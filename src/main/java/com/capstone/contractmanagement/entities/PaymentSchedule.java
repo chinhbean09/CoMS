@@ -1,0 +1,44 @@
+package com.capstone.contractmanagement.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payment_schedules")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class PaymentSchedule {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
+    private Long id;
+
+    @Column(name = "payment_order", nullable = false)
+    private Integer paymentOrder; // Thứ tự đợt thanh toán
+
+    @Column(name = "amount", nullable = false)
+    private Double amount; // Số tiền thanh toán trong đợt
+
+    @Column(name = "currency", nullable = false, length = 10)
+    private String currency; // Đơn vị tiền tệ
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDateTime dueDate; // Ngày đến hạn thanh toán
+
+    @Column(name = "status", length = 50)
+    private String status; // Trạng thái: Chưa thanh toán, Đã thanh toán, Quá hạn
+
+    @Column(name = "description", length = 500)
+    private String description; // Ghi chú
+
+    // Relationship với Contract
+    @ManyToOne
+    @JoinColumn(name = "contract_id", nullable = false)
+    private Contract contract;
+}
