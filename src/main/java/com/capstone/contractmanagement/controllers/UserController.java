@@ -342,15 +342,15 @@ public class UserController {
         }
     }
 
-//    @PutMapping(value = "/update-avatar/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<ResponseObject> updateUserAvatar(@PathVariable long userId,
-//                                                           @RequestParam("avatar") MultipartFile avatar) {
-//        User user = userService.updateUserAvatar(userId, avatar);
-//        return ResponseEntity.ok(ResponseObject.builder()
-//                .status(HttpStatus.OK)
-//                .data(UserResponse.fromUser(user))
-//                .message(MessageKeys.UPDATE_AVATAR_SUCCESSFULLY)
-//                .build());
-//    }
+    @PutMapping(value = "/update-avatar/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> updateUserAvatar(@PathVariable long userId,
+                                                           @RequestParam("avatar") MultipartFile avatar) {
+        User user = userService.updateUserAvatar(userId, avatar);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(UserResponse.fromUser(user))
+                .message(MessageKeys.UPDATE_AVATAR_SUCCESSFULLY)
+                .build());
+    }
 
 }
