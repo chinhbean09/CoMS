@@ -26,5 +26,8 @@ public interface IUserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.role.id = ?1")
     List<User> findByRoleId(Long roleId);
+    @Query("SELECT u FROM User u WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR u.fullName ILIKE %:keyword%)")
+    Page<User> searchUsers(@Param("keyword") String keyword, Pageable pageable);
 
 }
