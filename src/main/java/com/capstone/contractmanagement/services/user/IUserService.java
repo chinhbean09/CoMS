@@ -31,7 +31,9 @@ public interface IUserService {
 
     List<UserResponse> getAllUsers(Long roleId);
 
-//    User updateUserAvatar(long id, MultipartFile avatar);
+    void updatePassword(String email, String password) throws DataNotFoundException;
+
+    User updateUserAvatar(long id, MultipartFile avatar);
 
 
 }
