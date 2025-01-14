@@ -258,33 +258,41 @@ public class UserService implements IUserService {
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public User updateUserAvatar(long id, MultipartFile avatar) {
-//        User user = UserRepository.findById(id).orElse(null);
-//        if (user != null && avatar != null && !avatar.isEmpty()) {
-//            try {
-//                // Check if the uploaded file is an image
-//                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(avatar.getContentType()));
-//                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
-//                        !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
-//                    throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
-//                }
-//
-//                // Upload the avatar to Cloudinary
-//                Map uploadResult = cloudinary.uploader().upload(avatar.getBytes(),
-//                        ObjectUtils.asMap("folder", "user_avatar/" + id, "public_id", avatar.getOriginalFilename()));
-//
-//                // Get the URL of the uploaded avatar
-//                String avatarUrl = uploadResult.get("secure_url").toString();
-//                user.setAvatar(avatarUrl);
-//
-//                // Save the updated user entity
-//                UserRepository.save(user);
-//                return user;
-//            } catch (IOException e) {
-//                logger.error("Failed to upload avatar for user with ID {}", id, e);
-//            }
-//        }
-//        return null;
-//    }
+    @Override
+    public void updatePassword(String email, String password) throws DataNotFoundException {
+        User user = UserRepository.findByEmail(email)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
+        user.setPassword(passwordEncoder.encode(password));
+        UserRepository.save(user);
+    }
+
+    @Override
+    public User updateUserAvatar(long id, MultipartFile avatar) {
+        User user = UserRepository.findById(id).orElse(null);
+        if (user != null && avatar != null && !avatar.isEmpty()) {
+            try {
+                // Check if the uploaded file is an image
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(avatar.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
+                        !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
+                    throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+                }
+
+                // Upload the avatar to Cloudinary
+                Map uploadResult = cloudinary.uploader().upload(avatar.getBytes(),
+                        ObjectUtils.asMap("folder", "user_avatar/" + id, "public_id", avatar.getOriginalFilename()));
+
+                // Get the URL of the uploaded avatar
+                String avatarUrl = uploadResult.get("secure_url").toString();
+                user.setAvatar(avatarUrl);
+
+                // Save the updated user entity
+                UserRepository.save(user);
+                return user;
+            } catch (IOException e) {
+                logger.error("Failed to upload avatar for user with ID {}", id, e);
+            }
+        }
+        return null;
+    }
 }
