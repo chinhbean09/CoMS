@@ -43,7 +43,7 @@ public class ContractController {
 
     @PostMapping
     public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-        Contract contract = contractService.createContract(scontractDTO);
+        Contract contract = contractService.createContract(contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message("Created contract successfully")

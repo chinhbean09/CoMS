@@ -1,0 +1,4 @@
+package com.capstone.contractmanagement.services.template;
+
+public interface ITemplateService {
+}
