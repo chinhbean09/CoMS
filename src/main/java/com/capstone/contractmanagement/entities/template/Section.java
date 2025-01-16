@@ -1,27 +1,32 @@
 package com.capstone.contractmanagement.entities.template;
+
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "can_cu_phap_li")
+@Table(name = "sections")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CanCuPhapLi {
+public class Section {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 255)
-    private String name;
+    @Column(name = "section_name")
+    private String sectionName;
 
-    @ManyToMany(mappedBy = "canCuPhapLi")
+    @Column(name = "section_order")
+    private int order;
+
+    @Column(name = "is_custom")
+    private boolean isCustom;
+
+    @ManyToMany(mappedBy = "sections")
     private List<Template> templates;
 }

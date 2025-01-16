@@ -32,22 +32,30 @@ public class Template {
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
-    // Relationships
-    @OneToOne(mappedBy = "template")
-    private HieuLucHopDong hieuLucHopDong;
+//    // Relationships
+//    @OneToOne(mappedBy = "template")
+//    private HieuLucHopDong hieuLucHopDong;
+//
+//    @OneToMany(mappedBy = "template")
+//    private List<ThoiGianThucHienHopDong> thoiGianThucHienHopDong;
+//
+//    @OneToOne(mappedBy = "template")
+//    private TieuDeHopDong tieuDeHopDong;
 
-    @OneToMany(mappedBy = "template")
-    private List<ThoiGianThucHienHopDong> thoiGianThucHienHopDong;
-
-    @OneToOne(mappedBy = "template")
-    private TieuDeHopDong tieuDeHopDong;
+//    @ManyToMany
+//    @JoinTable(
+//            name = "can_cu_phap_li_templates",
+//            joinColumns = @JoinColumn(name = "template_id"),
+//            inverseJoinColumns = @JoinColumn(name = "can_cu_phap_li_id")
+//    )
+//    private List<CanCuPhapLi> canCuPhapLi;
 
     @ManyToMany
     @JoinTable(
-            name = "can_cu_phap_li_templates",
+            name = "section_templates",
             joinColumns = @JoinColumn(name = "template_id"),
-            inverseJoinColumns = @JoinColumn(name = "can_cu_phap_li_id")
+            inverseJoinColumns = @JoinColumn(name = "section_id")
     )
-    private List<CanCuPhapLi> canCuPhapLi;
+    private List<Section> sections;
 
 }
