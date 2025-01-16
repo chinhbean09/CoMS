@@ -21,7 +21,7 @@ import java.util.Optional;
 @Component
 public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Autowired
-    private com.capstone.contractmanagement.repositories.IUserRepository IUserRepository;
+    private IUserRepository IUserRepository;
 
     @Autowired
     private ISectionRepository sectionRepository;
@@ -34,30 +34,38 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.admin.email}")
     private String email;
 
-    @Value("${contract.guest.email}")
-    private String guestEmail;
+    @Value("${contract.manager.email}")
+    private String managerEmail;
+
+    @Value("${contract.staff.email}")
+    private String staffEmail;
 
     @Value("${contract.admin.fullName}")
     private String fullName;
 
-    @Value("${contract.guest.fullName}")
-    private String guestFullName;
+    @Value("${contract.manager.fullName}")
+    private String managerFullName;
+
+    @Value("${contract.staff.fullName}")
+    private String staffFullName;
 
     @Value("${contract.admin.address}")
     private String address;
 
-    @Value("${contract.guest.address}")
-    private String guestAddress;
+    @Value("${contract.manager.address}")
+    private String managerAddress;
+
+    @Value("${contract.manager.address}")
+    private String staffAddress;
 
     @Value("${contract.admin.phoneNumber}")
     private String phoneNumber;
 
-    @Value("${contract.guest.phoneNumber}")
-    private String guestPhoneNumber;
+    @Value("${contract.manager.phoneNumber}")
+    private String managerPhoneNumber;
 
-
-    @Value("${contract.admin.gender}")
-    private String gender;
+    @Value("${contract.staff.phoneNumber}")
+    private String staffPhoneNumber;
 
     @Value("${contract.admin.password}")
     private String password;
@@ -66,6 +74,12 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     private Boolean active;
 
     public void initializeSections() {
+
+        if (sectionRepository.count() > 0) {
+            System.out.println("Sections already initialized!");
+            return;
+        }
+
         List<Section> sections = List.of(
                 Section.builder().sectionName("Tiêu đề hợp đồng").order(1).isCustom(false).build(),
                 Section.builder().sectionName("Căn cứ pháp lý").order(2).isCustom(false).build(),
@@ -94,7 +108,8 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         Optional<User> findAccountResult = IUserRepository.findByPhoneNumber(phoneNumber);
         Optional<Role> existRolePermission = IRoleRepository.findById((long) 1);
-        Optional<User> findAccountGuest = IUserRepository.findByPhoneNumber(guestPhoneNumber);
+        Optional<User> findAccountManager = IUserRepository.findByPhoneNumber(managerPhoneNumber);
+        Optional<User> findAccountStaff = IUserRepository.findByPhoneNumber(staffPhoneNumber);
 
         initializeSections();
 
@@ -137,20 +152,36 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             System.out.println("Admin initialized!");
         }
 
-        if (findAccountGuest.isEmpty()) {
+        if (findAccountManager.isEmpty()) {
             String encodedPassword = passwordEncoder.encode(password);
 
             User user = new User();
-            user.setEmail(guestEmail);
-            user.setAddress(guestAddress);
+            user.setEmail(managerEmail);
+            user.setAddress(managerAddress);
             user.setPassword(encodedPassword);
             user.setActive(active);
-            user.setFullName(guestFullName);
-            user.setPhoneNumber(guestPhoneNumber);
+            user.setFullName(managerFullName);
+            user.setPhoneNumber(managerPhoneNumber);
             user.setRole(ManagerRole);
             user.setActive(true);
             IUserRepository.save(user);
             System.out.println("Manager initialized!");
+        }
+
+        if (findAccountStaff.isEmpty()) {
+            String encodedPassword = passwordEncoder.encode(password);
+
+            User user = new User();
+            user.setEmail(staffEmail);
+            user.setAddress(staffAddress);
+            user.setPassword(encodedPassword);
+            user.setActive(active);
+            user.setFullName(staffFullName);
+            user.setPhoneNumber(staffPhoneNumber);
+            user.setRole(StaffRole);
+            user.setActive(true);
+            IUserRepository.save(user);
+            System.out.println("Staff initialized!");
         }
 
         System.out.println("Hello, I'm System Manager!");
