@@ -18,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ContractDTO {
-    @JsonProperty("")
 
     @NotBlank(message = "Title cannot be blank")
     private String title;

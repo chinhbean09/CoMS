@@ -37,7 +37,14 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new IllegalArgumentException("Contract not found with id: " + id));
         return convertToResponse(contract);
     }
-
+    private void validateParty(Party party) {
+        if (party.getName() == null || party.getName().isEmpty()) {
+            throw new IllegalArgumentException("Party must have a valid name");
+        }
+        if (party.getAddress() == null || party.getAddress().isEmpty()) {
+            throw new IllegalArgumentException("Party must have a valid address");
+        }
+    }
     @Override
     public Contract createContract(ContractDTO request) throws DataNotFoundException {
         // Validate các trường bắt buộc
@@ -45,9 +52,13 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
         Party party = partyRepository.findById(request.getPartyId())
                 .orElseThrow(() -> new DataNotFoundException("Party not found"));
+        validateParty(party); // Kiểm tra thêm nếu cần
 //        Template template = templateRepository.findById(request.getTemplateId())
 //                .orElse(null);
 
+        if (contractRepository.existsByContractNumber(request.getContractNumber())) {
+            throw new IllegalArgumentException("Contract number already exists: " + request.getContractNumber());
+        }
         // Build Contract object
         Contract contract = Contract.builder()
                 .title(request.getTitle())
@@ -98,7 +109,9 @@ public class ContractService implements IContractService{
 
         // Lưu hợp đồng
         return contractRepository.save(contract);
+
     }
+
 
     @Override
     public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
