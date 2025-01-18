@@ -109,4 +109,16 @@ public class MessageKeys {
     public static final String REVIEW_PERMISSION_DENIED = "review.review_permission_denied";
 
     public static final String REVIEWS_FETCHED_SUCCESSFULLY = "review.list_review.reviews_fetched_successfully";
+
+    public static final String CREATE_TERM_SUCCESSFULLY = "term.create_term.create_term_successfully";
+
+    public static final String TERM_NOT_FOUND = "term.update_term.term_not_found";
+
+    public static final String UPDATE_TERM_SUCCESSFULLY = "term.update_term.update_term_successfully";
+
+    public static final String GET_ALL_TERMS_SUCCESSFULLY = "term.get_all_terms.get_all_terms_successfully";
+
+    public static final String DELETE_TERM_SUCCESSFULLY = "term.delete_term.delete_term_successfully";
+
+    public static final String GET_TERM_SUCCESSFULLY = "term.get_term.get_term_successfully";
 }
