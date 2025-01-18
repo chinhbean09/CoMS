@@ -38,7 +38,7 @@ public class Term {
     private List<Contract> contracts = new ArrayList<>();
 
     // Liên kết Many-to-One với TypeTerm
-    @ManyToOne
-    @JoinColumn(name = "type_term_id", nullable = false)
-    private TypeTerm typeTerm;
+//    @ManyToOne
+//    @JoinColumn(name = "type_term_id", nullable = false)
+//    private TypeTerm typeTerm;
 }
