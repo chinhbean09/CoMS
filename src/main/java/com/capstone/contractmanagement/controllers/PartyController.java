@@ -33,7 +33,7 @@ public class PartyController {
 //    }
 // Create a new Party
 @PostMapping
-public ResponseEntity<Party> createParty(@RequestBody Partgity party) {
+public ResponseEntity<Party> createParty(@RequestBody Pary party) {
     Party createdParty = partyService.createParty(party);
     return ResponseEntity.ok(createdParty);
 }
