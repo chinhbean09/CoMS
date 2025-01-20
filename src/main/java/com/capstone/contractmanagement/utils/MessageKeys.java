@@ -121,4 +121,14 @@ public class MessageKeys {
     public static final String DELETE_TERM_SUCCESSFULLY = "term.delete_term.delete_term_successfully";
 
     public static final String GET_TERM_SUCCESSFULLY = "term.get_term.get_term_successfully";
+
+    public static final String CREATE_TASK_SUCCESSFULLY = "task.create_task.create_task_successfully";
+
+    public static final String TASK_NOT_FOUND = "task.update_task.task_not_found";
+
+    public static final String UPDATE_TASK_SUCCESSFULLY = "task.update_task.update_task_successfully";
+
+    public static final String DELETE_TASK_SUCCESSFULLY = "task.delete_task.delete_task_successfully";
+
+    public static final String GET_TASK_SUCCESSFULLY = "task.get_task.get_task_successfully";
 }
