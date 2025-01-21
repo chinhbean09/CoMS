@@ -22,21 +22,26 @@ public class TaskController {
 
     private final ITaskService taskService;
 
+    @GetMapping("/search")
+    public ResponseEntity<ResponseObject> searchTasks(@RequestParam String keyword) {
+        List<TaskResponse> tasks = taskService.searchTasks(keyword);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.SEARCH_TASK_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(tasks).build());
+    }
 
-    // Create a new task
+    // create a new task
     @PostMapping("/create")
-    public ResponseEntity<ResponseObject> createTask(
-            @RequestBody CreateTaskDTO createTaskDTO) throws DataNotFoundException {
-
+    public ResponseEntity<ResponseObject> createTask(@RequestBody CreateTaskDTO createTaskDTO) throws DataNotFoundException {
         TaskResponse taskResponse = taskService.createTask(createTaskDTO);
-
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.CREATE_TASK_SUCCESSFULLY)
                 .status(HttpStatus.CREATED)
                 .data(taskResponse).build());
     }
 
-    // Get tasks assigned by manager
+    // get tasks assigned by manager
     @GetMapping("/get-task-by-manager/{managerId}")
     public ResponseEntity<ResponseObject> getTasksByManager(@PathVariable Long managerId) {
         List<TaskResponse> tasks = taskService.getTasksByManager(managerId);
@@ -46,6 +51,7 @@ public class TaskController {
                 .data(tasks).build());
     }
 
+    // update task
     @PutMapping("/update/{taskId}")
     public ResponseEntity<ResponseObject> updateTask(@PathVariable Long taskId, @RequestBody UpdateTaskDTO updateTaskDTO) throws DataNotFoundException {
         TaskResponse taskResponse = taskService.updateTask(taskId, updateTaskDTO);
@@ -55,6 +61,7 @@ public class TaskController {
                 .data(taskResponse).build());
     }
 
+    // delete task
     @DeleteMapping("/delete/{taskId}")
     public ResponseEntity<ResponseObject> deleteTask(@PathVariable Long taskId) throws DataNotFoundException {
         taskService.deleteTask(taskId);
