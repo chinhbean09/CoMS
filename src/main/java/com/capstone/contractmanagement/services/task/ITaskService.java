@@ -8,10 +8,11 @@ import com.capstone.contractmanagement.responses.task.TaskResponse;
 import java.util.List;
 
 public interface ITaskService {
-    TaskResponse createTask(CreateTaskDTO createTaskDTO) throws DataNotFoundException;
-
-    List<TaskResponse> getTasksByManager(Long managerId);
 
     TaskResponse updateTask(Long taskId, UpdateTaskDTO updateTaskDTO) throws DataNotFoundException;
     void deleteTask(Long taskId) throws DataNotFoundException;
+
+    TaskResponse createTask(CreateTaskDTO request) throws DataNotFoundException;
+    List<TaskResponse> getTasksByManager(Long managerId);
+    List<TaskResponse> searchTasks(String keyword);
 }
