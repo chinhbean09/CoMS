@@ -15,9 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateTaskDTO {
 
-    private String name;
+    private String taskName;
     private String description;
+    private Long assignedToId;
+    private List<Long> supervisorIds;
     private Date dueDate;
-    private List<Long> assigneeIds; // List of user IDs assigned to the task
-    private List<CreateTaskPermissionDTO> permissions; // Permissions for each user
 }
