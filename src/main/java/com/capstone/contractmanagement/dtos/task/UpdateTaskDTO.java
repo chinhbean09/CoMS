@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.dtos.task;
 
 import com.capstone.contractmanagement.dtos.taskpermission.CreateTaskPermissionDTO;
+import com.capstone.contractmanagement.enums.TaskStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,9 +15,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateTaskDTO {
-    private String name;
+    private String taskName;
     private String description;
+    private Long assignedToId;
+    private List<Long> supervisorIds;
     private Date dueDate;
-    private List<Long> assigneeIds; // List of user IDs assigned to the task
-    private List<CreateTaskPermissionDTO> permissions; // Permissions for each user
+    private TaskStatus status;
 }

@@ -131,4 +131,5 @@ public class MessageKeys {
     public static final String DELETE_TASK_SUCCESSFULLY = "task.delete_task.delete_task_successfully";
 
     public static final String GET_TASK_SUCCESSFULLY = "task.get_task.get_task_successfully";
+    public static final String SEARCH_TASK_SUCCESSFULLY = "task.search_task.search_task_successfully";
 }
