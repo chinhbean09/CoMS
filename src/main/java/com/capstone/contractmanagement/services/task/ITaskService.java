@@ -15,4 +15,6 @@ public interface ITaskService {
     TaskResponse createTask(CreateTaskDTO request) throws DataNotFoundException;
     List<TaskResponse> getTasksByManager(Long managerId);
     List<TaskResponse> searchTasks(String keyword);
+    void updateLastViewedAt(Long taskId) throws DataNotFoundException;
+    List<TaskResponse> getTasksByEmployee(Long employeeId);
 }

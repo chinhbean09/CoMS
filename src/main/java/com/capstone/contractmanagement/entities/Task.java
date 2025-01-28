@@ -58,6 +58,9 @@ public class Task {
     @Column(name = "last_viewed_at")
     private LocalDateTime lastViewedAt;
 
+    @Column(name = "last_viewed_by")
+    private String lastViewedBy;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 }

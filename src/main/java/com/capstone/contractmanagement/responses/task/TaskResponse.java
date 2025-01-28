@@ -22,12 +22,14 @@ public class TaskResponse {
     private Long id;
     private String taskName;
     private String description;
+    private String createdBy;
     private LocalDateTime createdAt;
     private String assignedTo;
     private List<String> supervisors;
     private Date dueDate;
     private String status;
     private LocalDateTime lastViewedAt;
+    private String lastViewedBy;
     private LocalDateTime updatedAt;
 
 }
