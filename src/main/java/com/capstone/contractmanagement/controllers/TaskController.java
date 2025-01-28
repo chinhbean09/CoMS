@@ -51,6 +51,16 @@ public class TaskController {
                 .data(tasks).build());
     }
 
+    // get tasks assigned by employee
+    @GetMapping("/get-task-by-employee/{assigneeId}")
+    public ResponseEntity<ResponseObject> getTasksByEmployee(@PathVariable Long assigneeId) {
+        List<TaskResponse> tasks = taskService.getTasksByEmployee(assigneeId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_TASK_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(tasks).build());
+    }
+
     // update task
     @PutMapping("/update/{taskId}")
     public ResponseEntity<ResponseObject> updateTask(@PathVariable Long taskId, @RequestBody UpdateTaskDTO updateTaskDTO) throws DataNotFoundException {
@@ -68,6 +78,15 @@ public class TaskController {
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.DELETE_TASK_SUCCESSFULLY)
                 .status(HttpStatus.NO_CONTENT)
+                .build());
+    }
+
+    @PutMapping("/update-last-viewed-at/{taskId}")
+    public ResponseEntity<ResponseObject> updateLastViewedAt(@PathVariable Long taskId) throws DataNotFoundException {
+        taskService.updateLastViewedAt(taskId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Update last viewed at successfully")
+                .status(HttpStatus.OK)
                 .build());
     }
 }
