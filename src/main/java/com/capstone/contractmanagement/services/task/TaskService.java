@@ -70,6 +70,8 @@ public class TaskService implements ITaskService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User manager = (User) authentication.getPrincipal();
 
+        if (manager.getRole().getRoleName().equals("MANAGER")) throw new DataNotFoundException(MessageKeys.NOT_ALLOWED);
+
         User assignee = userRepository.findById(request.getAssignedToId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
         List<User> supervisors = userRepository.findAllById(request.getSupervisorIds());
@@ -108,11 +110,33 @@ public class TaskService implements ITaskService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public void updateLastViewedAt(Long taskId) throws DataNotFoundException {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.TASK_NOT_FOUND));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+
+        task.setLastViewedAt(LocalDateTime.now());
+        task.setLastViewedBy(user.getFullName()); // Lưu tên nhân viên truy cập lần cuối
+        taskRepository.save(task);
+    }
+
+    @Override
+    @Transactional
+    public List<TaskResponse> getTasksByEmployee(Long employeeId) {
+        List<Task> tasks = taskRepository.findByAssigneeId(employeeId);
+        return tasks.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     private TaskResponse mapToResponse(Task task) {
         return TaskResponse.builder()
                 .id(task.getId())
                 .taskName(task.getTaskName())
                 .description(task.getDescription())
+                .createdBy(task.getManager().getFullName())
                 .createdAt(task.getCreatedAt())
                 .assignedTo(task.getAssignee().getFullName())
                 .supervisors(task.getSupervisors().stream()
@@ -121,6 +145,7 @@ public class TaskService implements ITaskService {
                 .dueDate(task.getDueDate())
                 .status(task.getStatus().name())
                 .lastViewedAt(task.getLastViewedAt())
+                .lastViewedBy(task.getLastViewedBy())
                 .updatedAt(task.getUpdatedAt())
                 .build();
     }
