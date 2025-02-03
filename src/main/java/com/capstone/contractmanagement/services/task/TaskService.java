@@ -70,7 +70,7 @@ public class TaskService implements ITaskService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User manager = (User) authentication.getPrincipal();
 
-        if (manager.getRole().getRoleName().equals("MANAGER")) throw new DataNotFoundException(MessageKeys.NOT_ALLOWED);
+        if (!manager.getRole().getRoleName().equals("MANAGER")) throw new DataNotFoundException(MessageKeys.NOT_ALLOWED);
 
         User assignee = userRepository.findById(request.getAssignedToId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
