@@ -175,33 +175,33 @@ public class UserServiceUnitTest {
         assertDoesNotThrow(() -> userService.deleteUser(1L));
     }
 
-//    @Test
-//    void testUploadAvatar_Success() throws IOException {
-//        MockMultipartFile file = new MockMultipartFile("avatar", "avatar.jpg", "image/jpeg", "test image content".getBytes());
-//
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(cloudinary.uploader().upload(any(byte[].class), any(Map.class)))
-//                .thenReturn(Map.of("secure_url", "https://cloudinary.com/avatar.jpg"));
-//
-//        User updatedUser = userService.updateUserAvatar(1L, file);
-//
-//        assertNotNull(updatedUser);
-//        assertEquals("https://cloudinary.com/avatar.jpg", updatedUser.getAvatar());
-//        verify(userRepository).save(user);
-//    }
-//
-//    @Test
-//    void testUploadAvatar_InvalidFileType() {
-//        MockMultipartFile file = new MockMultipartFile("avatar", "avatar.txt", "text/plain", "invalid file content".getBytes());
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//
-//        Exception exception = assertThrows(InvalidParamException.class, () -> {
-//            userService.updateUserAvatar(1L, file);
-//        });
-//
-//        assertTrue(exception.getMessage().contains("UPLOAD_IMAGES_FILE_MUST_BE_IMAGE"));
-//        verify(userRepository, never()).save(any(User.class));
-//    }
+    @Test
+    void testUploadAvatar_Success() throws IOException {
+        MockMultipartFile file = new MockMultipartFile("avatar", "avatar.jpg", "image/jpeg", "test image content".getBytes());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(cloudinary.uploader().upload(any(byte[].class), any(Map.class)))
+                .thenReturn(Map.of("secure_url", "https://cloudinary.com/avatar.jpg"));
+
+        User updatedUser = userService.updateUserAvatar(1L, file);
+
+        assertNotNull(updatedUser);
+        assertEquals("https://cloudinary.com/avatar.jpg", updatedUser.getAvatar());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void testUploadAvatar_InvalidFileType() {
+        MockMultipartFile file = new MockMultipartFile("avatar", "avatar.txt", "text/plain", "invalid file content".getBytes());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        Exception exception = assertThrows(InvalidParamException.class, () -> {
+            userService.updateUserAvatar(1L, file);
+        });
+
+        assertTrue(exception.getMessage().contains("UPLOAD_IMAGES_FILE_MUST_BE_IMAGE"));
+        verify(userRepository, never()).save(any(User.class));
+    }
 
     @Test
     void testUploadAvatar_UserNotFound() {
