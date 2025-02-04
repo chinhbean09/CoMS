@@ -9,8 +9,6 @@ import lombok.*;
 @Getter
 @Setter
 public class ForgotPasswordDTO {
-    @JsonProperty("email")
-    private String email;
 
     @JsonProperty("otp")
     private Integer otp;
