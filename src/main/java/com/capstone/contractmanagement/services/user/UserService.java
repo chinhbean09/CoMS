@@ -172,13 +172,28 @@ public class UserService implements IUserService {
         try {
             User existingUser = UserRepository.findByEmailOrPhoneNumber(loginIdentifier, loginIdentifier)
                     .orElseThrow(() -> new UsernameNotFoundException(MessageKeys.USER_NOT_FOUND));
-            if (!passwordEncoder.matches(userLoginDTO.getPassword(), existingUser.getPassword())) {
-                throw new BadCredentialsException(MessageKeys.PASSWORD_NOT_MATCH);
-            }
 
+            // check if account is locked
             if (!existingUser.isActive()) {
                 throw new LockedException(MessageKeys.USER_IS_LOCKED);
             }
+
+            // check failed login attempts
+            if (existingUser.getFailedLoginAttempts() >= 5) {
+                existingUser.setActive(false);
+                UserRepository.save(existingUser);
+                throw new LockedException(MessageKeys.USER_IS_LOCKED);
+            }
+
+            if (!passwordEncoder.matches(userLoginDTO.getPassword(), existingUser.getPassword())) {
+                existingUser.setFailedLoginAttempts(existingUser.getFailedLoginAttempts() + 1);
+                UserRepository.save(existingUser);
+                throw new BadCredentialsException(MessageKeys.PASSWORD_NOT_MATCH);
+            }
+
+            // login success reset failed login attempts
+            existingUser.setFailedLoginAttempts(0);
+            UserRepository.save(existingUser);
 
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                     loginIdentifier, userLoginDTO.getPassword(), existingUser.getAuthorities());
