@@ -58,6 +58,10 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
 
     @ManyToMany(mappedBy = "supervisors")
     private List<Task> tasks = new ArrayList<>();
+
+    @Column(name = "failed_login_attempts")
+    private int failedLoginAttempts;
+
     @Override
     public Map<String, Object> getAttributes() {
         Map<String, Object> attributes = new HashMap<>();
