@@ -35,7 +35,7 @@ public class PartyController {
 @PostMapping
 public ResponseEntity<Party> createParty(@RequestBody Party party) {
     Party createdParty = partyService.createParty(party);
-    return ResponseEntity.ok(createdParty);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdParty);
 }
 
     // Get all Parties
