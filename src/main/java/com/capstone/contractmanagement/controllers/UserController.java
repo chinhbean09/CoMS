@@ -61,7 +61,7 @@ public class UserController {
         return ResponseEntity.ok(jwtTokenUtils.generateSecretKey());
     }
 
-    @PostMapping("/register")
+        @PostMapping("/register")
     public ResponseEntity<ResponseObject> registerUser(
             @Valid @RequestBody UserDTO userDTO,
             BindingResult result
