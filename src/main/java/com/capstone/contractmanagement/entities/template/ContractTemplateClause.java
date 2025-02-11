@@ -21,21 +21,26 @@ public class ContractTemplateClause {
     @JoinColumn(name = "template_id", nullable = false)
     private ContractTemplate contractTemplate;
 
+    //để chỉ tên nhóm chính : legalBasis, additional, RightsAndObligations
     @Column(name = "section", nullable = false)
     private String section;
 
+    //để lưu tên sub-group (vd: additionalCommon, specialA, …).
     @Column(name = "sub_section")
     private String subSection;
 
     @Column(name = "clause_order")
     private Integer clauseOrder;
 
+    //Cau truc cua sub section
     @Column(name = "label")
     private String label;
 
+    //Cau truc cua sub section
     @Column(name = "value")
     private String value;
 
+    //Cau truc cua sub section
     @Column(name = "key")
     private String key;
 }
