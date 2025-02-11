@@ -1,6 +1,5 @@
 package com.capstone.contractmanagement.responses.template;
 
-import com.capstone.contractmanagement.entities.template.Section;
 import com.capstone.contractmanagement.responses.section.SectionResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
