@@ -2,7 +2,6 @@ package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.entities.*;
-import com.capstone.contractmanagement.entities.template.Template;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
@@ -20,7 +19,6 @@ public class ContractService implements IContractService{
 
     private final IContractRepository contractRepository;
     private final IUserRepository userRepository;
-    private final ITemplateRepository templateRepository;
     private final IPartyRepository partyRepository;
     private final ITermRepository termRepository;
 

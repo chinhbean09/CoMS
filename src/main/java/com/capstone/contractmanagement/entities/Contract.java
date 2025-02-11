@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
-import com.capstone.contractmanagement.entities.template.Template;
+import com.capstone.contractmanagement.entities.template.ContractTemplate;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -93,7 +93,7 @@ public class Contract {
 
     @ManyToOne
     @JoinColumn(name = "template_id", referencedColumnName = "template_id")
-    private Template template;
+    private ContractTemplate template;
 
     @ManyToOne
     @JoinColumn(name = "party_id", nullable = false)
