@@ -21,20 +21,14 @@ public class Term {
     @Column(name = "term_id")
     private Long id;
 
-    @Column(name = "title", nullable = false, length = 255)
-    private String title;
-
     @Column(name = "label")
     private String label;
 
     @Column(name = "value")
     private String value;
 
-    @Column(name = "key")
-    private String key;
-
-    @Column(name = "is_default", nullable = false)
-    private Boolean isDefault;
+    @Column(name = "clause_code")
+    private String clauseCode;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

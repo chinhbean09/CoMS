@@ -23,7 +23,7 @@ public class TermController {
 
     @PostMapping("/create/{typeTermId}")
     public ResponseObject createTerm(@PathVariable Long typeTermId, @RequestBody CreateTermDTO termRequest) {
-        CreateTermResponse termResponse = termService.createTerm(typeTermId, termRequest);
+        CreateTermResponse termResponse = termService.createTerm(termRequest);
         return ResponseObject.builder()
                 .message(MessageKeys.CREATE_TERM_SUCCESSFULLY)
                 .data(termResponse)
