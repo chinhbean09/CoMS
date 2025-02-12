@@ -9,5 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateTermDTO {
+public class TermDTO {
+    private String label;
+    private String value;
+    private String clauseCode;
 }

@@ -1,49 +1,46 @@
-//package com.capstone.contractmanagement.services.term;
-//
-//import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
-//import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
-//import com.capstone.contractmanagement.entities.Term;
-//import com.capstone.contractmanagement.exceptions.DataNotFoundException;
-//import com.capstone.contractmanagement.repositories.ITermRepository;
-//import com.capstone.contractmanagement.responses.term.TermResponse;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Service;
-//
-//import java.time.LocalDateTime;
-//import java.util.List;
-//import java.util.Optional;
-//import java.util.stream.Collectors;
-//
-//@Service
-//@RequiredArgsConstructor
-//public class TermService implements ITermService{
-//
-//    private final ITermRepository termRepository;
+package com.capstone.contractmanagement.services.term;
+
+import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
+import com.capstone.contractmanagement.entities.Term;
+import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.repositories.ITermRepository;
+import com.capstone.contractmanagement.repositories.ITypeTermRepository;
+import com.capstone.contractmanagement.responses.term.CreateTermResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class TermService implements ITermService{
+
+    private final ITermRepository termRepository;
+    private final ITypeTermRepository typeTermRepository;
+    @Override
+    public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
+        TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
+                .orElseThrow(() -> new IllegalArgumentException("TypeTerm not found"));
+        Term term = Term.builder()
+                .clauseCode(request.getClauseCode())
+                .label(request.getLabel())
+                .value(request.getValue())
+                .createdAt(LocalDateTime.now())
+                .typeTerm(typeTerm)
+                .build();
+        termRepository.save(term);
+        return CreateTermResponse.builder()
+                .id(term.getId())
+                .clauseCode(term.getClauseCode())
+                .label(term.getLabel())
+                .value(term.getValue())
+                .type(term.getTypeTerm().getName())
+                .build();
+    }
+
+
 //    @Override
-//    public TermResponse createTerm(CreateTermDTO termRequest) {
-//        // Map TermRequest to Term entity
-//        Term term = Term.builder()
-//                .title(termRequest.getTitle())
-//                .description(termRequest.getDescription())
-//                .isDefault(termRequest.getIsDefault())
-//                .createdAt(LocalDateTime.now())
-//                .build();
-//
-//        // Save Term entity
-//        Term savedTerm = termRepository.save(term);
-//
-//        // Map saved Term to TermResponse
-//        return TermResponse.builder()
-//                .id(savedTerm.getId())
-//                .title(savedTerm.getTitle())
-//                .description(savedTerm.getDescription())
-//                .isDefault(savedTerm.getIsDefault())
-//                .createdAt(savedTerm.getCreatedAt().toString())
-//                .build();
-//    }
-//
-//    @Override
-//    public TermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException {
+//    public CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException {
 //        // Find the term by ID
 //        Optional<Term> optionalTerm = termRepository.findById(termId);
 //
@@ -60,7 +57,7 @@
 //        // Save updated term
 //        Term updatedTerm = termRepository.save(term);
 //
-//        return TermResponse.builder()
+//        return CreateTermResponse.builder()
 //                .id(updatedTerm.getId())
 //                .title(updatedTerm.getTitle())
 //                .description(updatedTerm.getDescription())
@@ -70,11 +67,11 @@
 //    }
 //
 //    @Override
-//    public List<TermResponse> getAllTerms() {
+//    public List<CreateTermResponse> getAllTerms() {
 //        List<Term> terms = termRepository.findAll();
 //
 //        return terms.stream()
-//                .map(term -> TermResponse.builder()
+//                .map(term -> CreateTermResponse.builder()
 //                        .id(term.getId())
 //                        .title(term.getTitle())
 //                        .description(term.getDescription())
@@ -85,7 +82,7 @@
 //    }
 //
 //    @Override
-//    public TermResponse getTermById(Long id) throws DataNotFoundException {
+//    public CreateTermResponse getTermById(Long id) throws DataNotFoundException {
 //        Optional<Term> optionalTerm = termRepository.findById(id);
 //
 //        if (!optionalTerm.isPresent()) {
@@ -93,7 +90,7 @@
 //        }
 //
 //        Term term = optionalTerm.get();
-//        return TermResponse.builder()
+//        return CreateTermResponse.builder()
 //                .id(term.getId())
 //                .title(term.getTitle())
 //                .description(term.getDescription())
@@ -112,4 +109,4 @@
 //
 //        termRepository.deleteById(termId);
 //    }
-//}
+}
