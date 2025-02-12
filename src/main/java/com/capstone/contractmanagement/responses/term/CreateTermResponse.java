@@ -5,14 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TermResponse {
+public class CreateTermResponse {
     private Long id;
-    private String title;
-    private String description;
-    private Boolean isDefault;
-    private String createdAt;
+    private String clauseCode;
+    private String label;
+    private String value;
+    private String type;
 }
