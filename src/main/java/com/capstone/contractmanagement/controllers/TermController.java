@@ -1,69 +1,69 @@
-package com.capstone.contractmanagement.controllers;
-
-import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
-import com.capstone.contractmanagement.exceptions.DataNotFoundException;
-import com.capstone.contractmanagement.responses.ResponseObject;
-import com.capstone.contractmanagement.responses.term.TermResponse;
-import com.capstone.contractmanagement.services.term.TermService;
-import com.capstone.contractmanagement.utils.MessageKeys;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("${api.prefix}/terms")
-@RequiredArgsConstructor
-public class TermController {
-
-    private final TermService termService;
-
-    @PostMapping("/create")
-    public ResponseObject createTerm(@RequestBody CreateTermDTO termRequest) {
-        TermResponse termResponse = termService.createTerm(termRequest);
-        return ResponseObject.builder()
-                .message(MessageKeys.CREATE_TERM_SUCCESSFULLY)
-                .data(termResponse)
-                .status(HttpStatus.CREATED)
-                .build();
-    }
-
-    @PutMapping("/update/{termId}")
-    public ResponseEntity<ResponseObject> updateTerm(@PathVariable Long termId, @RequestBody UpdateTermDTO termRequest) throws DataNotFoundException {
-        TermResponse termResponse = termService.updateTerm(termId, termRequest);
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.UPDATE_TERM_SUCCESSFULLY)
-                .data(termResponse)
-                .status(HttpStatus.OK).build());
-    }
-
-    @GetMapping("/get-all")
-    public ResponseEntity<ResponseObject> getAllTerms() {
-        List<TermResponse> termResponses = termService.getAllTerms();
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
-                .data(termResponses)
-                .status(HttpStatus.OK).build());
-    }
-
-    @GetMapping("/get-by-id/{termId}")
-    public ResponseEntity<ResponseObject> getTermById(@PathVariable Long termId) throws DataNotFoundException {
-        TermResponse termResponse = termService.getTermById(termId);
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.GET_TERM_SUCCESSFULLY)
-                .data(termResponse)
-                .status(HttpStatus.OK).build());
-    }
-
-    @DeleteMapping("/delete/{termId}")
-    public ResponseEntity<ResponseObject> deleteTerm(@PathVariable Long termId) throws DataNotFoundException {
-        termService.deleteTerm(termId);
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.DELETE_TERM_SUCCESSFULLY)
-                .status(HttpStatus.NO_CONTENT)
-                .build());// Trả về mã 204 (No Content)
-    }
-}
+//package com.capstone.contractmanagement.controllers;
+//
+//import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
+//import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
+//import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+//import com.capstone.contractmanagement.responses.ResponseObject;
+//import com.capstone.contractmanagement.responses.term.TermResponse;
+//import com.capstone.contractmanagement.services.term.TermService;
+//import com.capstone.contractmanagement.utils.MessageKeys;
+//import lombok.RequiredArgsConstructor;
+//import org.springframework.http.HttpStatus;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.web.bind.annotation.*;
+//
+//import java.util.List;
+//
+//@RestController
+//@RequestMapping("${api.prefix}/terms")
+//@RequiredArgsConstructor
+//public class TermController {
+//
+//    private final TermService termService;
+//
+//    @PostMapping("/create")
+//    public ResponseObject createTerm(@RequestBody CreateTermDTO termRequest) {
+//        TermResponse termResponse = termService.createTerm(termRequest);
+//        return ResponseObject.builder()
+//                .message(MessageKeys.CREATE_TERM_SUCCESSFULLY)
+//                .data(termResponse)
+//                .status(HttpStatus.CREATED)
+//                .build();
+//    }
+//
+//    @PutMapping("/update/{termId}")
+//    public ResponseEntity<ResponseObject> updateTerm(@PathVariable Long termId, @RequestBody UpdateTermDTO termRequest) throws DataNotFoundException {
+//        TermResponse termResponse = termService.updateTerm(termId, termRequest);
+//        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+//                .message(MessageKeys.UPDATE_TERM_SUCCESSFULLY)
+//                .data(termResponse)
+//                .status(HttpStatus.OK).build());
+//    }
+//
+//    @GetMapping("/get-all")
+//    public ResponseEntity<ResponseObject> getAllTerms() {
+//        List<TermResponse> termResponses = termService.getAllTerms();
+//        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+//                .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
+//                .data(termResponses)
+//                .status(HttpStatus.OK).build());
+//    }
+//
+//    @GetMapping("/get-by-id/{termId}")
+//    public ResponseEntity<ResponseObject> getTermById(@PathVariable Long termId) throws DataNotFoundException {
+//        TermResponse termResponse = termService.getTermById(termId);
+//        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+//                .message(MessageKeys.GET_TERM_SUCCESSFULLY)
+//                .data(termResponse)
+//                .status(HttpStatus.OK).build());
+//    }
+//
+//    @DeleteMapping("/delete/{termId}")
+//    public ResponseEntity<ResponseObject> deleteTerm(@PathVariable Long termId) throws DataNotFoundException {
+//        termService.deleteTerm(termId);
+//        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+//                .message(MessageKeys.DELETE_TERM_SUCCESSFULLY)
+//                .status(HttpStatus.NO_CONTENT)
+//                .build());// Trả về mã 204 (No Content)
+//    }
+//}
