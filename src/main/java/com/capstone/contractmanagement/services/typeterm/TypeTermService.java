@@ -1,0 +1,22 @@
+package com.capstone.contractmanagement.services.typeterm;
+
+import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
+import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.repositories.ITypeTermRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class TypeTermService implements ITypeTermService {
+    private final ITypeTermRepository typeTermRepository;
+
+    @Override
+    public String createTypeTerm(CreateTypeTermDTO request) {
+        TypeTerm typeTerm = TypeTerm.builder()
+                .name(request.getName())
+                .build();
+        typeTermRepository.save(typeTerm);
+        return "Type Term created successfully";
+    }
+}
