@@ -24,8 +24,14 @@ public class Term {
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
-    @Column(name = "description", length = 1000)
-    private String description;
+    @Column(name = "label")
+    private String label;
+
+    @Column(name = "value")
+    private String value;
+
+    @Column(name = "key")
+    private String key;
 
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault;
@@ -38,7 +44,11 @@ public class Term {
     private List<Contract> contracts = new ArrayList<>();
 
     // Liên kết Many-to-One với TypeTerm
-//    @ManyToOne
-//    @JoinColumn(name = "type_term_id", nullable = false)
-//    private TypeTerm typeTerm;
+    @ManyToOne
+    @JoinColumn(name = "type_term_id", nullable = false)
+    private TypeTerm typeTerm;
+
+    @ManyToMany(mappedBy = "terms")
+    private List<ContractTemplate> contractTemplates = new ArrayList<>();
+
 }

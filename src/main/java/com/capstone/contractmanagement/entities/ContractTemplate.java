@@ -1,7 +1,5 @@
-package com.capstone.contractmanagement.entities.template;
+package com.capstone.contractmanagement.entities;
 
-import com.capstone.contractmanagement.entities.Contract;
-import com.capstone.contractmanagement.entities.Term;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,9 +27,13 @@ public class ContractTemplate {
     @Column(name = "party_info")
     private String partyInfo;
 
-    //vd: specialTerms cua ben A, specialTerms cua ben B
-    @Column(name = "special_terms")
-    private String specialTerms;
+    //vd: specialTerms cua ben A
+    @Column(name = "special_termsA")
+    private String specialTermsA;
+
+    //specialTerms cua ben B
+    @Column(name = "special_termsB")
+    private String specialTermsB;
 
     //dc tạo phụ lục
     @Column(name = "appendix_enabled")
@@ -93,8 +95,4 @@ public class ContractTemplate {
             inverseJoinColumns = @JoinColumn(name = "term_id")
     )
     private List<Term> terms = new ArrayList<>();
-
-    //clause (dieu khoan, section, sub-section  )
-    @OneToMany(mappedBy = "contractTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ContractTemplateClause> clauses;
 }
