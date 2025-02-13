@@ -132,5 +132,29 @@ public class MessageKeys {
     public static final String DELETE_TASK_SUCCESSFULLY = "task.delete_task.delete_task_successfully";
 
     public static final String GET_TASK_SUCCESSFULLY = "task.get_task.get_task_successfully";
+
     public static final String SEARCH_TASK_SUCCESSFULLY = "task.search_task.search_task_successfully";
+
+    public static final String CREATE_TEMPLATE_SUCCESSFULLY = "template.create_template.create_template_successfull" +
+            "y";
+    public static final String GET_ALL_TEMPLATES_SUCCESSFULLY = "template.get_all_templates.get_all_templates_successfully";
+
+    public static final String GET_TEMPLATE_SUCCESSFULLY = "template.get_template.get_template_successfully";
+
+    public static final String DELETE_TEMPLATE_SUCCESSFULLY = "template.delete_template.delete_template_successfully";
+
+    public static final String UPDATE_TEMPLATE_SUCCESSFULLY = "template.update_template.update_template_successfully";
+
+    public static final String UPDATE_TEMPLATE_FAILED = "template.update_template.update_template_failed";
+
+    public static final String GET_ALL_CONTRACTS_SUCCESSFULLY = "contract.get_all_contracts.get_all_contracts_successfully";
+
+    public static final String GET_CONTRACT_SUCCESSFULLY = "contract.get_contract.get_contract_successfully";
+
+
+    public static final String CREATE_CONTRACT_SUCCESSFULLY = "contract.create_contract.create_contract_successfully";
+
+    public static final String UPDATE_CONTRACT_SUCCESSFULLY = "contract.update_contract.update_contract_successfully";
+
+    public static final String DELETE_CONTRACT_SUCCESSFULLY = "contract.delete_contract.delete_contract_successfully";
 }
