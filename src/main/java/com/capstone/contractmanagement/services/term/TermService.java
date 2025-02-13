@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.term;
 
 import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
+import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
 import com.capstone.contractmanagement.entities.Term;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.repositories.ITermRepository;
@@ -36,6 +37,16 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .build();
+    }
+
+
+    @Override
+    public TypeTerm createTypeTerm(CreateTypeTermDTO request) {
+        TypeTerm typeTerm = TypeTerm.builder()
+                .name(request.getName())
+                .build();
+        typeTermRepository.save(typeTerm);
+        return typeTerm;
     }
 
 
