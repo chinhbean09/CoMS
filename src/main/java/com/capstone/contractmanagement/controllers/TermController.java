@@ -42,7 +42,6 @@ public class TermController {
                 .data(typeTerm)
                 .status(HttpStatus.CREATED)
                 .build();
-
     }
 
 //    @PutMapping("/update/{termId}")
