@@ -23,6 +23,10 @@ public class TypeTerm {
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
+    //generalTerms, additionalTerms, otherTerms, legalbasis
+    @Column(name = "identifier", nullable = false, length = 255)
+    private String identifier;
+
     // Liên kết One-to-Many với Terms
     @OneToMany(mappedBy = "typeTerm", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Term> terms = new ArrayList<>();
