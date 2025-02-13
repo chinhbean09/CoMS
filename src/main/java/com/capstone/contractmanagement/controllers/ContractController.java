@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
+import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class ContractController {
         List<ContractResponse> contracts = contractService.getAllContracts();
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
-                .message("Fetched all contracts successfully")
+                .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
                 .data(contracts)
                 .build());
     }
@@ -36,7 +37,7 @@ public class ContractController {
         ContractResponse contract = contractService.getContractById(id);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
-                .message("Fetched contract successfully")
+                .message(MessageKeys.GET_CONTRACT_SUCCESSFULLY)
                 .data(contract)
                 .build());
     }
@@ -46,7 +47,7 @@ public class ContractController {
         Contract contract = contractService.createContract(contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
-                .message("Created contract successfully")
+                .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
                 .data(contract)
                 .build());
     }
@@ -58,7 +59,7 @@ public class ContractController {
         ContractResponse contract = contractService.updateContract(id, contractDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
-                .message("Updated contract successfully")
+                .message(MessageKeys.UPDATE_CONTRACT_SUCCESSFULLY)
                 .data(contract)
                 .build());
     }
@@ -68,7 +69,7 @@ public class ContractController {
         contractService.deleteContract(id);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
-                .message("Deleted contract successfully")
+                .message(MessageKeys.DELETE_CONTRACT_SUCCESSFULLY)
                 .build());
     }
 

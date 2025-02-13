@@ -1,7 +1,9 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
+import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
+import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
@@ -21,6 +23,7 @@ public class TermController {
 
     private final TermService termService;
 
+
     @PostMapping("/create/{typeTermId}")
     public ResponseObject createTerm(@PathVariable Long typeTermId, @RequestBody CreateTermDTO termRequest) {
         CreateTermResponse termResponse = termService.createTerm(typeTermId, termRequest);
@@ -29,6 +32,17 @@ public class TermController {
                 .data(termResponse)
                 .status(HttpStatus.CREATED)
                 .build();
+    }
+
+    @PostMapping("/create-type-term")
+    public ResponseObject createTypeTerm(@RequestBody CreateTypeTermDTO request) {
+        TypeTerm typeTerm = termService.createTypeTerm(request);
+                 return ResponseObject.builder()
+                .message(MessageKeys.CREATE_TYPE_TERM_SUCCESSFULLY)
+                .data(typeTerm)
+                .status(HttpStatus.CREATED)
+                .build();
+
     }
 
 //    @PutMapping("/update/{termId}")
