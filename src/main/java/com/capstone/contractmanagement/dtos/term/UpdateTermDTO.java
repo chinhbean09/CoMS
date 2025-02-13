@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateTermDTO {
 
-    private String title;
-    private String description;
-    private Boolean isDefault;
+    private String label;
+    private String value;
+    private String clauseCode;
+    private Long typeTermId;
 }
