@@ -9,7 +9,6 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
-import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.TermService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -100,21 +99,4 @@ public class TermController {
                 .build());// Trả về mã 204 (No Content)
     }
 
-    @GetMapping("/get-all-type-terms")
-    public ResponseEntity<ResponseObject> getAllTypeTerms() {
-        List<TypeTermResponse> typeTerms = termService.getAllTypeTerms();
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.GET_ALL_TYPE_TERMS_SUCCESSFULLY)
-                .data(typeTerms)
-                .status(HttpStatus.OK).build());
-    }
-
-    @GetMapping("/get-type-term-by-id/{typeTermId}")
-    public ResponseEntity<ResponseObject> getTypeTermById(@PathVariable Long typeTermId) throws DataNotFoundException {
-        TypeTermResponse typeTermResponse = termService.getTypeTermById(typeTermId);
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.GET_TYPE_TERM_SUCCESSFULLY)
-                .data(typeTermResponse)
-                .status(HttpStatus.OK).build());
-    }
 }
