@@ -72,35 +72,6 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.admin.active}")
     private Boolean active;
 
-//    public void initializeSections() {
-//
-//        if (sectionRepository.count() > 0) {
-//            System.out.println("Sections already initialized!");
-//            return;
-//        }
-//
-//        List<Section> sections = List.of(
-//                Section.builder().sectionName("Tiêu đề hợp đồng").order(1).isCustom(false).build(),
-//                Section.builder().sectionName("Căn cứ pháp lý").order(2).isCustom(false).build(),
-//                Section.builder().sectionName("Thông tin các bên tham gia").order(3).isCustom(false).build(),
-//                Section.builder().sectionName("Nội dung hợp đồng").order(4).isCustom(false).build(),
-//                Section.builder().sectionName("Giá trị hợp đồng và phương thức thanh toán").order(5).isCustom(false).build(),
-//                Section.builder().sectionName("Thời gian thực hiện hợp đồng").order(6).isCustom(false).build(),
-//                Section.builder().sectionName("Quyền và nghĩa vụ của các bên").order(7).isCustom(false).build(),
-//                Section.builder().sectionName("Điều khoản về bảo hành, bảo trì (nếu có)").order(8).isCustom(false).build(),
-//                Section.builder().sectionName("Điều khoản về vi phạm và bồi thường thiệt hại").order(9).isCustom(false).build(),
-//                Section.builder().sectionName("Điều khoản về chấm dứt hợp đồng").order(10).isCustom(false).build(),
-//                Section.builder().sectionName("Giải quyết tranh chấp").order(11).isCustom(false).build(),
-//                Section.builder().sectionName("Hiệu lực hợp đồng").order(12).isCustom(false).build(),
-//                Section.builder().sectionName("Cam kết chung").order(13).isCustom(false).build(),
-//                Section.builder().sectionName("Chữ ký, con dấu của các bên").order(14).isCustom(false).build()
-//
-//        );
-//
-//        sectionRepository.saveAll(sections);
-//        System.out.println("Sections initialized successfully!");
-//    }
-
     public void initializeTypeTerms() {
         if (typeTermRepository.count() > 0) {
             System.out.println("Type terms already initialized!");
