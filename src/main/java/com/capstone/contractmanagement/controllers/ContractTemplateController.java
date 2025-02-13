@@ -21,7 +21,7 @@ public class ContractTemplateController {
 
     private final IContractTemplateService templateService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ResponseObject> createTemplate(@RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.createTemplate(dto);

@@ -32,6 +32,8 @@ public class ContractTemplateDTO {
     //  type term của nhóm additional
     private List<Long> additionalTerms;
 
+    private List<Long> otherTerms;
+
     /**
      * type term thuộc additionalTerms.
      * Đây là 1 map với key là indentifier cho từng type term (additional,
@@ -42,8 +44,8 @@ public class ContractTemplateDTO {
     //key = String, value = Map < key = String, value = List<IdDTO>>
     private Map<String, Map<String, List<IdDTO>>> additionalConfig;
 
-    private Long specialTermsA;  // term id
-    private Long specialTermsB;  // term id
+    private String specialTermsA;
+    private String specialTermsB;
 
     private String contractContent;
     private Boolean autoAddVAT;
