@@ -29,11 +29,11 @@ public class ContractTemplate {
 
     //vd: specialTerms cua ben A
     @Column(name = "special_termsA")
-    private String specialTermsA;
+    private Long specialTermsA;
 
     //specialTerms cua ben B
     @Column(name = "special_termsB")
-    private String specialTermsB;
+    private Long specialTermsB;
 
     //dc tạo phụ lục
     @Column(name = "appendix_enabled")
@@ -51,11 +51,11 @@ public class ContractTemplate {
 
     //vi phạm điều khoản
     @Column(name = "violate")
-    private String violate;
+    private Boolean violate;
 
     //tạm ngưng
     @Column(name = "suspend")
-    private String suspend;
+    private Boolean suspend;
 
     //trường hợp được tạm ngưng
     @Column(name = "suspend_content")
@@ -87,7 +87,6 @@ public class ContractTemplate {
     @Column(name = "auto_renew")
     private Boolean autoRenew;
 
-    //generalTerms, additionalTerms.
     @ManyToMany
     @JoinTable(
             name = "contract_template_terms",
