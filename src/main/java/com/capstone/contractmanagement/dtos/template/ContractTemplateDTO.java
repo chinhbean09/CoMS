@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.dtos.template;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -10,8 +11,10 @@ import java.util.List;
 @Data
 public class ContractTemplateDTO {
     @NotBlank(message = "Contract title is required")
+    @JsonProperty("contract-title")
     @Size(max = 200, message = "Contract title must be less than 200 characters")
     private String contractTitle;
+
 
     @NotBlank(message = "Party info is required")
     private String partyInfo;
