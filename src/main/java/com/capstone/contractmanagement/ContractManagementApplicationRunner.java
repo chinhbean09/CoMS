@@ -1,8 +1,11 @@
 package com.capstone.contractmanagement;
 
 import com.capstone.contractmanagement.entities.Role;
+import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.repositories.IRoleRepository;
+import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +14,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -22,6 +26,9 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     private IRoleRepository IRoleRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ITypeTermRepository typeTermRepository;
 
     @Value("${contract.admin.email}")
     private String email;
@@ -94,6 +101,36 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 //        System.out.println("Sections initialized successfully!");
 //    }
 
+    public void initializeTypeTerms() {
+        if (typeTermRepository.count() > 0) {
+            System.out.println("Type terms already initialized!");
+            return;
+        }
+        //generalTerms, additionalTerms, otherTerms, legalbasis
+        List<TypeTerm> typeTerms = List.of(
+                // Additional Terms
+                TypeTerm.builder().name("Điều khoản thêm").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Quyền và nghĩa vụ").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Bảo hành và bảo trì").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Vi phạm và thiệt hại").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Chấm dứt hợp đồng").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản giải quyết tranh chấp").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Chính sách bảo mật").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+
+                // Legal basis
+                TypeTerm.builder().name("Căn cứ pháp lí").identifier(TypeTermIdentifier.LEGAL_BASIS).build(),
+
+                // General terms
+                TypeTerm.builder().name("Điều khoản chung").identifier(TypeTermIdentifier.GENERAL_TERMS).build(),
+
+                // Other terms
+                TypeTerm.builder().name("Các điều khoản khác").identifier(TypeTermIdentifier.OTHER_TERMS).build()
+        );
+
+        typeTermRepository.saveAll(typeTerms);
+        System.out.println("Type terms initialized successfully!");
+    }
+
     @Override
     public void run(ApplicationArguments args) {
 
@@ -103,7 +140,8 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         Optional<User> findAccountManager = IUserRepository.findByPhoneNumber(managerPhoneNumber);
         Optional<User> findAccountStaff = IUserRepository.findByPhoneNumber(staffPhoneNumber);
 
-//        initializeSections();
+        // Initialize type terms
+        initializeTypeTerms();
 
 
         Role AdminRole = Role.builder()

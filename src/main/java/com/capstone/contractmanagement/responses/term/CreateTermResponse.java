@@ -17,4 +17,5 @@ public class CreateTermResponse {
     private String label;
     private String value;
     private String type;
+    private String identifier;
 }

@@ -5,5 +5,4 @@ import com.capstone.contractmanagement.entities.Term;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ITermRepository extends JpaRepository<Term, Long> {
-    int countByTypeTermId(Long typeTermId);
 }

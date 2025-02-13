@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,7 +26,8 @@ public class TypeTerm {
 
     //generalTerms, additionalTerms, otherTerms, legalbasis
     @Column(name = "identifier", nullable = false, length = 255)
-    private String identifier;
+    @Enumerated(EnumType.STRING)
+    private TypeTermIdentifier identifier;
 
     // Liên kết One-to-Many với Terms
     @OneToMany(mappedBy = "typeTerm", cascade = CascadeType.ALL, orphanRemoval = true)
