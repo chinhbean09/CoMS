@@ -115,6 +115,8 @@ public class MessageKeys {
 
     public static final String TERM_NOT_FOUND = "term.update_term.term_not_found";
 
+    public static final String TYPE_TERM_NOT_FOUND = "term.update_term.type_term_not_found";
+
     public static final String UPDATE_TERM_SUCCESSFULLY = "term.update_term.update_term_successfully";
 
     public static final String GET_ALL_TERMS_SUCCESSFULLY = "term.get_all_terms.get_all_terms_successfully";
@@ -122,6 +124,10 @@ public class MessageKeys {
     public static final String DELETE_TERM_SUCCESSFULLY = "term.delete_term.delete_term_successfully";
 
     public static final String GET_TERM_SUCCESSFULLY = "term.get_term.get_term_successfully";
+
+    public static final String GET_ALL_TYPE_TERMS_SUCCESSFULLY = "type_term.get_all_type_terms.get_all_type_terms_successfully";
+
+    public static final String GET_TYPE_TERM_SUCCESSFULLY = "type_term.get_type_term.get_type_term_successfully";
 
     public static final String CREATE_TASK_SUCCESSFULLY = "task.create_task.create_task_successfully";
 
