@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,14 +36,11 @@ public class Term {
 
     // Liên kết Many-to-Many với Contracts thông qua bảng contract_terms
     @ManyToMany(mappedBy = "terms")
+    @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
-
     // Liên kết Many-to-One với TypeTerm
     @ManyToOne
     @JoinColumn(name = "type_term_id", nullable = false)
     private TypeTerm typeTerm;
-
-    @ManyToMany(mappedBy = "terms")
-    private List<ContractTemplate> contractTemplates = new ArrayList<>();
 
 }

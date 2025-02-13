@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,7 +28,7 @@ public class ContractTemplate {
     @Column(name = "party_info")
     private String partyInfo;
 
-    //vd: specialTerms cua ben A
+    //specialTerms cua ben A
     @Column(name = "special_termsA")
     private String specialTermsA;
 
@@ -51,11 +52,11 @@ public class ContractTemplate {
 
     //vi phạm điều khoản
     @Column(name = "violate")
-    private String violate;
+    private Boolean violate;
 
     //tạm ngưng
     @Column(name = "suspend")
-    private String suspend;
+    private Boolean suspend;
 
     //trường hợp được tạm ngưng
     @Column(name = "suspend_content")
@@ -87,12 +88,51 @@ public class ContractTemplate {
     @Column(name = "auto_renew")
     private Boolean autoRenew;
 
-    //generalTerms, additionalTerms.
+    //  Many-to-Many cho Legal Basis
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
-            name = "contract_template_terms",
+            name = "contract_template_legal_basis",
             joinColumns = @JoinColumn(name = "template_id"),
             inverseJoinColumns = @JoinColumn(name = "term_id")
     )
-    private List<Term> terms = new ArrayList<>();
+    private List<Term> legalBasisTerms = new ArrayList<>();
+
+    // Many-to-Many cho General Terms
+    @ManyToMany
+    @JsonIgnore
+
+    @JoinTable(
+            name = "contract_template_general_terms",
+            joinColumns = @JoinColumn(name = "template_id"),
+            inverseJoinColumns = @JoinColumn(name = "term_id")
+    )
+    private List<Term> generalTerms = new ArrayList<>();
+
+    // Many-to-Many cho Other Terms
+    @ManyToMany
+    @JsonIgnore
+    @JoinTable(
+            name = "contract_template_other_terms",
+            joinColumns = @JoinColumn(name = "template_id"),
+            inverseJoinColumns = @JoinColumn(name = "term_id")
+    )
+    private List<Term> otherTerms = new ArrayList<>();
+
+
+    @ManyToMany
+    @JsonIgnore
+    @JoinTable(
+            name = "contract_template_additional_type_terms", // đổi tên bảng join
+            joinColumns = @JoinColumn(name = "template_id"),
+            inverseJoinColumns = @JoinColumn(name = "term_id")
+    )
+    private List<Term> additionalTerms = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "contractTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
+
+
 }
