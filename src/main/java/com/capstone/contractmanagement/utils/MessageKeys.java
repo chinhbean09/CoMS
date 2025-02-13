@@ -157,4 +157,5 @@ public class MessageKeys {
     public static final String UPDATE_CONTRACT_SUCCESSFULLY = "contract.update_contract.update_contract_successfully";
 
     public static final String DELETE_CONTRACT_SUCCESSFULLY = "contract.delete_contract.delete_contract_successfully";
+    public static final String CREATE_TYPE_TERM_SUCCESSFULLY = "term.create_type_term.create_type_term_successfully";
 }
