@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ITermRepository extends JpaRepository<Term, Long> {
+    int countByTypeTermId(Long typeTermId);
 
     List<Term> findByTypeTermId(Long typeTermId);
 
