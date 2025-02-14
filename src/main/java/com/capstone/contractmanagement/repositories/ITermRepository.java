@@ -16,16 +16,28 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     List<Term> findByTypeTermId(Long typeTermId);
 
-    // Lọc theo identifier
-    Page<Term> findByTypeTermIdentifier(TypeTermIdentifier identifier, Pageable pageable);
+    // Khi chỉ lấy LEGAL_BASIS và tìm kiếm theo search (thực chất kiểm tra cả clauseCode và label)
+    @Query("SELECT t FROM Term t " +
+            "WHERE t.typeTerm.identifier = :identifier " +
+            "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
+    Page<Term> findByTypeTermIdentifierAndSearch(@Param("identifier") TypeTermIdentifier identifier,
+                                                 @Param("search") String search,
+                                                 Pageable pageable);
 
-    // Tìm theo danh sách loại, nhưng loại bỏ "LEGAL_BASIS"
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier IN :identifiers AND t.typeTerm.identifier <> 'LEGAL_BASIS'")
-    Page<Term> findByTypeTermIdentifierInExcludingLegalBasic(@Param("identifiers") List<TypeTermIdentifier> identifiers, Pageable pageable);
+    // Khi có danh sách identifier (loại trừ LEGAL_BASIS) và tìm kiếm theo search
+    @Query("SELECT t FROM Term t " +
+            "WHERE t.typeTerm.identifier IN :identifiers " +
+            "AND t.typeTerm.identifier <> 'LEGAL_BASIS' " +
+            "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
+    Page<Term> findByTypeTermIdentifierInExcludingLegalBasicAndSearch(@Param("identifiers") List<TypeTermIdentifier> identifiers,
+                                                                      @Param("search") String search,
+                                                                      Pageable pageable);
 
-
-    // Trả về tất cả ngoại trừ "LEGAL_BASIC"
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS'")
-    Page<Term> findAllExcludingLegalBasic(Pageable pageable);
+    // Khi không có filter identifier, trả về tất cả ngoại trừ LEGAL_BASIS và tìm kiếm theo search
+    @Query("SELECT t FROM Term t " +
+            "WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' " +
+            "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
+    Page<Term> findAllExcludingLegalBasicAndSearch(@Param("search") String search,
+                                                   Pageable pageable);
 
 }
