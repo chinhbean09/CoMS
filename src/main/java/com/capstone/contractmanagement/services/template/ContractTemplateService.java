@@ -5,6 +5,7 @@
     import com.capstone.contractmanagement.entities.ContractTemplate;
     import com.capstone.contractmanagement.entities.ContractTemplateAdditionalTermDetail;
     import com.capstone.contractmanagement.entities.Term;
+    import com.capstone.contractmanagement.enums.TypeTermIdentifier;
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
     import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@
     import org.springframework.transaction.annotation.Transactional;
     import java.time.LocalDateTime;
     import java.util.*;
+    import java.util.stream.Collectors;
 
     @Service
     @RequiredArgsConstructor
@@ -22,6 +24,7 @@
         @Override
         @Transactional
         public ContractTemplate createTemplate(ContractTemplateDTO dto) {
+
             // Khai báo các tập hợp id cho từng nhóm
             Set<Long> legalBasisIds = new HashSet<>();
             Set<Long> generalTermsIds = new HashSet<>();
@@ -31,21 +34,43 @@
             // Legal Basis
             if (dto.getLegalBasis() != null) {
                 dto.getLegalBasis().forEach(idDTO -> legalBasisIds.add(idDTO.getId()));
+                for (Long id : legalBasisIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lí (LEGAL_BASIS)");
+                    }
+                }
             }
             // General Terms
             if (dto.getGeneralTerms() != null) {
                 generalTermsIds.addAll(dto.getGeneralTerms());
+                for (Long id : generalTermsIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (GENERAL_TERMS)");
+                    }
+                }
             }
             // Other Terms
             if (dto.getOtherTerms() != null) {
                 otherTermsIds.addAll(dto.getOtherTerms());
+                for (Long id : otherTermsIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (OTHER_TERMS)");
+                    }
+                }
             }
-            // Additional Terms
+
+            // Additional Terms, type term khong can phai luu
             if (dto.getAdditionalTerms() != null) {
                 additionalTermsIds.addAll(dto.getAdditionalTerms());
             }
-            // Special Terms
 
+            //luu 3 term con lai
             Set<Long> termIdSet = new HashSet<>();
             termIdSet.addAll(legalBasisIds);
             termIdSet.addAll(generalTermsIds);
@@ -53,6 +78,7 @@
             // các term từ additionalConfig sẽ được thêm sau
 
             // xử lý additionalConfig để tạo cấu hình chi tiết cho nhóm Additional
+            //term cuoi cung can phai xu ly truoc khi luu
             List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
             if (dto.getAdditionalConfig() != null) {
                 // additionalConfig: Map<String, Map<String, List<IdDTO>>>
@@ -81,45 +107,77 @@
                     Set<Long> unionCommonA = new HashSet<>(commonTermIds);
                     unionCommonA.retainAll(aTermIds);
                     if (!unionCommonA.isEmpty()) {
-                        throw new IllegalArgumentException("Các term " + unionCommonA
-                                + " không được chọn đồng thời ở 'Common' và 'A' cho type term id " + configTypeTermId);
+
+                        //convert id thành tên điều khoản
+                        List<String> conflictTerms = unionCommonA.stream()
+                                .map(id -> termRepository.findById(id)
+                                        .map(Term::getLabel)
+                                        .orElse(String.valueOf(id)))
+                                .toList();
+
+                        // Lấy tên loại điều khoản từ một term trong commonTermIds
+                        String typeName = termRepository.findById(commonTermIds.iterator().next())
+                                .map(t -> t.getTypeTerm().getName())
+                                .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'Common' và 'A' cho loại điều khoản:" + typeName);
                     }
+
                     Set<Long> unionCommonB = new HashSet<>(commonTermIds);
                     unionCommonB.retainAll(bTermIds);
                     if (!unionCommonB.isEmpty()) {
-                        throw new IllegalArgumentException("Các term " + unionCommonB
-                                + " không được chọn đồng thời ở 'Common' và 'B' cho type term id " + configTypeTermId);
+
+                        List<String> conflictTerms = unionCommonB.stream()
+                                .map(id -> termRepository.findById(id)
+                                        .map(Term::getLabel)
+                                        .orElse(String.valueOf(id)))
+                                .toList();
+
+                        String typeName = termRepository.findById(commonTermIds.iterator().next())
+                                .map(t -> t.getTypeTerm().getName())
+                                .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'Common' và 'B' cho loại điều khoản: " + typeName);
                     }
+
                     Set<Long> unionAB = new HashSet<>(aTermIds);
                     unionAB.retainAll(bTermIds);
                     if (!unionAB.isEmpty()) {
-                        throw new IllegalArgumentException("Các term " + unionAB
-                                + " không được chọn đồng thời ở 'A' và 'B' cho type term id " + configTypeTermId);
+                        List<String> conflictTerms = unionAB.stream()
+                                .map(id -> termRepository.findById(id)
+                                        .map(Term::getLabel)
+                                        .orElse(String.valueOf(id)))
+                                .collect(Collectors.toList());
+                        String typeName = termRepository.findById(aTermIds.iterator().next())
+                                .map(t -> t.getTypeTerm().getName())
+                                .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'A' và 'B' cho loại điều khoản: " + typeName);
                     }
 
                     // các term trong cấu hình này thuộc đúng type term
                     for (Long termId : commonTermIds) {
                         Term term = termRepository.findById(termId)
-                                .orElseThrow(() -> new IllegalArgumentException("Term không tồn tại: " + termId));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Term " + termId
-                                    + " không thuộc type term id " + configTypeTermId);
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
                         }
                     }
                     for (Long termId : aTermIds) {
                         Term term = termRepository.findById(termId)
-                                .orElseThrow(() -> new IllegalArgumentException("Term không tồn tại: " + termId));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Term " + termId
-                                    + " không thuộc type term id " + configTypeTermId);
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
                         }
                     }
                     for (Long termId : bTermIds) {
                         Term term = termRepository.findById(termId)
-                                .orElseThrow(() -> new IllegalArgumentException("Term không tồn tại: " + termId));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Term " + termId
-                                    + " không thuộc type term id " + configTypeTermId);
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
                         }
                     }
 
