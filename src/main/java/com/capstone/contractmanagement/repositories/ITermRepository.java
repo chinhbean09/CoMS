@@ -19,9 +19,10 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     // Lọc theo identifier
     Page<Term> findByTypeTermIdentifier(TypeTermIdentifier identifier, Pageable pageable);
 
-    // Lọc theo identifier nhưng loại bỏ "LEGAL_BASIC"
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = :identifier AND t.typeTerm.identifier <> 'LEGAL_BASIS'")
-    Page<Term> findByTypeTermIdentifierExcludingLegalBasic(@Param("identifier") TypeTermIdentifier identifier, Pageable pageable);
+    // Tìm theo danh sách loại, nhưng loại bỏ "LEGAL_BASIS"
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier IN :identifiers AND t.typeTerm.identifier <> 'LEGAL_BASIS'")
+    Page<Term> findByTypeTermIdentifierInExcludingLegalBasic(@Param("identifiers") List<TypeTermIdentifier> identifiers, Pageable pageable);
+
 
     // Trả về tất cả ngoại trừ "LEGAL_BASIC"
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS'")
