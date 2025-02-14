@@ -9,6 +9,8 @@
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
     import lombok.RequiredArgsConstructor;
+    import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.Pageable;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
     import java.time.LocalDateTime;
@@ -241,11 +243,11 @@
 
             return templateRepository.save(template);
         }
-
         @Override
-        public List<ContractTemplate> getAllTemplates() {
-            return templateRepository.findAll();
+        public Page<ContractTemplate> getAllTemplates(Pageable pageable) {
+            return templateRepository.findAll(pageable);
         }
+
 
         @Override
         public Optional<ContractTemplate> getTemplateById(Long id) {
