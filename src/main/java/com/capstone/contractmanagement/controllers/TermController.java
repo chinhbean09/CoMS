@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
 import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
@@ -13,6 +14,7 @@ import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.TermService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -57,12 +59,18 @@ public class TermController {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<ResponseObject> getAllTerms() {
-        List<GetAllTermsResponse> termResponses = termService.getAllTerms();
+    public ResponseEntity<ResponseObject> getAllTerms(
+            @RequestParam(required = false) TypeTermIdentifier identifier,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifier, page, size);
+
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
-                .data(termResponses)
-                .status(HttpStatus.OK).build());
+                .data(termResponses.getContent())
+                .status(HttpStatus.OK)
+                .build());
     }
 
     @GetMapping("/get-by-id/{termId}")
@@ -115,6 +123,16 @@ public class TermController {
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_TYPE_TERM_SUCCESSFULLY)
                 .data(typeTermResponse)
+                .status(HttpStatus.OK).build());
+    }
+
+    // get all terms by type term id
+    @GetMapping("/get-terms-by-type-term-id/{typeTermId}")
+    public ResponseEntity<ResponseObject> getTermsByTypeTermId(@PathVariable Long typeTermId) {
+        List<GetAllTermsResponse> terms = termService.getAllTermsByTypeTermId(typeTermId);
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+                .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
+                .data(terms)
                 .status(HttpStatus.OK).build());
     }
 }
