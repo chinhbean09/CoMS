@@ -28,6 +28,9 @@ public class UserDTO {
 
     private String address;
 
+    @JsonProperty("is_ceo")
+    private Boolean isCeo;
+
     @JsonProperty("old_password")
     private String oldPassword;
 

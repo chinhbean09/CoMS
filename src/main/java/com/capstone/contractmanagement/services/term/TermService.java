@@ -15,8 +15,11 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,6 +41,7 @@ public class TermService implements ITermService{
                 .value(request.getValue())
                 .createdAt(LocalDateTime.now())
                 .typeTerm(typeTerm)
+                .isDeleted(false)
                 .build();
         termRepository.save(term);
         TypeTermIdentifier typeTermIdentifier = TypeTermIdentifier.valueOf(String.valueOf(term.getTypeTerm().getIdentifier()));
@@ -49,6 +53,7 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .identifier(String.valueOf(typeTermIdentifier))
+                .isDelete(term.getIsDeleted())
                 .build();
     }
 
@@ -123,21 +128,37 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .identifier(String.valueOf(typeTermIdentifier))
+                .isDelete(term.getIsDeleted())
                 .build();
     }
 
     @Override
-    public List<GetAllTermsResponse> getAllTerms() {
-        // get all terms
-        List<Term> terms = termRepository.findAll();
-        return terms.stream().map(term -> GetAllTermsResponse.builder()
+    public Page<GetAllTermsResponse> getAllTerms(TypeTermIdentifier identifier, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size); // Không cần ép kiểu
+
+        Page<Term> termPage;
+
+        if (identifier != null) {
+            // Nếu chỉ lấy "LEGAL_BASIS", trả về duy nhất nó
+            if (identifier == TypeTermIdentifier.LEGAL_BASIS) {
+                termPage = termRepository.findByTypeTermIdentifier(identifier, pageable);
+            } else {
+                // Ngược lại, lọc theo identifier nhưng loại bỏ "LEGAL_BASIS"
+                termPage = termRepository.findByTypeTermIdentifierExcludingLegalBasic(identifier, pageable);
+            }
+        } else {
+            // Nếu không có filter identifier, trả về tất cả ngoại trừ "LEGAL_BASIS"
+            termPage = termRepository.findAllExcludingLegalBasic(pageable);
+        }
+
+        return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())
                 .label(term.getLabel())
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
-                .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
-                .build()).toList();
+                .identifier(term.getTypeTerm().getIdentifier().name())
+                .build());
     }
 
     @Override
@@ -207,6 +228,22 @@ public class TermService implements ITermService{
                         .identifier(String.valueOf(typeTerm.getIdentifier()))
                         .build())
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId) {
+        // check if type term exists
+        TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
+                .orElseThrow(() -> new IllegalArgumentException(MessageKeys.TYPE_TERM_NOT_FOUND));
+        return typeTerm.getTerms().stream().map(term -> GetAllTermsResponse.builder()
+                .id(term.getId())
+                .clauseCode(term.getClauseCode())
+                .label(term.getLabel())
+                .value(term.getValue())
+                .type(term.getTypeTerm().getName())
+                .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
+                .build()).toList();
     }
 
 }
