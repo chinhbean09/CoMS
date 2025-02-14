@@ -133,23 +133,25 @@ public class TermService implements ITermService{
     }
 
     @Override
-    public Page<GetAllTermsResponse> getAllTerms(TypeTermIdentifier identifier, int page, int size) {
+    public Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, int page, int size) {
         Pageable pageable = PageRequest.of(page, size); // Không cần ép kiểu
 
         Page<Term> termPage;
 
-        if (identifier != null) {
-            // Nếu chỉ lấy "LEGAL_BASIS", trả về duy nhất nó
-            if (identifier == TypeTermIdentifier.LEGAL_BASIS) {
-                termPage = termRepository.findByTypeTermIdentifier(identifier, pageable);
+
+        if (identifiers != null && !identifiers.isEmpty()) {
+            if (identifiers.contains(TypeTermIdentifier.LEGAL_BASIS) && identifiers.size() == 1) {
+
+                termPage = termRepository.findByTypeTermIdentifier(TypeTermIdentifier.LEGAL_BASIS, pageable);
             } else {
-                // Ngược lại, lọc theo identifier nhưng loại bỏ "LEGAL_BASIS"
-                termPage = termRepository.findByTypeTermIdentifierExcludingLegalBasic(identifier, pageable);
+                // Lọc theo danh sách identifier, có thể chứa nhiều loại
+                termPage = termRepository.findByTypeTermIdentifierInExcludingLegalBasic(identifiers, pageable);
             }
         } else {
             // Nếu không có filter identifier, trả về tất cả ngoại trừ "LEGAL_BASIS"
             termPage = termRepository.findAllExcludingLegalBasic(pageable);
         }
+
 
         return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
