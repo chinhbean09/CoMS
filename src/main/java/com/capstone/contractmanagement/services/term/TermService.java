@@ -162,6 +162,7 @@ public class TermService implements ITermService{
                 .type(term.getTypeTerm().getName())
                 .identifier(term.getTypeTerm().getIdentifier().name())
                 .isDelete(term.getIsDeleted())
+                .createdAt(term.getCreatedAt())
                 .build());
     }
 
