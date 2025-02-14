@@ -246,4 +246,14 @@ public class TermService implements ITermService{
                 .build()).toList();
     }
 
+    @Override
+    @Transactional
+    public void updateTermStatus(Long termId, Boolean isDeleted) throws DataNotFoundException {
+        Term existingTerm = termRepository.findById(termId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy điều khoản với id: " + termId));
+        existingTerm.setIsDeleted(isDeleted);
+        termRepository.save(existingTerm);
+    }
+
+
 }

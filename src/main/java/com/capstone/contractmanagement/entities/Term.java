@@ -22,10 +22,10 @@ public class Term {
     @Column(name = "term_id")
     private Long id;
 
-    @Column(name = "label")
+    @Column(name = "label", nullable = false)
     private String label;
 
-    @Column(name = "value")
+    @Column(name = "value", nullable = false)
     private String value;
 
     @Column(name = "clause_code")
