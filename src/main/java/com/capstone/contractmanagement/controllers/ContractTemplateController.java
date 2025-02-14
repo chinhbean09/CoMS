@@ -36,7 +36,7 @@ public class ContractTemplateController {
             );
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
-                    new ResponseObject("Internal Server Error",HttpStatus.INTERNAL_SERVER_ERROR, null)
+                    new ResponseObject(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
