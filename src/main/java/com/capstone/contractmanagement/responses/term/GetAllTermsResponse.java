@@ -4,6 +4,8 @@ package com.capstone.contractmanagement.responses.term;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 public class GetAllTermsResponse {
@@ -13,4 +15,7 @@ public class GetAllTermsResponse {
     private String value;
     private String type;
     private String identifier;
+    private LocalDateTime createdAt;
+    private Boolean isDelete;
+
 }
