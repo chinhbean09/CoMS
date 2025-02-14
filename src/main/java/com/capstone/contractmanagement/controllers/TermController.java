@@ -11,6 +11,7 @@ import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.services.term.ITermService;
 import com.capstone.contractmanagement.services.term.TermService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TermController {
 
-    private final TermService termService;
+    private final ITermService termService;
 
 
     @PostMapping("/create/{typeTermId}")
@@ -135,4 +136,18 @@ public class TermController {
                 .data(terms)
                 .status(HttpStatus.OK).build());
     }
+
+    @PutMapping("/update-status/{termId}/{isDeleted}")
+    public ResponseEntity<String> updateTermStatus(@PathVariable Long termId, @PathVariable Boolean isDeleted) {
+        try {
+            termService.updateTermStatus(termId, isDeleted);
+            String message = isDeleted ? "Xóa mềm điều khoản thành công" : "Khôi phục điều khoản thành công";
+            return ResponseEntity.ok(message);
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body("Không tìm thấy điều khoản");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }

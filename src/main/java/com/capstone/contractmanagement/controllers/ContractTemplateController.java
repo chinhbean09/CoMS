@@ -7,9 +7,12 @@ import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.services.template.IContractTemplateService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +45,19 @@ public class ContractTemplateController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseObject> getAllTemplates() {
-        List<ContractTemplate> templates = templateService.getAllTemplates();
-        return ResponseEntity.ok(new ResponseObject( MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY,HttpStatus.OK, templates));
+    public ResponseEntity<ResponseObject> getAllTemplates(
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        try {
+            Page<ContractTemplate> templates = templateService.getAllTemplates(pageable);
+            return ResponseEntity.ok(
+                    new ResponseObject(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY, HttpStatus.OK, templates)
+            );
+        } catch (Exception e) {
+            // Log lỗi nếu cần, ví dụ: logger.error("Error retrieving templates", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseObject("Error retrieving templates: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR, null));
+        }
     }
 
     @GetMapping("/{id}")

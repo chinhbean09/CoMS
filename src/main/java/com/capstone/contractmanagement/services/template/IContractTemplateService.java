@@ -2,6 +2,8 @@ package com.capstone.contractmanagement.services.template;
 
 import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.ContractTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +11,7 @@ import java.util.Optional;
 public interface IContractTemplateService {
     ContractTemplate createTemplate(ContractTemplateDTO dto);
 
-    List<ContractTemplate> getAllTemplates();
+     Page<ContractTemplate> getAllTemplates(Pageable pageable);
 
     Optional<ContractTemplate> getTemplateById(Long id);
 
