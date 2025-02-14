@@ -134,19 +134,24 @@ public class TermService implements ITermService{
     }
 
     @Override
-    public Page<GetAllTermsResponse> getAllTerms(TypeTermIdentifier identifiers, String search, int page, int size) {
+    public Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
-        // Nếu search null hoặc rỗng, set thành chuỗi rỗng
+        // Nếu search null thì set thành chuỗi rỗng
         search = (search == null) ? "" : search;
 
         Page<Term> termPage;
 
-        if (identifiers != null) {
-            // Khi truyền identifier (bao gồm cả trường hợp LEGAL_BASIS)
-            termPage = termRepository.findByTypeTermIdentifierAndSearch(identifiers, search, pageable);
+        if (identifiers != null && !identifiers.isEmpty()) {
+            // Nếu danh sách chỉ chứa LEGAL_BASIS
+            if (identifiers.contains(TypeTermIdentifier.LEGAL_BASIS) && identifiers.size() == 1) {
+                termPage = termRepository.findByTypeTermIdentifierAndSearch(TypeTermIdentifier.LEGAL_BASIS, search, pageable);
+            } else {
+                // Nếu truyền danh sách identifier (có thể chứa nhiều loại), loại bỏ LEGAL_BASIS
+                termPage = termRepository.findByTypeTermIdentifierInExcludingLegalBasicAndSearch(identifiers, search, pageable);
+            }
         } else {
-            // Khi không truyền identifier, trả về tất cả term ngoại trừ LEGAL_BASIS
+            // Nếu không truyền filter identifier, trả về tất cả ngoại trừ LEGAL_BASIS, tìm kiếm theo search
             termPage = termRepository.findAllExcludingLegalBasicAndSearch(search, pageable);
         }
 

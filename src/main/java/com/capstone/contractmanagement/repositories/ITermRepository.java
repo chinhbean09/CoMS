@@ -16,7 +16,7 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     List<Term> findByTypeTermId(Long typeTermId);
 
-    // Khi truyền vào identifier (bao gồm cả LEGAL_BASIS) và tìm kiếm theo search
+    // Khi chỉ lấy LEGAL_BASIS và tìm kiếm theo search (thực chất kiểm tra cả clauseCode và label)
     @Query("SELECT t FROM Term t " +
             "WHERE t.typeTerm.identifier = :identifier " +
             "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
@@ -24,7 +24,16 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
                                                  @Param("search") String search,
                                                  Pageable pageable);
 
-    // Khi không truyền identifier, trả về tất cả ngoại trừ LEGAL_BASIS, tìm kiếm theo search
+    // Khi có danh sách identifier (loại trừ LEGAL_BASIS) và tìm kiếm theo search
+    @Query("SELECT t FROM Term t " +
+            "WHERE t.typeTerm.identifier IN :identifiers " +
+            "AND t.typeTerm.identifier <> 'LEGAL_BASIS' " +
+            "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
+    Page<Term> findByTypeTermIdentifierInExcludingLegalBasicAndSearch(@Param("identifiers") List<TypeTermIdentifier> identifiers,
+                                                                      @Param("search") String search,
+                                                                      Pageable pageable);
+
+    // Khi không có filter identifier, trả về tất cả ngoại trừ LEGAL_BASIS và tìm kiếm theo search
     @Query("SELECT t FROM Term t " +
             "WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' " +
             "AND (t.clauseCode LIKE %:search% OR t.label LIKE %:search%)")
