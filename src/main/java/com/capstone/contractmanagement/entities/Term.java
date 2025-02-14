@@ -43,4 +43,8 @@ public class Term {
     @JoinColumn(name = "type_term_id", nullable = false)
     private TypeTerm typeTerm;
 
+    // false - chưa xóa, true - đã xóa mềm
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = Boolean.FALSE;
+
 }
