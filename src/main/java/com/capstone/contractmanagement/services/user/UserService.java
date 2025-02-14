@@ -89,6 +89,7 @@ public class UserService implements IUserService {
                 .active(true)
                 .facebookAccountId(userDTO.getFacebookAccountId())
                 .googleAccountId(userDTO.getGoogleAccountId())
+                .isCeo(userDTO.getIsCeo())
                 .build();
         newUser.setRole(role);
 
@@ -214,6 +215,7 @@ public class UserService implements IUserService {
         User existingUser = UserRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
         existingUser.setActive(active);
+        existingUser.setFailedLoginAttempts(0);
 
         if(existingUser.getRole().getRoleName().equals(Role.ADMIN)) {
             throw new PermissionDenyException("Not allowed to block Admin account");
