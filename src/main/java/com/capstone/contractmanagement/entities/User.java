@@ -56,6 +56,9 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "avatar")
     private String avatar;
 
+    @Column(name = "is_ceo", nullable = true)
+    private Boolean isCeo;
+
     @ManyToMany(mappedBy = "supervisors")
     private List<Task> tasks = new ArrayList<>();
 
