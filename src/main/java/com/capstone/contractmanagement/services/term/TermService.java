@@ -51,6 +51,7 @@ public class TermService implements ITermService{
                 .clauseCode(term.getClauseCode())
                 .label(term.getLabel())
                 .value(term.getValue())
+                .createdAt(LocalDateTime.now())
                 .type(term.getTypeTerm().getName())
                 .identifier(String.valueOf(typeTermIdentifier))
                 .isDelete(term.getIsDeleted())
@@ -115,7 +116,6 @@ public class TermService implements ITermService{
             term.setTypeTerm(typeTerm);
         }
 
-        term.setClauseCode(termRequest.getClauseCode());
         term.setLabel(termRequest.getLabel());
         term.setValue(termRequest.getValue());
         termRepository.save(term);
@@ -129,6 +129,7 @@ public class TermService implements ITermService{
                 .type(term.getTypeTerm().getName())
                 .identifier(String.valueOf(typeTermIdentifier))
                 .isDelete(term.getIsDeleted())
+                .createdAt(term.getCreatedAt())
                 .build();
     }
 
@@ -160,6 +161,7 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .identifier(term.getTypeTerm().getIdentifier().name())
+                .isDelete(term.getIsDeleted())
                 .build());
     }
 
