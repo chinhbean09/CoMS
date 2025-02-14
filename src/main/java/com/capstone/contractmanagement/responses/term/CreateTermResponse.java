@@ -18,4 +18,5 @@ public class CreateTermResponse {
     private String value;
     private String type;
     private String identifier;
+    private Boolean isDelete;
 }

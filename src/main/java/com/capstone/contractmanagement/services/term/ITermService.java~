@@ -10,7 +10,6 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -21,7 +20,7 @@ public interface ITermService {
 
     CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException;
 
-    Page<GetAllTermsResponse> getAllTerms(TypeTermIdentifier identifier, int page, int size);
+    List<GetAllTermsResponse> getAllTerms(TypeTermIdentifier identifier, int page, int size);
 
     CreateTermResponse getTermById(Long id) throws DataNotFoundException;
 
