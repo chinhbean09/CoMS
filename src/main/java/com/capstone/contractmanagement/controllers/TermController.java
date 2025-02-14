@@ -12,7 +12,6 @@ import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.ITermService;
-import com.capstone.contractmanagement.services.term.TermService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -61,11 +60,11 @@ public class TermController {
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject> getAllTerms(
-            @RequestParam(required = false) TypeTermIdentifier identifier,
+            @RequestParam(required = false) List<TypeTermIdentifier> identifiers,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifier, page, size);
+        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifiers, page, size);
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
@@ -119,7 +118,7 @@ public class TermController {
     }
 
     @GetMapping("/get-type-term-by-id/{typeTermId}")
-    public ResponseEntity<ResponseObject> getTypeTermById(@PathVariable Long typeTermId) throws DataNotFoundException {
+    public ResponseEntity<ResponseObject> getTypeTermById(@PathVariable Long typeTermId) {
         TypeTermResponse typeTermResponse = termService.getTypeTermById(typeTermId);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_TYPE_TERM_SUCCESSFULLY)
