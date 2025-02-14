@@ -60,11 +60,12 @@ public class TermController {
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject> getAllTerms(
-            @RequestParam(required = false) List<TypeTermIdentifier> identifiers,
+            @RequestParam(required = false) TypeTermIdentifier identifiers,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifiers, page, size);
+        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifiers, keyword, page, size);
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
