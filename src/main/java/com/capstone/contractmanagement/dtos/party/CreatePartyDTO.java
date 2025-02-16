@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,5 +25,5 @@ public class CreatePartyDTO {
     private String phone;
     private String email;
     private String note;
-    private CreateBankDTO banking;
+    private List<CreateBankDTO> banking;
 }
