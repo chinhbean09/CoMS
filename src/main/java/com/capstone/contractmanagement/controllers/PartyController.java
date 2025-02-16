@@ -11,6 +11,7 @@ import com.capstone.contractmanagement.responses.party.ListPartyResponse;
 import com.capstone.contractmanagement.services.party.IPartyService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,13 +46,19 @@ public class PartyController {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<ResponseObject> getAllParties() {
-        List<ListPartyResponse> response = partyService.getAllParties();
-        return ResponseEntity.ok(ResponseObject.builder()
-                .status(HttpStatus.OK)
-                .message(MessageKeys.GET_ALL_PARTIES_SUCCESSFULLY)
-                .data(response)
-                .build());
+    public ResponseEntity<ResponseObject> getAllParties(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int size) {
+
+        Page<ListPartyResponse> response = partyService.getAllParties(keyword, page, size);
+        return ResponseEntity.ok(
+                ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .message(MessageKeys.GET_ALL_PARTIES_SUCCESSFULLY)
+                        .data(response)
+                        .build()
+        );
     }
 
     @GetMapping("/get-by-id/{partyId}")
