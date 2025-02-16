@@ -184,6 +184,17 @@ public class TermService implements ITermService{
             // Nếu không có filter, trả về tất cả ngoại trừ LEGAL_BASIS
             termPage = termRepository.findAllExcludingLegalBasic(pageable);
         }
+        return termPage.map(term -> GetAllTermsResponse.builder()
+                .id(term.getId())
+                .clauseCode(term.getClauseCode())
+                .label(term.getLabel())
+                .value(term.getValue())
+                .type(term.getTypeTerm().getName())
+                .identifier(term.getTypeTerm().getIdentifier().name())
+                .isDelete(term.getIsDeleted())
+                .createdAt(term.getCreatedAt())
+                .build());
+    }
 
 
     @Override
