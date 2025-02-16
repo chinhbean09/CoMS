@@ -19,5 +19,6 @@ public class ListPartyResponse {
     private String taxCode;// Mã số thuế
     private String phone;
     private String email;
+    private String note;
     private List<BankResponse> banking;
 }

@@ -39,9 +39,13 @@ public class Party {
     @Column(name = "tax_code", length = 50)
     private String taxCode; // Mã số thuế
 
+    @Column(name = "phone", length = 20)
     private String phone;
 
+    @Column(name = "email", length = 100)
     private String email;
+    @Column(name = "note", length = 1000)
+    private String note;
 
     @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Bank> banking = new ArrayList<>();
