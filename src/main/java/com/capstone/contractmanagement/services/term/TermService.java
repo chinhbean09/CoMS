@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,8 @@ public class TermService implements ITermService{
 
     private final ITermRepository termRepository;
     private final ITypeTermRepository typeTermRepository;
+
+
     @Override
     public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
@@ -133,27 +137,53 @@ public class TermService implements ITermService{
                 .build();
     }
 
+//    @Override
+//    public Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size); // Không cần ép kiểu
+//
+//        Page<Term> termPage;
+//
+//
+//        if (identifiers != null && !identifiers.isEmpty()) {
+//            if (identifiers.contains(TypeTermIdentifier.LEGAL_BASIS) && identifiers.size() == 1) {
+//
+//                termPage = termRepository.findByTypeTermIdentifier(TypeTermIdentifier.LEGAL_BASIS, pageable);
+//            } else {
+//                // Lọc theo danh sách identifier, có thể chứa nhiều loại
+//                termPage = termRepository.findByTypeTermIdentifierInExcludingLegalBasic(identifiers, pageable);
+//            }
+//        } else {
+//            // Nếu không có filter identifier, trả về tất cả ngoại trừ "LEGAL_BASIS"
+//            termPage = termRepository.findAllExcludingLegalBasic(pageable);
+//        }
+//
+//
+//        return termPage.map(term -> GetAllTermsResponse.builder()
+//                .id(term.getId())
+//                .clauseCode(term.getClauseCode())
+//                .label(term.getLabel())
+//                .value(term.getValue())
+//                .type(term.getTypeTerm().getName())
+//                .identifier(term.getTypeTerm().getIdentifier().name())
+//                .isDelete(term.getIsDeleted())
+//                .createdAt(term.getCreatedAt())
+//                .build());
+//    }
+
     @Override
-    public Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size); // Không cần ép kiểu
-
+    public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         Page<Term> termPage;
-
-
-        if (identifiers != null && !identifiers.isEmpty()) {
-            if (identifiers.contains(TypeTermIdentifier.LEGAL_BASIS) && identifiers.size() == 1) {
-
-                termPage = termRepository.findByTypeTermIdentifier(TypeTermIdentifier.LEGAL_BASIS, pageable);
+        if (typeTermIds != null && !typeTermIds.isEmpty()) {
+            if (includeLegalBasis) {
+                termPage = termRepository.findByLegalBasisOrTypeTermIdIn(typeTermIds, pageable);
             } else {
-                // Lọc theo danh sách identifier, có thể chứa nhiều loại
-                termPage = termRepository.findByTypeTermIdentifierInExcludingLegalBasic(identifiers, pageable);
+                termPage = termRepository.findByTypeTermIdIn(typeTermIds, pageable);
             }
         } else {
-            // Nếu không có filter identifier, trả về tất cả ngoại trừ "LEGAL_BASIS"
+            // Nếu không có filter, trả về tất cả ngoại trừ LEGAL_BASIS
             termPage = termRepository.findAllExcludingLegalBasic(pageable);
         }
-
-
         return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())
@@ -227,12 +257,14 @@ public class TermService implements ITermService{
     @Override
     public List<TypeTermResponse> getAllTypeTerms() {
         return typeTermRepository.findAll().stream()
+                // Loại bỏ các TypeTerm có identifier là LEGAL_BASIS
+                .filter(typeTerm -> !typeTerm.getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS))
                 .map(typeTerm -> TypeTermResponse.builder()
                         .id(typeTerm.getId())
                         .name(typeTerm.getName())
                         .identifier(String.valueOf(typeTerm.getIdentifier()))
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
