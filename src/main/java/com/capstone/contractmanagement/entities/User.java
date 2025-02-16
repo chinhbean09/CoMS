@@ -57,7 +57,7 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     private String avatar;
 
     @Column(name = "is_ceo", nullable = true)
-    private Boolean isCeo;
+    private Boolean isCeo  = Boolean.FALSE;
 
     @ManyToMany(mappedBy = "supervisors")
     private List<Task> tasks = new ArrayList<>();
@@ -77,6 +77,9 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
         if (role != null) {
             authorityList.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName()));
+        }
+        if (Boolean.TRUE.equals(isCeo)) {
+            authorityList.add(new SimpleGrantedAuthority("ROLE_CEO"));
         }
         return authorityList;
     }
