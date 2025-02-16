@@ -20,7 +20,8 @@ import com.cloudinary.utils.ObjectUtils;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,7 +39,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+ import org.springframework.validation.BindingResult;
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
@@ -59,7 +62,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public User registerUser(UserDTO userDTO) throws Exception {
+    public User registerUser( @Valid @RequestBody UserDTO userDTO) throws Exception {
         String phoneNumber = userDTO.getPhoneNumber();
         if (UserRepository.existsByPhoneNumber(phoneNumber) && userDTO.getPhoneNumber() != null) {
             throw new DataIntegrityViolationException(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
