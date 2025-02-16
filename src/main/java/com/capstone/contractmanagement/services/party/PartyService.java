@@ -13,6 +13,9 @@ import com.capstone.contractmanagement.responses.party.CreatePartyResponse;
 import com.capstone.contractmanagement.responses.party.ListPartyResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class PartyService implements IPartyService{
                 .taxCode(createPartyDTO.getTaxCode())
                 .phone(createPartyDTO.getPhone())
                 .email(createPartyDTO.getEmail())
+                .note(createPartyDTO.getNote())
                 .build();
 
         party = partyRepository.save(party);
@@ -63,6 +67,7 @@ public class PartyService implements IPartyService{
                 .taxCode(party.getTaxCode())
                 .phone(party.getPhone())
                 .email(party.getEmail())
+                .note(party.getNote())
                 .banking(Collections.singletonList(
                         BankResponse.builder()
                                 .bankName(bank.getBankName())
@@ -137,11 +142,21 @@ public class PartyService implements IPartyService{
 
     @Override
     @Transactional
-    public List<ListPartyResponse> getAllParties() {
-        // get all parties
-        List<Party> parties = partyRepository.findAll();
-        // Chuyển đổi sang response
-        return parties.stream().map(party ->
+    public Page<ListPartyResponse> getAllParties(String search, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Party> partyPage;
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Nếu có tham số search, tìm kiếm theo partnerCode, partnerName, hoặc email
+            partyPage = partyRepository.findByPartnerCodeContainingIgnoreCaseOrPartnerNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    search, search, search, pageable);
+        } else {
+            // Nếu không có search, trả về tất cả Party theo phân trang
+            partyPage = partyRepository.findAll(pageable);
+        }
+
+        // Chuyển đổi đối tượng Party sang ListPartyResponse
+        return partyPage.map(party ->
                 ListPartyResponse.builder()
                         .partyId(party.getId())
                         .partnerCode(party.getPartnerCode())
@@ -152,14 +167,14 @@ public class PartyService implements IPartyService{
                         .taxCode(party.getTaxCode())
                         .phone(party.getPhone())
                         .email(party.getEmail())
-                        .banking(party.getBanking().stream() // Nếu Party có danh sách Banks
+                        .note(party.getNote())
+                        .banking(party.getBanking().stream()
                                 .map(bank -> BankResponse.builder()
                                         .bankName(bank.getBankName())
                                         .backAccountNumber(bank.getBackAccountNumber())
-                                        .build()) // Thiếu .build()
-                                .collect(Collectors.toList())) // Đổi từ .toList() thành Collectors.toList()
-                        .build() // Thiếu .build()
-        ).collect(Collectors.toList()); // Đổi từ .toList() thành Collectors.toList()
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build());
     }
 
     @Override
@@ -178,6 +193,7 @@ public class PartyService implements IPartyService{
                 .taxCode(party.getTaxCode())
                 .phone(party.getPhone())
                 .email(party.getEmail())
+                .note(party.getNote())
                 .banking(party.getBanking().stream() // Nếu Party có danh sách Banks
                         .map(bank -> BankResponse.builder()
                                 .bankName(bank.getBankName())

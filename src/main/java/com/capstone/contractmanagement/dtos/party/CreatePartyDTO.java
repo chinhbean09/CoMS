@@ -22,5 +22,6 @@ public class CreatePartyDTO {
     private String taxCode;// Mã số thuế
     private String phone;
     private String email;
+    private String note;
     private CreateBankDTO banking;
 }
