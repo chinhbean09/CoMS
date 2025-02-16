@@ -164,4 +164,10 @@ public class MessageKeys {
 
     public static final String DELETE_CONTRACT_SUCCESSFULLY = "contract.delete_contract.delete_contract_successfully";
     public static final String CREATE_TYPE_TERM_SUCCESSFULLY = "term.create_type_term.create_type_term_successfully";
+    public static final String PARTY_NOT_FOUND = "party.update_party.party_not_found";
+    public static final String DELETE_PARTY_SUCCESSFULLY = "party.delete_party.delete_party_successfully";
+    public static final String CREATE_PARTY_SUCCESSFULLY = "party.create_party.create_party_successfully";
+    public static final String UPDATE_PARTY_SUCCESSFULLY = "party.update_party.update_party_successfully";
+    public static final String GET_PARTY_SUCCESSFULLY = "party.get_party.get_party_successfully";
+    public static final String GET_ALL_PARTIES_SUCCESSFULLY = "party.get_all_parties.get_all_parties_successfully";
 }

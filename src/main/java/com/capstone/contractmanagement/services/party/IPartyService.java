@@ -1,22 +1,22 @@
 package com.capstone.contractmanagement.services.party;
 
+import com.capstone.contractmanagement.dtos.party.CreatePartyDTO;
+import com.capstone.contractmanagement.dtos.party.UpdatePartyDTO;
 import com.capstone.contractmanagement.entities.Party;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.party.CreatePartyResponse;
+import com.capstone.contractmanagement.responses.party.ListPartyResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface IPartyService {
-    Party createParty(Party party);
+    CreatePartyResponse createParty(CreatePartyDTO createPartyDTO);
 
-    List<Party> getAllParties();
+    CreatePartyResponse updateParty(Long id, UpdatePartyDTO updatePartyDTO) throws DataNotFoundException;
+    void deleteParty(Long id) throws DataNotFoundException;
+//
+    List<ListPartyResponse> getAllParties();
+    ListPartyResponse getPartyById(Long id) throws DataNotFoundException;
 
-    // Get a Party by ID
-     Party getPartyById(Long id) ;
-
-    // Update a Party
-     Party updateParty(Long id, Party partyDetails) ;
-
-    // Delete a Party
-     void deleteParty(Long id) ;
-
-    }
+}
