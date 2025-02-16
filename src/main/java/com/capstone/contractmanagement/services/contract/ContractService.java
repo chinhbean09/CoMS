@@ -36,7 +36,7 @@ public class ContractService implements IContractService{
         return convertToResponse(contract);
     }
     private void validateParty(Party party) {
-        if (party.getName() == null || party.getName().isEmpty()) {
+        if (party.getPartnerName() == null || party.getPartnerName().isEmpty()) {
             throw new IllegalArgumentException("Party must have a valid name");
         }
         if (party.getAddress() == null || party.getAddress().isEmpty()) {
