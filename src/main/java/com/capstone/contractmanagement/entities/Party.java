@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.enums.PartyType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,11 +21,17 @@ public class Party {
     @Column(name = "party_id")
     private Long id;
 
+    private String partnerCode;
+
     @Column(name = "party_type", nullable = false, length = 50)
-    private String partyType; // Loại bên (Bên A, Bên B)
+    @Enumerated(EnumType.STRING)
+    private PartyType partnerType; // Loại bên (Bên A, Bên B)
 
     @Column(name = "name", nullable = false, length = 200)
-    private String name; // Tên công ty hoặc cá nhân
+    private String partnerName; // Tên công ty hoặc cá nhân
+
+    @Column(name = "spokesman_name", length = 100)
+    private String spokesmanName;
 
     @Column(name = "address", length = 300)
     private String address;
@@ -32,15 +39,12 @@ public class Party {
     @Column(name = "tax_code", length = 50)
     private String taxCode; // Mã số thuế
 
-    @Column(name = "identity_card", length = 50)
-    private String identityCard; // CCCD
+    private String phone;
 
-    @Column(name = "representative", length = 100)
-    private String representative; // Người đại diện pháp luật
+    private String email;
 
-    @Column(name = "contact_info", length = 300)
-    private String contactInfo; // Thông tin liên hệ
-
+    @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Bank> banking = new ArrayList<>();
     // One-to-Many với Contract
     @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Contract> contracts = new ArrayList<>();
