@@ -21,9 +21,9 @@ public interface ITermService {
 
     CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException;
 
-    Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, String search, int page, int size);
+     Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, int page, int size);
 
-    CreateTermResponse getTermById(Long id) throws DataNotFoundException;
+        CreateTermResponse getTermById(Long id) throws DataNotFoundException;
 
     void deleteTerm(Long termId) throws DataNotFoundException;
 
