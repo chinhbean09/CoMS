@@ -37,6 +37,8 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS'")
     Page<Term> findAllExcludingLegalBasic(Pageable pageable);
 
+  
+
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids")
     Page<Term> findByLegalBasisOrTypeTermIdIn(@Param("ids") java.util.List<Long> ids, Pageable pageable);
 
