@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.party;
 
+import com.capstone.contractmanagement.dtos.bank.CreateBankDTO;
 import com.capstone.contractmanagement.dtos.party.CreatePartyDTO;
 import com.capstone.contractmanagement.dtos.party.UpdatePartyDTO;
 import com.capstone.contractmanagement.entities.Bank;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -33,8 +35,10 @@ public class PartyService implements IPartyService{
     @Transactional
     @Override
     public CreatePartyResponse createParty(CreatePartyDTO createPartyDTO) {
-        // Tự động tạo partnerCode theo định dạng: P + 5 số (vd: P12345)
+        // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
         String partnerCode = "P" + String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
+
+        // Tạo Party mới với thông tin từ DTO và partnerCode tự tạo
         Party party = Party.builder()
                 .partnerCode(partnerCode)
                 .partnerType(createPartyDTO.getPartnerType())
@@ -47,15 +51,37 @@ public class PartyService implements IPartyService{
                 .note(createPartyDTO.getNote())
                 .build();
 
+        // Lưu Party để lấy được ID
         party = partyRepository.save(party);
 
-        Bank bank = Bank.builder()
-                .bankName(createPartyDTO.getBanking().getBankName())
-                .backAccountNumber(createPartyDTO.getBanking().getBackAccountNumber())
-                .party(party)
-                .build();
+        // Khởi tạo danh sách Bank từ danh sách DTO
+        List<Bank> banks = new ArrayList<>();
+        if (createPartyDTO.getBanking() != null && !createPartyDTO.getBanking().isEmpty()) {
+            for (CreateBankDTO bankDTO : createPartyDTO.getBanking()) {
+                Bank bank = Bank.builder()
+                        .bankName(bankDTO.getBankName())
+                        .backAccountNumber(bankDTO.getBackAccountNumber())
+                        .party(party)
+                        .build();
+                banks.add(bank);
+            }
+        }
 
-        bankRepository.save(bank);
+        // Lưu tất cả các Bank và cập nhật lại danh sách ngân hàng cho Party
+        if (!banks.isEmpty()) {
+            bankRepository.saveAll(banks);
+            party.setBanking(banks);
+            // Nếu muốn cập nhật lại Party với danh sách ngân hàng mới (cascade có thể tự động xử lý)
+            party = partyRepository.save(party);
+        }
+
+        // Chuyển đổi danh sách Bank thành danh sách BankResponse
+        List<BankResponse> bankResponses = banks.stream()
+                .map(bank -> BankResponse.builder()
+                        .bankName(bank.getBankName())
+                        .backAccountNumber(bank.getBackAccountNumber())
+                        .build())
+                .collect(Collectors.toList());
 
         return CreatePartyResponse.builder()
                 .partyId(party.getId())
@@ -68,12 +94,7 @@ public class PartyService implements IPartyService{
                 .phone(party.getPhone())
                 .email(party.getEmail())
                 .note(party.getNote())
-                .banking(Collections.singletonList(
-                        BankResponse.builder()
-                                .bankName(bank.getBankName())
-                                .backAccountNumber(bank.getBackAccountNumber())
-                                .build()
-                ))
+                .banking(bankResponses)
                 .build();
     }
 
