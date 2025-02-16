@@ -12,6 +12,7 @@ import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.ITermService;
+import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ import java.util.List;
 public class TermController {
 
     private final ITermService termService;
+    private final TranslationService translationService;
 
 
     @PostMapping("/create/{typeTermId}")
@@ -60,18 +62,25 @@ public class TermController {
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject> getAllTerms(
-            @RequestParam(required = false) List<TypeTermIdentifier> identifiers,
-            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<Long> typeTermIds,
+            @RequestParam(defaultValue = "false") boolean includeLegalBasis,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-        Page<GetAllTermsResponse> termResponses = termService.getAllTerms(identifiers, keyword, page, size);
-
-        return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
-                .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
-                .data(termResponses.getContent())
-                .status(HttpStatus.OK)
-                .build());
+        try {
+            Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis, page, size);
+            return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
+                    .data(termResponses.getContent())
+                    .status(HttpStatus.OK)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
     }
 
     @GetMapping("/get-by-id/{termId}")
@@ -110,12 +119,20 @@ public class TermController {
     }
 
     @GetMapping("/get-all-type-terms")
-    public ResponseEntity<ResponseObject> getAllTypeTerms() {
+    public ResponseEntity<ResponseObject> getAllTypeTerms( ) {
         List<TypeTermResponse> typeTerms = termService.getAllTypeTerms();
+
+//        if (lang != null && !lang.equalsIgnoreCase("vi")) {
+//            typeTerms.forEach(typeTerm -> {
+//                String translatedName = translationService.translateText(typeTerm.getName(), lang);
+//                typeTerm.setName(translatedName);
+//            });
+//        }
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TYPE_TERMS_SUCCESSFULLY)
                 .data(typeTerms)
-                .status(HttpStatus.OK).build());
+                .status(HttpStatus.OK)
+                .build());
     }
 
     @GetMapping("/get-type-term-by-id/{typeTermId}")
