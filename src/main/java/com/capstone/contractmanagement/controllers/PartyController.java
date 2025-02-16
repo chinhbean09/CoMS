@@ -1,8 +1,15 @@
 package com.capstone.contractmanagement.controllers;
 
+import com.capstone.contractmanagement.dtos.party.CreatePartyDTO;
+import com.capstone.contractmanagement.dtos.party.UpdatePartyDTO;
 import com.capstone.contractmanagement.entities.Party;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IPartyRepository;
+import com.capstone.contractmanagement.responses.ResponseObject;
+import com.capstone.contractmanagement.responses.party.CreatePartyResponse;
+import com.capstone.contractmanagement.responses.party.ListPartyResponse;
 import com.capstone.contractmanagement.services.party.IPartyService;
+import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,54 +23,54 @@ import java.util.List;
 public class PartyController {
     private final IPartyRepository partyRepository;
     private final IPartyService partyService;
-//    @PostMapping
-//    public ResponseEntity<Party> createParty(@RequestBody PartyDTO request) {
-//        Party party = Party.builder()
-//                .partyType(request.getPartyType())
-//                .name(request.getName())
-//                .address(request.getAddress())
-//                .taxCode(request.getTaxCode())
-//                .identityCard(request.getIdentityCard())
-//                .representative(request.getRepresentative())
-//                .contactInfo(request.getContactInfo())
-//                .build();
-//
-//        Party savedParty = partyRepository.save(party);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(savedParty);
-//    }
-// Create a new Party
-@PostMapping
-public ResponseEntity<Party> createParty(@RequestBody Party party) {
-    Party createdParty = partyService.createParty(party);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdParty);
-}
 
-    // Get all Parties
-    @GetMapping
-    public ResponseEntity<List<Party>> getAllParties() {
-        List<Party> parties = partyService.getAllParties();
-        return ResponseEntity.ok(parties);
+    @PostMapping("/create")
+    public ResponseEntity<ResponseObject> createParty(@RequestBody CreatePartyDTO createPartyDTO) {
+        CreatePartyResponse response = partyService.createParty(createPartyDTO);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.CREATED)
+                .message(MessageKeys.CREATE_PARTY_SUCCESSFULLY)
+                .data(response)
+                .build());
     }
 
-    // Get a Party by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Party> getPartyById(@PathVariable Long id) {
-        Party party = partyService.getPartyById(id);
-        return ResponseEntity.ok(party);
+    @PutMapping("/update/{partyId}")
+    public ResponseEntity<ResponseObject> updateParty(@PathVariable Long partyId, @RequestBody UpdatePartyDTO createPartyDTO) throws DataNotFoundException {
+        CreatePartyResponse response = partyService.updateParty(partyId, createPartyDTO);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.UPDATE_PARTY_SUCCESSFULLY)
+                .data(response)
+                .build());
     }
 
-    // Update a Party
-    @PutMapping("/{id}")
-    public ResponseEntity<Party> updateParty(@PathVariable Long id, @RequestBody Party party) {
-        Party updatedParty = partyService.updateParty(id, party);
-        return ResponseEntity.ok(updatedParty);
+    @GetMapping("/get-all")
+    public ResponseEntity<ResponseObject> getAllParties() {
+        List<ListPartyResponse> response = partyService.getAllParties();
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.GET_ALL_PARTIES_SUCCESSFULLY)
+                .data(response)
+                .build());
     }
 
-    // Delete a Party
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteParty(@PathVariable Long id) {
-        partyService.deleteParty(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/get-by-id/{partyId}")
+    public ResponseEntity<ResponseObject> getPartyById(@PathVariable Long partyId) throws DataNotFoundException {
+        ListPartyResponse response = partyService.getPartyById(partyId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.GET_PARTY_SUCCESSFULLY)
+                .data(response)
+                .build());
+    }
+
+    @DeleteMapping("/delete/{partyId}")
+    public ResponseEntity<ResponseObject> deleteParty(@PathVariable Long partyId) throws DataNotFoundException {
+        partyService.deleteParty(partyId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.DELETE_PARTY_SUCCESSFULLY)
+                .build());
     }
 }
 
