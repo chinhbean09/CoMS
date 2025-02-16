@@ -193,7 +193,7 @@ public class UserController {
 //    }
 
     @PutMapping("/block-or-enable/{userId}/{active}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public ResponseEntity<String> blockOrEnable(
             @Valid @PathVariable long userId,
             @Valid @PathVariable int active) {

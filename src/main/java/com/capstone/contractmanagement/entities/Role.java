@@ -21,6 +21,8 @@ public class Role {
     private String roleName;
 
     public static String ADMIN = "ADMIN";
+    public static String MANAGER = "MANAGER";
+    public static String STAFF = "STAFF";
 
 
 }
