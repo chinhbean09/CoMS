@@ -64,10 +64,11 @@ public class TermController {
     public ResponseEntity<ResponseObject> getAllTerms(
             @RequestParam(required = false) List<Long> typeTermIds,
             @RequestParam(defaultValue = "false") boolean includeLegalBasis,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int size) {
         try {
-            Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis, page, size);
+            Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis,keyword, page, size);
             return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
                     .data(termResponses.getContent())
