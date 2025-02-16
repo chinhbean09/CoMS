@@ -171,19 +171,33 @@ public class TermService implements ITermService{
 //    }
 
     @Override
-    public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, int page, int size) {
+    public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search,int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Term> termPage;
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+
         if (typeTermIds != null && !typeTermIds.isEmpty()) {
-            if (includeLegalBasis) {
-                termPage = termRepository.findByLegalBasisOrTypeTermIdIn(typeTermIds, pageable);
+            if (hasSearch) {
+                if (includeLegalBasis) {
+                    termPage = termRepository.findByLegalBasisOrTypeTermIdInWithSearch(typeTermIds, search, pageable);
+                } else {
+                    termPage = termRepository.findByTypeTermIdInWithSearch(typeTermIds, search, pageable);
+                }
             } else {
-                termPage = termRepository.findByTypeTermIdIn(typeTermIds, pageable);
+                if (includeLegalBasis) {
+                    termPage = termRepository.findByLegalBasisOrTypeTermIdIn(typeTermIds, pageable);
+                } else {
+                    termPage = termRepository.findByTypeTermIdIn(typeTermIds, pageable);
+                }
             }
         } else {
-            // Nếu không có filter, trả về tất cả ngoại trừ LEGAL_BASIS
-            termPage = termRepository.findAllExcludingLegalBasic(pageable);
+            if (hasSearch) {
+                termPage = termRepository.findAllExcludingLegalBasicWithSearch(search, pageable);
+            } else {
+                termPage = termRepository.findAllExcludingLegalBasic(pageable);
+            }
         }
+
         return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())

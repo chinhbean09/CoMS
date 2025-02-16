@@ -18,5 +18,6 @@ public class UpdatePartyDTO {
     private String taxCode;// Mã số thuế
     private String phone;
     private String email;
+    private String note;
     private List<UpdateBankDTO> banking;
 }
