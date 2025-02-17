@@ -1,8 +1,11 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.enums.ContractStatus;
+import com.capstone.contractmanagement.enums.TermStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import net.minidev.json.annotate.JsonIgnore;
+import org.checkerframework.checker.units.qual.C;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,8 +46,14 @@ public class Term {
     @JoinColumn(name = "type_term_id", nullable = false)
     private TypeTerm typeTerm;
 
-    // false - chưa xóa, true - đã xóa mềm
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = Boolean.FALSE;
+    // Trạng thái của điều khoản: NEW (mới), OLD (cũ), SOFT_DELETED (đã xóa mềm)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TermStatus status = TermStatus.NEW;
+
+    // Số phiên bản của điều khoản
+    @Column(name = "version", nullable = false)
+    private Integer version = 1;
+
 
 }
