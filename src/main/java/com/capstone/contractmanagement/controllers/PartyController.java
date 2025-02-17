@@ -79,5 +79,19 @@ public class PartyController {
                 .message(MessageKeys.DELETE_PARTY_SUCCESSFULLY)
                 .build());
     }
+
+    // update party status
+    @PutMapping("/update-status/{partyId}/{isDeleted}")
+    public ResponseEntity<String> updatePartyStatus(@PathVariable Long partyId, @PathVariable Boolean isDeleted) {
+        try {
+            partyService.updatePartyStatus(partyId, isDeleted);
+            String message = isDeleted ? "Xóa mềm quan hệ" : "Khôi phục quan hệ";
+            return ResponseEntity.ok(message);
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body("Không tìm thấy quan hệ");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
 
