@@ -172,11 +172,12 @@ public class PartyService implements IPartyService{
         Page<Party> partyPage;
 
         if (search != null && !search.trim().isEmpty()) {
-            // Tìm kiếm với điều kiện isDeleted = false
-            partyPage = partyRepository.searchByFields(search, pageable);
+            // Nếu có tham số search, tìm kiếm theo partnerCode, partnerName, hoặc email
+            partyPage = partyRepository.findByPartnerCodeContainingIgnoreCaseOrPartnerNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    search, search, search, pageable);
         } else {
-            // Lấy tất cả với điều kiện isDeleted = false
-            partyPage = partyRepository.findByIsDeletedFalse(pageable);
+            // Nếu không có search, trả về tất cả Party theo phân trang
+            partyPage = partyRepository.findAll(pageable);
         }
 
         // Chuyển đổi đối tượng Party sang ListPartyResponse
