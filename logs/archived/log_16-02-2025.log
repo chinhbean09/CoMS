@@ -1,0 +1,313 @@
+16-02-2025 16:03:13.798 [background-preinit] INFO  o.h.validator.internal.util.Version.<clinit> - HV000001: Hibernate Validator 8.0.1.Final
+16-02-2025 16:03:13.827 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarting - Starting ContractManagementApplication using Java 17.0.14 with PID 15739 (/media/chinhbean/PERSONAL/source-code/source-code-java/CoMS/target/classes started by chinhbean in /media/chinhbean/PERSONAL/source-code/source-code-java/CoMS)
+16-02-2025 16:03:13.828 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStartupProfileInfo - The following 1 profile is active: "dev"
+16-02-2025 16:03:13.860 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-netty-shaded-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-context-1.39.0.jar
+16-02-2025 16:03:13.861 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-alts-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-auth-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-grpclb-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-stub-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-util-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/proto-google-common-protos-2.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/conscrypt-openjdk-uber-2.5.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-oauth2-http-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-netty-shaded-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-lite-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-jackson2-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-contrib-http-util-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-credentials-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/auto-value-annotations-1.7.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-api-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-context-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpclient-4.5.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpcore-4.4.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jackson-core-2.11.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-logging-1.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-codec-1.11.jar
+16-02-2025 16:03:13.861 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+16-02-2025 16:03:13.861 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+16-02-2025 16:03:14.917 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+16-02-2025 16:03:15.045 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Finished Spring Data repository scanning in 121 ms. Found 11 JPA repository interfaces.
+16-02-2025 16:03:15.743 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.initialize - Tomcat initialized with port 8080 (http)
+16-02-2025 16:03:15.751 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Initializing ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:03:15.753 [restartedMain] INFO  o.a.catalina.core.StandardService.log - Starting service [Tomcat]
+16-02-2025 16:03:15.754 [restartedMain] INFO  o.a.catalina.core.StandardEngine.log - Starting Servlet engine: [Apache Tomcat/10.1.28]
+16-02-2025 16:03:15.792 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring embedded WebApplicationContext
+16-02-2025 16:03:15.792 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext.prepareWebApplicationContext - Root WebApplicationContext: initialization completed in 1930 ms
+16-02-2025 16:03:15.915 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Starting...
+16-02-2025 16:03:16.088 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool.checkFailFast - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2a7bedf8
+16-02-2025 16:03:16.090 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Start completed.
+16-02-2025 16:03:16.098 [restartedMain] INFO  o.s.b.a.h.H2ConsoleAutoConfiguration.logDataSources - H2 console available at '/h2-console'. Database available at 'jdbc:postgresql://localhost:5432/coms?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
+16-02-2025 16:03:16.274 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper.logPersistenceUnitInformation - HHH000204: Processing PersistenceUnitInfo [name: default]
+16-02-2025 16:03:16.330 [restartedMain] INFO  org.hibernate.Version.logVersion - HHH000412: Hibernate ORM core version 6.5.2.Final
+16-02-2025 16:03:16.360 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator.initiateService - HHH000026: Second-level cache disabled
+16-02-2025 16:03:16.604 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo.addTransformer - No LoadTimeWeaver setup: ignoring JPA class transformer
+16-02-2025 16:03:16.651 [restartedMain] WARN  org.hibernate.orm.deprecation.constructDialect - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+16-02-2025 16:03:17.778 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator.initiateService - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+16-02-2025 16:03:18.082 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.buildNativeEntityManagerFactory - Initialized JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:03:18.345 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory.<clinit> - Hibernate is in classpath; If applicable, HQL parser will be used.
+16-02-2025 16:03:19.349 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer.configure - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+16-02-2025 16:03:19.350 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer.configure - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+16-02-2025 16:03:19.957 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver.<init> - Exposing 1 endpoint beneath base path '/actuator'
+16-02-2025 16:03:20.711 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer.startServer - LiveReload server is running on port 35729
+16-02-2025 16:03:20.761 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Starting ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:03:20.777 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.start - Tomcat started on port 8080 (http) with context path '/'
+16-02-2025 16:03:20.794 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarted - Started ContractManagementApplication in 7.409 seconds (process running for 7.925)
+16-02-2025 16:03:21.190 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring DispatcherServlet 'dispatcherServlet'
+16-02-2025 16:03:21.191 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Initializing Servlet 'dispatcherServlet'
+16-02-2025 16:03:21.194 [RMI TCP Connection(3)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Completed initialization in 2 ms
+16-02-2025 16:04:54.876 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.destroy - Closing JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:04:54.881 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown initiated...
+16-02-2025 16:04:54.888 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown completed.
+16-02-2025 16:04:56.759 [restartedMain] ERROR | PID: %PARSER_ERROR[pid] | o.s.boot.SpringApplication.reportFailure - Application run failed
+java.lang.IllegalStateException: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@2858a486 - Failed to instantiate converter class [org.springframework.boot.logging.logback.PidConverter] for keyword [pid] ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@2858a486 - [pid] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@51f991b9 - Failed to instantiate converter class [org.springframework.boot.logging.logback.PidConverter] for keyword [pid] ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@51f991b9 - [pid] is not a valid conversion word
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:347)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:185)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:178)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:156)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:138)
+	at org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+	at org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+	at org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+	at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+	at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:370)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:330)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352)
+	at com.capstone.contractmanagement.ContractManagementApplication.main(ContractManagementApplication.java:10)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@2858a486 - Failed to instantiate converter class [org.springframework.boot.logging.logback.PidConverter] for keyword [pid] ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@2858a486 - [pid] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@51f991b9 - Failed to instantiate converter class [org.springframework.boot.logging.logback.PidConverter] for keyword [pid] ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@51f991b9 - [pid] is not a valid conversion word
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.reportConfigurationErrorsIfNecessary(LogbackLoggingSystem.java:284)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.loadConfiguration(LogbackLoggingSystem.java:262)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:81)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:61)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.initialize(LogbackLoggingSystem.java:193)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+	... 24 common frames omitted
+	Suppressed: ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassNameAndParameter(OptionHelper.java:69)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassName(OptionHelper.java:44)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassName(OptionHelper.java:33)
+		at ch.qos.logback.core.pattern.parser.Compiler.createConverter(Compiler.java:103)
+		at ch.qos.logback.core.pattern.parser.Compiler.compile(Compiler.java:63)
+		at ch.qos.logback.core.pattern.parser.Parser.compile(Parser.java:87)
+		at ch.qos.logback.core.pattern.PatternLayoutBase.start(PatternLayoutBase.java:85)
+		at ch.qos.logback.classic.encoder.PatternLayoutEncoder.start(PatternLayoutEncoder.java:28)
+		at ch.qos.logback.core.model.processor.ImplicitModelHandler.postHandleComplex(ImplicitModelHandler.java:207)
+		at ch.qos.logback.core.model.processor.ImplicitModelHandler.postHandle(ImplicitModelHandler.java:186)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:257)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:253)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:253)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.traversalLoop(DefaultProcessor.java:90)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.process(DefaultProcessor.java:106)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.processModel(GenericXMLConfigurator.java:222)
+		at org.springframework.boot.logging.logback.SpringBootJoranConfigurator.processModel(SpringBootJoranConfigurator.java:133)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:178)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:123)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:66)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.configureByResourceUrl(LogbackLoggingSystem.java:294)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.lambda$loadConfiguration$1(LogbackLoggingSystem.java:255)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.withLoggingSuppressed(LogbackLoggingSystem.java:474)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.loadConfiguration(LogbackLoggingSystem.java:249)
+		... 28 common frames omitted
+	Caused by: java.lang.ClassNotFoundException: org.springframework.boot.logging.logback.PidConverter
+		at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+		at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+		at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassNameAndParameter(OptionHelper.java:56)
+		... 51 common frames omitted
+	Suppressed: ch.qos.logback.core.util.DynamicClassLoadingException: Failed to instantiate type org.springframework.boot.logging.logback.PidConverter
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassNameAndParameter(OptionHelper.java:69)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassName(OptionHelper.java:44)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassName(OptionHelper.java:33)
+		at ch.qos.logback.core.pattern.parser.Compiler.createConverter(Compiler.java:103)
+		at ch.qos.logback.core.pattern.parser.Compiler.compile(Compiler.java:63)
+		at ch.qos.logback.core.pattern.parser.Parser.compile(Parser.java:87)
+		at ch.qos.logback.core.pattern.PatternLayoutBase.start(PatternLayoutBase.java:85)
+		at ch.qos.logback.classic.encoder.PatternLayoutEncoder.start(PatternLayoutEncoder.java:28)
+		at ch.qos.logback.core.model.processor.ImplicitModelHandler.postHandleComplex(ImplicitModelHandler.java:207)
+		at ch.qos.logback.core.model.processor.ImplicitModelHandler.postHandle(ImplicitModelHandler.java:186)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:257)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:253)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.secondPhaseTraverse(DefaultProcessor.java:253)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.traversalLoop(DefaultProcessor.java:90)
+		at ch.qos.logback.core.model.processor.DefaultProcessor.process(DefaultProcessor.java:106)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.processModel(GenericXMLConfigurator.java:222)
+		at org.springframework.boot.logging.logback.SpringBootJoranConfigurator.processModel(SpringBootJoranConfigurator.java:133)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:178)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:123)
+		at ch.qos.logback.core.joran.GenericXMLConfigurator.doConfigure(GenericXMLConfigurator.java:66)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.configureByResourceUrl(LogbackLoggingSystem.java:294)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.lambda$loadConfiguration$1(LogbackLoggingSystem.java:255)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.withLoggingSuppressed(LogbackLoggingSystem.java:474)
+		at org.springframework.boot.logging.logback.LogbackLoggingSystem.loadConfiguration(LogbackLoggingSystem.java:249)
+		... 28 common frames omitted
+	Caused by: java.lang.ClassNotFoundException: org.springframework.boot.logging.logback.PidConverter
+		at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+		at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+		at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+		at ch.qos.logback.core.util.OptionHelper.instantiateByClassNameAndParameter(OptionHelper.java:56)
+		... 51 common frames omitted
+16-02-2025 16:05:43.344 [restartedMain] ERROR | PID: %PARSER_ERROR[processId] | o.s.boot.SpringApplication.reportFailure - Application run failed
+java.lang.IllegalStateException: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@384019b5 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@384019b5 - [processId] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@d1e98cc - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@d1e98cc - [processId] is not a valid conversion word
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:347)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:185)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:178)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:156)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:138)
+	at org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+	at org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+	at org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+	at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+	at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:370)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:330)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352)
+	at com.capstone.contractmanagement.ContractManagementApplication.main(ContractManagementApplication.java:10)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@384019b5 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@384019b5 - [processId] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@d1e98cc - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@d1e98cc - [processId] is not a valid conversion word
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.reportConfigurationErrorsIfNecessary(LogbackLoggingSystem.java:284)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.loadConfiguration(LogbackLoggingSystem.java:262)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:81)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:61)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.initialize(LogbackLoggingSystem.java:193)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+	... 24 common frames omitted
+16-02-2025 16:05:55.224 [background-preinit] INFO  o.h.validator.internal.util.Version.<clinit> - HV000001: Hibernate Validator 8.0.1.Final
+16-02-2025 16:05:55.256 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarting - Starting ContractManagementApplication using Java 17.0.14 with PID 16523 (/media/chinhbean/PERSONAL/source-code/source-code-java/CoMS/target/classes started by chinhbean in /media/chinhbean/PERSONAL/source-code/source-code-java/CoMS)
+16-02-2025 16:05:55.257 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStartupProfileInfo - The following 1 profile is active: "dev"
+16-02-2025 16:05:55.295 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-netty-shaded-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-context-1.39.0.jar
+16-02-2025 16:05:55.295 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-alts-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-auth-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-grpclb-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-stub-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-util-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/proto-google-common-protos-2.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/conscrypt-openjdk-uber-2.5.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-oauth2-http-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-netty-shaded-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-lite-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-jackson2-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-contrib-http-util-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-credentials-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/auto-value-annotations-1.7.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-api-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-context-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpclient-4.5.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpcore-4.4.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jackson-core-2.11.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-logging-1.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-codec-1.11.jar
+16-02-2025 16:05:55.296 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+16-02-2025 16:05:55.296 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+16-02-2025 16:05:56.403 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+16-02-2025 16:05:56.540 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Finished Spring Data repository scanning in 131 ms. Found 11 JPA repository interfaces.
+16-02-2025 16:05:57.281 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.initialize - Tomcat initialized with port 8080 (http)
+16-02-2025 16:05:57.289 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Initializing ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:05:57.291 [restartedMain] INFO  o.a.catalina.core.StandardService.log - Starting service [Tomcat]
+16-02-2025 16:05:57.291 [restartedMain] INFO  o.a.catalina.core.StandardEngine.log - Starting Servlet engine: [Apache Tomcat/10.1.28]
+16-02-2025 16:05:57.325 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring embedded WebApplicationContext
+16-02-2025 16:05:57.325 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext.prepareWebApplicationContext - Root WebApplicationContext: initialization completed in 2029 ms
+16-02-2025 16:05:57.443 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Starting...
+16-02-2025 16:05:57.611 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool.checkFailFast - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5d07ea53
+16-02-2025 16:05:57.613 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Start completed.
+16-02-2025 16:05:57.621 [restartedMain] INFO  o.s.b.a.h.H2ConsoleAutoConfiguration.logDataSources - H2 console available at '/h2-console'. Database available at 'jdbc:postgresql://localhost:5432/coms?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
+16-02-2025 16:05:57.807 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper.logPersistenceUnitInformation - HHH000204: Processing PersistenceUnitInfo [name: default]
+16-02-2025 16:05:57.858 [restartedMain] INFO  org.hibernate.Version.logVersion - HHH000412: Hibernate ORM core version 6.5.2.Final
+16-02-2025 16:05:57.890 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator.initiateService - HHH000026: Second-level cache disabled
+16-02-2025 16:05:58.144 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo.addTransformer - No LoadTimeWeaver setup: ignoring JPA class transformer
+16-02-2025 16:05:58.182 [restartedMain] WARN  org.hibernate.orm.deprecation.constructDialect - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+16-02-2025 16:05:59.333 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator.initiateService - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+16-02-2025 16:05:59.655 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.buildNativeEntityManagerFactory - Initialized JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:05:59.911 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory.<clinit> - Hibernate is in classpath; If applicable, HQL parser will be used.
+16-02-2025 16:06:00.949 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer.configure - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+16-02-2025 16:06:00.950 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer.configure - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+16-02-2025 16:06:01.545 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver.<init> - Exposing 1 endpoint beneath base path '/actuator'
+16-02-2025 16:06:02.216 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer.startServer - LiveReload server is running on port 35729
+16-02-2025 16:06:02.266 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Starting ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:06:02.275 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.start - Tomcat started on port 8080 (http) with context path '/'
+16-02-2025 16:06:02.292 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarted - Started ContractManagementApplication in 7.46 seconds (process running for 7.956)
+16-02-2025 16:06:02.603 [RMI TCP Connection(1)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring DispatcherServlet 'dispatcherServlet'
+16-02-2025 16:06:02.603 [RMI TCP Connection(1)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Initializing Servlet 'dispatcherServlet'
+16-02-2025 16:06:02.605 [RMI TCP Connection(1)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Completed initialization in 1 ms
+16-02-2025 16:07:39.802 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.destroy - Closing JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:07:39.851 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown initiated...
+16-02-2025 16:07:39.861 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown completed.
+16-02-2025 16:07:41.508 [restartedMain] ERROR | PID: %PARSER_ERROR[processId] | o.s.boot.SpringApplication.reportFailure - Application run failed
+java.lang.IllegalStateException: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@7feb4876 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@7feb4876 - [processId] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@4948af36 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@4948af36 - [processId] is not a valid conversion word
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:347)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:185)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:178)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:156)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:138)
+	at org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+	at org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+	at org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+	at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+	at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:370)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:330)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352)
+	at com.capstone.contractmanagement.ContractManagementApplication.main(ContractManagementApplication.java:10)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: java.lang.IllegalStateException: Logback configuration error detected: 
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@7feb4876 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@7feb4876 - [processId] is not a valid conversion word
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@4948af36 - There is no conversion class registered for conversion word [processId]
+ERROR in ch.qos.logback.core.pattern.parser.Compiler@4948af36 - [processId] is not a valid conversion word
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.reportConfigurationErrorsIfNecessary(LogbackLoggingSystem.java:284)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.loadConfiguration(LogbackLoggingSystem.java:262)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:81)
+	at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:61)
+	at org.springframework.boot.logging.logback.LogbackLoggingSystem.initialize(LogbackLoggingSystem.java:193)
+	at org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+	... 24 common frames omitted
+16-02-2025 16:07:52.425 [background-preinit] INFO  o.h.validator.internal.util.Version.<clinit> - HV000001: Hibernate Validator 8.0.1.Final
+16-02-2025 16:07:52.458 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarting - Starting ContractManagementApplication using Java 17.0.14 with PID 17396 (/media/chinhbean/PERSONAL/source-code/source-code-java/CoMS/target/classes started by chinhbean in /media/chinhbean/PERSONAL/source-code/source-code-java/CoMS)
+16-02-2025 16:07:52.459 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStartupProfileInfo - The following 1 profile is active: "dev"
+16-02-2025 16:07:52.492 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-netty-shaded-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-netty-shaded/1.39.0/grpc-context-1.39.0.jar
+16-02-2025 16:07:52.492 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls.logTo - The Class-Path manifest attribute in /home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-alts-1.39.0.jar referenced one or more files that do not exist: file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-auth-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-grpclb-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-stub-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-util-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/proto-google-common-protos-2.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/protobuf-java-3.17.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/conscrypt-openjdk-uber-2.5.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-oauth2-http-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-netty-shaded-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-core-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-protobuf-lite-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-api-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-jackson2-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-http-client-1.38.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-contrib-http-util-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/guava-30.1-android.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/google-auth-library-credentials-0.22.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/error_prone_annotations-2.4.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jsr305-3.0.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/failureaccess-1.0.1.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/checker-compat-qual-2.5.5.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/j2objc-annotations-1.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/auto-value-annotations-1.7.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/perfmark-api-0.23.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/opencensus-api-0.24.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/grpc-context-1.39.0.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/gson-2.8.6.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/annotations-4.1.1.4.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/animal-sniffer-annotations-1.19.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpclient-4.5.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/httpcore-4.4.13.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/jackson-core-2.11.3.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-logging-1.2.jar,file:/home/chinhbean/.m2/repository/io/grpc/grpc-alts/1.39.0/commons-codec-1.11.jar
+16-02-2025 16:07:52.492 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+16-02-2025 16:07:52.493 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor.logTo - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+16-02-2025 16:07:53.595 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+16-02-2025 16:07:53.711 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate.registerRepositoriesIn - Finished Spring Data repository scanning in 111 ms. Found 11 JPA repository interfaces.
+16-02-2025 16:07:54.424 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.initialize - Tomcat initialized with port 8080 (http)
+16-02-2025 16:07:54.433 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Initializing ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:07:54.435 [restartedMain] INFO  o.a.catalina.core.StandardService.log - Starting service [Tomcat]
+16-02-2025 16:07:54.436 [restartedMain] INFO  o.a.catalina.core.StandardEngine.log - Starting Servlet engine: [Apache Tomcat/10.1.28]
+16-02-2025 16:07:54.482 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring embedded WebApplicationContext
+16-02-2025 16:07:54.483 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext.prepareWebApplicationContext - Root WebApplicationContext: initialization completed in 1989 ms
+16-02-2025 16:07:54.611 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Starting...
+16-02-2025 16:07:54.774 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool.checkFailFast - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5e411c85
+16-02-2025 16:07:54.776 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource.getConnection - HikariPool-1 - Start completed.
+16-02-2025 16:07:54.784 [restartedMain] INFO  o.s.b.a.h.H2ConsoleAutoConfiguration.logDataSources - H2 console available at '/h2-console'. Database available at 'jdbc:postgresql://localhost:5432/coms?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
+16-02-2025 16:07:54.961 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper.logPersistenceUnitInformation - HHH000204: Processing PersistenceUnitInfo [name: default]
+16-02-2025 16:07:55.011 [restartedMain] INFO  org.hibernate.Version.logVersion - HHH000412: Hibernate ORM core version 6.5.2.Final
+16-02-2025 16:07:55.039 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator.initiateService - HHH000026: Second-level cache disabled
+16-02-2025 16:07:55.307 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo.addTransformer - No LoadTimeWeaver setup: ignoring JPA class transformer
+16-02-2025 16:07:55.347 [restartedMain] WARN  org.hibernate.orm.deprecation.constructDialect - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+16-02-2025 16:07:56.517 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator.initiateService - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+16-02-2025 16:07:56.858 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.buildNativeEntityManagerFactory - Initialized JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:07:57.128 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory.<clinit> - Hibernate is in classpath; If applicable, HQL parser will be used.
+16-02-2025 16:07:58.277 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer.configure - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+16-02-2025 16:07:58.278 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer.configure - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+16-02-2025 16:07:58.970 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver.<init> - Exposing 1 endpoint beneath base path '/actuator'
+16-02-2025 16:07:59.611 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer.startServer - LiveReload server is running on port 35729
+16-02-2025 16:07:59.672 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol.log - Starting ProtocolHandler ["http-nio-8080"]
+16-02-2025 16:07:59.683 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer.start - Tomcat started on port 8080 (http) with context path '/'
+16-02-2025 16:07:59.701 [restartedMain] INFO  c.c.c.ContractManagementApplication.logStarted - Started ContractManagementApplication in 7.639 seconds (process running for 8.128)
+16-02-2025 16:08:00.392 [RMI TCP Connection(2)-127.0.0.1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/].log - Initializing Spring DispatcherServlet 'dispatcherServlet'
+16-02-2025 16:08:00.392 [RMI TCP Connection(2)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Initializing Servlet 'dispatcherServlet'
+16-02-2025 16:08:00.395 [RMI TCP Connection(2)-127.0.0.1] INFO  o.s.web.servlet.DispatcherServlet.initServletBean - Completed initialization in 2 ms
+16-02-2025 16:08:36.173 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean.destroy - Closing JPA EntityManagerFactory for persistence unit 'default'
+16-02-2025 16:08:36.188 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown initiated...
+16-02-2025 16:08:36.214 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource.close - HikariPool-1 - Shutdown completed.
