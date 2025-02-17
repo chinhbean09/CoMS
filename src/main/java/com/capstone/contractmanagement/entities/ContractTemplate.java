@@ -135,4 +135,9 @@ public class ContractTemplate {
     private List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
 
 
+    @ManyToOne
+    @JoinColumn(name = "contract_type_id", nullable = false)
+    private ContractType contractType;
+
+
 }
