@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Data
 public class ContractTemplateDTO {
+
     @NotBlank(message = "Contract title is required")
     @Size(max = 200, message = "Contract title must be less than 200 characters")
     private String contractTitle;
@@ -21,9 +22,13 @@ public class ContractTemplateDTO {
     private List<IdDTO> legalBasis;
 
     private Boolean appendixEnabled;
+
     private Boolean transferEnabled;
+
     private Boolean violate;
+
     private Boolean suspend;
+
     private String suspendContent;
 
     //  type term của nhóm general
@@ -45,12 +50,21 @@ public class ContractTemplateDTO {
     private Map<String, Map<String, List<IdDTO>>> additionalConfig;
 
     private String specialTermsA;
+
     private String specialTermsB;
 
     private String contractContent;
+
     private Boolean autoAddVAT;
+
     private Integer vatPercentage;
+
     private Boolean isDateLateChecked;
+
     private Integer maxDateLate;
+
     private Boolean autoRenew;
+
+    private Long contractTypeId;
+
 }
