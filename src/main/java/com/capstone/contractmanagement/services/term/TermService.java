@@ -172,8 +172,7 @@ public class TermService implements ITermService{
 //    }
 
     @Override
-    public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search,int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+    public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable) {
         Page<Term> termPage;
         boolean hasSearch = search != null && !search.trim().isEmpty();
 
