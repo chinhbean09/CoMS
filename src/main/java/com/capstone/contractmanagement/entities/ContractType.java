@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -24,5 +25,6 @@ public class ContractType {
 
     // loại hợp đồng có thể có nhiều template
     @OneToMany(mappedBy = "contractType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ContractTemplate> templates = new ArrayList<>();
 }
