@@ -4,8 +4,16 @@ import com.capstone.contractmanagement.entities.Party;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface IPartyRepository extends JpaRepository<Party, Long> {
-    Page<Party> findByPartnerCodeContainingIgnoreCaseOrPartnerNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String partnerCode, String partnerName, String email, Pageable pageable);
+//    Page<Party> findByPartnerCodeContainingIgnoreCaseOrPartnerNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+//            String partnerCode, String partnerName, String email, Pageable pageable);
+    @Query("SELECT p FROM Party p WHERE p.isDeleted = false AND (" +
+            "LOWER(p.partnerCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(p.partnerName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(p.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Party> searchByFields(@Param("search") String search, Pageable pageable);
+    Page<Party> findByIsDeletedFalse(Pageable pageable);
 }
