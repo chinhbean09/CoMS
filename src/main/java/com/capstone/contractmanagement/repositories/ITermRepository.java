@@ -16,36 +16,34 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     List<Term> findByTypeTermId(Long typeTermId);
 
-    // Lọc theo identifier
-    Page<Term> findByTypeTermIdentifier(TypeTermIdentifier identifier, Pageable pageable);
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = :identifier AND t.status = 'NEW'")
+    Page<Term> findByTypeTermIdentifier(@Param("identifier") TypeTermIdentifier identifier, Pageable pageable);
 
-    // Tìm theo danh sách loại, nhưng loại bỏ "LEGAL_BASIS"
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier IN :identifiers AND t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.isDeleted = false")
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier IN :identifiers AND t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.status = 'NEW'")
     Page<Term> findByTypeTermIdentifierInExcludingLegalBasic(@Param("identifiers") List<TypeTermIdentifier> identifiers, Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.id IN :ids AND t.isDeleted = false")
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.id IN :ids  AND t.status = 'NEW'")
     Page<Term> findByTypeTermIdIn(@Param("ids") List<Long> ids, Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' AND t.isDeleted = false")
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' AND t.status = 'NEW'")
     Page<Term> findByTypeTermIdentifier(Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.isDeleted = false")
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.status = 'NEW'")
     Page<Term> findAllExcludingLegalBasic(Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE (t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids) AND t.isDeleted = false")
+    @Query("SELECT t FROM Term t WHERE (t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids)  AND t.status = 'NEW'")
     Page<Term> findByLegalBasisOrTypeTermIdIn(@Param("ids") List<Long> ids, Pageable pageable);
 
-    // --- Các truy vấn hỗ trợ search --- //
-
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.isDeleted = false " +
+    // Các truy vấn hỗ trợ search
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.status = 'NEW' " +
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findAllExcludingLegalBasicWithSearch(@Param("search") String search, Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE t.typeTerm.id IN :ids AND t.isDeleted = false " +
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.id IN :ids AND t.status = 'NEW' " +
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findByTypeTermIdInWithSearch(@Param("ids") List<Long> ids, @Param("search") String search, Pageable pageable);
 
-    @Query("SELECT t FROM Term t WHERE (t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids) AND t.isDeleted = false " +
+    @Query("SELECT t FROM Term t WHERE (t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids)  AND t.status = 'NEW' " +
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findByLegalBasisOrTypeTermIdInWithSearch(@Param("ids") List<Long> ids, @Param("search") String search, Pageable pageable);
 }
