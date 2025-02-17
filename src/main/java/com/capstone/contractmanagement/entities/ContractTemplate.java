@@ -113,7 +113,7 @@ public class ContractTemplate {
     @ManyToMany
     @JsonIgnore
     @JoinTable(
-            name = "'contract_template_other_terms'",
+            name = "contract_template_other_terms",
             joinColumns = @JoinColumn(name = "template_id"),
             inverseJoinColumns = @JoinColumn(name = "term_id")
     )
