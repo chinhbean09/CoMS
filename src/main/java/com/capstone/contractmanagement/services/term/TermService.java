@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
 import com.capstone.contractmanagement.entities.Term;
 import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.enums.TermStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.ITermRepository;
@@ -36,33 +37,36 @@ public class TermService implements ITermService{
 
     @Override
     public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
+        // Lấy TypeTerm theo typeTermId
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
                 .orElseThrow(() -> new IllegalArgumentException("TypeTerm not found"));
-        // Sinh clauseCode tự động dựa trên tên của typeTerm và số thứ tự
+
+        // Sinh clauseCode tự động dựa trên tên của typeTerm và số thứ tự (logic của bạn)
         String clauseCode = generateClauseCode(typeTerm);
+
+        // Tạo Term mới với status = NEW và version = 1
         Term term = Term.builder()
                 .clauseCode(clauseCode)
                 .label(request.getLabel())
                 .value(request.getValue())
                 .createdAt(LocalDateTime.now())
                 .typeTerm(typeTerm)
-                .isDeleted(false)
+                .status(TermStatus.NEW)
+                .version(1)
                 .build();
         termRepository.save(term);
-        TypeTermIdentifier typeTermIdentifier = TypeTermIdentifier.valueOf(String.valueOf(term.getTypeTerm().getIdentifier()));
 
         return CreateTermResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())
                 .label(term.getLabel())
                 .value(term.getValue())
-                .createdAt(LocalDateTime.now())
+                .createdAt(term.getCreatedAt())
                 .type(term.getTypeTerm().getName())
-                .identifier(String.valueOf(typeTermIdentifier))
-                .isDelete(term.getIsDeleted())
+                .status(TermStatus.NEW)
+                .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
                 .build();
     }
-
 
     /**
      * Phương thức sinh clauseCode dựa trên tên của TypeTerm và số thứ tự.
@@ -110,31 +114,38 @@ public class TermService implements ITermService{
     }
 
     @Override
+    @Transactional
     public CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException {
-        // check if term exists
-        Term term = termRepository.findById(termId)
-                .orElseThrow(() -> new DataNotFoundException(MessageKeys.TERM_NOT_FOUND));
 
-        if (termRequest.getTypeTermId() != null){
-            TypeTerm typeTerm = typeTermRepository.findById(termRequest.getTypeTermId())
-                    .orElseThrow(() -> new DataNotFoundException(MessageKeys.TYPE_TERM_NOT_FOUND));
-            term.setTypeTerm(typeTerm);
-        }
+        Term oldTerm = termRepository.findById(termId)
+                .orElseThrow(() -> new DataNotFoundException("Term not found"));
 
-        term.setLabel(termRequest.getLabel());
-        term.setValue(termRequest.getValue());
-        termRepository.save(term);
-        TypeTermIdentifier typeTermIdentifier = TypeTermIdentifier.valueOf(String.valueOf(term.getTypeTerm().getIdentifier()));
+        // cũ thành OLD (phiên bản cũ)
+        oldTerm.setStatus(TermStatus.OLD);
+        termRepository.save(oldTerm);
+
+        // Tạo Term mới với dữ liệu cập nhật, version tăng thêm 1 và status là NEW
+
+        Term newTerm = Term.builder()
+                .clauseCode(oldTerm.getClauseCode())
+                .label(termRequest.getLabel())
+                .value(termRequest.getValue())
+                .createdAt(LocalDateTime.now())
+                .typeTerm(oldTerm.getTypeTerm())
+                .status(TermStatus.NEW)
+                .version(oldTerm.getVersion() + 1)
+                .build();
+        termRepository.save(newTerm);
 
         return CreateTermResponse.builder()
-                .id(term.getId())
-                .clauseCode(term.getClauseCode())
-                .label(term.getLabel())
-                .value(term.getValue())
-                .type(term.getTypeTerm().getName())
-                .identifier(String.valueOf(typeTermIdentifier))
-                .isDelete(term.getIsDeleted())
-                .createdAt(term.getCreatedAt())
+                .id(newTerm.getId())
+                .clauseCode(newTerm.getClauseCode())
+                .label(newTerm.getLabel())
+                .value(newTerm.getValue())
+                .createdAt(newTerm.getCreatedAt())
+                .type(newTerm.getTypeTerm().getName())
+                .identifier(String.valueOf(newTerm.getTypeTerm().getIdentifier()))
+                .status(TermStatus.NEW)
                 .build();
     }
 
@@ -205,11 +216,10 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .identifier(term.getTypeTerm().getIdentifier().name())
-                .isDelete(term.getIsDeleted())
+                .status(term.getStatus())
                 .createdAt(term.getCreatedAt())
                 .build());
     }
-
 
     @Override
     public CreateTermResponse getTermById(Long id) throws DataNotFoundException {
@@ -303,7 +313,7 @@ public class TermService implements ITermService{
     public void updateTermStatus(Long termId, Boolean isDeleted) throws DataNotFoundException {
         Term existingTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy điều khoản với id: " + termId));
-        existingTerm.setIsDeleted(isDeleted);
+        existingTerm.setStatus(TermStatus.SOFT_DELETED);
         termRepository.save(existingTerm);
     }
 

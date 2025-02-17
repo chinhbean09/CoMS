@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.term;
 
 
+import com.capstone.contractmanagement.enums.TermStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,6 +17,6 @@ public class GetAllTermsResponse {
     private String type;
     private String identifier;
     private LocalDateTime createdAt;
-    private Boolean isDelete;
+    private TermStatus status;
 
 }
