@@ -16,6 +16,9 @@ import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,9 +69,15 @@ public class TermController {
             @RequestParam(defaultValue = "false") boolean includeLegalBasis,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0", required = false) int page,
-            @RequestParam(defaultValue = "10", required = false) int size) {
+            @RequestParam(defaultValue = "10", required = false) int size,
+            @RequestParam(defaultValue = "id", required = false) String sortBy,
+            @RequestParam(defaultValue = "asc", required = false) String order) {
         try {
-            Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis,keyword, page, size);
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis,keyword, pageable);
             return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
                     .data(termResponses)
