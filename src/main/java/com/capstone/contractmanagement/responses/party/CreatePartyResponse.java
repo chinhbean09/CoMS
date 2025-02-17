@@ -21,5 +21,6 @@ public class CreatePartyResponse {
     private String phone;
     private String email;
     private String note;
+    private Boolean isDeleted;
     private List<BankResponse> banking;
 }
