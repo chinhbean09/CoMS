@@ -20,6 +20,4 @@ public interface IPartyService {
     Page<ListPartyResponse> getAllParties(String search, int page, int size);
     ListPartyResponse getPartyById(Long id) throws DataNotFoundException;
 
-    void updatePartyStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException;
-
 }
