@@ -71,7 +71,7 @@ public class TermController {
             Page<GetAllTermsResponse> termResponses = termService.getAllTerms(typeTermIds, includeLegalBasis,keyword, page, size);
             return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
-                    .data(termResponses.getContent())
+                    .data(termResponses)
                     .status(HttpStatus.OK)
                     .build());
         } catch (Exception e) {
