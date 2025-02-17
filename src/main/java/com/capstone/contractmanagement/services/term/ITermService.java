@@ -11,6 +11,7 @@ import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface ITermService {
 
     CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException;
 
-     Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search,  int page, int size);
+     Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
 
         CreateTermResponse getTermById(Long id) throws DataNotFoundException;
 
