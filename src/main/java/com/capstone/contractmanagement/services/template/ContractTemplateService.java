@@ -4,9 +4,12 @@
     import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
     import com.capstone.contractmanagement.entities.ContractTemplate;
     import com.capstone.contractmanagement.entities.ContractTemplateAdditionalTermDetail;
+    import com.capstone.contractmanagement.entities.ContractType;
     import com.capstone.contractmanagement.entities.Term;
     import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+    import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
+    import com.capstone.contractmanagement.repositories.IContractTypeRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
@@ -22,10 +25,14 @@
     public class ContractTemplateService implements IContractTemplateService {
         private final IContractTemplateRepository templateRepository;
         private final ITermRepository termRepository;
+        private final IContractTypeRepository contractTypeRepository;
 
         @Override
         @Transactional
-        public ContractTemplate createTemplate(ContractTemplateDTO dto) {
+        public ContractTemplate createTemplate(ContractTemplateDTO dto) throws DataNotFoundException {
+
+            ContractType contractType = contractTypeRepository.findById(dto.getContractTypeId())
+                    .orElseThrow(() -> new DataNotFoundException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()));
 
             // Khai báo các tập hợp id cho từng nhóm
             Set<Long> legalBasisIds = new HashSet<>();
@@ -216,6 +223,7 @@
                     .vatPercentage(dto.getVatPercentage())
                     .isDateLateChecked(dto.getIsDateLateChecked())
                     .maxDateLate(dto.getMaxDateLate())
+                    .contractType(contractType)
                     .autoRenew(dto.getAutoRenew())
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())

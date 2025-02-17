@@ -113,7 +113,7 @@ public class ContractTemplate {
     @ManyToMany
     @JsonIgnore
     @JoinTable(
-            name = "'contract_template_other_terms'",
+            name = "contract_template_other_terms",
             joinColumns = @JoinColumn(name = "template_id"),
             inverseJoinColumns = @JoinColumn(name = "term_id")
     )
@@ -133,6 +133,11 @@ public class ContractTemplate {
     @OneToMany(mappedBy = "contractTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
+
+
+    @ManyToOne
+    @JoinColumn(name = "contract_type_id", nullable = false)
+    private ContractType contractType;
 
 
 }
