@@ -47,6 +47,9 @@ public class Party {
     @Column(name = "note", length = 1000)
     private String note;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = Boolean.FALSE;
+
     @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Bank> banking = new ArrayList<>();
     // One-to-Many với Contract
