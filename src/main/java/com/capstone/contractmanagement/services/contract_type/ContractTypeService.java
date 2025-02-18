@@ -39,8 +39,6 @@ public class ContractTypeService implements IContractTypeService {
 //        if (exists) {
 //            throw new IllegalArgumentException("exist");
 //        }
-
-        return contractTypeRepository.save(contractType);
     }
 
     @Override
