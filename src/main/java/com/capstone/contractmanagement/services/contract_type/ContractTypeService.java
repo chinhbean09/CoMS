@@ -17,12 +17,14 @@ public class ContractTypeService implements IContractTypeService {
 
     @Override
     public List<ContractType> findAll() {
-        return contractTypeRepository.findAll();
+        return contractTypeRepository.findAllByIsDeletedFalse();
     }
 
     @Override
     public Optional<ContractType> findById(Long id) {
-        return contractTypeRepository.findById(id);
+        return Optional.ofNullable(contractTypeRepository.findById(id)
+                .filter(contractType -> !contractType.isDeleted())
+                .orElseThrow(() -> new EntityNotFoundException("ContractType not found")));
     }
     @Override
     public ContractType save(ContractType contractType) {
@@ -49,4 +51,14 @@ public class ContractTypeService implements IContractTypeService {
         }
         contractTypeRepository.deleteById(id);
     }
+
+    @Override
+    public void updateDeleteStatus(Long id, Boolean isDeleted) {
+        ContractType contractType = contractTypeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
+        contractType.setDeleted(isDeleted);
+        contractTypeRepository.save(contractType);
+    }
+
+
 }
