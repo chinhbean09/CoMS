@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IContractTypeRepository extends JpaRepository<ContractType, Long> {
+
+    boolean existsByName(String name);
+
 }
