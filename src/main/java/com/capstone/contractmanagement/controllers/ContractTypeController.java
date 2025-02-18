@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_type.ContractTypeDTO;
 import com.capstone.contractmanagement.entities.ContractType;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.services.contract_type.IContractTypeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -89,4 +90,37 @@ public class ContractTypeController {
         contractType.setName(dto.getName());
         return contractType;
     }
+    @PatchMapping("/{id}/delete-status")
+    public ResponseEntity<ResponseObject> updateDeleteStatus(
+            @PathVariable Long id,
+            @RequestParam Boolean isDeleted) {
+        try {
+            contractTypeService.updateDeleteStatus(id, isDeleted);
+            String message = isDeleted ? "Contract type soft deleted successfully." : "Contract type restored successfully.";
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(ResponseObject.builder()
+                            .message(message)
+                            .status(HttpStatus.OK)
+                            .data(null)
+                            .build());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.NOT_FOUND)
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+
+
+
 }

@@ -16,5 +16,6 @@ public interface IContractTypeService {
 
     void delete(Long id);
 
+     void updateDeleteStatus(Long id, Boolean isDeleted);
 
 }
