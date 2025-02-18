@@ -3,11 +3,12 @@ package com.capstone.contractmanagement.services.contract_type;
 import com.capstone.contractmanagement.entities.ContractType;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IContractTypeService {
     List<ContractType> findAll();
 
-    ContractType findById(Long id);
+    Optional<ContractType> findById(Long id);
 
     ContractType save(ContractType contractType);
 

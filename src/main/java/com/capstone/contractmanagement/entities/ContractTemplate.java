@@ -138,7 +138,7 @@ public class ContractTemplate {
 
     @ManyToOne
     @JoinColumn(name = "contract_type_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     private ContractType contractType;
 
 
