@@ -32,10 +32,14 @@ public class ContractTypeService implements IContractTypeService {
     public ContractType save(ContractType contractType) {
 //        boolean exists = contractTypeRepository.existsByNqame(contractType.getName());
 
-        Optional<ContractType> existingOpt = contractTypeRepository.findByName(contractType.getName());
-        if (existingOpt.isPresent() && !existingOpt.get().isDeleted()) {
-            throw new IllegalArgumentException("exist");
+        Optional<ContractType> existingOpt = contractTypeRepository.findByNameAndIsDeletedFalse(contractType.getName());
+
+        // Nếu tồn tại bản ghi chưa bị xóa với tên trùng, ném lỗi
+        if (existingOpt.isPresent()) {
+            throw new IllegalArgumentException("Contract type with name '" + contractType.getName() + "' already exists.");
         }
+
+        // Nếu không tìm thấy bản ghi trùng tên và chưa bị xóa, lưu bản ghi mới
         return contractTypeRepository.save(contractType);
 
     }
