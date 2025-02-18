@@ -6,6 +6,8 @@ import com.capstone.contractmanagement.services.contract.IContractService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +38,6 @@ public class ContractTypeService implements IContractTypeService {
         }
         return contractTypeRepository.save(contractType);
 
-//        if (exists) {
-//            throw new IllegalArgumentException("exist");
-//        }
     }
 
     @Override
@@ -65,6 +64,7 @@ public class ContractTypeService implements IContractTypeService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateDeleteStatus(Long id, Boolean isDeleted) {
         ContractType contractType = contractTypeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
