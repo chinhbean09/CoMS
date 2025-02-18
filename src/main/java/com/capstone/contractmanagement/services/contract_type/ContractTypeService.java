@@ -39,10 +39,16 @@ public class ContractTypeService implements IContractTypeService {
     public ContractType update(Long id, ContractType contractType) {
         return contractTypeRepository.findById(id)
                 .map(existingType -> {
+                    // Kiểm tra xem tên mới đã tồn tại đối với một ContractType khác chưa
+                    if (contractTypeRepository.existsByNameAndIdNot(contractType.getName(), id)) {
+                        throw new IllegalArgumentException("exist");
+                    }
                     existingType.setName(contractType.getName());
                     return contractTypeRepository.save(existingType);
-                }).orElseThrow(() -> new RuntimeException("ContractType not found"));
+                })
+                .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
     }
+
 
     @Override
     public void delete(Long id) {
