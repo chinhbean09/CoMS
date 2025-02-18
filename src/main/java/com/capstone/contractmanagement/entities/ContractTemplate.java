@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -137,7 +138,10 @@ public class ContractTemplate {
 
     @ManyToOne
     @JoinColumn(name = "contract_type_id", nullable = false)
+    @JsonIgnore
     private ContractType contractType;
+
+
 
 
 }
