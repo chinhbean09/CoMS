@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,27 +21,32 @@ public class ContractTypeService implements IContractTypeService {
     }
 
     @Override
-    public ContractType findById(Long id) {
-        return contractTypeRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ContractType không tồn tại với id: " + id));
+    public Optional<ContractType> findById(Long id) {
+        return contractTypeRepository.findById(id);
     }
-
     @Override
     public ContractType save(ContractType contractType) {
+        boolean exists = contractTypeRepository.existsByName(contractType.getName());
+        if (exists) {
+            throw new IllegalArgumentException("Contract type with name '" + contractType.getName() + "' already exists.");
+        }
         return contractTypeRepository.save(contractType);
     }
 
     @Override
     public ContractType update(Long id, ContractType contractType) {
-        ContractType existing = findById(id);
-        existing.setName(contractType.getName());
-        // Nếu có các trường khác cần cập nhật, hãy cập nhật tương ứng
-        return contractTypeRepository.save(existing);
+        return contractTypeRepository.findById(id)
+                .map(existingType -> {
+                    existingType.setName(contractType.getName());
+                    return contractTypeRepository.save(existingType);
+                }).orElseThrow(() -> new RuntimeException("ContractType not found"));
     }
 
     @Override
     public void delete(Long id) {
-        ContractType existing = findById(id);
-        contractTypeRepository.delete(existing);
+        if (!contractTypeRepository.existsById(id)) {
+            throw new RuntimeException("ContractType not found");
+        }
+        contractTypeRepository.deleteById(id);
     }
 }
