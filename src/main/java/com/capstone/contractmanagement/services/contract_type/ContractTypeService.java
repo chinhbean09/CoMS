@@ -28,10 +28,18 @@ public class ContractTypeService implements IContractTypeService {
     }
     @Override
     public ContractType save(ContractType contractType) {
-        boolean exists = contractTypeRepository.existsByName(contractType.getName());
-        if (exists) {
+//        boolean exists = contractTypeRepository.existsByNqame(contractType.getName());
+
+        Optional<ContractType> existingOpt = contractTypeRepository.findByName(contractType.getName());
+        if (existingOpt.isPresent() && !existingOpt.get().isDeleted()) {
             throw new IllegalArgumentException("exist");
         }
+        return contractTypeRepository.save(contractType);
+
+//        if (exists) {
+//            throw new IllegalArgumentException("exist");
+//        }
+
         return contractTypeRepository.save(contractType);
     }
 
