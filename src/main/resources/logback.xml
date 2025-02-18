@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- (Tùy chọn) Bao gồm cấu hình mặc định của Spring Boot nếu cần -->
-    <!-- <include resource="org/springframework/boot/logging/logback/base.xml" /> -->
+     <include resource="org/springframework/boot/logging/logback/base.xml" />
 
-    <!-- Định nghĩa biến dùng chung -->
-    <property name="LOG_PATH" value="logs" />
+    <!-- <property name="LOG_PATH" value="logs" /> -->
 
-    <!-- Appender ghi ra Console với màu sắc -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
@@ -16,7 +13,7 @@
         </encoder>
     </appender>
 
-    <!-- Appender ghi ra file với Rolling Policy -->
+    <!--  ghi log ra file, appender FILE
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/log.log</file>
         <encoder>
@@ -28,25 +25,27 @@
             <totalSizeCap>100MB</totalSizeCap>
         </rollingPolicy>
     </appender>
+    -->
 
-    <!-- Cấu hình logger cho một package cụ thể (hoặc theo class) -->
+    <!-- Cấu hình logger cho một package cụ thể -->
     <logger name="com.lankydan.service" additivity="false" level="debug">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
+        <!-- <appender-ref ref="FILE"/> -->
     </logger>
 
     <!-- Cấu hình root logger theo profile -->
     <springProfile name="dev">
         <root level="info">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
+            <!-- <appender-ref ref="FILE"/> -->
         </root>
     </springProfile>
 
     <springProfile name="prod">
         <root level="info">
-            <!-- Ở môi trường prod, chỉ ghi ra file -->
-            <appender-ref ref="FILE"/>
+            <!-- Ở môi trường prod, chỉ ghi ra console -->
+            <appender-ref ref="CONSOLE"/>
+            <!-- <appender-ref ref="FILE"/> -->
         </root>
     </springProfile>
 
