@@ -21,7 +21,7 @@ public class ContractType {
     @Column(name = "contract_type_id")
     private Long id;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Setter
