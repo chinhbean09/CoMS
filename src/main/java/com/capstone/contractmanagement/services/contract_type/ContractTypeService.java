@@ -28,7 +28,7 @@ public class ContractTypeService implements IContractTypeService {
     public ContractType save(ContractType contractType) {
         boolean exists = contractTypeRepository.existsByName(contractType.getName());
         if (exists) {
-            throw new IllegalArgumentException("Contract type with name '" + contractType.getName() + "' already exists.");
+            throw new IllegalArgumentException("exist");
         }
         return contractTypeRepository.save(contractType);
     }

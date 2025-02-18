@@ -68,7 +68,7 @@ public class ContractTypeController {
     public ResponseEntity<?> deleteContractType(@PathVariable Long id) {
         try {
             contractTypeService.delete(id);
-            return ResponseEntity.ok("Xóa loại hợp đồng thành công.");
+            return ResponseEntity.ok(" successfully");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy hợp đồng có ID: " + id);
         } catch (Exception e) {
