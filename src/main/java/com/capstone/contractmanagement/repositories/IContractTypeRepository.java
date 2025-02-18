@@ -13,4 +13,6 @@ public interface IContractTypeRepository extends JpaRepository<ContractType, Lon
 
     List<ContractType> findAllByIsDeletedFalse();
 
+    boolean existsByNameAndIdNot(String name, Long id);
+
 }

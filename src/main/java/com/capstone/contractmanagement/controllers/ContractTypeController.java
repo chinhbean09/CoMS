@@ -55,13 +55,14 @@ public class ContractTypeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ContractTypeDTO> updateContractType(@PathVariable Long id, @RequestBody ContractTypeDTO contractTypeDTO) {
+    @Transactional
+    public ResponseEntity<?> updateContractType(@PathVariable Long id, @RequestBody ContractTypeDTO contractTypeDTO) {
         try {
             ContractType contractType = convertToEntity(contractTypeDTO);
             ContractType updatedType = contractTypeService.update(id, contractType);
             return ResponseEntity.ok(convertToDTO(updatedType));
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -90,6 +91,7 @@ public class ContractTypeController {
         contractType.setName(dto.getName());
         return contractType;
     }
+
     @PatchMapping("/{id}/delete-status")
     public ResponseEntity<ResponseObject> updateDeleteStatus(
             @PathVariable Long id,
@@ -119,8 +121,5 @@ public class ContractTypeController {
                             .build());
         }
     }
-
-
-
 
 }
