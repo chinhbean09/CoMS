@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ public class ContractTypeController {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+        Collections.reverse(contractTypes);
         return ResponseEntity.ok(contractTypes);
     }
 
