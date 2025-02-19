@@ -2,9 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.components.JwtTokenUtils;
 import com.capstone.contractmanagement.components.LocalizationUtils;
-import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
-import com.capstone.contractmanagement.dtos.user.UserDTO;
-import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
+import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.Token;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -64,7 +62,7 @@ public class UserController {
 
         @PostMapping("/register")
     public ResponseEntity<ResponseObject> registerUser(
-            @Valid @RequestBody UserDTO userDTO,
+            @Valid @RequestBody CreateUserDTO userDTO,
             BindingResult result
     ) throws Exception {
         if (result.hasErrors()) {
@@ -104,13 +102,13 @@ public class UserController {
                     .message(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS))
                     .build());
         }
-        if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
-            return ResponseEntity.badRequest().body(ResponseObject.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .data(null)
-                    .message(localizationUtils.getLocalizedMessage(MessageKeys.PASSWORD_NOT_MATCH))
-                    .build());
-        }
+//        if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
+//            return ResponseEntity.badRequest().body(ResponseObject.builder()
+//                    .status(HttpStatus.BAD_REQUEST)
+//                    .data(null)
+//                    .message(localizationUtils.getLocalizedMessage(MessageKeys.PASSWORD_NOT_MATCH))
+//                    .build());
+//        }
         User user = userService.registerUser(userDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
@@ -352,6 +350,24 @@ public class UserController {
                 .data(UserResponse.fromUser(user))
                 .message(MessageKeys.UPDATE_AVATAR_SUCCESSFULLY)
                 .build());
+    }
+
+    @PutMapping("/update-password/{userId}")
+    public ResponseEntity<ResponseObject> changePassword(
+            @PathVariable long userId,
+            @RequestBody UpdatePasswordDTO changePasswordDTO) {
+        try {
+            userService.changePassword(userId, changePasswordDTO);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message(MessageKeys.CHANGE_PASSWORD_SUCCESSFULLY)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResponseObject.builder()
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .message(e.getMessage())
+                    .build());
+        }
     }
 
 }
