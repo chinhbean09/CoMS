@@ -24,7 +24,7 @@ public interface ITermService {
 
      Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
 
-        CreateTermResponse getTermById(Long id) throws DataNotFoundException;
+     CreateTermResponse getTermById(Long id) throws DataNotFoundException;
 
     void deleteTerm(Long termId) throws DataNotFoundException;
 
