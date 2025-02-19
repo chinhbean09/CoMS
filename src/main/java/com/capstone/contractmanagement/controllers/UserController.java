@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.components.JwtTokenUtils;
 import com.capstone.contractmanagement.components.LocalizationUtils;
+import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
 import com.capstone.contractmanagement.dtos.user.UserDTO;
 import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
 import com.capstone.contractmanagement.entities.Token;
@@ -193,7 +194,7 @@ public class UserController {
 //    }
 
     @PutMapping("/block-or-enable/{userId}/{active}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<String> blockOrEnable(
             @Valid @PathVariable long userId,
             @Valid @PathVariable int active) {
@@ -286,10 +287,10 @@ public class UserController {
     }
 
     @Transactional
-    @PutMapping("/update-user")
-    public ResponseEntity<?> updateUser(@RequestBody UserDTO userDTO) {
+    @PutMapping("/update-user/{userId}")
+    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
         try {
-            userService.updateUser(userDTO);
+            userService.updateUser(userId, userDTO);
             return ResponseEntity.ok(MessageKeys.UPDATE_USER_SUCCESSFULLY);
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
