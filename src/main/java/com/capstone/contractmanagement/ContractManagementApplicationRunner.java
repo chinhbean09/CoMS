@@ -80,13 +80,13 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         //generalTerms, additionalTerms, otherTerms, legalbasis
         List<TypeTerm> typeTerms = List.of(
                 // Additional Terms
-                TypeTerm.builder().name("Điều khoản thêm").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-                TypeTerm.builder().name("Quyền và nghĩa vụ").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-                TypeTerm.builder().name("Bảo hành và bảo trì").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-                TypeTerm.builder().name("Vi phạm và thiệt hại").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-                TypeTerm.builder().name("Chấm dứt hợp đồng").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản bổ sung").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản Quyền và nghĩa vụ các bên").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản Bảo hành và bảo trì").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản vi phạm và thiệt hại").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản chấm dứt hợp đồng").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
                 TypeTerm.builder().name("Điều khoản giải quyết tranh chấp").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-                TypeTerm.builder().name("Chính sách bảo mật").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
+                TypeTerm.builder().name("Điều khoản bảo mật").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
 
                 // Legal basis
                 TypeTerm.builder().name("Căn cứ pháp lí").identifier(TypeTermIdentifier.LEGAL_BASIS).build(),
