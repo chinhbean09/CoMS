@@ -2,6 +2,7 @@
 
     import com.capstone.contractmanagement.dtos.IdDTO;
     import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
+    import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
     import com.capstone.contractmanagement.entities.ContractTemplate;
     import com.capstone.contractmanagement.entities.ContractTemplateAdditionalTermDetail;
     import com.capstone.contractmanagement.entities.ContractType;
@@ -11,6 +12,9 @@
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
     import com.capstone.contractmanagement.repositories.IContractTypeRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
+    import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
+    import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
+    import com.capstone.contractmanagement.responses.term.TermResponse;
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.Pageable;
@@ -242,10 +246,10 @@
                 List<Term> otherTerms = termRepository.findAllById(otherTermsIds);
                 template.setOtherTerms(otherTerms);
             }
-//            if (!additionalTermsIds.isEmpty()) {
-//                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
-//                template.setAdditionalTerms(additionalTerms);
-//            }
+            if (!additionalTermsIds.isEmpty()) {
+                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
+                template.setAdditionalTerms(additionalTerms);
+            }
 
             template.setAdditionalTermConfigs(additionalTermConfigs);
             additionalTermConfigs.forEach(config -> config.setContractTemplate(template));
@@ -259,9 +263,141 @@
 
 
         @Override
-        public Optional<ContractTemplate> getTemplateById(Long id) {
-            return templateRepository.findById(id);
+        @Transactional(readOnly = true)
+        public Optional<ContractTemplateResponse> getTemplateById(Long id) {
+            return templateRepository.findById(id)
+                    .map(template -> {
+                        // Force lazy loading on ContractTemplate collections:
+                        template.getLegalBasisTerms().size();
+                        template.getGeneralTerms().size();
+                        template.getOtherTerms().size();
+                        template.getAdditionalTerms().size();
+
+                        // Force lazy loading on each additionalTermConfigs' element collections:
+                        template.getAdditionalTermConfigs().forEach(config -> {
+                            config.getCommonTermIds().size();
+                            config.getATermIds().size();
+                            config.getBTermIds().size();
+                        });
+
+                        return convertToResponseDTO(template);
+                    });
         }
+
+
+        private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
+            List<TermResponse> legalBasisTerms = template.getLegalBasisTerms().stream()
+                    .map(term -> TermResponse.builder()
+                            .id(term.getId())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+
+            List<TermResponse> generalTerms = template.getGeneralTerms().stream()
+                    //biến đổi từng phần tử của stream từ kiểu dữ liệu này sang kiểu dữ liệu khác.
+                    .map(term -> TermResponse.builder()
+                            .id(term.getId())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+
+            List<TermResponse> otherTerms = template.getOtherTerms().stream()
+                    .map(term -> TermResponse.builder()
+                            .id(term.getId())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+
+            List<TermResponse> additionalTerms = template.getAdditionalTerms().stream()
+                    .map(term -> TermResponse.builder()
+                            .id(term.getId())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+
+            Map<String, Map<String, List<TermResponse>>> additionalConfig = template.getAdditionalTermConfigs()
+
+                    //gọi .stream(), Java sẽ tự động lặp qua từng phần tử của danh sách
+                    //chỉ cần định nghĩa cách xử lý từng phần tử (biến đổi thành key và value)
+                    .stream()
+                    //tạo ra map => Collectors.toMap
+                    //Key là typeTermId, value là một Map bao gồm 3 phần: common, A và B.
+                    .collect(Collectors.toMap(
+                            //Một hàm để tạo key cho mỗi entry.
+                            //Với mỗi config, lấy config.getTypeTermId(), chuyển thành chuỗi và dùng làm key.
+                            config -> String.valueOf(config.getTypeTermId()),
+
+                            //Một hàm để tạo value cho mỗi entry.
+                            config -> {
+                                // khởi tạo inner map phục vụ cho value của key
+                                Map<String, List<TermResponse>> innerMap = new java.util.HashMap<>();
+                                //Gán key "Common"̀ ; value: gán danh sách TermResponse được tạo từ config.getCommonTermIds().
+                                innerMap.put("Common", convertTermIdsToTermResponseDTOList(config.getCommonTermIds()));
+                                innerMap.put("A", convertTermIdsToTermResponseDTOList(config.getATermIds())); // Ensure getter naming is correct
+                                innerMap.put("B", convertTermIdsToTermResponseDTOList(config.getBTermIds())); // Ensure getter naming is correct
+                                return innerMap;
+                            }
+                    ));
+
+            return ContractTemplateResponse.builder()
+                    .id(template.getId())
+                    .contractTitle(template.getContractTitle())
+                    .partyInfo(template.getPartyInfo())
+                    .specialTermsA(template.getSpecialTermsA())
+                    .specialTermsB(template.getSpecialTermsB())
+                    .appendixEnabled(template.getAppendixEnabled())
+                    .transferEnabled(template.getTransferEnabled())
+                    .createdAt(template.getCreatedAt())
+                    .updatedAt(template.getUpdatedAt())
+                    .violate(template.getViolate())
+                    .suspend(template.getSuspend())
+                    .suspendContent(template.getSuspendContent())
+                    .contractContent(template.getContractContent())
+                    .autoAddVAT(template.getAutoAddVAT())
+                    .vatPercentage(template.getVatPercentage())
+                    .isDateLateChecked(template.getIsDateLateChecked())
+                    .maxDateLate(template.getMaxDateLate())
+                    .autoRenew(template.getAutoRenew())
+                    .legalBasisTerms(legalBasisTerms)
+                    .generalTerms(generalTerms)
+                    .otherTerms(otherTerms)
+                    .additionalTerms(additionalTerms)
+                    .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
+                    .additionalConfig(additionalConfig)
+                    .build();
+        }
+
+        //Biến đổi từng phần tử trong danh sách termIds (Long) thành các đối tượng TermResponse.
+        private List<TermResponse> convertTermIdsToTermResponseDTOList(List<Long> termIds) {
+            return termIds
+                    //chuyển danh sách thành stream
+                    .stream()
+
+                    //chuyển mỗi phần tử id thành một đối tượng TermResponse
+                    //Mỗi phần tử id của stream sẽ được truyền vào lambda thực hiện lambda id -> { ... }.
+                    .map(id ->
+
+                            //với mỗi id, gọi termRepository.findById(id) để tìm đối tượng Term tương ứng.
+                            termRepository.findById(id)
+
+                    //Phương thức map nhận đối tượng Term và áp dụng lambda: term -> TermResponse.builder()
+                    //Lambda term -> TermResponse.builder()...build(): "với đối tượng term, tạo ra một đối tượng TermResponse dựa trên các thông tin của term."
+                    .map(term -> TermResponse.builder()
+                                    .id(term.getId())
+                                    .label(term.getLabel())
+                                    .value(term.getValue())
+                                    .build())
+                            .orElse(null))
+                    //chỉ giữ lại các TermResponse hợp lệ.
+                    .filter(dto -> dto != null)
+                    //tất cả các đối tượng TermResponse được thu thập lại thành một danh sách (List<TermResponse>) và trả về.
+                    .collect(Collectors.toList());
+        }
+
 
         @Override
         public void deleteTemplate(Long id) {
