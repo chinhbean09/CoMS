@@ -42,7 +42,7 @@
 
             // Legal Basis
             if (dto.getLegalBasis() != null) {
-                dto.getLegalBasis().forEach(idDTO -> legalBasisIds.add(idDTO.getId()));
+                legalBasisIds.addAll(dto.getLegalBasis());
                 for (Long id : legalBasisIds) {
                     Term term = termRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
@@ -51,6 +51,7 @@
                     }
                 }
             }
+
             // General Terms
             if (dto.getGeneralTerms() != null) {
                 generalTermsIds.addAll(dto.getGeneralTerms());
