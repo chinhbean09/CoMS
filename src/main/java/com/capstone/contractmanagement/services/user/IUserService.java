@@ -1,8 +1,6 @@
 package com.capstone.contractmanagement.services.user;
 
-import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
-import com.capstone.contractmanagement.dtos.user.UserDTO;
-import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
+import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.User.UserResponse;
@@ -13,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface IUserService {
-    com.capstone.contractmanagement.entities.User registerUser(UserDTO userDTO) throws Exception;
+    com.capstone.contractmanagement.entities.User registerUser(CreateUserDTO userDTO) throws Exception;
 
     String login(UserLoginDTO userLoginDTO) throws Exception;
 
@@ -35,6 +33,7 @@ public interface IUserService {
     void updatePassword(String email, String password) throws DataNotFoundException;
 
     User updateUserAvatar(long id, MultipartFile avatar);
+    void changePassword(Long id, UpdatePasswordDTO changePasswordDTO) throws DataNotFoundException;
 
 
 }

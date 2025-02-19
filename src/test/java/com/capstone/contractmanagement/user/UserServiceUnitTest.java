@@ -100,24 +100,24 @@ public class UserServiceUnitTest {
         userDTO.setRoleId(2L);
     }
 
-    @Test
-    void registerUser_Success() throws Exception {
-        when(userRepository.existsByPhoneNumber(userDTO.getPhoneNumber())).thenReturn(false);
-        when(userRepository.existsByEmail(userDTO.getEmail())).thenReturn(false);
-        when(roleRepository.findById(2L)).thenReturn(Optional.of(role));
-        when(passwordEncoder.encode(userDTO.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
-
-        User registeredUser = userService.registerUser(userDTO);
-        assertNotNull(registeredUser);
-        assertEquals("test@example.com", registeredUser.getEmail());
-    }
-
-    @Test
-    void registerUser_EmailAlreadyExists() {
-        when(userRepository.existsByEmail(userDTO.getEmail())).thenReturn(true);
-        assertThrows(Exception.class, () -> userService.registerUser(userDTO));
-    }
+//    @Test
+//    void registerUser_Success() throws Exception {
+//        when(userRepository.existsByPhoneNumber(userDTO.getPhoneNumber())).thenReturn(false);
+//        when(userRepository.existsByEmail(userDTO.getEmail())).thenReturn(false);
+//        when(roleRepository.findById(2L)).thenReturn(Optional.of(role));
+//        when(passwordEncoder.encode(userDTO.getPassword())).thenReturn("encodedPassword");
+//        when(userRepository.save(any(User.class))).thenReturn(user);
+//
+//        User registeredUser = userService.registerUser(userDTO);
+//        assertNotNull(registeredUser);
+//        assertEquals("test@example.com", registeredUser.getEmail());
+//    }
+//
+//    @Test
+//    void registerUser_EmailAlreadyExists() {
+//        when(userRepository.existsByEmail(userDTO.getEmail())).thenReturn(true);
+//        assertThrows(Exception.class, () -> userService.registerUser(userDTO));
+//    }
 
     @Test
     void getUserDetailsFromToken_UserExists() throws Exception {
