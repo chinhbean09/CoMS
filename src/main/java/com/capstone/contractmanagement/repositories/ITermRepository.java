@@ -48,6 +48,9 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findByLegalBasisOrTypeTermIdInWithSearch(@Param("ids") List<Long> ids, @Param("search") String search, Pageable pageable);
 
+    @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' AND t.status = 'NEW'")
+    List<Term> findAllLegalBasisTerms();
+  
     @Query("SELECT t FROM Term t WHERE t.typeTerm = :typeTerm " +
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
