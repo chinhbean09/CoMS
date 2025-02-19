@@ -12,9 +12,11 @@
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
     import com.capstone.contractmanagement.repositories.IContractTypeRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
+    import com.capstone.contractmanagement.repositories.ITypeTermRepository;
     import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
     import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
     import com.capstone.contractmanagement.responses.term.TermResponse;
+    import com.capstone.contractmanagement.responses.term.TypeTermResponse;
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.Pageable;
@@ -30,6 +32,8 @@
         private final IContractTemplateRepository templateRepository;
         private final ITermRepository termRepository;
         private final IContractTypeRepository contractTypeRepository;
+        private final ITypeTermRepository typeTermRepository;
+
 
         @Override
         @Transactional
@@ -246,10 +250,10 @@
                 List<Term> otherTerms = termRepository.findAllById(otherTermsIds);
                 template.setOtherTerms(otherTerms);
             }
-            if (!additionalTermsIds.isEmpty()) {
-                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
-                template.setAdditionalTerms(additionalTerms);
-            }
+//            if (!additionalTermsIds.isEmpty()) {
+//                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
+//                template.setAdditionalTerms(additionalTerms);
+//            }
 
             template.setAdditionalTermConfigs(additionalTermConfigs);
             additionalTermConfigs.forEach(config -> config.setContractTemplate(template));
@@ -267,22 +271,20 @@
         public Optional<ContractTemplateResponse> getTemplateById(Long id) {
             return templateRepository.findById(id)
                     .map(template -> {
-                        // Force lazy loading on ContractTemplate collections:
+                        // Force lazy loading of collections while session is open.
                         template.getLegalBasisTerms().size();
                         template.getGeneralTerms().size();
                         template.getOtherTerms().size();
-                        template.getAdditionalTerms().size();
-
-                        // Force lazy loading on each additionalTermConfigs' element collections:
+                        // No additionalTerms list is used now.
                         template.getAdditionalTermConfigs().forEach(config -> {
                             config.getCommonTermIds().size();
                             config.getATermIds().size();
                             config.getBTermIds().size();
                         });
-
                         return convertToResponseDTO(template);
                     });
         }
+
 
 
         private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
@@ -311,12 +313,24 @@
                             .build())
                     .collect(Collectors.toList());
 
-            List<TermResponse> additionalTerms = template.getAdditionalTerms().stream()
-                    .map(term -> TermResponse.builder()
-                            .id(term.getId())
-                            .label(term.getLabel())
-                            .value(term.getValue())
+//            List<TermResponse> additionalTerms = template.getAdditionalTerms().stream()
+//                    .map(term -> TermResponse.builder()
+//                            .id(term.getId())
+//                            .label(term.getLabel())
+//                            .value(term.getValue())
+//                            .build())
+//                    .collect(Collectors.toList());
+
+            List<TypeTermResponse> additionalTerms = template.getAdditionalTermConfigs().stream()
+                    .map(config -> typeTermRepository.findById(config.getTypeTermId()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .map(typeTerm -> TypeTermResponse.builder()
+                            .id(typeTerm.getId())
+                            .name(typeTerm.getName())
+                            .identifier(typeTerm.getIdentifier())
                             .build())
+                    .distinct()  // ensure uniqueness if needed
                     .collect(Collectors.toList());
 
             Map<String, Map<String, List<TermResponse>>> additionalConfig = template.getAdditionalTermConfigs()

@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.responses.template;
 
 import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
 import com.capstone.contractmanagement.responses.term.TermResponse;
+import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.Builder;
 import lombok.Data;
 
@@ -34,7 +35,7 @@ public class ContractTemplateResponse {
     private List<TermResponse> legalBasisTerms;
     private List<TermResponse> generalTerms;
     private List<TermResponse> otherTerms;
-    private List<TermResponse> additionalTerms;
+    private List<TypeTermResponse> additionalTerms;
     private Long contractTypeId;
     // Thêm field cho additionalTermConfigs
 
