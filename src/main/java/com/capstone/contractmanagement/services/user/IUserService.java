@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.user;
 
+import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
 import com.capstone.contractmanagement.dtos.user.UserDTO;
 import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
 import com.capstone.contractmanagement.entities.User;
@@ -25,7 +26,7 @@ public interface IUserService {
 
     void deleteUser(Long userId);
 
-    void updateUser(UserDTO userDTO) throws Exception;
+    void updateUser(Long userId, UpdateUserDTO userDTO) throws Exception;
 
     User getUserDetailsFromRefreshToken(String refreshToken) throws Exception;
 
