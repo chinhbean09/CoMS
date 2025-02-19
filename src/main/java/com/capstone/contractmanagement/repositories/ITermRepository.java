@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.repositories;
 
 import com.capstone.contractmanagement.entities.Term;
+import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,5 +50,11 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' AND t.status = 'NEW'")
     List<Term> findAllLegalBasisTerms();
-
+  
+    @Query("SELECT t FROM Term t WHERE t.typeTerm = :typeTerm " +
+            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Term> searchByTypeTermAndLabelOrClauseCode(@Param("typeTerm") TypeTerm typeTerm,
+                                                    @Param("search") String search,
+                                                    Pageable pageable);
 }

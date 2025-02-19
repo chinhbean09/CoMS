@@ -36,7 +36,7 @@ public interface ITermService {
 
     List<TypeTermResponse> getAllTypeTerms();
 
-    List<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId);
+    Page<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId, String search, int page, int size);
 
     void updateTermStatus(Long termId, Boolean isDeleted) throws DataNotFoundException;
 }

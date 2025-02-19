@@ -161,8 +161,11 @@ public class TermController {
 
     // get all terms by type term id
     @GetMapping("/get-terms-by-type-term-id/{typeTermId}")
-    public ResponseEntity<ResponseObject> getTermsByTypeTermId(@PathVariable Long typeTermId) {
-        List<GetAllTermsResponse> terms = termService.getAllTermsByTypeTermId(typeTermId);
+    public ResponseEntity<ResponseObject> getTermsByTypeTermId(@PathVariable Long typeTermId,
+                                                               @RequestParam(required = false) String keyword,
+                                                               @RequestParam(defaultValue = "0") int page,
+                                                               @RequestParam(defaultValue = "10") int size) {
+        Page<GetAllTermsResponse> terms = termService.getAllTermsByTypeTermId(typeTermId, keyword, page, size);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
                 .data(terms)
