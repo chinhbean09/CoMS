@@ -242,10 +242,10 @@
                 List<Term> otherTerms = termRepository.findAllById(otherTermsIds);
                 template.setOtherTerms(otherTerms);
             }
-            if (!additionalTermsIds.isEmpty()) {
-                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
-                template.setAdditionalTerms(additionalTerms);
-            }
+//            if (!additionalTermsIds.isEmpty()) {
+//                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
+//                template.setAdditionalTerms(additionalTerms);
+//            }
 
             template.setAdditionalTermConfigs(additionalTermConfigs);
             additionalTermConfigs.forEach(config -> config.setContractTemplate(template));
