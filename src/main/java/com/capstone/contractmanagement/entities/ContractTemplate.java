@@ -121,14 +121,14 @@ public class ContractTemplate {
     private List<Term> otherTerms = new ArrayList<>();
 
 
-    @ManyToMany
-    @JsonIgnore
-    @JoinTable(
-            name = "contract_template_additional_type_terms", // đổi tên bảng join
-            joinColumns = @JoinColumn(name = "template_id"),
-            inverseJoinColumns = @JoinColumn(name = "term_id")
-    )
-    private List<Term> additionalTerms = new ArrayList<>();
+//    @ManyToMany
+//    @JsonIgnore
+//    @JoinTable(
+//            name = "contract_template_additional_type_terms", // đổi tên bảng join
+//            joinColumns = @JoinColumn(name = "template_id"),
+//            inverseJoinColumns = @JoinColumn(name = "term_id")
+//    )
+//    private List<Term> additionalTerms = new ArrayList<>();
 
 
     @OneToMany(mappedBy = "contractTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
