@@ -2,9 +2,8 @@ package com.capstone.contractmanagement.services.user;
 
  import com.capstone.contractmanagement.components.JwtTokenUtils;
  import com.capstone.contractmanagement.components.LocalizationUtils;
- import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
- import com.capstone.contractmanagement.dtos.user.UserDTO;
- import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
+ import com.capstone.contractmanagement.dtos.DataMailDTO;
+ import com.capstone.contractmanagement.dtos.user.*;
  import com.capstone.contractmanagement.entities.Role;
  import com.capstone.contractmanagement.entities.Token;
  import com.capstone.contractmanagement.entities.User;
@@ -15,6 +14,8 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.repositories.ITokenRepository;
  import com.capstone.contractmanagement.repositories.IUserRepository;
  import com.capstone.contractmanagement.responses.User.UserResponse;
+ import com.capstone.contractmanagement.services.sendmails.IMailService;
+ import com.capstone.contractmanagement.utils.MailTemplate;
  import com.capstone.contractmanagement.utils.MessageKeys;
  import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -45,7 +46,8 @@ import org.springframework.stereotype.Service;
  import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.*;
+ import java.security.SecureRandom;
+ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,54 +62,117 @@ public class UserService implements IUserService {
     private final AuthenticationManager authenticationManager;
     private final ITokenRepository TokenRepository;
     private final Cloudinary cloudinary;
+    private final IMailService mailService;
 
     @Override
     @Transactional
-    public User registerUser( @Valid @RequestBody UserDTO userDTO) throws Exception {
+    public User registerUser( @Valid @RequestBody CreateUserDTO userDTO) throws Exception {
         String phoneNumber = userDTO.getPhoneNumber();
-        if (UserRepository.existsByPhoneNumber(phoneNumber) && userDTO.getPhoneNumber() != null) {
-            throw new DataIntegrityViolationException(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+        if (phoneNumber != null && UserRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         String email = userDTO.getEmail();
         if (UserRepository.existsByEmail(email)) {
-            throw new DataIntegrityViolationException(localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
-        // Sử dụng roleId mặc định là 2 nếu không được truyền vào
+        // Use the default roleId = 2 if none is provided
         Long roleId = userDTO.getRoleId() != null ? userDTO.getRoleId() : 2L;
         Role role = RoleRepository.findById(roleId)
                 .orElseThrow(() -> new DataNotFoundException(
                         localizationUtils.getLocalizedMessage(MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
-        // Check if the current user has permission to register users with the specified role
+        // Prevent registration of an Admin account
         if (role.getRoleName().equalsIgnoreCase("ADMIN")) {
             throw new PermissionDenyException("Not allowed to register for an Admin account");
         }
 
+        // Create a new user instance
         User newUser = User.builder()
                 .email(userDTO.getEmail())
                 .phoneNumber(userDTO.getPhoneNumber())
-                .password(userDTO.getPassword())
                 .fullName(userDTO.getFullName())
                 .active(true)
-                .facebookAccountId(userDTO.getFacebookAccountId())
-                .googleAccountId(userDTO.getGoogleAccountId())
+                //.facebookAccountId(userDTO.getFacebookAccountId())
+                //.googleAccountId(userDTO.getGoogleAccountId())
                 .isCeo(userDTO.getIsCeo())
                 .build();
         newUser.setRole(role);
 
-        // Kiểm tra nếu có accountId, không yêu cầu password
-        if (userDTO.getFacebookAccountId() == null) {
-            String password = userDTO.getPassword();
-            String encodedPassword = passwordEncoder.encode(password);
-            newUser.setPassword(encodedPassword);
-        }
+        // Always generate a random password to ensure a non-null value
+        String generatedPassword = generateRandomPassword();
+        String encodedPassword = passwordEncoder.encode(generatedPassword);
+        newUser.setPassword(encodedPassword);
+
+        // Send the generated password via email (if needed)
+        sendAccountPassword(newUser.getEmail(), generatedPassword);
+
+        // Save the new user
         User user = UserRepository.save(newUser);
-        // send mail
-        //sendMailForRegisterSuccess(userDTO.getFullName(), userDTO.getEmail(), userDTO.getPassword());
         return user;
     }
+
+    private void sendAccountPassword(String email, String password) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(email);
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
+
+            Map<String, Object> props = new HashMap<>();
+            props.put("password", password);
+            dataMailDTO.setProps(props); // Set props to dataMailDTO
+
+            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
+        } catch (MessagingException e) {
+            logger.error("Failed to send OTP email", e);
+        }
+    }
+
+    /**
+     * Generates a random 8-character password that includes at least one uppercase letter,
+     * one lowercase letter, one digit, and one special character.
+     */
+    private String generateRandomPassword() {
+        int length = 8;
+        String upperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
+        String numbers = "0123456789";
+        String specialCharacters = "!@#$%^&*()-_+=<>?";
+
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder(length);
+
+        // Ensure each character type is represented at least once
+        password.append(upperCaseLetters.charAt(random.nextInt(upperCaseLetters.length())));
+        password.append(lowerCaseLetters.charAt(random.nextInt(lowerCaseLetters.length())));
+        password.append(numbers.charAt(random.nextInt(numbers.length())));
+        password.append(specialCharacters.charAt(random.nextInt(specialCharacters.length())));
+
+        // Create a pool of all allowed characters for the remaining characters
+        String allAllowed = upperCaseLetters + lowerCaseLetters + numbers + specialCharacters;
+        for (int i = 4; i < length; i++) {
+            password.append(allAllowed.charAt(random.nextInt(allAllowed.length())));
+        }
+
+        // Shuffle the characters to ensure randomness
+        List<Character> passwordChars = new ArrayList<>();
+        for (char c : password.toString().toCharArray()) {
+            passwordChars.add(c);
+        }
+        Collections.shuffle(passwordChars, random);
+
+        StringBuilder finalPassword = new StringBuilder();
+        for (char c : passwordChars) {
+            finalPassword.append(c);
+        }
+
+        return finalPassword.toString();
+    }
+
+
     @Override
     public User getUserDetailsFromToken(String token) throws DataNotFoundException {
         if (jwtTokenUtils.isTokenExpired(token)) {
@@ -311,5 +376,19 @@ public class UserService implements IUserService {
             }
         }
         return null;
+    }
+
+    @Override
+    public void changePassword(Long id, UpdatePasswordDTO changePasswordDTO) throws DataNotFoundException {
+        User exsistingUser = UserRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
+        if (!passwordEncoder.matches(changePasswordDTO.getOldPassword(), exsistingUser.getPassword())) {
+            throw new DataNotFoundException(MessageKeys.OLD_PASSWORD_WRONG);
+        }
+        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
+            throw new DataNotFoundException(MessageKeys.CONFIRM_PASSWORD_NOT_MATCH);
+        }
+        exsistingUser.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        UserRepository.save(exsistingUser);
     }
 }
