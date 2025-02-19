@@ -142,6 +142,4 @@ public class ContractTemplate {
     private ContractType contractType;
 
 
-
-
 }

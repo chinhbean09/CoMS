@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.services.template;
 import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.ContractTemplate;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,7 +15,7 @@ public interface IContractTemplateService {
 
      Page<ContractTemplate> getAllTemplates(Pageable pageable);
 
-    Optional<ContractTemplate> getTemplateById(Long id);
+    Optional<ContractTemplateResponse> getTemplateById(Long id);
 
     void deleteTemplate(Long id);
 }

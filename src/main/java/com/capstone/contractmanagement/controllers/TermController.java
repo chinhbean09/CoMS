@@ -4,9 +4,12 @@ import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
 import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
 import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
+import com.capstone.contractmanagement.entities.Term;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.repositories.ITermRepository;
+import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
@@ -24,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.prefix}/terms")
@@ -32,7 +36,8 @@ public class TermController {
 
     private final ITermService termService;
     private final TranslationService translationService;
-
+    private final ITermRepository termRepository;
+    private final ITypeTermRepository typeTermRepository;
 
     @PostMapping("/create/{typeTermId}")
     public ResponseObject createTerm(@PathVariable Long typeTermId, @RequestBody CreateTermDTO termRequest) {
@@ -178,6 +183,52 @@ public class TermController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/legal-basis")
+    public ResponseEntity<ResponseObject> getAllLegalBasisTerms() {
+        try {
+            List<Term> legalBasisTerms = termRepository.findAllLegalBasisTerms();
+            List<GetAllTermsResponse> dtos = legalBasisTerms.stream()
+                    .map(term -> GetAllTermsResponse.builder()
+                            .id(term.getId())
+                            .clauseCode(term.getClauseCode())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .type(term.getTypeTerm().getName())
+                            .identifier(term.getTypeTerm().getIdentifier().name())
+                            .createdAt(term.getCreatedAt())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(
+                    ResponseObject.builder()
+                            .message("Get all LEGAL_BASIS terms successfully")
+                            .status(HttpStatus.OK)
+                            .data(dtos)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+    @GetMapping("/additional")
+    public ResponseEntity<List<TypeTermResponse>> getAdditionalTypeTerms() {
+        List<TypeTerm> typeTerms = typeTermRepository.findByIdentifier(TypeTermIdentifier.ADDITIONAL_TERMS);
+        List<TypeTermResponse> responses = typeTerms.stream()
+                .map(tt -> TypeTermResponse.builder()
+                        .id(tt.getId())
+                        .name(tt.getName())
+                        .identifier(tt.getIdentifier().name())
+                        .build())
+                .collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
 }

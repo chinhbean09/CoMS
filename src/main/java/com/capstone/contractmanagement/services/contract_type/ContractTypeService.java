@@ -49,7 +49,7 @@ public class ContractTypeService implements IContractTypeService {
         return contractTypeRepository.findById(id)
                 .map(existingType -> {
                     // Kiểm tra xem tên mới đã tồn tại đối với một ContractType khác chưa
-                    if (contractTypeRepository.existsByNameAndIdNot(contractType.getName(), id)) {
+                    if (contractTypeRepository.existsByNameAndIdNotAndIsDeletedFalse(contractType.getName(), id)) {
                         throw new IllegalArgumentException("exist");
                     }
                     existingType.setName(contractType.getName());
