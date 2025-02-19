@@ -294,18 +294,29 @@ public class TermService implements ITermService{
 
     @Override
     @Transactional
-    public List<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId) {
-        // check if type term exists
+    public Page<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId, String search, int page, int size) {
+        // Kiểm tra sự tồn tại của TypeTerm
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
                 .orElseThrow(() -> new IllegalArgumentException(MessageKeys.TYPE_TERM_NOT_FOUND));
-        return typeTerm.getTerms().stream().map(term -> GetAllTermsResponse.builder()
+
+        Pageable pageable = PageRequest.of(page, size);
+        // Nếu search null, gán chuỗi rỗng để trả về tất cả dữ liệu
+        if (search == null) {
+            search = "";
+        }
+
+        // Tìm kiếm theo label hoặc clauseCode dựa trên một trường search
+        Page<Term> termPage = termRepository.searchByTypeTermAndLabelOrClauseCode(typeTerm, search, pageable);
+
+        // Map sang DTO trả về
+        return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())
                 .label(term.getLabel())
                 .value(term.getValue())
                 .type(term.getTypeTerm().getName())
                 .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
-                .build()).toList();
+                .build());
     }
 
     @Override
