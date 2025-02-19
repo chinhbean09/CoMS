@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.user;
 
  import com.capstone.contractmanagement.components.JwtTokenUtils;
  import com.capstone.contractmanagement.components.LocalizationUtils;
+ import com.capstone.contractmanagement.dtos.user.UpdateUserDTO;
  import com.capstone.contractmanagement.dtos.user.UserDTO;
  import com.capstone.contractmanagement.dtos.user.UserLoginDTO;
  import com.capstone.contractmanagement.entities.Role;
@@ -245,23 +246,19 @@ public class UserService implements IUserService {
         optionalUser.ifPresent(UserRepository::delete);
     }
     @Override
-    public void updateUser(UserDTO userDTO) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        if(userDTO.getEmail() != null){
-            currentUser.setEmail(userDTO.getEmail());
-        }
-        if(userDTO.getPhoneNumber() != null) {
-            currentUser.setPhoneNumber(userDTO.getPhoneNumber());
-        }
-        if(userDTO.getFullName() != null ){
-            currentUser.setFullName(userDTO.getFullName());
+    public void updateUser(Long userId, UpdateUserDTO userDTO) throws DataNotFoundException {
+        // Check if the user exists
+        User user = UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
-        }
-        if(userDTO.getAddress() != null){
-            currentUser.setAddress(userDTO.getAddress());
-        }
-        UserRepository.save(currentUser);
+        // Update the user's information
+        user.setFullName(userDTO.getFullName());
+        user.setPhoneNumber(userDTO.getPhoneNumber());
+        user.setEmail(userDTO.getEmail());
+        user.setAddress(userDTO.getAddress());
+        user.setIsCeo(userDTO.getIsCeo());
+
+        // Save the updated user entity
+        UserRepository.save(user);
     }
 
     @Override
