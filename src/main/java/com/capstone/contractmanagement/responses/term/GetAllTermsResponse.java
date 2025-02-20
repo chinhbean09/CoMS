@@ -18,5 +18,6 @@ public class GetAllTermsResponse {
     private String identifier;
     private LocalDateTime createdAt;
     private TermStatus status;
+    private Integer version;
 
 }
