@@ -99,7 +99,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(ResponseObject.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .data(null)
-                    .message(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS))
+                    .message(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS)
                     .build());
         }
 //        if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
@@ -172,34 +172,20 @@ public class UserController {
         }
     }
 
-//    @PutMapping("/update-password/{userId}")
-//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_CUSTOMER')")
-//    public ResponseEntity<ResponseObject> changePassword(
-//            @PathVariable long userId,
-//            @Valid @RequestBody ChangePasswordDTO changePasswordDTO) {
-//        try {
-//            userService.changePassword(userId, changePasswordDTO);
-//            return ResponseEntity.ok(ResponseObject.builder()
-//                    .status(HttpStatus.OK)
-//                    .message(MessageKeys.CHANGE_PASSWORD_SUCCESSFULLY)
-//                    .build());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResponseObject.builder()
-//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .message(e.getMessage())
-//                    .build());
-//        }
-//    }
-
     @PutMapping("/block-or-enable/{userId}/{active}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<String> blockOrEnable(
+    public ResponseEntity<?> blockOrEnable(
             @Valid @PathVariable long userId,
             @Valid @PathVariable int active) {
         try {
             userService.blockOrEnable(userId, active > 0);
             String message = active > 0 ? MessageKeys.ENABLE_USER_SUCCESSFULLY : MessageKeys.BLOCK_USER_SUCCESSFULLY;
-            return ResponseEntity.ok().body(message);
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(message)
+                    .build());
         } catch (DataNotFoundException e) {
             return ResponseEntity.badRequest().body(MessageKeys.USER_NOT_FOUND);
         } catch (Exception e) {
@@ -208,21 +194,34 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_CUSTOMER')")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         try {
             String authorizationHeader = request.getHeader("Authorization");
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 tokenService.deleteToken(token);
-                return ResponseEntity.ok().body("Logout successful.");
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .message(MessageKeys.LOGOUT_SUCCESSFULLY)
+                        .build());
             } else {
-                return ResponseEntity.badRequest().body("No token provided.");
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .message(MessageKeys.NO_TOKEN_FOUND)
+                        .build());
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("An error occurred during logout: " + e.getMessage());
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .data(null)
+                    .message(e.getMessage())
+                    .build());
         }
     }
+
     @GetMapping("/get-all-user")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_CUSTOMER')")
     public ResponseEntity<UserListResponse> getAllUsers(
@@ -272,14 +271,17 @@ public class UserController {
         }
     }
 
-    @Transactional
-    @DeleteMapping("/delete/{id}")
+
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
         try {
             userService.deleteUser(id);
-            return ResponseEntity.ok(MessageKeys.DELETE_USER_SUCCESSFULLY);
-        } catch (Exception e) {
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(MessageKeys.DELETE_USER_SUCCESSFULLY)
+                    .build());        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
         }
     }
@@ -289,7 +291,11 @@ public class UserController {
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
         try {
             userService.updateUser(userId, userDTO);
-            return ResponseEntity.ok(MessageKeys.UPDATE_USER_SUCCESSFULLY);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(MessageKeys.UPDATE_USER_SUCCESSFULLY)
+                    .build());
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
