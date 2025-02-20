@@ -218,6 +218,7 @@ public class TermService implements ITermService{
                 .identifier(term.getTypeTerm().getIdentifier().name())
                 .status(term.getStatus())
                 .createdAt(term.getCreatedAt())
+                .version(term.getVersion())
                 .build());
     }
 
