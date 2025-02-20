@@ -218,6 +218,7 @@ public class TermService implements ITermService{
                 .identifier(term.getTypeTerm().getIdentifier().name())
                 .status(term.getStatus())
                 .createdAt(term.getCreatedAt())
+                .version(term.getVersion())
                 .build());
     }
 
@@ -275,7 +276,7 @@ public class TermService implements ITermService{
         return TypeTermResponse.builder()
                 .id(typeTerm.getId())
                 .name(typeTerm.getName())
-                .identifier(String.valueOf(typeTerm.getIdentifier()))
+                .identifier(typeTerm.getIdentifier())
                 .build();
     }
 
@@ -287,7 +288,7 @@ public class TermService implements ITermService{
                 .map(typeTerm -> TypeTermResponse.builder()
                         .id(typeTerm.getId())
                         .name(typeTerm.getName())
-                        .identifier(String.valueOf(typeTerm.getIdentifier()))
+                        .identifier(typeTerm.getIdentifier())
                         .build())
                 .collect(Collectors.toList());
     }

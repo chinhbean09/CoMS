@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.term;
 
+import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class TypeTermResponse {
     private Long id;
     private String name;
-    private String identifier;
+    private TypeTermIdentifier identifier;
 }
