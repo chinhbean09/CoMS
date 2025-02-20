@@ -174,13 +174,18 @@ public class UserController {
 
     @PutMapping("/block-or-enable/{userId}/{active}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<String> blockOrEnable(
+    public ResponseEntity<?> blockOrEnable(
             @Valid @PathVariable long userId,
             @Valid @PathVariable int active) {
         try {
             userService.blockOrEnable(userId, active > 0);
             String message = active > 0 ? MessageKeys.ENABLE_USER_SUCCESSFULLY : MessageKeys.BLOCK_USER_SUCCESSFULLY;
-            return ResponseEntity.ok().body(message);
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(message)
+                    .build());
         } catch (DataNotFoundException e) {
             return ResponseEntity.badRequest().body(MessageKeys.USER_NOT_FOUND);
         } catch (Exception e) {
@@ -195,14 +200,28 @@ public class UserController {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 tokenService.deleteToken(token);
-                return ResponseEntity.ok().body("Logout successful.");
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .message(MessageKeys.LOGOUT_SUCCESSFULLY)
+                        .build());
             } else {
-                return ResponseEntity.badRequest().body("No token provided.");
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .message(MessageKeys.NO_TOKEN_FOUND)
+                        .build());
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("An error occurred during logout: " + e.getMessage());
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .data(null)
+                    .message(e.getMessage())
+                    .build());
         }
     }
+
     @GetMapping("/get-all-user")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_CUSTOMER')")
     public ResponseEntity<UserListResponse> getAllUsers(
