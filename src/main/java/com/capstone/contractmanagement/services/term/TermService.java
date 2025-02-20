@@ -187,6 +187,10 @@ public class TermService implements ITermService{
         Page<Term> termPage;
         boolean hasSearch = search != null && !search.trim().isEmpty();
 
+        if (hasSearch) {
+            search = search.trim(); // Loại bỏ khoảng trắng dư thừa
+        }
+
         if (typeTermIds != null && !typeTermIds.isEmpty()) {
             if (hasSearch) {
                 if (includeLegalBasis) {
