@@ -172,6 +172,7 @@ public class PartyService implements IPartyService{
         Page<Party> partyPage;
 
         if (search != null && !search.trim().isEmpty()) {
+            search = search.trim(); // Loại bỏ khoảng trắng dư thừa
             // Tìm kiếm với điều kiện isDeleted = false
             partyPage = partyRepository.searchByFields(search, pageable);
         } else {
