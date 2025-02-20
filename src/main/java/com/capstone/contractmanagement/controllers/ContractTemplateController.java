@@ -7,11 +7,14 @@ import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
+import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.services.template.IContractTemplateService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,19 +54,31 @@ public class ContractTemplateController {
 
     @GetMapping
     public ResponseEntity<ResponseObject> getAllTemplates(
-            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
         try {
-            Page<ContractTemplate> templates = templateService.getAllTemplates(pageable);
-            return ResponseEntity.ok(
-                    new ResponseObject(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY, HttpStatus.OK, templates)
-            );
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
+                    .status(HttpStatus.OK)
+                    .data(templates)
+                    .build());
         } catch (Exception e) {
-            // Log lỗi nếu cần, ví dụ: logger.error("Error retrieving templates", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseObject("Error retrieving templates: " + e.getMessage(),
-                            HttpStatus.INTERNAL_SERVER_ERROR, null));
+                    .body(ResponseObject.builder()
+                            .message("Error retrieving templates: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
         }
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getTemplateById(@PathVariable Long id) {
