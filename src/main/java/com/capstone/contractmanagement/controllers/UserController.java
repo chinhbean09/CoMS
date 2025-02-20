@@ -252,14 +252,17 @@ public class UserController {
         }
     }
 
-    @Transactional
-    @DeleteMapping("/delete/{id}")
+
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
         try {
             userService.deleteUser(id);
-            return ResponseEntity.ok(MessageKeys.DELETE_USER_SUCCESSFULLY);
-        } catch (Exception e) {
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(MessageKeys.DELETE_USER_SUCCESSFULLY)
+                    .build());        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
         }
     }
@@ -269,7 +272,11 @@ public class UserController {
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
         try {
             userService.updateUser(userId, userDTO);
-            return ResponseEntity.ok(MessageKeys.UPDATE_USER_SUCCESSFULLY);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .data(null)
+                    .message(MessageKeys.UPDATE_USER_SUCCESSFULLY)
+                    .build());
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
