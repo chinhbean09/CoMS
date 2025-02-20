@@ -59,4 +59,13 @@ public class MessageKeys {
     public static final String UPDATE_PARTY_SUCCESSFULLY = "Cập nhật đối tác thành công";
     public static final String GET_PARTY_SUCCESSFULLY = "Lấy thông tin đối tác thành công";
     public static final String GET_ALL_PARTIES_SUCCESSFULLY = "Lấy danh sách đối tác thành công";
+
+    public static final String GET_ALL_CONTRACTS_BY_TYPE_SUCCESSFULLY = "Lấy danh sách hợp đồng theo loại thành công";
+
+    public static final String LOGOUT_SUCCESSFULLY = "Đăng xuất thành công";
+
+    public static final String NO_TOKEN_FOUND = "Không tìm thấy token";
+    public static final String TOKEN_EXPIRED = "Token hết hạn";
+    public static final String TOKEN_INVALID = "Token không hợp lệ";
+    public static final String GET_ALL_CONTRACTS_BY_USER_SUCCESSFULLY = "Lấy danh sách hợp đồng theo người dùng thành công";
 }
