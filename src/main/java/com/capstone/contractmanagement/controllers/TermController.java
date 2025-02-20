@@ -225,7 +225,7 @@ public class TermController {
                 .map(tt -> TypeTermResponse.builder()
                         .id(tt.getId())
                         .name(tt.getName())
-                        .identifier(tt.getIdentifier().name())
+                        .identifier(tt.getIdentifier())
                         .build())
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
