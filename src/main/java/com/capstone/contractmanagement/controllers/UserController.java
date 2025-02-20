@@ -99,7 +99,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(ResponseObject.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .data(null)
-                    .message(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS))
+                    .message(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS)
                     .build());
         }
 //        if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
@@ -172,25 +172,6 @@ public class UserController {
         }
     }
 
-//    @PutMapping("/update-password/{userId}")
-//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_CUSTOMER')")
-//    public ResponseEntity<ResponseObject> changePassword(
-//            @PathVariable long userId,
-//            @Valid @RequestBody ChangePasswordDTO changePasswordDTO) {
-//        try {
-//            userService.changePassword(userId, changePasswordDTO);
-//            return ResponseEntity.ok(ResponseObject.builder()
-//                    .status(HttpStatus.OK)
-//                    .message(MessageKeys.CHANGE_PASSWORD_SUCCESSFULLY)
-//                    .build());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResponseObject.builder()
-//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .message(e.getMessage())
-//                    .build());
-//        }
-//    }
-
     @PutMapping("/block-or-enable/{userId}/{active}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<String> blockOrEnable(
@@ -208,7 +189,6 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_CUSTOMER')")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         try {
             String authorizationHeader = request.getHeader("Authorization");
