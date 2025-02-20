@@ -15,6 +15,7 @@
     import com.capstone.contractmanagement.repositories.ITypeTermRepository;
     import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
     import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
+    import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
     import com.capstone.contractmanagement.responses.term.TermResponse;
     import com.capstone.contractmanagement.responses.term.TypeTermResponse;
     import lombok.RequiredArgsConstructor;
@@ -261,9 +262,36 @@
             return templateRepository.save(template);
         }
         @Override
-        public Page<ContractTemplate> getAllTemplates(Pageable pageable) {
-            return templateRepository.findAll(pageable);
+        @Transactional(readOnly = true)
+        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable) {
+            Page<ContractTemplate> templates = templateRepository.findAll(pageable);
+            return templates.map(this::convertToSimpleResponseDTO);
         }
+
+        private ContractTemplateSimpleResponse convertToSimpleResponseDTO(ContractTemplate template) {
+            return ContractTemplateSimpleResponse.builder()
+                    .id(template.getId())
+                    .contractTitle(template.getContractTitle())
+                    .partyInfo(template.getPartyInfo())
+                    .specialTermsA(template.getSpecialTermsA())
+                    .specialTermsB(template.getSpecialTermsB())
+                    .appendixEnabled(template.getAppendixEnabled())
+                    .transferEnabled(template.getTransferEnabled())
+                    .createdAt(template.getCreatedAt())
+                    .updatedAt(template.getUpdatedAt())
+                    .violate(template.getViolate())
+                    .suspend(template.getSuspend())
+                    .suspendContent(template.getSuspendContent())
+                    .contractContent(template.getContractContent())
+                    .autoAddVAT(template.getAutoAddVAT())
+                    .vatPercentage(template.getVatPercentage())
+                    .isDateLateChecked(template.getIsDateLateChecked())
+                    .maxDateLate(template.getMaxDateLate())
+                    .autoRenew(template.getAutoRenew())
+                    .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
+                    .build();
+        }
+
 
 
         @Override
