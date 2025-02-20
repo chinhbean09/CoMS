@@ -320,6 +320,7 @@ public class UserService implements IUserService {
         user.setEmail(userDTO.getEmail());
         user.setAddress(userDTO.getAddress());
         user.setIsCeo(userDTO.getIsCeo());
+        user.setRole(RoleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
         // Save the updated user entity
         UserRepository.save(user);
