@@ -96,6 +96,7 @@ public class UserService implements IUserService {
                 .phoneNumber(userDTO.getPhoneNumber())
                 .fullName(userDTO.getFullName())
                 .active(true)
+                .address(userDTO.getAddress())
                 //.facebookAccountId(userDTO.getFacebookAccountId())
                 //.googleAccountId(userDTO.getGoogleAccountId())
                 .isCeo(userDTO.getIsCeo())
