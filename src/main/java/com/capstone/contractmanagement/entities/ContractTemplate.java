@@ -38,12 +38,14 @@ public class ContractTemplate {
     private String specialTermsB;
 
     //dc tạo phụ lục
+    @Builder.Default
     @Column(name = "appendix_enabled")
-    private Boolean appendixEnabled;
+    private Boolean appendixEnabled = false;
 
     //cho phép chuyển nhượng
+    @Builder.Default
     @Column(name = "transfer_enabled")
-    private Boolean transferEnabled;
+    private Boolean transferEnabled = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -52,12 +54,14 @@ public class ContractTemplate {
     private LocalDateTime updatedAt;
 
     //vi phạm điều khoản
+    @Builder.Default
     @Column(name = "violate")
-    private Boolean violate;
+    private Boolean violate = false;
 
     //tạm ngưng
+    @Builder.Default
     @Column(name = "suspend")
-    private Boolean suspend;
+    private Boolean suspend = false;
 
     //trường hợp được tạm ngưng
     @Column(name = "suspend_content")
@@ -70,24 +74,27 @@ public class ContractTemplate {
     private List<Contract> contracts = new ArrayList<>();
 
     //cho phép tự động add VAT
+    @Builder.Default
     @Column(name = "auto_add_vat")
-    private Boolean autoAddVAT;
+    private Boolean autoAddVAT = false;
 
     //phí VAT
     @Column(name = "vat_percentage")
     private Integer vatPercentage;
 
     //cho phép trễ hạn thanh toán
+    @Builder.Default
     @Column(name = "is_date_late_checked")
-    private Boolean isDateLateChecked;
+    private Boolean isDateLateChecked = false;
 
     //ngày tối đa trễ hạn thanh toán
     @Column(name = "max_date_late")
     private Integer maxDateLate;
 
     //tự động gia hạn
+    @Builder.Default
     @Column(name = "auto_renew")
-    private Boolean autoRenew;
+    private Boolean autoRenew = false;
 
     //  Many-to-Many cho Legal Basis
     @ManyToMany
