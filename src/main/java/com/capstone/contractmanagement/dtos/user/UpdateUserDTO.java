@@ -21,4 +21,7 @@ public class UpdateUserDTO {
     @JsonProperty("is_ceo")
     private Boolean isCeo;
 
+    @JsonProperty("role_id")
+    private Long roleId;
+
 }
