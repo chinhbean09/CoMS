@@ -39,14 +39,6 @@ public class PaymentSchedule {
     @Column(name = "description", length = 500)
     private String description; // Ghi chú
 
-    // Flag gửi email nhắc nhở
-    @Column(name = "reminder_email_sent")
-    private boolean reminderEmailSent;
-
-    // Flag gửi email quá hạn
-    @Column(name = "overdue_email_sent")
-    private boolean overdueEmailSent;
-
     // Relationship với Contract
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = false)

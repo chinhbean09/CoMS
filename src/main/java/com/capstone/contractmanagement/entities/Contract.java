@@ -98,8 +98,8 @@ public class Contract {
     @JoinColumn(name = "party_id", nullable = false)
     private Party party;
 
-    @ManyToOne
-    @JoinColumn(name = "task_id", nullable = true)
-    private Task task;
+//    @ManyToOne
+//    @JoinColumn(name = "task_id", nullable = true)
+//    private Task task;
 
 }
