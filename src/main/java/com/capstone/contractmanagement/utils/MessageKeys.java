@@ -68,4 +68,5 @@ public class MessageKeys {
     public static final String TOKEN_EXPIRED = "Token hết hạn";
     public static final String TOKEN_INVALID = "Token không hợp lệ";
     public static final String GET_ALL_CONTRACTS_BY_USER_SUCCESSFULLY = "Lấy danh sách hợp đồng theo người dùng thành công";
+    public static final String CREATE_PAYMENT_SCHEDULE_SUCCESSFULLY = "Tạo lịch thanh toán hợp đồng thành công";
 }
