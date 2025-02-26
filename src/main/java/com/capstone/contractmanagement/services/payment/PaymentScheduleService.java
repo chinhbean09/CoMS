@@ -68,7 +68,11 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
                         "' sẽ đến hạn thanh toán lúc " + payment.getDueDate() +
                         ". Vui lòng chuẩn bị thanh toán.";
-                messagingTemplate.convertAndSend("/topic/payment", reminderMessage);
+                //messagingTemplate.convertAndSend("/user/payment", reminderMessage);
+                // Lấy username của người dùng được liên kết với hợp đồng
+                String username = payment.getContract().getUser().getUsername();
+                // Gửi thông báo qua WebSocket đến người dùng cụ thể
+                messagingTemplate.convertAndSendToUser(username, "/payment", reminderMessage);
                 // Gửi email nhắc nhở
                 sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
@@ -86,7 +90,11 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 // Gửi thông báo qua WebSocket
                 String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
                         "' đã quá hạn thanh toán lúc " + payment.getDueDate() + ".";
-                messagingTemplate.convertAndSend("/topic/payment", overdueMessage);
+                //messagingTemplate.convertAndSend("/user/payment", overdueMessage);
+                // Lấy username của người dùng được liên kết với hợp đồng
+                String username = payment.getContract().getUser().getUsername();
+                // Gửi thông báo qua WebSocket đến người dùng cụ thể
+                messagingTemplate.convertAndSendToUser(username, "/payment", overdueMessage);
                 // Gửi email thông báo quá hạn
                 sendEmailExpired(payment);
                 // Đánh dấu đã gửi email quá hạn
