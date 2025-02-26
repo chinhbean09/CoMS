@@ -56,6 +56,7 @@ public class ContractTemplateController {
     public ResponseEntity<ResponseObject> getAllTemplates(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String order) {
         try {
@@ -63,7 +64,7 @@ public class ContractTemplateController {
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable);
+            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable,keyword);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
                     .status(HttpStatus.OK)
@@ -107,78 +108,6 @@ public class ContractTemplateController {
                             .build());
         }
     }
-
-//    private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
-//        List<TermResponse> legalBasisTerms = template.getLegalBasisTerms().stream()
-//                .map(term -> TermResponse.builder()
-//                        .id(term.getId())
-//                        .label(term.getLabel())
-//                        .value(term.getValue())
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        List<TermResponse> generalTerms = template.getGeneralTerms().stream()
-//                .map(term -> TermResponse.builder()
-//                        .id(term.getId())
-//                        .label(term.getLabel())
-//                        .value(term.getValue())
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        List<TermResponse> otherTerms = template.getOtherTerms().stream()
-//                .map(term -> TermResponse.builder()
-//                        .id(term.getId())
-//                        .label(term.getLabel())
-//                        .value(term.getValue())
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        List<TermResponse> additionalTerms = template.getAdditionalTerms().stream()
-//                .map(term -> TermResponse.builder()
-//                        .id(term.getId())
-//                        .label(term.getLabel())
-//                        .value(term.getValue())
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        // Chuyển đổi additionalTermConfigs
-//        List<ContractTemplateAdditionalTermDetailResponse> additionalTermConfigs = template.getAdditionalTermConfigs().stream()
-//                .map(config -> ContractTemplateAdditionalTermDetailResponse.builder()
-//                        .typeTermId(config.getTypeTermId())
-//                        .commonTermIds(config.getCommonTermIds())
-//                        .aTermIds(config.getATermIds())  // Giả sử getter là getATermIds()
-//                        .bTermIds(config.getBTermIds())  // Giả sử getter là getBTermIds()
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        return ContractTemplateResponse.builder()
-//                .id(template.getId())
-//                .contractTitle(template.getContractTitle())
-//                .partyInfo(template.getPartyInfo())
-//                .specialTermsA(template.getSpecialTermsA())
-//                .specialTermsB(template.getSpecialTermsB())
-//                .appendixEnabled(template.getAppendixEnabled())
-//                .transferEnabled(template.getTransferEnabled())
-//                .createdAt(template.getCreatedAt())
-//                .updatedAt(template.getUpdatedAt())
-//                .violate(template.getViolate())
-//                .suspend(template.getSuspend())
-//                .suspendContent(template.getSuspendContent())
-//                .contractContent(template.getContractContent())
-//                .autoAddVAT(template.getAutoAddVAT())
-//                .vatPercentage(template.getVatPercentage())
-//                .isDateLateChecked(template.getIsDateLateChecked())
-//                .maxDateLate(template.getMaxDateLate())
-//                .autoRenew(template.getAutoRenew())
-//                .legalBasisTerms(legalBasisTerms)
-//                .generalTerms(generalTerms)
-//                .otherTerms(otherTerms)
-//                .additionalTerms(additionalTerms)
-//                .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
-//                .additionalTermConfigs(additionalTermConfigs)
-//                .build();
-//    }
-
 
 
     @DeleteMapping("/{id}")

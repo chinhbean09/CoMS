@@ -49,6 +49,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         argumentResolvers.add(new AuthenticationPrincipalArgumentResolver());
     }
 
+    //tin nhắn sẽ được sử dụng để định tuyến thư từ một khách hàng này đến ứng dụng khách khác.
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
