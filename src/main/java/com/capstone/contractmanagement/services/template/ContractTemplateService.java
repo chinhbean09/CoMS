@@ -263,10 +263,20 @@
         }
         @Override
         @Transactional(readOnly = true)
-        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable) {
-            Page<ContractTemplate> templates = templateRepository.findAll(pageable);
+        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword) {
+            boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
+            Page<ContractTemplate> templates;
+
+            if (hasSearch) {
+                keyword = keyword.trim(); // Loại bỏ khoảng trắng dư thừa
+                templates = templateRepository.findByContractTitleContainingIgnoreCase(keyword, pageable);
+            } else {
+                templates = templateRepository.findAll(pageable);
+            }
+
             return templates.map(this::convertToSimpleResponseDTO);
         }
+
 
         private ContractTemplateSimpleResponse convertToSimpleResponseDTO(ContractTemplate template) {
             return ContractTemplateSimpleResponse.builder()
@@ -288,7 +298,10 @@
                     .isDateLateChecked(template.getIsDateLateChecked())
                     .maxDateLate(template.getMaxDateLate())
                     .autoRenew(template.getAutoRenew())
-                    .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
+                    .contractType(ContractType.builder()
+                            .id(template.getContractType().getId())
+                            .name(template.getContractType().getName())
+                            .build())
                     .build();
         }
 
