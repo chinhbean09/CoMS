@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -38,6 +39,8 @@ public class JwtTokenUtils {
     private String secretKey;
 
     private final ITokenRepository ITokenRepository;
+    // Thêm UserDetailsService để lấy thông tin người dùng từ token
+    private final UserDetailsService userDetailsService;
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenUtils.class);
 
     public String generateToken(User user) throws InvalidParamException {
@@ -125,5 +128,15 @@ public class JwtTokenUtils {
             logger.error("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
+    }
+
+    // Hàm getUserDetailsFromToken: chuyển token thành UserDetails dựa vào email hoặc phoneNumber
+    public UserDetails getUserDetailsFromToken(String token) {
+        Map<String, String> identifiers = extractIdentifier(token);
+        String identifier = identifiers.get("email") != null ? identifiers.get("email") : identifiers.get("phoneNumber");
+        if (identifier == null || identifier.isEmpty()) {
+            throw new IllegalArgumentException("Token không chứa thông tin định danh hợp lệ.");
+        }
+        return userDetailsService.loadUserByUsername(identifier);
     }
 }
