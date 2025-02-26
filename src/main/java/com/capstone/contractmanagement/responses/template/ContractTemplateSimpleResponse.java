@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.template;
 
+import com.capstone.contractmanagement.entities.ContractType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -26,5 +27,5 @@ public class ContractTemplateSimpleResponse {
     private Boolean isDateLateChecked;
     private Integer maxDateLate;
     private Boolean autoRenew;
-    private Long contractTypeId;
+    private ContractType contractType;
 }
