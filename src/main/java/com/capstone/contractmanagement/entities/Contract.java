@@ -31,6 +31,13 @@ public class Contract {
     @Column(name = "description", length = 500)
     private String description;
 
+    @Column(name = "special_terms_a")
+    private String specialTermsA;
+
+    @Column(name = "special_terms_b")
+    private String specialTermsB;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ContractStatus status; // Enum cho các trạng thái
@@ -88,7 +95,7 @@ public class Contract {
     private List<Term> terms = new ArrayList<>();
 
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AuditTrail> auditTrails = new ArrayList<>();
+    private List<AuditTrail> auditTrails = new ArrayList<>();<<<<<<< coms_chinh-dev
 
     @ManyToOne
     @JoinColumn(name = "template_id", referencedColumnName = "template_id")
@@ -98,8 +105,30 @@ public class Contract {
     @JoinColumn(name = "party_id", nullable = false)
     private Party party;
 
-//    @ManyToOne
-//    @JoinColumn(name = "task_id", nullable = true)
-//    private Task task;
+    @Builder.Default
+    @Column(name = "appendix_enabled")
+    private Boolean appendixEnabled = false;
+
+    //cho phép chuyển nhượng
+    @Builder.Default
+    @Column(name = "transfer_enabled")
+    private Boolean transferEnabled = false;
+
+    @Builder.Default
+    @Column(name = "auto_add_vat")
+    private Boolean autoAddVAT = false;
+
+    //phí VAT
+    @Column(name = "vat_percentage")
+    private Integer vatPercentage;
+
+    @Builder.Default
+    @Column(name = "auto_renew")
+    private Boolean autoRenew = false;
+
+
+    @Column(name = "contract_content", columnDefinition = "TEXT")
+    private String contractContent;
+
 
 }
