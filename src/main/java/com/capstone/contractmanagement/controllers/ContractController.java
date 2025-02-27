@@ -2,6 +2,9 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.entities.Contract;
+import com.capstone.contractmanagement.entities.ContractTerm;
+import com.capstone.contractmanagement.entities.Term;
+import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
@@ -12,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,8 +49,9 @@ public class ContractController {
     }
 
     @PostMapping
+    @Transactional
     public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-        Contract contract = contractService.createContractFromTemplate(contractDTO.getTemplateId(), contractDTO);
+        Contract contract = contractService.createContractFromTemplate(contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)

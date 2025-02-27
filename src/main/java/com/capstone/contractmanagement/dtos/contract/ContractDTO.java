@@ -25,7 +25,8 @@ public class ContractDTO {
     @NotBlank(message = "Contract Number cannot be blank")
     private String contractNumber;
 
-    private String description;
+    private String contractContent;
+
 
     private ContractStatus status;
 
@@ -51,10 +52,12 @@ public class ContractDTO {
 
     private Long partyId;
 
-    private List<Long> termIds;
-
     private List<PaymentSchedule> paymentSchedules;
 
     private PaymentOneTime paymentOneTime;
+
+    private String specialTermsA;
+
+    private String specialTermsB;
 
 }

@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,6 +22,7 @@ public class AuditTrail {
 
     // Quan hệ Many-to-One với Contract
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "contract_id", nullable = false)
     private Contract contract;
 
