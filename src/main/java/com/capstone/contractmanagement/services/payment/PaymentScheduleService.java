@@ -62,18 +62,20 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         LocalDateTime reminderWindowEnd = now.plusMinutes(5);
         List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByDueDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
-            // Kiểm tra xem email nhắc nhở đã được gửi hay chưa
             if (!payment.isReminderEmailSent()) {
-                // Gửi thông báo qua WebSocket
+                // Tạo payload dạng JSON
+                Map<String, Object> payload = new HashMap<>();
                 String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
                         "' sẽ đến hạn thanh toán lúc " + payment.getDueDate() +
                         ". Vui lòng chuẩn bị thanh toán.";
-                //messagingTemplate.convertAndSend("/user/payment", reminderMessage);
-                // Lấy username của người dùng được liên kết với hợp đồng
-                String username = payment.getContract().getUser().getUsername();
-                // Gửi thông báo qua WebSocket đến người dùng cụ thể
-                messagingTemplate.convertAndSendToUser(username, "/payment", reminderMessage);
-                // Gửi email nhắc nhở
+                payload.put("message", reminderMessage);
+                // Bạn có thể thêm các trường khác nếu cần, ví dụ "url"
+                //payload.put("url", ""); // Hoặc bỏ qua nếu không cần
+
+                // Lấy username của người dùng
+                String username = payment.getContract().getUser().getName();
+                // Gửi thông báo dưới dạng JSON
+                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
@@ -87,17 +89,16 @@ public class PaymentScheduleService implements IPaymentScheduleService {
             if (now.isAfter(payment.getDueDate()) && !payment.isOverdueEmailSent()) {
                 payment.setStatus(PaymentStatus.OVERDUE);
                 paymentScheduleRepository.save(payment);
-                // Gửi thông báo qua WebSocket
+                // Tạo payload dạng JSON cho thông báo quá hạn
+                Map<String, Object> payload = new HashMap<>();
                 String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
                         "' đã quá hạn thanh toán lúc " + payment.getDueDate() + ".";
-                //messagingTemplate.convertAndSend("/user/payment", overdueMessage);
-                // Lấy username của người dùng được liên kết với hợp đồng
-                String username = payment.getContract().getUser().getUsername();
-                // Gửi thông báo qua WebSocket đến người dùng cụ thể
-                messagingTemplate.convertAndSendToUser(username, "/payment", overdueMessage);
-                // Gửi email thông báo quá hạn
+                payload.put("message", overdueMessage);
+                //payload.put("url", ""); // Nếu có URL cụ thể thì thêm vào
+
+                String username = payment.getContract().getUser().getName();
+                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 sendEmailExpired(payment);
-                // Đánh dấu đã gửi email quá hạn
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
             }

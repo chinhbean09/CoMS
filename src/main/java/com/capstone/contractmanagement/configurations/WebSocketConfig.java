@@ -53,9 +53,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:9999") // đây là port FE
+                .setAllowedOriginPatterns("http://localhost:9999")
                 .withSockJS();
     }
+
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
