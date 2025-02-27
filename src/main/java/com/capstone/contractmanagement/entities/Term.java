@@ -37,10 +37,6 @@ public class Term {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // Liên kết Many-to-Many với Contracts thông qua bảng contract_terms
-    @ManyToMany(mappedBy = "terms")
-    @JsonIgnore
-    private List<Contract> contracts = new ArrayList<>();
     // Liên kết Many-to-One với TypeTerm
     @ManyToOne
     @JoinColumn(name = "type_term_id", nullable = false)
