@@ -95,7 +95,7 @@ public class Contract {
     private List<Term> terms = new ArrayList<>();
 
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AuditTrail> auditTrails = new ArrayList<>();
+    private List<AuditTrail> auditTrails = new ArrayList<>();<<<<<<< coms_chinh-dev
 
     @ManyToOne
     @JoinColumn(name = "template_id", referencedColumnName = "template_id")
