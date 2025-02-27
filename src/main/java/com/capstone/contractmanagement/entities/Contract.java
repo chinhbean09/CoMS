@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.enums.ContractStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -72,10 +73,12 @@ public class Contract {
 
     // Relationship với PaymentSchedules
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<PaymentSchedule> paymentSchedules = new ArrayList<>();
 
     // Relationship với PaymentOneTime
     @OneToOne(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private PaymentOneTime paymentOneTime;
 
     @Column(name = "amount")
@@ -84,25 +87,37 @@ public class Contract {
     // Relationship: Many-to-One với User
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "contract_terms",
-            joinColumns = @JoinColumn(name = "contract_id"),
-            inverseJoinColumns = @JoinColumn(name = "term_id")
-    )
-    private List<Term> terms = new ArrayList<>();
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ContractTerm> contractTerms = new ArrayList<>();
+
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<ContractAdditionalTerm> additionalTerms = new ArrayList<>();
+
+    @Builder.Default
+    @Column(name = "is_date_late_checked")
+    private Boolean isDateLateChecked = false;
+
 
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<AuditTrail> auditTrails = new ArrayList<>();
+
+    @Column(name = "max_date_late")
+    private Integer maxDateLate;
 
     @ManyToOne
     @JoinColumn(name = "template_id", referencedColumnName = "template_id")
+    @JsonIgnore
     private ContractTemplate template;
 
     @ManyToOne
     @JoinColumn(name = "party_id", nullable = false)
+    @JsonIgnore
     private Party party;
 
     @Builder.Default

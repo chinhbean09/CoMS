@@ -44,6 +44,10 @@
             ContractType contractType = contractTypeRepository.findById(dto.getContractTypeId())
                     .orElseThrow(() -> new DataNotFoundException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()));
 
+            if (templateRepository.existsByContractTitle(dto.getContractTitle())) {
+                throw new IllegalArgumentException("Tiêu đề hợp đồng đã tồn tại: " + dto.getContractTitle());
+            }
+
             // Khai báo các tập hợp id cho từng nhóm
             Set<Long> legalBasisIds = new HashSet<>();
             Set<Long> generalTermsIds = new HashSet<>();
@@ -218,6 +222,7 @@
             List<Long> allTermIds = new ArrayList<>(termIdSet);
             List<Term> allTerms = termRepository.findAllById(allTermIds);
 
+
             // ContractTemplate
             ContractTemplate template = ContractTemplate.builder()
                     .contractTitle(dto.getContractTitle())
@@ -252,11 +257,6 @@
                 List<Term> otherTerms = termRepository.findAllById(otherTermsIds);
                 template.setOtherTerms(otherTerms);
             }
-//            if (!additionalTermsIds.isEmpty()) {
-//                List<Term> additionalTerms = termRepository.findAllById(additionalTermsIds);
-//                template.setAdditionalTerms(additionalTerms);
-//            }
-
             template.setAdditionalTermConfigs(additionalTermConfigs);
             additionalTermConfigs.forEach(config -> config.setContractTemplate(template));
 

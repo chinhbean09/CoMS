@@ -59,9 +59,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "is_ceo", nullable = true)
     private Boolean isCeo  = Boolean.FALSE;
 
-    @ManyToMany(mappedBy = "supervisors")
-    private List<Task> tasks = new ArrayList<>();
-
     @Column(name = "failed_login_attempts")
     private int failedLoginAttempts;
 
