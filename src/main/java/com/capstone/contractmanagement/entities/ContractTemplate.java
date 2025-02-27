@@ -154,5 +154,8 @@ public class ContractTemplate {
     @Column(name = "duplicate_version")
     private Integer duplicateVersion; // 0 hoặc null nếu là bản gốc, >=1 đối với các duplicate
 
+    @OneToMany(mappedBy = "contractTemplate", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<ContractAdditionalTerm> additionalTerms = new ArrayList<>();
 
 }
