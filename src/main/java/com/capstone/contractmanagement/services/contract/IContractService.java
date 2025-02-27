@@ -19,7 +19,7 @@ public interface IContractService {
     void deleteContract(Long id);
 
 
-    Contract createContractFromTemplate(Long templateId, ContractDTO dto) throws DataNotFoundException;
+    Contract createContractFromTemplate(ContractDTO dto) throws DataNotFoundException;
 
 
     }
