@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.contract;
 
+import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -9,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,9 +22,11 @@ public class ContractService implements IContractService{
 
 
     private final IContractRepository contractRepository;
+    private final IContractTemplateRepository contractTemplateRepository;
     private final IUserRepository userRepository;
     private final IPartyRepository partyRepository;
     private final ITermRepository termRepository;
+    private final SecurityUtils currentUser;
 
     @Override
     public List<ContractResponse> getAllContracts() {
@@ -43,71 +49,57 @@ public class ContractService implements IContractService{
             throw new IllegalArgumentException("Party must have a valid address");
         }
     }
-    @Override
-    public Contract createContract(ContractDTO request) throws DataNotFoundException {
-        // Validate các trường bắt buộc
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
-        Party party = partyRepository.findById(request.getPartyId())
-                .orElseThrow(() -> new DataNotFoundException("Party not found"));
-        validateParty(party); // Kiểm tra thêm nếu cần
-//        Template template = templateRepository.findById(request.getTemplateId())
-//                .orElse(null);
+    public Contract createContractFromTemplate(Long templateId, ContractDTO dto) throws DataNotFoundException {
+        // Fetch Template với tất cả quan hệ cần thiết
+        ContractTemplate template = contractTemplateRepository.findWithTermsById(templateId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy mẫu hợp đồng với id: " + templateId));
 
-        if (contractRepository.existsByContractNumber(request.getContractNumber())) {
-            throw new IllegalArgumentException("Contract number already exists: " + request.getContractNumber());
+        // Tạo Contract mới và sao chép thông tin từ Template
+        Contract contract = new Contract();
+        contract.setTitle(template.getContractTitle());
+        contract.setSpecialTermsA(template.getSpecialTermsA());
+        contract.setSpecialTermsB(template.getSpecialTermsB());
+        contract.setContractContent(template.getContractContent());
+        contract.setAppendixEnabled(template.getAppendixEnabled());
+        contract.setTransferEnabled(template.getTransferEnabled());
+        contract.setAutoAddVAT(template.getAutoAddVAT());
+        contract.setVatPercentage(template.getVatPercentage());
+        contract.setAutoRenew(template.getAutoRenew());
+
+        contract.setContractNumber(dto.getContractNumber());
+        contract.setStatus(dto.getStatus());
+
+        contract.setStartDate(LocalDateTime.now());
+
+        Set<Term> allTerms = new HashSet<>();
+
+        allTerms.addAll(template.getLegalBasisTerms());
+        allTerms.addAll(template.getGeneralTerms());
+        allTerms.addAll(template.getOtherTerms());
+
+        // Thu thập các Term từ additionalTermConfigs
+        Set<Long> additionalTermIds = new HashSet<>();
+        for (ContractTemplateAdditionalTermDetail config : template.getAdditionalTermConfigs()) {
+            additionalTermIds.addAll(config.getCommonTermIds());
+            additionalTermIds.addAll(config.getATermIds());
+            additionalTermIds.addAll(config.getBTermIds());
         }
-        // Build Contract object
-        Contract contract = Contract.builder()
-                .title(request.getTitle())
-                .contractNumber(request.getContractNumber())
-                .description(request.getDescription())
-                .status(request.getStatus())
-                .startDate(request.getStartDate())
-                .createdBy(request.getCreatedBy())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .scope(request.getScope())
-                .configuration(request.getConfiguration())
-                .sla(request.getSla())
-                .confidentiality(request.getConfidentiality())
-                .obligations(request.getObligations())
-                .amount(request.getAmount())
-                .user(user)
-                .party(party)
-                .build();
+        List<Term> additionalTerms = termRepository.findAllById(additionalTermIds);
+        allTerms.addAll(additionalTerms);
 
-        // Thêm các Term liên quan
-        if (request.getTermIds() != null) {
-            List<Term> terms = termRepository.findAllById(request.getTermIds());
-            contract.getTerms().addAll(terms);
-        }
+        // Gán danh sách Term vào Contract
+        contract.setTerms(new ArrayList<>(allTerms));
 
-        // Thêm PaymentSchedules
-        if (request.getPaymentSchedules() != null) {
-            List<PaymentSchedule> schedules = request.getPaymentSchedules().stream()
-                    .map(scheduleRequest -> PaymentSchedule.builder()
-                            .contract(contract)
-                            .dueDate(scheduleRequest.getDueDate())
-                            .amount(scheduleRequest.getAmount())
-                            .build())
-                    .toList();
-            contract.getPaymentSchedules().addAll(schedules);
-        }
+        User user = currentUser.getLoggedInUser();
 
-        // Thêm PaymentOneTime
-        if (request.getPaymentOneTime() != null) {
-            PaymentOneTime paymentOneTime = PaymentOneTime.builder()
-                    .contract(contract)
-                    .dueDate(request.getPaymentOneTime().getDueDate())
-                    .amount(request.getPaymentOneTime().getAmount())
-                    .build();
-            contract.setPaymentOneTime(paymentOneTime);
-        }
+        // Liên kết Contract với Template và các entity khác
+        contract.setTemplate(template);
+        contract.setUser(user); // Giả sử currentUser được lấy từ security context
+        contract.setParty(partyRepository.findById(dto.getPartyId()) // Giả sử partyId từ DTO
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy đối tác")));
 
-        // Lưu hợp đồng
+        // Lưu Contract
         return contractRepository.save(contract);
-
     }
 
 

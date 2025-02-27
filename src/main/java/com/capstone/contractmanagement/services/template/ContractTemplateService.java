@@ -15,6 +15,7 @@
     import com.capstone.contractmanagement.repositories.ITypeTermRepository;
     import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
     import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
+    import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
     import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
     import com.capstone.contractmanagement.responses.term.TermResponse;
     import com.capstone.contractmanagement.responses.term.TypeTermResponse;
@@ -423,6 +424,8 @@
                     .additionalTerms(additionalTerms)
                     .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
                     .additionalConfig(additionalConfig)
+                    .originalTemplateId(template.getOriginalTemplateId())
+                    .duplicateVersion(template.getDuplicateVersion())
                     .build();
         }
 
@@ -458,4 +461,143 @@
         public void deleteTemplate(Long id) {
             templateRepository.deleteById(id);
         }
+        @Override
+        @Transactional(readOnly = true)
+        public Optional<ContractTemplateResponseIds> getTemplateIdsById(Long id) {
+            return templateRepository.findById(id)
+                    .map(template -> {
+                        template.getLegalBasisTerms().size();
+                        template.getGeneralTerms().size();
+                        template.getOtherTerms().size();
+                        template.getAdditionalTermConfigs().forEach(config -> {
+                            config.getCommonTermIds().size();
+                            config.getATermIds().size();
+                            config.getBTermIds().size();
+                        });
+                        return convertToIdResponseDTO(template);
+                    });
+        }
+
+
+        private ContractTemplateResponseIds convertToIdResponseDTO(ContractTemplate template) {
+            List<Long> legalBasisTermIds = template.getLegalBasisTerms().stream()
+                    .map(Term::getId)
+                    .collect(Collectors.toList());
+
+            List<Long> generalTermIds = template.getGeneralTerms().stream()
+                    .map(Term::getId)
+                    .collect(Collectors.toList());
+
+            List<Long> otherTermIds = template.getOtherTerms().stream()
+                    .map(Term::getId)
+                    .collect(Collectors.toList());
+
+            List<Long> additionalTermIds = template.getAdditionalTermConfigs().stream()
+                    .map(ContractTemplateAdditionalTermDetail::getTypeTermId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            Map<String, Map<String, List<Long>>> additionalConfig = template.getAdditionalTermConfigs().stream()
+                    .collect(Collectors.toMap(
+                            config -> String.valueOf(config.getTypeTermId()),
+                            config -> {
+                                Map<String, List<Long>> innerMap = new HashMap<>();
+                                innerMap.put("Common", config.getCommonTermIds());
+                                innerMap.put("A", config.getATermIds());
+                                innerMap.put("B", config.getBTermIds());
+                                return innerMap;
+                            }
+                    ));
+
+            return ContractTemplateResponseIds.builder()
+                    .id(template.getId())
+                    .legalBasisTermIds(legalBasisTermIds)
+                    .generalTermIds(generalTermIds)
+                    .otherTermIds(otherTermIds)
+                    .additionalTermIds(additionalTermIds)
+                    .additionalConfig(additionalConfig)
+                    .build();
+        }
+
+        @Override
+        @Transactional
+        public Optional<ContractTemplateResponse> duplicateTemplate(Long id) {
+            return templateRepository.findById(id)
+                    .map(originalTemplate -> {
+
+                        ContractTemplate duplicate = new ContractTemplate();
+                        int duplicateCount = templateRepository.countByOriginalTemplateId(originalTemplate.getId());
+                        duplicate.setDuplicateVersion(duplicateCount + 1);
+                        duplicate.setOriginalTemplateId(originalTemplate.getId());
+
+                        // Cập nhật tiêu đề: thêm dấu hiệu copy và số thứ tự duplicate
+                        String newTitle = originalTemplate.getContractTitle()
+                                + " (Copy " + (duplicateCount + 1) + ")";
+                        duplicate.setContractTitle(newTitle);
+                        duplicate.setPartyInfo(originalTemplate.getPartyInfo());
+                        duplicate.setSpecialTermsA(originalTemplate.getSpecialTermsA());
+                        duplicate.setSpecialTermsB(originalTemplate.getSpecialTermsB());
+                        duplicate.setAppendixEnabled(originalTemplate.getAppendixEnabled());
+                        duplicate.setTransferEnabled(originalTemplate.getTransferEnabled());
+                        duplicate.setViolate(originalTemplate.getViolate());
+                        duplicate.setSuspend(originalTemplate.getSuspend());
+                        duplicate.setSuspendContent(originalTemplate.getSuspendContent());
+                        duplicate.setContractContent(originalTemplate.getContractContent());
+                        duplicate.setAutoAddVAT(originalTemplate.getAutoAddVAT());
+                        duplicate.setVatPercentage(originalTemplate.getVatPercentage());
+                        duplicate.setIsDateLateChecked(originalTemplate.getIsDateLateChecked());
+                        duplicate.setMaxDateLate(originalTemplate.getMaxDateLate());
+                        duplicate.setAutoRenew(originalTemplate.getAutoRenew());
+                        duplicate.setContractType(originalTemplate.getContractType());
+
+                        // Copy các danh sách liên quan (nếu cần duplicate sâu)
+                        duplicate.setLegalBasisTerms(new ArrayList<>(originalTemplate.getLegalBasisTerms()));
+                        duplicate.setGeneralTerms(new ArrayList<>(originalTemplate.getGeneralTerms()));
+                        duplicate.setOtherTerms(new ArrayList<>(originalTemplate.getOtherTerms()));
+
+                        // Đặt lại thời gian tạo, cập nhật
+                        duplicate.setCreatedAt(LocalDateTime.now());
+                        duplicate.setUpdatedAt(LocalDateTime.now());
+
+                        // Set thông tin version:
+                        // Gán originalTemplateId = id của template gốc
+                        duplicate.setOriginalTemplateId(originalTemplate.getId());
+                        // Đếm số bản duplicate đã tạo từ template gốc
+
+                        // Lưu đối tượng duplicate vào database
+                        ContractTemplate savedDuplicate = templateRepository.save(duplicate);
+
+                        // Duplicate các bản ghi trong bảng contract_template_additional_term_details
+                        List<ContractTemplateAdditionalTermDetail> duplicatedDetails = new ArrayList<>();
+                        for (ContractTemplateAdditionalTermDetail detail : originalTemplate.getAdditionalTermConfigs()) {
+                            ContractTemplateAdditionalTermDetail newDetail = ContractTemplateAdditionalTermDetail.builder()
+                                    // Liên kết với duplicate mới (foreign key template_id)
+                                    .contractTemplate(savedDuplicate)
+                                    .typeTermId(detail.getTypeTermId())
+                                    // Copy danh sách term id theo từng nhóm
+                                    .commonTermIds(new ArrayList<>(detail.getCommonTermIds()))
+                                    .aTermIds(new ArrayList<>(detail.getATermIds()))
+                                    .bTermIds(new ArrayList<>(detail.getBTermIds()))
+                                    .build();
+                            duplicatedDetails.add(newDetail);
+                        }
+
+                        // Nếu cascade persist đã được cấu hình thì chỉ cần gán danh sách mới vào savedDuplicate.
+                        // Nếu không, bạn cần lưu từng bản ghi detail riêng thông qua repository.
+                        savedDuplicate.setAdditionalTermConfigs(duplicatedDetails);
+                        // Nếu không có cascade, uncomment dòng dưới đây và inject additionalTermDetailRepository:
+                        // duplicatedDetails.forEach(additionalTermDetailRepository::save);
+
+                        savedDuplicate = templateRepository.save(savedDuplicate);
+
+                        savedDuplicate.getLegalBasisTerms().size();
+                        savedDuplicate.getGeneralTerms().size();
+                        savedDuplicate.getOtherTerms().size();
+                        savedDuplicate.getAdditionalTermConfigs().size();
+
+                        return convertToResponseDTO(savedDuplicate);
+                    });
+        }
+
+
     }
