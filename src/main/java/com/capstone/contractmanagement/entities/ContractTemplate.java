@@ -148,5 +148,11 @@ public class ContractTemplate {
     @JsonIgnore
     private ContractType contractType;
 
+    @Column(name = "original_template_id")
+    private Long originalTemplateId; // null nếu là bản gốc
+
+    @Column(name = "duplicate_version")
+    private Integer duplicateVersion; // 0 hoặc null nếu là bản gốc, >=1 đối với các duplicate
+
 
 }

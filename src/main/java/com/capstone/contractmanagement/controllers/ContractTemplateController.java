@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
+import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
 import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.services.template.IContractTemplateService;
@@ -109,6 +110,35 @@ public class ContractTemplateController {
         }
     }
 
+    @GetMapping("/{id}/ids")
+    public ResponseEntity<ResponseObject> getTemplateIdsById(@PathVariable Long id) {
+        try {
+            Optional<ContractTemplateResponseIds> templateOpt = templateService.getTemplateIdsById(id);
+            if (templateOpt.isPresent()) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.GET_TEMPLATE_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(templateOpt.get())
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseObject> deleteTemplate(@PathVariable Long id) {
@@ -121,6 +151,36 @@ public class ContractTemplateController {
             );
         }
     }
+
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<ResponseObject> duplicateTemplate(@PathVariable Long id) {
+        try {
+            Optional<ContractTemplateResponse> duplicateTemplateOpt = templateService.duplicateTemplate(id);
+            if (duplicateTemplateOpt.isPresent()) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.DUPLICATE_TEMPLATE_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(duplicateTemplateOpt.get())
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+
 
 
 }

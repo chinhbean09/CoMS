@@ -1,6 +1,5 @@
 package com.capstone.contractmanagement.responses.template;
 
-import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.Builder;
@@ -12,8 +11,7 @@ import java.util.Map;
 
 @Data
 @Builder
-public class ContractTemplateResponse {
-
+public class ContractTemplateResponseIds {
     private Long id;
     private String contractTitle;
     private String partyInfo;
@@ -32,20 +30,16 @@ public class ContractTemplateResponse {
     private Boolean isDateLateChecked;
     private Integer maxDateLate;
     private Boolean autoRenew;
-    private List<TermResponse> legalBasisTerms;
-    private List<TermResponse> generalTerms;
-    private List<TermResponse> otherTerms;
-    private List<TypeTermResponse> additionalTerms;
+    private List<Long> legalBasisTermIds;
+    private List<Long> generalTermIds;
+    private List<Long> otherTermIds;
+    private List<Long> additionalTermIds;
+    private List<Long> additionalTerms;
     private Long contractTypeId;
     // Thêm field cho additionalTermConfigs
 
     // Instead of a list of additionalTermConfigs, we now use a map:
     // Key: typeTermId (as String)
     // Value: Map with keys "Common", "A", "B" and values are lists of TermResponseDTO
-    private Map<String, Map<String, List<TermResponse>>> additionalConfig;
-
-    private Long originalTemplateId;
-    private Integer duplicateVersion;
-
-
+    private Map<String, Map<String, List<Long>>> additionalConfig;
 }
