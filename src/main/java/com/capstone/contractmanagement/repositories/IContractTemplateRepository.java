@@ -15,7 +15,12 @@ public interface IContractTemplateRepository extends JpaRepository<ContractTempl
     Page<ContractTemplate> findByContractTitleContainingIgnoreCase(String contractTitle, Pageable pageable);
 
     @EntityGraph(attributePaths = {"legalBasisTerms", "generalTerms", "otherTerms", "additionalTermConfigs"})
+
     Optional<ContractTemplate> findWithTermsById(Long id);
+
     int countByOriginalTemplateId(Long originalTemplateId);
+
+    boolean existsByContractTitle(String contractTitle);
+
 
 }
