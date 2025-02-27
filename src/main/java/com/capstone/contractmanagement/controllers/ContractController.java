@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.entities.Contract;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
+import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("${api.prefix}/contracts")
@@ -44,14 +46,13 @@ public class ContractController {
 
     @PostMapping
     public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-        Contract contract = contractService.createContract(contractDTO);
+        Contract contract = contractService.createContractFromTemplate(contractDTO.getTemplateId(), contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
                 .data(contract)
                 .build());
     }
-
     @PutMapping("/{id}")
     public ResponseEntity<ResponseObject> updateContract(
             @PathVariable Long id,
