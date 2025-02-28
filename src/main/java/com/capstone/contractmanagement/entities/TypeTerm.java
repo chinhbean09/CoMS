@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,5 +32,7 @@ public class TypeTerm {
 
     // Liên kết One-to-Many với Terms
     @OneToMany(mappedBy = "typeTerm", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+
     private List<Term> terms = new ArrayList<>();
 }

@@ -13,10 +13,7 @@
     import com.capstone.contractmanagement.repositories.IContractTypeRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
     import com.capstone.contractmanagement.repositories.ITypeTermRepository;
-    import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
-    import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
-    import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
-    import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
+    import com.capstone.contractmanagement.responses.template.*;
     import com.capstone.contractmanagement.responses.term.TermResponse;
     import com.capstone.contractmanagement.responses.term.TypeTermResponse;
     import lombok.RequiredArgsConstructor;
@@ -326,6 +323,18 @@
                         return convertToResponseDTO(template);
                     });
         }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<ContractTemplateTitleResponse> getAllTemplateTitles() {
+            return templateRepository.findAll().stream()
+                    .map(template -> ContractTemplateTitleResponse.builder()
+                            .id(template.getId())
+                            .contractTitle(template.getContractTitle())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+
 
 
 

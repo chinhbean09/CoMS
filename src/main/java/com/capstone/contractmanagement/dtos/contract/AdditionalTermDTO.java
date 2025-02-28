@@ -1,6 +1,5 @@
-package com.capstone.contractmanagement.responses.contract;
+package com.capstone.contractmanagement.dtos.contract;
 
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdditionalTermResponse {
+public class AdditionalTermDTO {
     private Long id;
     private String name;
-    private TypeTermIdentifier identifier;
+    private String identifier;  // Ví dụ: "ADDITIONAL_TERMS"
 }
