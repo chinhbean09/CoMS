@@ -84,10 +84,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     private boolean isBypassToken(@NonNull HttpServletRequest request) {
-        if (request.getServletPath().startsWith("/ws")) {
-            return true;
-        }
-
         final List<Pair<String, String>> bypassTokens = Arrays.asList(
                 Pair.of(String.format("%s/users/generate-secret-key", apiPrefix), "GET"),
                 Pair.of(String.format("%s/users/login", apiPrefix), "POST"),
@@ -105,9 +101,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 Pair.of("/configuration/security", "GET"),
                 Pair.of("/v3/api-docs/**", "GET"),
                 Pair.of("/swagger-ui.html", "GET"),
-                Pair.of("/swagger-ui/**", "GET"),
-                Pair.of("/ws/**", "GET")
-
+                Pair.of("/swagger-ui/**", "GET")
         );
         String requestPath = request.getServletPath();
         String requestMethod = request.getMethod();
@@ -115,7 +109,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             String path = token.getFirst();
             String method = token.getSecond();
             // Check if the request path and method match any pair in the bypassTokens list
-            if (requestPath.matches(path.replace("*", "."))
+            if (requestPath.matches(path.replace("**", ".*"))
                     && requestMethod.equalsIgnoreCase(method)) {
                 return true;
             }

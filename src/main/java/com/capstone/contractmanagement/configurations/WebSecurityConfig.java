@@ -43,8 +43,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(requests ->
                 {
                     requests
-                            .requestMatchers("/ws/**").permitAll()
-                            .requestMatchers("/api-docs/**", "swagger-ui/**", "/swagger-ui.html","/ws/*").permitAll()
+                            .requestMatchers("/api-docs/**", "swagger-ui/**", "/swagger-ui.html").permitAll()
                             .requestMatchers(
                                     String.format("%s/users/register", apiPrefix),
                                     String.format("%s/users/login", apiPrefix),
