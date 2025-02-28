@@ -21,10 +21,15 @@ pipeline {
                         env | sort
                     """
                     CI_PROJECT_NAME = sh(script: "git remote show origin -n | grep Fetch | awk -F'[:/]' '{print \$3}' | cut -d'.' -f1", returnStdout:true).trim()
+                    echo "CI_PROJECT_NAME: ${CI_PROJECT_NAME}"
                     def CI_COMMIT_HASH = sh(script: "git rev-parse HEAD ", returnStdout: true).trim()
+                    echo "CI_COMMIT_HASH: ${CI_COMMIT_HASH}"
                     CI_COMMIT_SHORT_SHA = CI_COMMIT_HASH.take(8)
+                    echo "CI_COMMIT_SHORT_SHA: ${CI_COMMIT_SHORT_SHA}"
                     CI_COMMIT_TAG = sh(script:"git log -1 --pretty=%s", returnStdout: true).trim()
+                    echo "CI_COMMIT_TAG: ${CI_COMMIT_TAG}"
                     IMAGE_VERSION = "${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}_${CI_COMMIT_TAG}"
+                    echo "IMAGE_VERSION: ${IMAGE_VERSION}"
                 }
             }
         }
