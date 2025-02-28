@@ -326,16 +326,17 @@
 
         @Override
         @Transactional(readOnly = true)
-        public List<ContractTemplateTitleResponse> getAllTemplateTitles() {
-            return templateRepository.findAll().stream()
-                    .map(template -> ContractTemplateTitleResponse.builder()
+        public Page<ContractTemplateTitleResponse> getAllTemplateTitles(Pageable pageable) {
+            // Lấy danh sách ContractTemplate theo phân trang
+            Page<ContractTemplate> pageTemplates = templateRepository.findAll(pageable);
+            // Map từng ContractTemplate thành ContractTemplateTitleResponse
+            return pageTemplates.map(template ->
+                    ContractTemplateTitleResponse.builder()
                             .id(template.getId())
                             .contractTitle(template.getContractTitle())
-                            .build())
-                    .collect(Collectors.toList());
+                            .build()
+            );
         }
-
-
 
 
         private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
