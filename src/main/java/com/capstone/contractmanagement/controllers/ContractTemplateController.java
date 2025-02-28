@@ -19,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -79,13 +81,22 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/titles")
-    public ResponseEntity<ResponseObject> getAllTemplateTitles() {
+    public ResponseEntity<ResponseObject> getAllTemplateTitles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
         try {
-            List<ContractTemplateTitleResponse> titles = templateService.getAllTemplateTitles();
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<ContractTemplateTitleResponse> pageTemplates = templateService.getAllTemplateTitles(pageable);
+
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
                     .status(HttpStatus.OK)
-                    .data(titles)
+                    .data(pageTemplates)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -96,6 +107,7 @@ public class ContractTemplateController {
                             .build());
         }
     }
+
 
 
     @GetMapping("/{id}")
