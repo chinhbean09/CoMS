@@ -17,9 +17,15 @@ public interface IContractTemplateService {
     ContractTemplate createTemplate(ContractTemplateDTO dto) throws DataNotFoundException;
 
     Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword);
+
     Optional<ContractTemplateResponse> getTemplateById(Long id);
+
     Optional<ContractTemplateResponseIds> getTemplateIdsById(Long id);
+
     void deleteTemplate(Long id);
+
     Optional<ContractTemplateResponse> duplicateTemplate(Long id);
-    List<ContractTemplateTitleResponse> getAllTemplateTitles();
+
+    Page<ContractTemplateTitleResponse> getAllTemplateTitles(Pageable pageable);
+
 }
