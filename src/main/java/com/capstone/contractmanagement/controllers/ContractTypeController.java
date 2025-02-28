@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_type.ContractTypeDTO;
 import com.capstone.contractmanagement.entities.ContractType;
+import com.capstone.contractmanagement.repositories.IContractTypeRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.services.contract_type.IContractTypeService;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +23,8 @@ import java.util.stream.Collectors;
 
 public class ContractTypeController {
     private final IContractTypeService contractTypeService;
+    private final IContractTypeRepository contractTypeRepository;
+
     @GetMapping
     public ResponseEntity<List<ContractTypeDTO>> getAllContractTypes() {
         List<ContractTypeDTO> contractTypes = contractTypeService.findAll()
@@ -44,6 +47,9 @@ public class ContractTypeController {
     @Transactional
     public ResponseEntity<?> createContractType(@RequestBody ContractTypeDTO contractTypeDTO) {
         try {
+            if (contractTypeRepository.existsByName(contractTypeDTO.getName())) {
+                throw new IllegalArgumentException("Tên loại hợp đồng đã tồn tại, vui lòng chọn tên khác!");
+            }
             ContractType contractType = convertToEntity(contractTypeDTO);
             ContractType savedType = contractTypeService.save(contractType);
             return ResponseEntity.ok(convertToDTO(savedType));

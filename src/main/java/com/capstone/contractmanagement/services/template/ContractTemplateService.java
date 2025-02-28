@@ -338,7 +338,6 @@
             );
         }
 
-
         private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
             List<TermResponse> legalBasisTerms = template.getLegalBasisTerms().stream()
                     .map(term -> TermResponse.builder()
@@ -364,14 +363,6 @@
                             .value(term.getValue())
                             .build())
                     .collect(Collectors.toList());
-
-//            List<TermResponse> additionalTerms = template.getAdditionalTerms().stream()
-//                    .map(term -> TermResponse.builder()
-//                            .id(term.getId())
-//                            .label(term.getLabel())
-//                            .value(term.getValue())
-//                            .build())
-//                    .collect(Collectors.toList());
 
             List<TypeTermResponse> additionalTerms = template.getAdditionalTermConfigs().stream()
                     .map(config -> typeTermRepository.findById(config.getTypeTermId()))
