@@ -18,9 +18,15 @@ public class ContractTerm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Nội dung điều khoản (được copy từ Term)
-    @Column(name = "term_content", columnDefinition = "TEXT", nullable = false)
-    private String termContent;
+    // Lưu lại label của điều khoản
+    @Column(name = "term_label_snapshot", length = 200)
+    private String termLabel;
+
+
+    // Lưu lại value của điều khoản (nội dung)
+    @Column(name = "term_value_snapshot", columnDefinition = "TEXT")
+    private String termValue;
+
 
     // Loại điều khoản (LEGAL_BASIS, GENERAL_TERMS, OTHER_TERMS, ADDITIONAL)
     @Enumerated(EnumType.STRING)
@@ -30,10 +36,6 @@ public class ContractTerm {
     // Lưu lại id của điều khoản gốc
     @Column(name = "original_term_id")
     private Long originalTermId;
-
-    // Thông tin nhóm cho điều khoản bổ sung (Common, A, B). Nếu không phải additional thì có thể null.
-    @Column(name = "additional_group", length = 50)
-    private String additionalGroup;
 
     // Liên kết với hợp đồng chứa bản snapshot này
     @ManyToOne

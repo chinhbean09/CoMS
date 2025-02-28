@@ -60,4 +60,9 @@ public class ContractDTO {
 
     private String specialTermsB;
 
+    private Long contractTypeId;
+
+    private TemplateSnapshotDTO templateSnapshot;
+
+
 }
