@@ -21,3 +21,8 @@ USER coms-chinhbean
 EXPOSE 8080
 
 ENTRYPOINT java -jar /run/history-education-0.0.1-SNAPSHOT.jar
+
+
+
+
+
