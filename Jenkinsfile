@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         CI_COMMIT_SHORT_SHA = ""
-        CI_COMMIT_TAG = ""
         CI_PROJECT_NAME = ""
         IMAGE_VERSION = ""
     }
@@ -12,36 +11,43 @@ pipeline {
         stage('Project Information') {
             steps {
                 script {
-                    // In ra một số thông tin cơ bản
+                    // Hiển thị thông tin hệ thống
                     sh """
                         echo "Running as: \$(whoami)"
                         echo "Current Directory: \$(pwd)"
-                        echo "Listing files:"
                         ls -la
-                        echo "Environment Variables:"
-                        env | sort
                     """
                     
-                    // Lệnh trích xuất project name (with escaped $)
-                    CI_PROJECT_NAME = sh(script: "git remote show origin -n | grep Fetch | awk '{print \$3}' | cut -d':' -f2 | cut -d'/' -f2 | cut -d'.' -f1", returnStdout:true).trim()
-                    def CI_COMMIT_HASH = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-                    CI_COMMIT_SHORT_SHA = CI_COMMIT_HASH.take(8)
-                    CI_COMMIT_TAG = sh(script:"git log -1 --pretty=%s", returnStdout: true).trim()
-                    IMAGE_VERSION = "${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}_${CI_COMMIT_TAG}"
+                    // Lấy tên project từ git remote
+                    env.CI_PROJECT_NAME = sh(script: """
+                        git remote -v | grep -m1 'origin.*fetch' | awk '{print \$2}' | 
+                        sed 's|.*:||; s|/| |g' | awk '{print \$2}' | 
+                        sed 's/\\.git//'
+                    """, returnStdout: true).trim()
+
+                    // Lấy commit hash ngắn
+                    def commitHash = sh(script: "git rev-parse --short=8 HEAD", returnStdout: true).trim()
+                    env.CI_COMMIT_SHORT_SHA = commitHash
+
+                    // Tạo version cho image
+                    env.IMAGE_VERSION = "${env.CI_PROJECT_NAME}:${env.CI_COMMIT_SHORT_SHA}"
                 }
             }
         }
         
-        stage('build') {
+        stage('Build Docker Image') {
             steps {
-                sh(script: "docker build -t ${IMAGE_VERSION} .", label: "")
+                script {
+                    echo "Building image version: ${env.IMAGE_VERSION}"
+                    sh "docker build -t ${env.IMAGE_VERSION} ."
+                }
             }
         }
     }
-    
+
     post {
         always {
-            echo "Pipeline execution completed."
+            echo "Pipeline hoàn tất - Kiểm tra trạng thái ở trên"
         }
     }
 }
