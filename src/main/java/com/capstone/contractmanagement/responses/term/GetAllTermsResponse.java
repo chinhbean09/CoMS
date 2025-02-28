@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.responses.term;
 
 
 import com.capstone.contractmanagement.enums.TermStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class GetAllTermsResponse {
+
     private Long id;
     private String clauseCode;
     private String label;
