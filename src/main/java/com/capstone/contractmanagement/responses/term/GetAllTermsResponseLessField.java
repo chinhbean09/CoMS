@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TermResponse {
+public class GetAllTermsResponseLessField {
 
     @JsonProperty("original_term_id")
     private Long id;
@@ -14,5 +14,4 @@ public class TermResponse {
     private String label;
 
     private String value;
-
 }

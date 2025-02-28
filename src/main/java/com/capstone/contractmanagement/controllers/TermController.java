@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
+import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessField;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.ITermService;
 import com.capstone.contractmanagement.services.translation.TranslationService;
@@ -97,6 +98,37 @@ public class TermController {
                             .build());
         }
     }
+
+    @GetMapping("/get-all-less-field")
+    public ResponseEntity<ResponseObject> getAllTermsLessField(
+            @RequestParam(required = false) List<Long> typeTermIds,
+            @RequestParam(defaultValue = "false") boolean includeLegalBasis,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int size,
+            @RequestParam(defaultValue = "id", required = false) String sortBy,
+            @RequestParam(defaultValue = "asc", required = false) String order) {
+        try {
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<GetAllTermsResponseLessField> termResponses = termService.getAllTermsLessField(typeTermIds, includeLegalBasis,keyword, pageable);
+            return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
+                    .data(termResponses)
+                    .status(HttpStatus.OK)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
 
     @GetMapping("/get-by-id/{termId}")
     public ResponseEntity<ResponseObject> getTermById(@PathVariable Long termId) throws DataNotFoundException {

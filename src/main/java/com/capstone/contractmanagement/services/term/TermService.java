@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.repositories.ITermRepository;
 import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
+import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessField;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -217,6 +218,8 @@ public class TermService implements ITermService{
             }
         }
 
+
+
         return termPage.map(term -> GetAllTermsResponse.builder()
                 .id(term.getId())
                 .clauseCode(term.getClauseCode())
@@ -227,6 +230,46 @@ public class TermService implements ITermService{
                 .status(term.getStatus())
                 .createdAt(term.getCreatedAt())
                 .version(term.getVersion())
+                .build());
+    }
+
+    @Override
+    public Page<GetAllTermsResponseLessField> getAllTermsLessField(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable) {
+        Page<Term> termPage;
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+
+        if (hasSearch) {
+            search = search.trim(); // Loại bỏ khoảng trắng dư thừa
+        }
+
+        if (typeTermIds != null && !typeTermIds.isEmpty()) {
+            if (hasSearch) {
+                if (includeLegalBasis) {
+                    termPage = termRepository.findByLegalBasisOrTypeTermIdInWithSearch(typeTermIds, search, pageable);
+                } else {
+                    termPage = termRepository.findByTypeTermIdInWithSearch(typeTermIds, search, pageable);
+                }
+            } else {
+                if (includeLegalBasis) {
+                    termPage = termRepository.findByLegalBasisOrTypeTermIdIn(typeTermIds, pageable);
+                } else {
+                    termPage = termRepository.findByTypeTermIdIn(typeTermIds, pageable);
+                }
+            }
+        } else {
+            if (hasSearch) {
+                termPage = termRepository.findAllExcludingLegalBasicWithSearch(search, pageable);
+            } else {
+                termPage = termRepository.findAllExcludingLegalBasic(pageable);
+            }
+        }
+
+
+
+        return termPage.map(term -> GetAllTermsResponseLessField.builder()
+                .id(term.getId())
+                .label(term.getLabel())
+                .value(term.getValue())
                 .build());
     }
 
