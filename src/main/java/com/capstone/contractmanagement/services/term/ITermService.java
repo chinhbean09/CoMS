@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
+import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessField;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,4 +40,8 @@ public interface ITermService {
     Page<GetAllTermsResponse> getAllTermsByTypeTermId(Long typeTermId, String search, int page, int size);
 
     void updateTermStatus(Long termId, Boolean isDeleted) throws DataNotFoundException;
+
+    Page<GetAllTermsResponseLessField> getAllTermsLessField(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
+
+
 }
