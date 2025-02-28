@@ -13,8 +13,8 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo "Running as: $(whoami)"
-                        echo "Current Directory: $(pwd)"
+                        echo "Running as: \$(whoami)"
+                        echo "Current Directory: \$(pwd)"
                         echo "Listing files:"
                         ls -la
                         echo "Environment Variables:"
