@@ -25,7 +25,7 @@ public class Term {
     @Column(name = "term_id")
     private Long id;
 
-    @Column(name = "label", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "label", nullable = false, columnDefinition = "TEXT", unique = true)
     private String label;
 
     @Column(name = "value", nullable = false, columnDefinition = "TEXT")
@@ -47,7 +47,7 @@ public class Term {
     @Column(name = "status", nullable = false)
     private TermStatus status = TermStatus.NEW;
 
-    // Số phiên bản của điều khoản
+    // Số phiên bản của điều khoản, update +=1
     @Column(name = "version", nullable = false)
     private Integer version = 1;
 

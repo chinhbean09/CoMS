@@ -22,7 +22,7 @@ public class TypeTerm {
     @Column(name = "type_term_id")
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 255)
+    @Column(name = "name", nullable = false, length = 255, unique = true)
     private String name;
 
     //generalTerms, additionalTerms, otherTerms, legalbasis
