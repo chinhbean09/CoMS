@@ -57,4 +57,7 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     Page<Term> searchByTypeTermAndLabelOrClauseCode(@Param("typeTerm") TypeTerm typeTerm,
                                                     @Param("search") String search,
                                                     Pageable pageable);
+
+    boolean existsByLabel(String label);
+
 }

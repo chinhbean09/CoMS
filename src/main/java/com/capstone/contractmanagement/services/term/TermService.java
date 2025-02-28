@@ -41,6 +41,10 @@ public class TermService implements ITermService{
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
                 .orElseThrow(() -> new IllegalArgumentException("TypeTerm not found"));
 
+        if (termRepository.existsByLabel(request.getLabel())) {
+            throw new IllegalArgumentException("Label đã tồn tại, vui lòng chọn tên khác!");
+        }
+
         // Sinh clauseCode tự động dựa trên tên của typeTerm và số thứ tự (logic của bạn)
         String clauseCode = generateClauseCode(typeTerm);
 
