@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
 import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
+import com.capstone.contractmanagement.responses.template.ContractTemplateTitleResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,5 +21,5 @@ public interface IContractTemplateService {
     Optional<ContractTemplateResponseIds> getTemplateIdsById(Long id);
     void deleteTemplate(Long id);
     Optional<ContractTemplateResponse> duplicateTemplate(Long id);
-
+    List<ContractTemplateTitleResponse> getAllTemplateTitles();
 }

@@ -5,10 +5,7 @@ import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
 import com.capstone.contractmanagement.entities.ContractTemplate;
 import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
-import com.capstone.contractmanagement.responses.template.ContractTemplateAdditionalTermDetailResponse;
-import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
-import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
-import com.capstone.contractmanagement.responses.template.ContractTemplateSimpleResponse;
+import com.capstone.contractmanagement.responses.template.*;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.services.template.IContractTemplateService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -70,6 +67,25 @@ public class ContractTemplateController {
                     .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
                     .status(HttpStatus.OK)
                     .data(templates)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Error retrieving templates: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+    @GetMapping("/titles")
+    public ResponseEntity<ResponseObject> getAllTemplateTitles() {
+        try {
+            List<ContractTemplateTitleResponse> titles = templateService.getAllTemplateTitles();
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
+                    .status(HttpStatus.OK)
+                    .data(titles)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
