@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.responses.contract;
 
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.entities.TypeTerm;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdditionalTermResponse {
+public class AdditionalConfigTermResponse {
     private Long id;
-    private String name;
-    private TypeTermIdentifier identifier;
+    private Long originalTermId;
+    private String termContent;
+    private TypeTerm typeTerm;
+    private String additionalGroup;
 }
