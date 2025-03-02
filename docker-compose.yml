@@ -1,29 +1,29 @@
-version: '3.8'
+  version: '3.8'
 
-services:
-  app:
-    build: .
-    ports:
-      - "8088:8088"
-    environment:
-      SPRING_PROFILES_ACTIVE: pro
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/coms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 12345
-    depends_on:
-      - db
+  services:
+    app:
+      image: ${BACKEND_IMAGE}
+      ports:
+        - "8088:8088"
+      environment:
+        SPRING_PROFILES_ACTIVE: pro
+        SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/coms
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: 12345
+      depends_on:
+        - db
 
-  db:
-    image: postgres:14
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: coms
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    db:
+      image: postgres:14
+      restart: always
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: 12345
+        POSTGRES_DB: coms
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
 
-volumes:
-  postgres_data:
+  volumes:
+    postgres_data:
