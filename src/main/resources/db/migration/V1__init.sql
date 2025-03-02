@@ -44,7 +44,7 @@ CREATE TABLE contract_types (
 ---------------------------------------------------------------------
 CREATE TABLE parties (
     party_id SERIAL PRIMARY KEY,
-    partnerCode VARCHAR(255),
+    partner_code VARCHAR(255),
     party_type VARCHAR(50) NOT NULL,
     name VARCHAR(200) NOT NULL,
     spokesman_name VARCHAR(100),
