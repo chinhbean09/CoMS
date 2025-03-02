@@ -1,9 +1,6 @@
 package com.capstone.contractmanagement.controllers;
 
-import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
-import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
+import com.capstone.contractmanagement.dtos.term.*;
 import com.capstone.contractmanagement.entities.Term;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
@@ -18,6 +15,7 @@ import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.ITermService;
 import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -263,4 +261,26 @@ public class TermController {
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
+    @PostMapping("/batch-create")
+    public ResponseEntity<ResponseObject> batchCreateTerms(
+            @Valid @RequestBody List<BatchCreateTermDTO> dtos
+    ) {
+        try {
+            List<CreateTermResponse> responses = termService.batchCreateTerms(dtos);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    ResponseObject.builder()
+                            .message(MessageKeys.CREATE_TERM_SUCCESSFULLY)
+                            .data(responses)
+                            .status(HttpStatus.CREATED)
+                            .build()
+            );
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.BAD_REQUEST)
+                            .build()
+            );
+        }
+    }
 }

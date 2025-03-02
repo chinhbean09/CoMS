@@ -1,9 +1,6 @@
 package com.capstone.contractmanagement.services.term;
 
-import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
-import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
+import com.capstone.contractmanagement.dtos.term.*;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -43,5 +40,5 @@ public interface ITermService {
 
     Page<GetAllTermsResponseLessField> getAllTermsLessField(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
 
-
+    List<CreateTermResponse> batchCreateTerms(List<BatchCreateTermDTO> dtos) throws DataNotFoundException;
 }
