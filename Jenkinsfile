@@ -49,8 +49,8 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'docker-hub-repo', variable: 'DOCKER_HUB_REPO')]) {
                         IMAGE_VERSION = "${DOCKER_HUB_REPO}:${CI_COMMIT_SHORT_SHA}"
-                        sh "BACKEND_IMAGE=${IMAGE_VERSION} && docker compose down"
-                        sh "BACKEND_IMAGE=${IMAGE_VERSION} && docker compose up -d"
+                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && docker compose down"
+                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && docker compose up -d"
                     }
                 }
             }
