@@ -35,3 +35,5 @@
 
     # Lệnh khởi động ứng dụng
     ENTRYPOINT ["java", "-jar", "/run/contract-management-0.0.1-SNAPSHOT.jar"]
+
+
