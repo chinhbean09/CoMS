@@ -4,7 +4,6 @@ import com.capstone.contractmanagement.entities.Party;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.enums.PartyType;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.repositories.IPartyRepository;
 import com.capstone.contractmanagement.repositories.IRoleRepository;
@@ -84,19 +83,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             System.out.println("Party already initialized!");
             return;
         }
-        Party party = Party.builder()
-                .address("Khu công nghệ cao")
-                .email("fsoftd1@gmail.com")
-                .isDeleted(false)
-                .note(null)
-                .partnerCode("P40076")
-                .partnerName("FPT software HCM")
-                .partnerType(PartyType.COMPANY)
-                .phone("0922343454")
-                .spokesmanName("Đặng Nam Tiến")
-                .taxCode("93245244534467")
-                .build();
-        partyRepository.save(party);
+        Party party = 
     }
     public void initializeTypeTerms() {
         if (typeTermRepository.count() > 0) {
@@ -139,7 +126,6 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         // Initialize type terms
         initializeTypeTerms();
-        initializeParty();
 
 
         Role AdminRole = Role.builder()
