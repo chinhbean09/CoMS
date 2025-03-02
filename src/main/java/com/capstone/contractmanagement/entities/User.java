@@ -91,6 +91,10 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
         return "";
     }
 
+    public boolean isManager() {
+        return role != null && "MANAGER".equalsIgnoreCase(role.getRoleName());
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
