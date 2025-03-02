@@ -4,10 +4,12 @@ import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.payment.CreatePaymentScheduleDTO;
 import com.capstone.contractmanagement.entities.Contract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
+import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MailTemplate;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     private final IContractRepository contractRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final IMailService mailService;
+    private final INotificationService notificationService;
 
     @Override
     public String createPaymentSchedule(Long contractId, CreatePaymentScheduleDTO createPaymentScheduleDTO) throws DataNotFoundException {
@@ -74,8 +77,10 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                 // Lấy username của người dùng
                 String username = payment.getContract().getUser().getName();
+                User user = payment.getContract().getUser();
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+                notificationService.saveNotification(user, reminderMessage);
                 sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
@@ -97,7 +102,9 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 //payload.put("url", ""); // Nếu có URL cụ thể thì thêm vào
 
                 String username = payment.getContract().getUser().getName();
+                User user = payment.getContract().getUser();
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+                notificationService.saveNotification(user, overdueMessage);
                 sendEmailExpired(payment);
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
