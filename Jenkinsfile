@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        USER_PROJECT = "coms-chinhbean"
         CI_COMMIT_SHORT_SHA = ""
         CI_COMMIT_TAG = ""
         CI_PROJECT_NAME = ""
@@ -9,7 +10,7 @@ pipeline {
     }
 
     stages {
-        stage('Project Information') {
+        stage('get project information') {
             steps {
                 script {
                     // In ra một số thông tin cơ bản
@@ -34,6 +35,16 @@ pipeline {
         stage('build') {
             steps {
                 sh(script: "docker build -t ${IMAGE_VERSION} .", label: "")
+            }
+        }
+
+        tage('deploy') {
+            steps {
+
+                sh(script: "docker compose down", label: "Stop old containers")
+                
+                sh(script: "BACKEND_IMAGE=${IMAGE_VERSION} docker compose up -d", label: "Deploy new containers" )
+
             }
         }
     }
