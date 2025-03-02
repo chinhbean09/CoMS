@@ -155,8 +155,7 @@ public class UserController {
                     .phoneNumber(userDetail.getPhoneNumber())
                     .avatar(userDetail.getAvatar())
                     .configs(managerConfigs)
-                    .roles(userDetais
-                            l.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                     .id(userDetail.getId());
 
             LoginResponse loginResponse = builder.build();
