@@ -23,18 +23,18 @@ public class ContractTemplate {
     @Column(name = "template_id")
     private Long id;
 
-    @Column(name = "contract_title", nullable = false, length = 200)
+    @Column(name = "contract_title", nullable = false, columnDefinition = "TEXT")
     private String contractTitle;
 
     @Column(name = "party_info")
     private String partyInfo;
 
     //specialTerms cua ben A
-    @Column(name = "special_termsA")
+    @Column(name = "special_termsA", columnDefinition = "TEXT")
     private String specialTermsA;
 
     //specialTerms cua ben B
-    @Column(name = "special_termsB")
+    @Column(name = "special_termsB", columnDefinition = "TEXT")
     private String specialTermsB;
 
     //dc tạo phụ lục
@@ -64,7 +64,7 @@ public class ContractTemplate {
     private Boolean suspend = false;
 
     //trường hợp được tạm ngưng
-    @Column(name = "suspend_content")
+    @Column(name = "suspend_content", columnDefinition = "TEXT")
     private String suspendContent;
 
     @Column(name = "contract_content", columnDefinition = "TEXT")
