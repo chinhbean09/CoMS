@@ -355,32 +355,32 @@ CREATE TABLE reports (
 ---------------------------------------------------------------------
 -- Table: task
 ---------------------------------------------------------------------
-CREATE TABLE tasks (
-    id SERIAL PRIMARY KEY,
-    task_name VARCHAR(255) NOT NULL,
-    description VARCHAR(500) NOT NULL,
-    created_by INTEGER NOT NULL,
-    assigned_to INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    due_date DATE NOT NULL,
-    task_status VARCHAR(50) NOT NULL,
-    last_viewed_at TIMESTAMP,
-    last_viewed_by VARCHAR(255),
-    updated_at TIMESTAMP,
-    CONSTRAINT fk_task_created_by FOREIGN KEY (created_by) REFERENCES users(id),
-    CONSTRAINT fk_task_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id)
-);
+--CREATE TABLE tasks (
+--    id SERIAL PRIMARY KEY,
+--    task_name VARCHAR(255) NOT NULL,
+--    description VARCHAR(500) NOT NULL,
+--    created_by INTEGER NOT NULL,
+--    assigned_to INTEGER NOT NULL,
+--    created_at TIMESTAMP NOT NULL,
+--    due_date DATE NOT NULL,
+--    task_status VARCHAR(50) NOT NULL,
+--    last_viewed_at TIMESTAMP,
+--    last_viewed_by VARCHAR(255),
+--    updated_at TIMESTAMP,
+--    CONSTRAINT fk_task_created_by FOREIGN KEY (created_by) REFERENCES users(id),
+--    CONSTRAINT fk_task_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id)
+--);
 
 ---------------------------------------------------------------------
 -- Join table: task_supervisors (Many-to-Many giữa task và users)
 ---------------------------------------------------------------------
-CREATE TABLE task_supervisors (
-    task_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    PRIMARY KEY (task_id, user_id),
-    CONSTRAINT fk_task_supervisors_task FOREIGN KEY (task_id) REFERENCES tasks(id),
-    CONSTRAINT fk_task_supervisors_user FOREIGN KEY (user_id) REFERENCES users(id)
-);
+--CREATE TABLE task_supervisors (
+--    task_id INTEGER NOT NULL,
+--    user_id INTEGER NOT NULL,
+--    PRIMARY KEY (task_id, user_id),
+--    CONSTRAINT fk_task_supervisors_task FOREIGN KEY (task_id) REFERENCES tasks(id),
+--    CONSTRAINT fk_task_supervisors_user FOREIGN KEY (user_id) REFERENCES users(id)
+--);
 
 ---------------------------------------------------------------------
 -- Table: token
