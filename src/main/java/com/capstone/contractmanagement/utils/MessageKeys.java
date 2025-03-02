@@ -69,4 +69,8 @@ public class MessageKeys {
     public static final String GET_ALL_CONTRACTS_BY_USER_SUCCESSFULLY = "Lấy danh sách hợp đồng theo người dùng thành công";
     public static final String DUPLICATE_TEMPLATE_SUCCESSFULLY = "Trung mẫu hợp đồng thành công";
     public static final String CREATE_PAYMENT_SCHEDULE_SUCCESSFULLY = "Tạo lịch thanh toán hợp đồng thành công";
+    public static final String GET_ALL_NOTIFICATION_SUCCESSFULLY = "Lấy danh sách thông báo thành công";
+    public static final String GET_NOTIFICATION_SUCCESSFULLY = "Lấy thông tin thống báo thành công";
+    public static final String NOTIFICATION_NOT_FOUND = "Không tìm thấy thống báo";
+    public static final String MARK_NOTIFICATION_AS_READ_SUCCESSFULLY = "Chuyển thống báo sang đã đọc thành công";
 }
