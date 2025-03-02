@@ -241,7 +241,7 @@ public class TermService implements ITermService{
                 .build());
     }
 
-       @Override
+        @Override
         @Transactional
         public List<CreateTermResponse> batchCreateTerms(List<BatchCreateTermDTO> dtos) throws DataNotFoundException {
             // Validate type term tồn tại
