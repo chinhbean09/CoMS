@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/config")
+@RequestMapping("/${api.prefix}/config")
 @RequiredArgsConstructor
 public class AppConfigController {
     private final IAppConfigService appConfigService;
