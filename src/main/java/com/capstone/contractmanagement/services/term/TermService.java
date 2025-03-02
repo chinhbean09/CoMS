@@ -1,9 +1,6 @@
 package com.capstone.contractmanagement.services.term;
 
-import com.capstone.contractmanagement.dtos.term.CreateTermDTO;
-import com.capstone.contractmanagement.dtos.term.CreateTypeTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTermDTO;
-import com.capstone.contractmanagement.dtos.term.UpdateTypeTermDTO;
+import com.capstone.contractmanagement.dtos.term.*;
 import com.capstone.contractmanagement.entities.Term;
 import com.capstone.contractmanagement.entities.TypeTerm;
 import com.capstone.contractmanagement.enums.TermStatus;
@@ -25,7 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -154,39 +155,6 @@ public class TermService implements ITermService{
                 .build();
     }
 
-//    @Override
-//    public Page<GetAllTermsResponse> getAllTerms(List<TypeTermIdentifier> identifiers, int page, int size) {
-//        Pageable pageable = PageRequest.of(page, size); // Không cần ép kiểu
-//
-//        Page<Term> termPage;
-//
-//
-//        if (identifiers != null && !identifiers.isEmpty()) {
-//            if (identifiers.contains(TypeTermIdentifier.LEGAL_BASIS) && identifiers.size() == 1) {
-//
-//                termPage = termRepository.findByTypeTermIdentifier(TypeTermIdentifier.LEGAL_BASIS, pageable);
-//            } else {
-//                // Lọc theo danh sách identifier, có thể chứa nhiều loại
-//                termPage = termRepository.findByTypeTermIdentifierInExcludingLegalBasic(identifiers, pageable);
-//            }
-//        } else {
-//            // Nếu không có filter identifier, trả về tất cả ngoại trừ "LEGAL_BASIS"
-//            termPage = termRepository.findAllExcludingLegalBasic(pageable);
-//        }
-//
-//
-//        return termPage.map(term -> GetAllTermsResponse.builder()
-//                .id(term.getId())
-//                .clauseCode(term.getClauseCode())
-//                .label(term.getLabel())
-//                .value(term.getValue())
-//                .type(term.getTypeTerm().getName())
-//                .identifier(term.getTypeTerm().getIdentifier().name())
-//                .isDelete(term.getIsDeleted())
-//                .createdAt(term.getCreatedAt())
-//                .build());
-//    }
-
     @Override
     public Page<GetAllTermsResponse> getAllTerms(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable) {
         Page<Term> termPage;
@@ -272,6 +240,55 @@ public class TermService implements ITermService{
                 .value(term.getValue())
                 .build());
     }
+
+       @Override
+        @Transactional
+        public List<CreateTermResponse> batchCreateTerms(List<BatchCreateTermDTO> dtos) throws DataNotFoundException {
+            // Validate type term tồn tại
+            Set<Long> typeTermIds = dtos.stream()
+                    .map(BatchCreateTermDTO::getTypeTermId)
+                    .collect(Collectors.toSet());
+
+            Map<Long, TypeTerm> typeTermMap = typeTermRepository.findAllById(typeTermIds)
+                    .stream()
+                    .collect(Collectors.toMap(TypeTerm::getId, Function.identity()));
+
+            // Tạo danh sách terms
+            List<Term> terms = new ArrayList<>();
+            LocalDateTime now = LocalDateTime.now();
+
+            for (BatchCreateTermDTO dto : dtos) {
+                TypeTerm typeTerm = typeTermMap.get(dto.getTypeTermId());
+
+                if (typeTerm == null) {
+                    throw new DataNotFoundException("Không tìm thấy TypeTerm với ID: " + dto.getTypeTermId());
+                }
+
+                Term term = Term.builder()
+                        .label(dto.getLabel())
+                        .value(dto.getValue())
+                        .typeTerm(typeTerm)
+                        .clauseCode(generateClauseCode(typeTerm))
+                        .createdAt(now)
+                        .status(TermStatus.NEW)
+                        .version(1)
+                        .build();
+
+                terms.add(term);
+            }
+
+            // Lưu batch và generate response
+            List<Term> savedTerms = termRepository.saveAll(terms);
+
+            return savedTerms.stream()
+                    .map(term -> CreateTermResponse.builder()
+                            .id(term.getId())
+                            .label(term.getLabel())
+                            .value(term.getValue())
+                            .createdAt(term.getCreatedAt())
+                            .build())
+                    .collect(Collectors.toList());
+        }
 
     @Override
     public CreateTermResponse getTermById(Long id) throws DataNotFoundException {
