@@ -294,7 +294,6 @@ public class ContractService implements IContractService{
                 .startDate(contract.getStartDate())
                 .createdAt(contract.getCreatedAt())
                 .updatedAt(contract.getUpdatedAt())
-                .createdBy(contract.getCreatedBy())
                 .legalBasisTerms(legalBasisTerms)
                 .generalTerms(generalTerms)
                 .otherTerms(otherTerms)

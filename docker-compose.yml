@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: ${BACKEND_IMAGE}
+    build: .
     ports:
       - "8088:8088"
     environment:
@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: 12345
       POSTGRES_DB: coms
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

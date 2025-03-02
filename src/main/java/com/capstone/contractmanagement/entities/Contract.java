@@ -29,13 +29,13 @@
         @Column(name = "contract_number", nullable = false, unique = true, length = 100)
         private String contractNumber; // Số hợp đồng
 
-        @Column(name = "description", length = 500)
+        @Column(name = "description", columnDefinition = "TEXT")
         private String description;
 
-        @Column(name = "special_terms_a")
+        @Column(name = "special_terms_a", columnDefinition = "TEXT")
         private String specialTermsA;
 
-        @Column(name = "special_terms_b")
+        @Column(name = "special_terms_b", columnDefinition = "TEXT")
         private String specialTermsB;
 
 
@@ -46,9 +46,6 @@
         @Column(name = "start_date")
         private LocalDateTime startDate;
 
-        @Column(name = "created_by", length = 100)
-        private String createdBy;
-
         @Column(name = "created_at")
         private LocalDateTime createdAt;
 
@@ -56,19 +53,16 @@
         private LocalDateTime updatedAt;
 
         // Các trường từ ContractDetails
-        @Column(name = "scope", length = 500)
+        @Column(name = "scope", columnDefinition = "TEXT")
         private String scope; // Phạm vi hợp đồng
-
-        @Column(name = "configuration", length = 500)
-        private String configuration; // Cấu hình máy chủ hoặc phần mềm
 
         @Column(name = "sla", length = 500)
         private String sla; // Cam kết chất lượng dịch vụ
 
-        @Column(name = "confidentiality", length = 500)
+        @Column(name = "confidentiality", columnDefinition = "TEXT")
         private String confidentiality; // Điều khoản bảo mật
 
-        @Column(name = "obligations", length = 500)
+        @Column(name = "obligations", columnDefinition = "TEXT")
         private String obligations; // Quyền và nghĩa vụ của các bên
 
         // Relationship với PaymentSchedules

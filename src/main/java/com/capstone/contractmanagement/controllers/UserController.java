@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.controllers;
 import com.capstone.contractmanagement.components.JwtTokenUtils;
 import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.user.*;
+import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.Token;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -12,6 +13,8 @@ import com.capstone.contractmanagement.responses.User.LoginResponse;
 import com.capstone.contractmanagement.responses.User.UserListResponse;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.responses.token.RefreshTokenDTO;
+import com.capstone.contractmanagement.services.app_config.AppConfigService;
+import com.capstone.contractmanagement.services.app_config.IAppConfigService;
 import com.capstone.contractmanagement.services.token.ITokenService;
 import com.capstone.contractmanagement.services.user.IUserService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -39,6 +42,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,6 +58,7 @@ public class UserController {
     private final IUserRepository UserRepository;
     private final IUserService userService;
     private final ITokenService tokenService;
+    private final IAppConfigService appConfigService;
 
     @GetMapping("/generate-secret-key")
     public ResponseEntity<?> generateSecretKey() {
@@ -120,6 +125,11 @@ public class UserController {
         return userAgent.toLowerCase().contains("mobile");
     }
 
+    private boolean isManager(User user) {
+        return user.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_MANAGER"));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ResponseObject> login(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
         try {
@@ -130,6 +140,11 @@ public class UserController {
 
             Token jwtToken = tokenService.addToken(userDetail, token, isMobileDevice(userAgent));
 
+            List<AppConfig> managerConfigs = new ArrayList<>();
+            if (isManager(userDetail)) {
+                managerConfigs = appConfigService.getAllConfigs();
+            }
+
             LoginResponse.LoginResponseBuilder builder = LoginResponse.builder()
                     .message(MessageKeys.LOGIN_SUCCESSFULLY)
                     .token(jwtToken.getToken())
@@ -139,7 +154,9 @@ public class UserController {
                     .email(userDetail.getEmail())
                     .phoneNumber(userDetail.getPhoneNumber())
                     .avatar(userDetail.getAvatar())
-                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                    .configs(managerConfigs)
+                    .roles(userDetais
+                            l.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                     .id(userDetail.getId());
 
             LoginResponse loginResponse = builder.build();
