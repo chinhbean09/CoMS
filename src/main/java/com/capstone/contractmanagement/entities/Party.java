@@ -21,6 +21,7 @@ public class Party {
     @Column(name = "party_id")
     private Long id;
 
+    @Column(name = "partner_code", nullable = false, length = 50)
     private String partnerCode;
 
     @Column(name = "party_type", nullable = false, length = 50)
