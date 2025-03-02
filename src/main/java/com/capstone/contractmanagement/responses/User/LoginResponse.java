@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.User;
 
+import com.capstone.contractmanagement.entities.AppConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -35,5 +36,7 @@ public class LoginResponse {
     private String phoneNumber;
 
     private String email;
+
+    private List<AppConfig> configs;
 
 }
