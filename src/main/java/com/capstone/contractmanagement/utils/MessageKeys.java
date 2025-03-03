@@ -73,4 +73,11 @@ public class MessageKeys {
     public static final String GET_NOTIFICATION_SUCCESSFULLY = "Lấy thông tin thống báo thành công";
     public static final String NOTIFICATION_NOT_FOUND = "Không tìm thấy thống báo";
     public static final String MARK_NOTIFICATION_AS_READ_SUCCESSFULLY = "Chuyển thống báo sang đã đọc thành công";
+    public static final String GET_ALL_APPROVAL_WORKFLOWS_SUCCESSFULLY = "Lấy danh sách quy trình phe duyet hợp đồng";
+    public static final String CREATE_APPROVAL_WORKFLOW_SUCCESSFULLY = "Tạo quy trình phe duyet hợp đồng";
+    public static final String UPDATE_APPROVAL_WORKFLOW_SUCCESSFULLY = "Cập nhật quy trình phe duyet hợp đồng";
+    public static final String DELETE_APPROVAL_WORKFLOW_SUCCESSFULLY = "Xóa quy trình phe duyet hợp đồng";
+    public static final String WORKFLOW_NOT_FOUND = "Không tìm thấy quy trình phe duyet";
+    public static final String GET_APPROVAL_WORKFLOW_SUCCESSFULLY = "Lấy thông tin quy trình phe duyet hợp đồng";
+    public static final String ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY = "Chọn quy trình phe duyet cho hợp đồng";
 }
