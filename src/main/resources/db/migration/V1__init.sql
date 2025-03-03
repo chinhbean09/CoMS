@@ -307,6 +307,7 @@ CREATE TABLE notifications (
     is_read BOOLEAN,
     created_at TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
+    contract_id SERIAL,
     CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 

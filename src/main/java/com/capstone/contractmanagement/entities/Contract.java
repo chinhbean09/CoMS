@@ -139,5 +139,9 @@
         @Column(name = "contract_content", columnDefinition = "TEXT")
         private String contractContent;
 
+        @ManyToOne
+        @JoinColumn(name = "approval_workflow_id")
+        private ApprovalWorkflow approvalWorkflow;
+
 
     }
