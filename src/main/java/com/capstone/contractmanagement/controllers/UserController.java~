@@ -239,7 +239,7 @@ public class UserController {
     }
 
     @GetMapping("/get-all-user")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STAFF')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_CUSTOMER')")
     public ResponseEntity<UserListResponse> getAllUsers(
             @RequestParam(defaultValue = "") String keyword,
             @NonNull @RequestParam("page") int page,
