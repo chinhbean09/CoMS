@@ -60,7 +60,7 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     private Boolean isCeo  = Boolean.FALSE;
 
     @Column(name = "failed_login_attempts")
-    private Integer failedLoginAttempts = 0;
+    private Integer failedLoginAttempts;
 
     @Override
     public Map<String, Object> getAttributes() {
