@@ -76,7 +76,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 //payload.put("url", ""); // Hoặc bỏ qua nếu không cần
 
                 // Lấy username của người dùng
-                String username = payment.getContract().getUser().getName();
+                String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
@@ -101,7 +101,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 payload.put("message", overdueMessage);
                 //payload.put("url", ""); // Nếu có URL cụ thể thì thêm vào
 
-                String username = payment.getContract().getUser().getName();
+                String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 notificationService.saveNotification(user, overdueMessage);
