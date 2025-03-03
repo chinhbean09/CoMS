@@ -23,10 +23,14 @@ public class Notification {
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;
 
+    @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "contract_id", nullable = false)
+    private Long contractId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
