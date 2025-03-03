@@ -23,11 +23,12 @@ public class NotificationService implements INotificationService {
 
     private final INotificationRepository notificationRepository;
     @Override
-    public void saveNotification(User user, String message) {
+    public void saveNotification(User user, String message, Long contractId) {
         Notification notification = Notification.builder()
                 .user(user)
                 .message(message)
                 .isRead(false)
+                .contractId(contractId)
                 .createdAt(LocalDateTime.now())
                 .build();
         notificationRepository.save(notification);
@@ -41,10 +42,12 @@ public class NotificationService implements INotificationService {
         Page<Notification> notificationsPage = notificationRepository.findByUser(currentUser, pageable);
 
         return notificationsPage.map(notification -> NotificationResponse.builder()
+                .id(notification.getId())
                 .message(notification.getMessage())
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .userId(notification.getUser().getId())
+                .contractId(notification.getContractId())
                 .build());
     }
 
@@ -53,10 +56,12 @@ public class NotificationService implements INotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.NOTIFICATION_NOT_FOUND));{
             return NotificationResponse.builder()
+                    .id(notification.getId())
                     .message(notification.getMessage())
                     .isRead(notification.getIsRead())
                     .createdAt(notification.getCreatedAt())
                     .userId(notification.getUser().getId())
+                    .contractId(notification.getContractId())
                     .build();
         }
     }

@@ -71,7 +71,9 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
                         "' sẽ đến hạn thanh toán lúc " + payment.getDueDate() +
                         ". Vui lòng chuẩn bị thanh toán.";
+                Long contractId = payment.getContract().getId();
                 payload.put("message", reminderMessage);
+                payload.put("contractId", contractId);
                 // Bạn có thể thêm các trường khác nếu cần, ví dụ "url"
                 //payload.put("url", ""); // Hoặc bỏ qua nếu không cần
 
@@ -80,7 +82,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 User user = payment.getContract().getUser();
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, reminderMessage);
+                notificationService.saveNotification(user, reminderMessage, contractId);
                 sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
@@ -98,13 +100,15 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 Map<String, Object> payload = new HashMap<>();
                 String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
                         "' đã quá hạn thanh toán lúc " + payment.getDueDate() + ".";
+                Long contractId = payment.getContract().getId();
                 payload.put("message", overdueMessage);
+                payload.put("contractId", contractId);
                 //payload.put("url", ""); // Nếu có URL cụ thể thì thêm vào
 
                 String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, overdueMessage);
+                notificationService.saveNotification(user, overdueMessage, contractId);
                 sendEmailExpired(payment);
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
