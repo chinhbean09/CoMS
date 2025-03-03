@@ -1,0 +1,7 @@
+package com.capstone.contractmanagement.enums;
+
+public enum ApprovalStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
+}
