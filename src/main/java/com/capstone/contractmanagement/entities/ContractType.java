@@ -24,8 +24,7 @@ public class ContractType {
     @Column(name = "name", nullable = false, unique = true, length = 255)
     private String name;
 
-    @Setter
-    @Column(name = "isDeleted", nullable = false)
+    @Column(name = "isdeleted", nullable = false)
     private boolean isDeleted = false;
 
     // loại hợp đồng có thể có nhiều template
