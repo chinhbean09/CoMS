@@ -126,32 +126,23 @@ public class TermService implements ITermService{
         Term oldTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Term not found"));
 
-        // cũ thành OLD (phiên bản cũ)
-        oldTerm.setStatus(TermStatus.OLD);
+        // Tạo Term mới với dữ liệu cập nhật, version tăng thêm 1 và status là NEW
+        oldTerm.setTypeTerm(oldTerm.getTypeTerm());
+        oldTerm.setLabel(termRequest.getLabel());
+        oldTerm.setValue(termRequest.getValue());
+        oldTerm.setStatus(TermStatus.NEW);
+        oldTerm.setVersion(oldTerm.getVersion() + 1);
         termRepository.save(oldTerm);
 
-        // Tạo Term mới với dữ liệu cập nhật, version tăng thêm 1 và status là NEW
-
-        Term newTerm = Term.builder()
-                .clauseCode(oldTerm.getClauseCode())
-                .label(termRequest.getLabel())
-                .value(termRequest.getValue())
-                .createdAt(LocalDateTime.now())
-                .typeTerm(oldTerm.getTypeTerm())
-                .status(TermStatus.NEW)
-                .version(oldTerm.getVersion() + 1)
-                .build();
-        termRepository.save(newTerm);
-
         return CreateTermResponse.builder()
-                .id(newTerm.getId())
-                .clauseCode(newTerm.getClauseCode())
-                .label(newTerm.getLabel())
-                .value(newTerm.getValue())
-                .createdAt(newTerm.getCreatedAt())
-                .type(newTerm.getTypeTerm().getName())
-                .identifier(String.valueOf(newTerm.getTypeTerm().getIdentifier()))
-                .status(TermStatus.NEW)
+                .id(oldTerm.getId())
+                .clauseCode(oldTerm.getClauseCode())
+                .label(oldTerm.getLabel())
+                .value(oldTerm.getValue())
+                .createdAt(oldTerm.getCreatedAt())
+                .type(oldTerm.getTypeTerm().getName())
+                .identifier(String.valueOf(oldTerm.getTypeTerm().getIdentifier()))
+                .status(oldTerm.getStatus())
                 .build();
     }
 
@@ -161,7 +152,7 @@ public class TermService implements ITermService{
         boolean hasSearch = search != null && !search.trim().isEmpty();
 
         if (hasSearch) {
-            search = search.trim(); // Loại bỏ khoảng trắng dư thừa
+            search = search.trim();
         }
 
         if (typeTermIds != null && !typeTermIds.isEmpty()) {
@@ -186,19 +177,23 @@ public class TermService implements ITermService{
             }
         }
 
-
-
-        return termPage.map(term -> GetAllTermsResponse.builder()
-                .id(term.getId())
-                .clauseCode(term.getClauseCode())
-                .label(term.getLabel())
-                .value(term.getValue())
-                .type(term.getTypeTerm().getName())
-                .identifier(term.getTypeTerm().getIdentifier().name())
-                .status(term.getStatus())
-                .createdAt(term.getCreatedAt())
-                .version(term.getVersion())
-                .build());
+        return termPage.map(term -> {
+            int contractTemplateCount = termRepository.countContractTemplateUsage(term.getId());
+            int contractCount = termRepository.countContractUsage(term.getId());
+            return GetAllTermsResponse.builder()
+                    .id(term.getId())
+                    .clauseCode(term.getClauseCode())
+                    .label(term.getLabel())
+                    .value(term.getValue())
+                    .type(term.getTypeTerm().getName())
+                    .identifier(term.getTypeTerm().getIdentifier().name())
+                    .status(term.getStatus())
+                    .createdAt(term.getCreatedAt())
+                    .version(term.getVersion())
+                    .contractTemplateCount(contractTemplateCount)
+                    .contractCount(contractCount)
+                    .build();
+        });
     }
 
     @Override

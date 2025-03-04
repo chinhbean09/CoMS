@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -34,6 +35,8 @@ public interface IUserService {
 
     User updateUserAvatar(long id, MultipartFile avatar);
     void changePassword(Long id, UpdatePasswordDTO changePasswordDTO) throws DataNotFoundException;
+
+    Page<UserResponse> getAllStaffAndManager(Pageable pageable);
 
 
 }
