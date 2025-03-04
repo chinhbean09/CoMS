@@ -60,4 +60,18 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     boolean existsByLabel(String label);
 
+    // Đếm số lượng contract_template (tính duy nhất các template) sử dụng term
+    @Query(value = "SELECT COUNT(DISTINCT template_id) FROM ( " +
+            "SELECT template_id FROM contract_template_legal_basis WHERE term_id = :termId " +
+            "UNION " +
+            "SELECT template_id FROM contract_template_general_terms WHERE term_id = :termId " +
+            "UNION " +
+            "SELECT template_id FROM contract_template_other_terms WHERE term_id = :termId " +
+            ") as templates", nativeQuery = true)
+    int countContractTemplateUsage(@Param("termId") Long termId);
+
+    // Đếm số lượng contract sử dụng term (giả sử có bảng join contract_terms)
+    @Query(value = "SELECT COUNT(DISTINCT contract_id) FROM contract_terms WHERE term_id = :termId", nativeQuery = true)
+    int countContractUsage(@Param("termId") Long termId);
+
 }
