@@ -30,7 +30,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.MediaType;
+ import org.springframework.data.domain.Pageable;
+ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -390,5 +391,12 @@ public class UserService implements IUserService {
         }
         exsistingUser.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
         UserRepository.save(exsistingUser);
+    }
+
+    @Override
+    public Page<UserResponse> getAllStaffAndManager(Pageable pageable) {
+        List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
+        Page<User> usersPage = UserRepository.findByRole_RoleNameIn(roleNames, pageable);
+        return usersPage.map(UserResponse::fromUser);
     }
 }
