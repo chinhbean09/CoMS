@@ -223,7 +223,6 @@
             // ContractTemplate
             ContractTemplate template = ContractTemplate.builder()
                     .contractTitle(dto.getContractTitle())
-                    .partyInfo(dto.getPartyInfo())
                     .specialTermsA(dto.getSpecialTermsA())
                     .specialTermsB(dto.getSpecialTermsB())
                     .appendixEnabled(dto.getAppendixEnabled())

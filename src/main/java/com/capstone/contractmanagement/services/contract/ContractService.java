@@ -85,44 +85,65 @@ public class ContractService implements IContractService{
                 .autoRenew(dto.getTemplateSnapshot().getAutoRenew())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
-                .status(ContractStatus.DRAFT)
+                .status(ContractStatus.CREATED)
                 .build();
 
         // 3. Map các điều khoản đơn giản sang ContractTerm
         List<ContractTerm> contractTerms = new ArrayList<>();
-        if (dto.getTemplateSnapshot().getLegalBasisTerms() != null) {
-            for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getLegalBasisTerms()) {
+
+        // Legal Basis
+        if (dto.getTemplateSnapshot().getLegalBasis() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getLegalBasis()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lí (LEGAL_BASIS)");
+                }
                 contractTerms.add(ContractTerm.builder()
-                        .originalTermId(termDTO.getId())
-                        .termLabel(termDTO.getLabel())
-                        .termValue(termDTO.getValue())
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
                         .termType(TypeTermIdentifier.LEGAL_BASIS)
                         .contract(contract)
                         .build());
             }
         }
+        // General Terms
         if (dto.getTemplateSnapshot().getGeneralTerms() != null) {
             for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getGeneralTerms()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản chung (GENERAL_TERMS)");
+                }
                 contractTerms.add(ContractTerm.builder()
-                        .originalTermId(termDTO.getId())
-                        .termLabel(termDTO.getLabel())
-                        .termValue(termDTO.getValue())
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
                         .termType(TypeTermIdentifier.GENERAL_TERMS)
                         .contract(contract)
                         .build());
             }
         }
+        // Other Terms
         if (dto.getTemplateSnapshot().getOtherTerms() != null) {
             for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getOtherTerms()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (OTHER_TERMS)");
+                }
+
                 contractTerms.add(ContractTerm.builder()
-                        .originalTermId(termDTO.getId())
-                        .termLabel(termDTO.getLabel())
-                        .termValue(termDTO.getValue())
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
                         .termType(TypeTermIdentifier.OTHER_TERMS)
                         .contract(contract)
                         .build());
             }
         }
+
         contract.setContractTerms(contractTerms);
 
         // 4. Map additionalConfig sang ContractAdditionalTermDetail
@@ -140,14 +161,21 @@ public class ContractService implements IContractService{
                 }
                 Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
 
+
+
                 // Map nhóm Common
                 List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("Common")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("Common")) {
+                        // Lấy term gốc từ DB
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+
+                        // Gán label, value từ term gốc
                         commonSnapshots.add(AdditionalTermSnapshot.builder()
-                                .termId(termDTO.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termId(term.getId())          // Lấy id thực của term
+                                .termLabel(term.getLabel())    // Lấy label từ DB
+                                .termValue(term.getValue())    // Lấy value từ DB
                                 .build());
                     }
                 }
@@ -155,10 +183,13 @@ public class ContractService implements IContractService{
                 List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("A")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("A")) {
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+
                         aSnapshots.add(AdditionalTermSnapshot.builder()
-                                .termId(termDTO.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
@@ -166,10 +197,13 @@ public class ContractService implements IContractService{
                 List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("B")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("B")) {
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+
                         bSnapshots.add(AdditionalTermSnapshot.builder()
-                                .termId(termDTO.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
@@ -191,6 +225,32 @@ public class ContractService implements IContractService{
                     throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'A' và 'B'");
                 }
 
+
+                // Thêm bước kiểm tra: đảm bảo tất cả các term trong từng nhóm thuộc đúng type term (so sánh với configTypeTermId)
+                for (AdditionalTermSnapshot snap : commonSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                + term.getTypeTerm().getName() + "\"");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : aSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                + term.getTypeTerm().getName() + "\"");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : bSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                + term.getTypeTerm().getName() + "\"");
+                    }
+                }
                 // Tạo đối tượng ContractAdditionalTermDetail snapshot
                 ContractAdditionalTermDetail configDetail = ContractAdditionalTermDetail.builder()
                         .typeTermId(configTypeTermId)
