@@ -32,7 +32,7 @@ public class TemplateSnapshotDTO {
     private Long contractTypeId;
 
     // Các danh sách điều khoản
-    private List<TermSnapshotDTO> legalBasisTerms;
+    private List<TermSnapshotDTO> legalBasis;
     private List<TermSnapshotDTO> generalTerms;
     private List<TermSnapshotDTO> otherTerms;
 

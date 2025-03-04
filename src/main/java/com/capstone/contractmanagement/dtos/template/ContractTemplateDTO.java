@@ -15,9 +15,6 @@ public class ContractTemplateDTO {
     @Size(max = 200, message = "Contract title must be less than 200 characters")
     private String contractTitle;
 
-    @NotBlank(message = "Party info is required")
-    private String partyInfo;
-
     // Mỗi phần tử chứa id của type term (ví dụ: 1, 2)
     private List<Long> legalBasis;
 
