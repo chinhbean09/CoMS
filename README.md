@@ -12,6 +12,7 @@
 - REST API
 - Mail Server
 - Cloudinary
+- Flyway Migration
 - Docker
 - Nginx
 - Jenkins
