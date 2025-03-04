@@ -16,7 +16,7 @@
 - Docker
 - Nginx
 - Jenkins
-
+- WebSockets
 
 
 
