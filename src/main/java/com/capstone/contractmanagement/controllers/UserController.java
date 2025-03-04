@@ -13,18 +13,17 @@ import com.capstone.contractmanagement.responses.User.LoginResponse;
 import com.capstone.contractmanagement.responses.User.UserListResponse;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.responses.token.RefreshTokenDTO;
-import com.capstone.contractmanagement.services.app_config.AppConfigService;
 import com.capstone.contractmanagement.services.app_config.IAppConfigService;
 import com.capstone.contractmanagement.services.token.ITokenService;
 import com.capstone.contractmanagement.services.user.IUserService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.capstone.contractmanagement.utils.ValidationUtils;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -390,6 +389,19 @@ public class UserController {
                     .message(e.getMessage())
                     .build());
         }
+    }
+
+    @GetMapping("/get-all-staff-and-manager")
+    public ResponseEntity<ResponseObject> getAllStaffAndManager(
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UserResponse> usersPage = userService.getAllStaffAndManager(pageable);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(usersPage)
+                .build());
     }
 
 }
