@@ -1,3 +1,8 @@
+-- V1__add_approval_workflow_tables.sql
+-- Migration script tạo các bảng và ràng buộc theo thiết kế Entity
+
+---------------------------------------------------------------------
+
 -- Tạo bảng approval_workflows
 
 CREATE TABLE approval_workflows (
