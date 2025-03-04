@@ -30,4 +30,6 @@ public interface IUserRepository extends JpaRepository<User, Long> {
             "(:keyword IS NULL OR :keyword = '' OR u.fullName ILIKE %:keyword%)")
     Page<User> searchUsers(@Param("keyword") String keyword, Pageable pageable);
 
+    Page<User> findByRole_RoleNameIn(List<String> roleNames, Pageable pageable);
+
 }
