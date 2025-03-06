@@ -1,10 +1,8 @@
 package com.capstone.contractmanagement.dtos.contract;
 
-import com.capstone.contractmanagement.entities.PaymentOneTime;
-import com.capstone.contractmanagement.entities.PaymentSchedule;
+import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,51 +16,21 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ContractDTO {
-
-    @NotBlank(message = "Title cannot be blank")
-    private String title;
-
-    @NotBlank(message = "Contract Number cannot be blank")
-    private String contractNumber;
-
-    private String contractContent;
-
-
-    private ContractStatus status;
-
-    private LocalDateTime startDate;
-
-    private String createdBy;
-
-    private String scope;
-
-    private String configuration;
-
-    private String sla;
-
-    private String confidentiality;
-
-    private String obligations;
-
-    private Double amount;
-
-    private Long userId;
-
     private Long templateId;
-
     private Long partyId;
-
-    private List<PaymentSchedule> paymentSchedules;
-
-    private PaymentOneTime paymentOneTime;
-
-    private String specialTermsA;
-
-    private String specialTermsB;
-
-    private Long contractTypeId;
-
-    private TemplateSnapshotDTO templateSnapshot;
-
+    private String contractNumber;
+    private LocalDateTime signingDate;
+    private String contractLocation;
+    private Double totalValue;
+    private List<PaymentDTO> payments;
+    private LocalDateTime effectiveDate;
+    private LocalDateTime expiryDate;
+    private LocalDateTime notifyEffectiveDate;
+    private LocalDateTime notifyExpiryDate;
+    private String notifyEffectiveContent;
+    private String notifyExpiryContent;
+    @JsonProperty("TemplateData")
+    private TemplateData templateData;
+    private ContractStatus status;
 
 }
