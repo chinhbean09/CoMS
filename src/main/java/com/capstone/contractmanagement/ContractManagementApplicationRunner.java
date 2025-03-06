@@ -1,15 +1,14 @@
 package com.capstone.contractmanagement;
 
+import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.entities.Party;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.PartyType;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
-import com.capstone.contractmanagement.repositories.IPartyRepository;
-import com.capstone.contractmanagement.repositories.IRoleRepository;
-import com.capstone.contractmanagement.repositories.ITypeTermRepository;
-import com.capstone.contractmanagement.repositories.IUserRepository;
+import com.capstone.contractmanagement.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -17,6 +16,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +36,11 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
     @Autowired
     private ITypeTermRepository typeTermRepository;
+
+    @Autowired
+    private IApprovalWorkflowRepository approvalWorkflowRepository;
+
+    private IApprovalStageRepository approvalStageRepository;
 
     @Value("${contract.admin.email}")
     private String email;
@@ -128,6 +134,60 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         System.out.println("Type terms initialized successfully!");
     }
 
+    private void initializeApprovalWorkflow() {
+        // Nếu đã có quy trình duyệt, không cần tạo lại
+        if (approvalWorkflowRepository.count() > 0) {
+            System.out.println("Approval workflows already initialized!");
+            return;
+        }
+        try {
+            User approver1 = IUserRepository.findById(1L).orElse(null);
+            User approver2 = IUserRepository.findById(2L).orElse(null);
+            User approver3 = IUserRepository.findById(3L).orElse(null);
+
+            // Tạo quy trình duyệt mới
+            ApprovalWorkflow workflow = ApprovalWorkflow.builder()
+                    .name("Standard Approval Workflow")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // Tạo đợt duyệt 1: Manager
+            ApprovalStage stage1 = ApprovalStage.builder()
+                    .stageOrder(1)
+                    .approver(approver1)
+                    .status(ApprovalStatus.PENDING)
+                    .approvalWorkflow(workflow)
+                    .build();
+            // Tạo đợt duyệt 2: Admin (đóng vai CEO)
+            ApprovalStage stage2 = ApprovalStage.builder()
+                    .stageOrder(2)
+                    .approver(approver2)
+                    .status(ApprovalStatus.PENDING)
+                    .approvalWorkflow(workflow)
+                    .build();
+
+            ApprovalStage stage3 = ApprovalStage.builder()
+                    .stageOrder(3)
+                    .approver(approver3)
+                    .status(ApprovalStatus.PENDING)
+                    .approvalWorkflow(workflow)
+                    .build();
+
+            // Thêm các stage vào quy trình
+            List<ApprovalStage> stages = new ArrayList<>();
+            stages.add(stage1);
+            stages.add(stage2);
+            stages.add(stage3);
+            workflow.setStages(stages);
+            workflow.setCustomStagesCount(stages.size());
+
+            approvalWorkflowRepository.save(workflow);
+            System.out.println("Predefined approval workflow created successfully!");
+        } catch (Exception e) {
+            System.err.println("Error while initializing approval workflow: " + e.getMessage());
+        }
+    }
+
     @Override
     public void run(ApplicationArguments args) {
 
@@ -211,6 +271,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             IUserRepository.save(user);
             System.out.println("Staff initialized!");
         }
+        initializeApprovalWorkflow();
 
         System.out.println("Hello, I'm System Manager!");
     }
