@@ -33,10 +33,11 @@ public class ApprovalWorkflowController {
     // api create approval workflow
     @PostMapping("/create")
     public ResponseEntity<ResponseObject> createApprovalWorkflow(@RequestBody ApprovalWorkflowDTO approvalWorkflowDTO) {
-        approvalWorkflowService.createWorkflow(approvalWorkflowDTO);
+        ApprovalWorkflowResponse response = approvalWorkflowService.createWorkflow(approvalWorkflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.CREATE_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.CREATED)
+                .data(response)
                 .build());
     }
 
