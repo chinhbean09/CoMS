@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

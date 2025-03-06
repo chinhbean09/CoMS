@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_type.ContractTypeDTO;
-import com.capstone.contractmanagement.entities.ContractType;
+import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.repositories.IContractTypeRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.services.contract_type.IContractTypeService;

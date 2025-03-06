@@ -1,15 +1,11 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
-import com.capstone.contractmanagement.entities.Contract;
-import com.capstone.contractmanagement.entities.ContractTerm;
-import com.capstone.contractmanagement.entities.Term;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
-import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -23,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
