@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.approvalworkflow;
 
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStageDTO;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -13,13 +14,18 @@ import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,10 +34,12 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     private final IApprovalStageRepository approvalStageRepository;
     private final IContractRepository contractRepository;
     private final IUserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final INotificationService notificationService;
 
     @Override
     @Transactional
-    public void createWorkflow(ApprovalWorkflowDTO approvalWorkflowDTO) {
+    public ApprovalWorkflowResponse createWorkflow(ApprovalWorkflowDTO approvalWorkflowDTO) {
         // Tạo đối tượng workflow mà không gán contract qua builder
         ApprovalWorkflow workflow = ApprovalWorkflow.builder()
                 .name(approvalWorkflowDTO.getName())
@@ -64,6 +72,20 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             contract.setApprovalWorkflow(workflow);
             contractRepository.save(contract);
         }
+        // Trả về response với các thông tin cần thiết
+        return ApprovalWorkflowResponse.builder()
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .customStagesCount(workflow.getCustomStagesCount())
+                .createdAt(workflow.getCreatedAt())
+                .stages(workflow.getStages().stream()
+                        .map(stage -> ApprovalStageResponse.builder()
+                                .stageId(stage.getId())
+                                .stageOrder(stage.getStageOrder())
+                                .approver(stage.getApprover().getId())
+                                .build())
+                        .toList())
+                .build();
     }
 
     @Override
@@ -79,6 +101,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         .createdAt(workflow.getCreatedAt())
                         .stages(workflow.getStages().stream()
                                 .map(stage -> ApprovalStageResponse.builder()
+                                        .stageId(stage.getId())
                                         .stageOrder(stage.getStageOrder())
                                         .approver(stage.getApprover().getId())
                                         .build())
@@ -163,5 +186,60 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
         contract.setApprovalWorkflow(workflow);
         contractRepository.save(contract);
+        // Lấy stage có stageOrder nhỏ nhất
+        workflow.getStages().stream()
+                .min(Comparator.comparingInt(stage -> stage.getStageOrder()))
+                .ifPresent(firstStage -> {
+                    Map<String, Object> payload = new HashMap<>();
+                    // Ví dụ payload thông báo
+                    String notificationMessage = "Bạn có hợp đồng cần phê duyệt đợt "+firstStage.getStageOrder()+": Hợp đồng " + contract.getTitle();
+                    payload.put("message", notificationMessage);
+                    payload.put("contractId", contractId);
+                    // Gửi thông báo đến user (sử dụng username làm định danh user destination)
+                    User firstApprover = firstStage.getApprover();
+                    messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
+                    notificationService.saveNotification(firstApprover, notificationMessage, contractId);
+                });
+    }
+
+    @Override
+    public void updateApprovalStageStatus(Long contractId, Long stageId, UpdateApprovalStageDTO dto) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+        // Tìm ApprovalStage theo id
+        ApprovalStage stage = approvalStageRepository.findById(stageId)
+                .orElseThrow(() -> new DataNotFoundException("Approval stage not found with id " + stageId));
+        // Cập nhật trạng thái mới
+        stage.setStatus(dto.getStatus());
+        // Nếu trạng thái được chuyển sang APPROVED (hoặc REJECTED), cập nhật approvedAt
+        if (dto.getStatus() == ApprovalStatus.APPROVED || dto.getStatus() == ApprovalStatus.REJECTED) {
+            stage.setApprovedAt(LocalDateTime.now());
+        }
+        approvalStageRepository.save(stage);
+
+        // Nếu trạng thái chuyển thành APPROVED, gửi thông báo qua WebSocket cho người duyệt ở đợt tiếp theo
+        if (dto.getStatus() == ApprovalStatus.APPROVED) {
+            // Lấy workflow của stage hiện tại
+            ApprovalWorkflow workflow = stage.getApprovalWorkflow();
+            // Tìm đợt duyệt có stageOrder lớn hơn stage hiện tại, với thứ tự nhỏ nhất (đợt tiếp theo)
+            workflow.getStages().stream()
+                    .filter(s -> s.getStageOrder() > stage.getStageOrder())
+                    .min(Comparator.comparingInt(ApprovalStage::getStageOrder))
+                    .ifPresent(nextStage -> {
+                        User nextApprover = nextStage.getApprover();
+                        // Tạo payload thông báo (có thể bổ sung thêm thông tin theo yêu cầu)
+                        Map<String, Object> payload = new HashMap<>();
+                        String notificationMessage = "Bạn có hợp đồng cần phê duyệt đợt "+nextStage.getStageOrder()+": Hợp đồng " + contract.getTitle();
+                        payload.put("message", notificationMessage);
+                        payload.put("contractId", contractId);
+                        // Gửi thông báo đến user, sử dụng username làm định danh user destination
+                        messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
+                        notificationService.saveNotification(nextApprover, notificationMessage, contractId);
+                    });
+        }
+
+        if (dto.getStatus() == ApprovalStatus.REJECTED) {
+            // comment cho can sua trong hop dong
+        }
     }
 }
