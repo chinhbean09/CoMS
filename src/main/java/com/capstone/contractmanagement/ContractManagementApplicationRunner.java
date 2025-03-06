@@ -1,6 +1,8 @@
 package com.capstone.contractmanagement;
 
 import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.entities.Party;
 import com.capstone.contractmanagement.entities.Role;
