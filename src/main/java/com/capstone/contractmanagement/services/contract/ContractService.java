@@ -1,16 +1,19 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.components.SecurityUtils;
-import com.capstone.contractmanagement.dtos.IdDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.entities.contract.AdditionalTermSnapshot;
+import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.entities.contract.ContractAdditionalTermDetail;
+import com.capstone.contractmanagement.entities.contract.ContractTerm;
+import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
-import com.capstone.contractmanagement.enums.TermGroup;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
-import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.term.TermResponse;

@@ -1,15 +1,10 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.term;
 
-import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.TermStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import net.minidev.json.annotate.JsonIgnore;
-import org.checkerframework.checker.units.qual.C;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "terms")
