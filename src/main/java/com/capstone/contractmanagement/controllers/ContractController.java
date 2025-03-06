@@ -1,24 +1,24 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
-import com.capstone.contractmanagement.entities.Contract;
-import com.capstone.contractmanagement.entities.ContractTerm;
-import com.capstone.contractmanagement.entities.Term;
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
-import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -28,13 +28,14 @@ import java.util.Optional;
 public class ContractController {
     private final IContractService contractService;
 
-    @GetMapping
-    public ResponseEntity<ResponseObject> getAllContracts() {
-        List<ContractResponse> contracts = contractService.getAllContracts();
-        return ResponseEntity.ok(ResponseObject.builder()
-                .status(HttpStatus.OK)
-                .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
-                .data(contracts)
+    @PostMapping
+    @Transactional
+    public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
+        Contract contract = contractService.createContractFromTemplate(contractDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
+                .status(HttpStatus.CREATED)
+                .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
+                .data(contract)
                 .build());
     }
 
@@ -48,16 +49,35 @@ public class ContractController {
                 .build());
     }
 
-    @PostMapping
-    @Transactional
-    public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-        Contract contract = contractService.createContractFromTemplate(contractDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
-                .status(HttpStatus.CREATED)
-                .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
-                .data(contract)
-                .build());
+    @GetMapping
+    public ResponseEntity<ResponseObject> getAllContracts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ContractStatus status,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
+        try {
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<ContractResponse> contracts = contractService.getAllContracts(pageable, keyword, status);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
+                    .status(HttpStatus.OK)
+                    .data(contracts)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Error retrieving contracts: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ResponseObject> updateContract(
             @PathVariable Long id,

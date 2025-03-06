@@ -1,6 +1,8 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.contract_template;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.capstone.contractmanagement.entities.contract.ContractType;
+import com.capstone.contractmanagement.entities.term.Term;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

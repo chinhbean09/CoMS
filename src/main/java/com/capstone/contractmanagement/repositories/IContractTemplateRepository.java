@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.repositories;
 
 
-import com.capstone.contractmanagement.entities.ContractTemplate;
+import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
