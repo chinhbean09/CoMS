@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public class ApprovalStageResponse {
-    private Long stageId;
     private Integer stageOrder;
     private Long approver;
 }
