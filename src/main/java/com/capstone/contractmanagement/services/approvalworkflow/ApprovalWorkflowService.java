@@ -1,9 +1,9 @@
 package com.capstone.contractmanagement.services.approvalworkflow;
 
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
-import com.capstone.contractmanagement.entities.ApprovalStage;
-import com.capstone.contractmanagement.entities.ApprovalWorkflow;
-import com.capstone.contractmanagement.entities.Contract;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;

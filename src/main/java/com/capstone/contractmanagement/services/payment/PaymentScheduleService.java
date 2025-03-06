@@ -2,7 +2,7 @@ package com.capstone.contractmanagement.services.payment;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.payment.CreatePaymentScheduleDTO;
-import com.capstone.contractmanagement.entities.Contract;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.PaymentStatus;

@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.responses.template;
 
-import com.capstone.contractmanagement.entities.ContractType;
+import com.capstone.contractmanagement.entities.contract.ContractType;
 import lombok.Builder;
 import lombok.Data;
 
