@@ -1,7 +1,7 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.contract;
 
+import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;

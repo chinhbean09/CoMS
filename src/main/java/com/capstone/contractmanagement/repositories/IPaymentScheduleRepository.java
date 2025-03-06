@@ -8,6 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface IPaymentScheduleRepository extends JpaRepository<PaymentSchedule, Long> {
-    List<PaymentSchedule> findByDueDateBeforeAndStatus(LocalDateTime dateTime, PaymentStatus status);
-    List<PaymentSchedule> findByDueDateBetweenAndStatus(LocalDateTime start, LocalDateTime end, PaymentStatus status);
+    List<PaymentSchedule> findByPaymentDateBeforeAndStatus(LocalDateTime dateTime, PaymentStatus status);
+    List<PaymentSchedule> findByPaymentDateBetweenAndStatus(LocalDateTime start, LocalDateTime end, PaymentStatus status);
 }

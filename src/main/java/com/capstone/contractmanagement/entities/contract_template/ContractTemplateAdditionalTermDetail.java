@@ -1,4 +1,4 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.contract_template;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

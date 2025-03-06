@@ -13,9 +13,9 @@ public class CreatePaymentScheduleDTO {
 
     private Double amount; // Số tiền thanh toán trong đợt
 
-    private String currency; // Đơn vị tiền tệ
+    private String notifyPaymentContent;
 
-    private LocalDateTime dueDate; // Ngày đến hạn thanh toán
+    private LocalDateTime paymentDate; // Ngày đến hạn thanh toán
 
-    private String description; // Ghi chú
+    private String paymentMethod; // Ghi chú
 }

@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.repositories;
 
-import com.capstone.contractmanagement.entities.ApprovalWorkflow;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, Long> {
