@@ -20,24 +20,27 @@ public class PaymentSchedule {
     @Column(name = "payment_id")
     private Long id;
 
-    @Column(name = "payment_order", nullable = false)
+    @Column(name = "payment_order", nullable = true)
     private Integer paymentOrder; // Thứ tự đợt thanh toán
 
     @Column(name = "amount", nullable = false)
     private Double amount; // Số tiền thanh toán trong đợt
 
-    @Column(name = "currency", nullable = false, length = 10)
-    private String currency; // Đơn vị tiền tệ
+    @Column(name = "notified_payment_date")
+    private LocalDateTime notifyPaymentDate;
 
-    @Column(name = "due_date", nullable = false)
-    private LocalDateTime dueDate; // Ngày đến hạn thanh toán
+    @Column(name = "payment_date", nullable = false)
+    private LocalDateTime paymentDate; // Ngày đến hạn thanh toán
 
     @Column(name = "status", length = 50)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status; // Trạng thái: Chưa thanh toán, Đã thanh toán, Quá hạn
 
-    @Column(name = "description", length = 500)
-    private String description; // Ghi chú
+    @Column(name = "payment_method", length = 500)
+    private String paymentMethod; // Ghi chú
+
+    @Column(name = "notify_payment_content", columnDefinition = "TEXT")
+    private String notifyPaymentContent;
 
     // Flag gửi email nhắc nhở
     @Column(name = "reminder_email_sent")
