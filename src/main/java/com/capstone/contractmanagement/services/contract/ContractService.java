@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.enums.ContractStatus;
+import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TermGroup;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -15,6 +16,8 @@ import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -259,11 +262,14 @@ public class ContractService implements IContractService{
         // Ánh xạ payments
         List<PaymentSchedule> paymentSchedules = new ArrayList<>();
         if (dto.getPayments() != null) {
+            int order = 1;
             for (PaymentDTO paymentDTO : dto.getPayments()) {
                 PaymentSchedule paymentSchedule = PaymentSchedule.builder()
                         .amount(paymentDTO.getAmount())
                         .paymentDate(paymentDTO.getPaymentDate())
                         .notifyPaymentDate(paymentDTO.getNotifyPaymentDate())
+                        .paymentOrder(order++)
+                        .status(PaymentStatus.UNPAID)
                         .paymentMethod(paymentDTO.getPaymentMethod())
                         .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
                         .contract(contract)
@@ -272,24 +278,72 @@ public class ContractService implements IContractService{
             }
         }
 
+
+        contract.setPaymentSchedules(paymentSchedules);
+
         // 5. Lưu hợp đồng với toàn bộ snapshot điều khoản và additional config
         return contractRepository.save(contract);
     }
 
 
     @Override
-    public List<ContractResponse> getAllContracts() {
-        return null;
+    @Transactional(readOnly = true)
+    public Page<ContractResponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status) {
+        boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
+        boolean hasStatusFilter = status != null;
+        Page<Contract> contracts;
+
+        if (hasSearch && hasStatusFilter) {
+            keyword = keyword.trim(); // Loại bỏ khoảng trắng dư thừa
+            contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+        } else if (hasSearch) {
+            keyword = keyword.trim();
+            contracts = contractRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+        } else if (hasStatusFilter) {
+            contracts = contractRepository.findByStatus(status, pageable);
+        } else {
+            contracts = contractRepository.findAll(pageable);
+        }
+
+        return contracts.map(this::convertToResponseDTO);
     }
 
-    @Override
-    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
-        Contract existingContract = contractRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Contract not found with id: " + id));
-
-        existingContract.setStatus(contractDTO.getStatus());
-        contractRepository.save(existingContract);
-        return null;
+    private ContractResponse convertToResponseDTO(Contract contract) {
+        return ContractResponse.builder()
+                .id(contract.getId())
+                .title(contract.getTitle())
+                .contractNumber(contract.getContractNumber())
+                .status(contract.getStatus())
+                .createdAt(contract.getCreatedAt())
+                .updatedAt(contract.getUpdatedAt())
+                .signingDate(contract.getSigningDate())
+                .contractLocation(contract.getContractLocation())
+                .amount(contract.getAmount())
+                .effectiveDate(contract.getEffectiveDate())
+                .expiryDate(contract.getExpiryDate())
+                .notifyEffectiveDate(contract.getNotifyEffectiveDate())
+                .notifyExpiryDate(contract.getNotifyExpiryDate())
+                .notifyEffectiveContent(contract.getNotifyEffectiveContent())
+                .notifyExpiryContent(contract.getNotifyExpiryContent())
+                .specialTermsA(contract.getSpecialTermsA())
+                .specialTermsB(contract.getSpecialTermsB())
+                .contractContent(contract.getContractContent())
+                .appendixEnabled(contract.getAppendixEnabled())
+                .transferEnabled(contract.getTransferEnabled())
+                .autoAddVAT(contract.getAutoAddVAT())
+                .vatPercentage(contract.getVatPercentage())
+                .isDateLateChecked(contract.getIsDateLateChecked())
+                .maxDateLate(contract.getMaxDateLate())
+                .autoRenew(contract.getAutoRenew())
+                .violate(contract.getViolate())
+                .suspend(contract.getSuspend())
+                .suspendContent(contract.getSuspendContent())
+                .legalBasisTerms(Collections.emptyList())
+                .generalTerms(Collections.emptyList())
+                .otherTerms(Collections.emptyList())
+                .additionalTerms(Collections.emptyList())
+                .additionalConfig(Collections.emptyMap())
+                .build();
     }
 
     @Override
@@ -315,6 +369,11 @@ public class ContractService implements IContractService{
                     });
                     return convertContractToResponse(contract);
                 });
+    }
+
+    @Override
+    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
+        return null;
     }
 
     private ContractResponse convertContractToResponse(Contract contract) {
