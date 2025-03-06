@@ -71,7 +71,7 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     int countContractTemplateUsage(@Param("termId") Long termId);
 
     // Đếm số lượng contract sử dụng term (giả sử có bảng join contract_terms)
-    @Query(value = "SELECT COUNT(DISTINCT contract_id) FROM contract_terms WHERE term_id = :termId", nativeQuery = true)
+    @Query(value = "SELECT COUNT(DISTINCT contract_id) FROM contract_terms_snapshot WHERE term_id = :termId", nativeQuery = true)
     int countContractUsage(@Param("termId") Long termId);
 
 }
