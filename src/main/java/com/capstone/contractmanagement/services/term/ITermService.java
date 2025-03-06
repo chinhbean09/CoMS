@@ -1,8 +1,7 @@
 package com.capstone.contractmanagement.services.term;
 
 import com.capstone.contractmanagement.dtos.term.*;
-import com.capstone.contractmanagement.entities.TypeTerm;
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;

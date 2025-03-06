@@ -1,4 +1,4 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.term;
 
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.repositories;
 
-import com.capstone.contractmanagement.entities.Term;
-import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.entities.term.Term;
+import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
