@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.IdDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
+import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.TermGroup;
@@ -34,26 +35,7 @@ public class ContractService implements IContractService{
     private final IContractTypeRepository contractTypeRepository;
     private final SecurityUtils currentUser;
     private final ITypeTermRepository typeTermRepository;
-    @Override
-    public List<ContractResponse> getAllContracts() {
-        return null;
-    }
 
-    @Override
-    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
-        Contract existingContract = contractRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Contract not found with id: " + id));
-
-        existingContract.setTitle(contractDTO.getTitle());
-        existingContract.setStatus(contractDTO.getStatus());
-        contractRepository.save(existingContract);
-        return null;
-    }
-
-    @Override
-    public void deleteContract(Long id) {
-        contractRepository.deleteById(id);
-    }
 
     @Transactional
     @Override
@@ -63,37 +45,47 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với id: " + dto.getTemplateId()));
         Party party = partyRepository.findById(dto.getPartyId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Party với id: " + dto.getPartyId()));
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy User với id: " + dto.getUserId()));
+        User user = currentUser.getLoggedInUser();
 
         // 2. Tạo hợp đồng mới, lấy dữ liệu từ DTO hoặc từ templateSnapshot
         Contract contract = Contract.builder()
-                .title(dto.getTitle() != null ? dto.getTitle() : dto.getTemplateSnapshot().getContractTitle())
-                .contractNumber(dto.getContractNumber() != null ? dto.getContractNumber() : generateContractNumber())
-                .template(template)  // Ghi nhận nguồn gốc mẫu
+                .title(dto.getTemplateData().getContractTitle())
+                .contractNumber(dto.getContractNumber())
                 .party(party)
                 .user(user)
-                .specialTermsA(dto.getTemplateSnapshot().getSpecialTermsA())
-                .specialTermsB(dto.getTemplateSnapshot().getSpecialTermsB())
-                .contractContent(dto.getTemplateSnapshot().getContractContent())
-                .appendixEnabled(dto.getTemplateSnapshot().getAppendixEnabled())
-                .transferEnabled(dto.getTemplateSnapshot().getTransferEnabled())
-                .autoAddVAT(dto.getTemplateSnapshot().getAutoAddVAT())
-                .vatPercentage(dto.getTemplateSnapshot().getVatPercentage())
-                .isDateLateChecked(dto.getTemplateSnapshot().getIsDateLateChecked())
-                .maxDateLate(dto.getTemplateSnapshot().getMaxDateLate())
-                .autoRenew(dto.getTemplateSnapshot().getAutoRenew())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .template(template)
+                .signingDate(dto.getSigningDate())
+                .contractLocation(dto.getContractLocation())
+                .amount(dto.getTotalValue())
+                .effectiveDate(dto.getEffectiveDate())
+                .expiryDate(dto.getExpiryDate())
+                .notifyEffectiveDate(dto.getNotifyEffectiveDate())
+                .notifyExpiryDate(dto.getNotifyExpiryDate())
+                .notifyEffectiveContent(dto.getNotifyEffectiveContent())
+                .notifyExpiryContent(dto.getNotifyExpiryContent())
+                .title(dto.getTemplateData().getContractTitle())
+                .specialTermsA(dto.getTemplateData().getSpecialTermsA())
+                .specialTermsB(dto.getTemplateData().getSpecialTermsB())
+                .contractContent(dto.getTemplateData().getContractContent())
+                .appendixEnabled(dto.getTemplateData().getAppendixEnabled())
+                .transferEnabled(dto.getTemplateData().getTransferEnabled())
+                .autoAddVAT(dto.getTemplateData().getAutoAddVAT())
+                .vatPercentage(dto.getTemplateData().getVatPercentage())
+                .isDateLateChecked(dto.getTemplateData().getIsDateLateChecked())
+                .maxDateLate(dto.getTemplateData().getMaxDateLate())
+                .autoRenew(dto.getTemplateData().getAutoRenew())
+                .violate(dto.getTemplateData().getViolate())
+                .suspend(dto.getTemplateData().getSuspend())
+                .suspendContent(dto.getTemplateData().getSuspendContent())
                 .status(ContractStatus.CREATED)
+                .createdAt(LocalDateTime.now())
                 .build();
-
         // 3. Map các điều khoản đơn giản sang ContractTerm
         List<ContractTerm> contractTerms = new ArrayList<>();
 
         // Legal Basis
-        if (dto.getTemplateSnapshot().getLegalBasis() != null) {
-            for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getLegalBasis()) {
+        if (dto.getTemplateData().getLegalBasis() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasis()) {
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
@@ -109,8 +101,8 @@ public class ContractService implements IContractService{
             }
         }
         // General Terms
-        if (dto.getTemplateSnapshot().getGeneralTerms() != null) {
-            for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getGeneralTerms()) {
+        if (dto.getTemplateData().getGeneralTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getGeneralTerms()) {
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
@@ -126,8 +118,8 @@ public class ContractService implements IContractService{
             }
         }
         // Other Terms
-        if (dto.getTemplateSnapshot().getOtherTerms() != null) {
-            for (TermSnapshotDTO termDTO : dto.getTemplateSnapshot().getOtherTerms()) {
+        if (dto.getTemplateData().getOtherTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getOtherTerms()) {
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
@@ -149,8 +141,8 @@ public class ContractService implements IContractService{
         // 4. Map additionalConfig sang ContractAdditionalTermDetail
         // additionalConfig: Map<String, Map<String, List<TermSnapshotDTO>>>
         List<ContractAdditionalTermDetail> additionalDetails = new ArrayList<>();
-        if (dto.getTemplateSnapshot().getAdditionalConfig() != null) {
-            Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getTemplateSnapshot().getAdditionalConfig();
+        if (dto.getTemplateData().getAdditionalConfig() != null) {
+            Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getTemplateData().getAdditionalConfig();
             for (Map.Entry<String, Map<String, List<TermSnapshotDTO>>> entry : configMap.entrySet()) {
                 String key = entry.getKey();
                 Long configTypeTermId;
@@ -264,8 +256,45 @@ public class ContractService implements IContractService{
         }
         contract.setAdditionalTermDetails(additionalDetails);
 
+        // Ánh xạ payments
+        List<PaymentSchedule> paymentSchedules = new ArrayList<>();
+        if (dto.getPayments() != null) {
+            for (PaymentDTO paymentDTO : dto.getPayments()) {
+                PaymentSchedule paymentSchedule = PaymentSchedule.builder()
+                        .amount(paymentDTO.getAmount())
+                        .paymentDate(paymentDTO.getPaymentDate())
+                        .notifyPaymentDate(paymentDTO.getNotifyPaymentDate())
+                        .paymentMethod(paymentDTO.getPaymentMethod())
+                        .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+                        .contract(contract)
+                        .build();
+                paymentSchedules.add(paymentSchedule);
+            }
+        }
+
         // 5. Lưu hợp đồng với toàn bộ snapshot điều khoản và additional config
         return contractRepository.save(contract);
+    }
+
+
+    @Override
+    public List<ContractResponse> getAllContracts() {
+        return null;
+    }
+
+    @Override
+    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
+        Contract existingContract = contractRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Contract not found with id: " + id));
+
+        existingContract.setStatus(contractDTO.getStatus());
+        contractRepository.save(existingContract);
+        return null;
+    }
+
+    @Override
+    public void deleteContract(Long id) {
+        contractRepository.deleteById(id);
     }
 
     private String generateContractNumber() {
@@ -349,11 +378,31 @@ public class ContractService implements IContractService{
                 .id(contract.getId())
                 .title(contract.getTitle())
                 .contractNumber(contract.getContractNumber())
-                .description(contract.getDescription())
                 .status(contract.getStatus())
-                .startDate(contract.getStartDate())
                 .createdAt(contract.getCreatedAt())
                 .updatedAt(contract.getUpdatedAt())
+                .signingDate(contract.getSigningDate())
+                .contractLocation(contract.getContractLocation())
+                .amount(contract.getAmount())
+                .effectiveDate(contract.getEffectiveDate())
+                .expiryDate(contract.getExpiryDate())
+                .notifyEffectiveDate(contract.getNotifyEffectiveDate())
+                .notifyExpiryDate(contract.getNotifyExpiryDate())
+                .notifyEffectiveContent(contract.getNotifyEffectiveContent())
+                .notifyExpiryContent(contract.getNotifyExpiryContent())
+                .specialTermsA(contract.getSpecialTermsA())
+                .specialTermsB(contract.getSpecialTermsB())
+                .contractContent(contract.getContractContent())
+                .appendixEnabled(contract.getAppendixEnabled())
+                .transferEnabled(contract.getTransferEnabled())
+                .autoAddVAT(contract.getAutoAddVAT())
+                .vatPercentage(contract.getVatPercentage())
+                .isDateLateChecked(contract.getIsDateLateChecked())
+                .maxDateLate(contract.getMaxDateLate())
+                .autoRenew(contract.getAutoRenew())
+                .violate(contract.getViolate())
+                .suspend(contract.getSuspend())
+                .suspendContent(contract.getSuspendContent())
                 .legalBasisTerms(legalBasisTerms)
                 .generalTerms(generalTerms)
                 .otherTerms(otherTerms)
