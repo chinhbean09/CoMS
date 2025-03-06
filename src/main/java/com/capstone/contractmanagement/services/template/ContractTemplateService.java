@@ -2,11 +2,10 @@
 
     import com.capstone.contractmanagement.dtos.IdDTO;
     import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
-    import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
-    import com.capstone.contractmanagement.entities.ContractTemplate;
-    import com.capstone.contractmanagement.entities.ContractTemplateAdditionalTermDetail;
-    import com.capstone.contractmanagement.entities.ContractType;
-    import com.capstone.contractmanagement.entities.Term;
+    import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+    import com.capstone.contractmanagement.entities.contract_template.ContractTemplateAdditionalTermDetail;
+    import com.capstone.contractmanagement.entities.contract.ContractType;
+    import com.capstone.contractmanagement.entities.term.Term;
     import com.capstone.contractmanagement.enums.TypeTermIdentifier;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;

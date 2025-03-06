@@ -2,7 +2,7 @@ package com.capstone.contractmanagement;
 
 import com.capstone.contractmanagement.entities.Party;
 import com.capstone.contractmanagement.entities.Role;
-import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.PartyType;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
