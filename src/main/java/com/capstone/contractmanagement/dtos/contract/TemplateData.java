@@ -12,8 +12,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TemplateSnapshotDTO {
-    private Long id;
+public class TemplateData {
     private String contractTitle;
     private String partyInfo;
     private String specialTermsA;
@@ -25,7 +24,7 @@ public class TemplateSnapshotDTO {
     private String suspendContent;
     private String contractContent;
     private Boolean autoAddVAT;
-    private Integer vatPercentage;
+    private Double vatPercentage;
     private Boolean isDateLateChecked;
     private Integer maxDateLate;
     private Boolean autoRenew;

@@ -42,12 +42,12 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         PaymentSchedule paymentSchedule = PaymentSchedule.builder()
                 .paymentOrder(createPaymentScheduleDTO.getPaymentOrder())
                 .amount(createPaymentScheduleDTO.getAmount())
-                .currency(createPaymentScheduleDTO.getCurrency())
-                .dueDate(createPaymentScheduleDTO.getDueDate())
+                .paymentDate(createPaymentScheduleDTO.getPaymentDate())
                 .status(PaymentStatus.UNPAID)
                 .overdueEmailSent(false)
                 .reminderEmailSent(false)
-                .description(createPaymentScheduleDTO.getDescription())
+                .paymentMethod(createPaymentScheduleDTO.getPaymentMethod())
+                .notifyPaymentContent(createPaymentScheduleDTO.getNotifyPaymentContent())
                 .contract(contract)
                 .build();
 
@@ -63,13 +63,13 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
         // 1. Gửi thông báo nhắc nhở 5 phút trước thời hạn
         LocalDateTime reminderWindowEnd = now.plusMinutes(5);
-        List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByDueDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
+        List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByPaymentDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
             if (!payment.isReminderEmailSent()) {
                 // Tạo payload dạng JSON
                 Map<String, Object> payload = new HashMap<>();
                 String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
-                        "' sẽ đến hạn thanh toán lúc " + payment.getDueDate() +
+                        "' sẽ đến hạn thanh toán lúc " + payment.getPaymentDate() +
                         ". Vui lòng chuẩn bị thanh toán.";
                 Long contractId = payment.getContract().getId();
                 payload.put("message", reminderMessage);
@@ -91,15 +91,15 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         }
 
         // 2. Gửi thông báo quá hạn nếu đã vượt qua dueDate
-        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByDueDateBeforeAndStatus(now, PaymentStatus.UNPAID);
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByPaymentDateBeforeAndStatus(now, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : overduePayments) {
-            if (now.isAfter(payment.getDueDate()) && !payment.isOverdueEmailSent()) {
+            if (now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
                 payment.setStatus(PaymentStatus.OVERDUE);
                 paymentScheduleRepository.save(payment);
                 // Tạo payload dạng JSON cho thông báo quá hạn
                 Map<String, Object> payload = new HashMap<>();
                 String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
-                        "' đã quá hạn thanh toán lúc " + payment.getDueDate() + ".";
+                        "' đã quá hạn thanh toán lúc " + payment.getPaymentDate() + ".";
                 Long contractId = payment.getContract().getId();
                 payload.put("message", overdueMessage);
                 payload.put("contractId", contractId);
@@ -125,7 +125,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
             Map<String, Object> props = new HashMap<>();
             props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getDueDate());
+            props.put("dueDate", payment.getPaymentDate());
             dataMailDTO.setProps(props);
             mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
         } catch (Exception e) {
@@ -144,7 +144,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
             Map<String, Object> props = new HashMap<>();
             props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getDueDate());
+            props.put("dueDate", payment.getPaymentDate());
             dataMailDTO.setProps(props);
             mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
         } catch (Exception e) {
