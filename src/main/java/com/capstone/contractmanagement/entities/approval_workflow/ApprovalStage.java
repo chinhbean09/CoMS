@@ -1,5 +1,6 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.approval_workflow;
 
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import jakarta.persistence.*;
 import lombok.*;
