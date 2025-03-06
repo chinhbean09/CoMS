@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.PartyType;
 import jakarta.persistence.*;
 import lombok.*;

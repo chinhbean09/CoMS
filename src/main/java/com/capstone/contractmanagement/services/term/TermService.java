@@ -1,8 +1,8 @@
 package com.capstone.contractmanagement.services.term;
 
 import com.capstone.contractmanagement.dtos.term.*;
-import com.capstone.contractmanagement.entities.Term;
-import com.capstone.contractmanagement.entities.TypeTerm;
+import com.capstone.contractmanagement.entities.term.Term;
+import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.TermStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -12,12 +12,10 @@ import com.capstone.contractmanagement.responses.term.CreateTermResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessField;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
-import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;

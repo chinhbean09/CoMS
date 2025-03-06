@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.services.contract_type;
 
-import com.capstone.contractmanagement.entities.ContractType;
+import com.capstone.contractmanagement.entities.contract.ContractType;
 
 import java.util.List;
 import java.util.Optional;

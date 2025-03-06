@@ -1,4 +1,4 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.contract;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
