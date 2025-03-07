@@ -45,6 +45,35 @@ public class ContractTemplateController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseObject> getTemplateById(@PathVariable Long id) {
+        try {
+            Optional<ContractTemplateResponse> templateOpt = templateService.getTemplateById(id);
+            if (templateOpt.isPresent()) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.GET_TEMPLATE_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(templateOpt.get())
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
+
     @GetMapping
     public ResponseEntity<ResponseObject> getAllTemplates(
             @RequestParam(defaultValue = "0") int page,
@@ -95,36 +124,6 @@ public class ContractTemplateController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()
                             .message("Error retrieving templates: " + e.getMessage())
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .data(null)
-                            .build());
-        }
-    }
-
-
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseObject> getTemplateById(@PathVariable Long id) {
-        try {
-            Optional<ContractTemplateResponse> templateOpt = templateService.getTemplateById(id);
-            if (templateOpt.isPresent()) {
-                return ResponseEntity.ok(ResponseObject.builder()
-                        .message(MessageKeys.GET_TEMPLATE_SUCCESSFULLY)
-                        .status(HttpStatus.OK)
-                        .data(templateOpt.get())
-                        .build());
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ResponseObject.builder()
-                                .message("Template not found with id: " + id)
-                                .status(HttpStatus.NOT_FOUND)
-                                .data(null)
-                                .build());
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseObject.builder()
-                            .message("Internal server error: " + e.getMessage())
                             .status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .data(null)
                             .build());
@@ -201,6 +200,25 @@ public class ContractTemplateController {
         }
     }
 
+    @PostMapping("/update/{templateId}")
+    public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long templateId, @RequestBody ContractTemplateDTO dto) {
+        try {
+            ContractTemplate template = templateService.updateTemplate(templateId,dto);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .message(MessageKeys.UPDATE_TEMPLATE_SUCCESSFULLY)
+                    .data(template)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    new ResponseObject(e.getMessage(), HttpStatus.BAD_REQUEST, null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    new ResponseObject(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
 
 
 
