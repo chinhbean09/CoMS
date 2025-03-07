@@ -87,6 +87,7 @@ public class ContractController {
         }
     }
 
+
     @PutMapping("/update/{id}")
     public ResponseEntity<ResponseObject> updateContract(
             @PathVariable Long id,
@@ -135,4 +136,33 @@ public class ContractController {
                             .build());
         }
     }
+
+    @DeleteMapping("/soft-delete/{id}")
+    public ResponseEntity<ResponseObject> softDeleteContract(@PathVariable Long id) {
+        try {
+            boolean deleted = contractService.softDelete(id);
+            if (deleted) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.DELETE_CONTRACT_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
 }

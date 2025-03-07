@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.enums.ContractTemplateStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -162,5 +163,7 @@ public class ContractTemplate {
     @JsonIgnore
     private User createdBy;
 
-
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private ContractTemplateStatus status;
 }
