@@ -19,5 +19,6 @@ public class UpdatePartyDTO {
     private String phone;
     private String email;
     private String note;
+    private String position;
     private List<UpdateBankDTO> banking;
 }

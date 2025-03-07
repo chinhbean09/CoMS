@@ -25,5 +25,6 @@ public class CreatePartyDTO {
     private String phone;
     private String email;
     private String note;
+    private String position;
     private List<CreateBankDTO> banking;
 }
