@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
+import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -107,4 +108,31 @@ public class ContractController {
                 .build());
     }
 
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<ResponseObject> duplicateContract(@PathVariable Long id) {
+        try {
+         Contract duplicateContract = contractService.duplicateContract(id);
+            if (duplicateContract!=null) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.DUPLICATE_CONTRACT_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(duplicateContract)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
 }
