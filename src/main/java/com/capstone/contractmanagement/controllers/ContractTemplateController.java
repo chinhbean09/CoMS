@@ -79,6 +79,7 @@ public class ContractTemplateController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status, // Tham số lọc theo status (nếu có)
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String order) {
         try {
@@ -86,7 +87,7 @@ public class ContractTemplateController {
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable,keyword);
+            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable, keyword, status);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
                     .status(HttpStatus.OK)
@@ -101,6 +102,7 @@ public class ContractTemplateController {
                             .build());
         }
     }
+
 
     @GetMapping("/titles")
     public ResponseEntity<ResponseObject> getAllTemplateTitles(
@@ -220,6 +222,32 @@ public class ContractTemplateController {
         }
     }
 
-
+    @DeleteMapping("/soft-delete/{id}")
+    public ResponseEntity<ResponseObject> softDeleteContractTemplate(@PathVariable Long id) {
+        try {
+            boolean deleted = templateService.softDelete(id);
+            if (deleted) {
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message(MessageKeys.DELETE_TEMPLATE_SUCCESSFULLY)
+                        .status(HttpStatus.OK)
+                        .data(null)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .message("Template not found with id: " + id)
+                                .status(HttpStatus.NOT_FOUND)
+                                .data(null)
+                                .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Internal server error: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
 
 }

@@ -8,6 +8,7 @@
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplateAdditionalTermDetail;
     import com.capstone.contractmanagement.entities.contract.ContractType;
     import com.capstone.contractmanagement.entities.term.Term;
+    import com.capstone.contractmanagement.enums.ContractTemplateStatus;
     import com.capstone.contractmanagement.enums.TypeTermIdentifier;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.repositories.IContractTemplateRepository;
@@ -250,6 +251,7 @@
                     .autoRenew(dto.getAutoRenew())
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
+                    .status(ContractTemplateStatus.CREATED)
                     .build();
 
             if (!legalBasisIds.isEmpty()) {
@@ -271,19 +273,37 @@
         }
         @Override
         @Transactional(readOnly = true)
-        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword) {
+        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status) {
             boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
+            boolean hasStatusFilter = status != null && !status.trim().isEmpty();
             Page<ContractTemplate> templates;
 
-            if (hasSearch) {
-                keyword = keyword.trim(); // Loại bỏ khoảng trắng dư thừa
-                templates = templateRepository.findByContractTitleContainingIgnoreCase(keyword, pageable);
+            if (hasStatusFilter) {
+                ContractTemplateStatus templateStatus;
+                try {
+                    templateStatus = ContractTemplateStatus.valueOf(status.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid status: " + status);
+                }
+
+                if (hasSearch) {
+                    templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatus(keyword, templateStatus, pageable);
+                } else {
+                    templates = templateRepository.findByStatus(templateStatus, pageable);
+                }
             } else {
-                templates = templateRepository.findAll(pageable);
+                // Mặc định loại bỏ các template có status DELETED
+                if (hasSearch) {
+                    templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatusNot(keyword, ContractTemplateStatus.DELETED, pageable);
+                } else {
+                    templates = templateRepository.findByStatusNot(ContractTemplateStatus.DELETED, pageable);
+                }
             }
 
             return templates.map(this::convertToSimpleResponseDTO);
         }
+
+
 
 
         private ContractTemplateSimpleResponse convertToSimpleResponseDTO(ContractTemplate template) {
@@ -310,6 +330,7 @@
                             .id(template.getContractType().getId())
                             .name(template.getContractType().getName())
                             .build())
+                    .status(template.getStatus())
                     .build();
         }
 
@@ -549,8 +570,8 @@
         @Override
         @Transactional(readOnly = true)
         public Page<ContractTemplateTitleResponse> getAllTemplateTitles(Pageable pageable) {
-            // Lấy danh sách ContractTemplate theo phân trang
-            Page<ContractTemplate> pageTemplates = templateRepository.findAll(pageable);
+            // Lấy danh sách ContractTemplate theo phân trang, loại bỏ các template có status DELETED
+            Page<ContractTemplate> pageTemplates = templateRepository.findByStatusNot(ContractTemplateStatus.DELETED, pageable);
             // Map từng ContractTemplate thành ContractTemplateTitleResponse
             return pageTemplates.map(template ->
                     ContractTemplateTitleResponse.builder()
@@ -559,6 +580,7 @@
                             .build()
             );
         }
+
 
         private ContractTemplateResponse convertToResponseDTO(ContractTemplate template) {
             List<TermResponse> legalBasisTerms = template.getLegalBasisTerms().stream()
@@ -831,6 +853,16 @@
                         return convertToResponseDTO(savedDuplicate);
                     });
         }
-
-
+        @Override
+        public boolean softDelete(Long id) {
+            Optional<ContractTemplate> optionalTemplate = templateRepository.findById(id);
+            if (optionalTemplate.isPresent()) {
+                ContractTemplate template = optionalTemplate.get();
+                template.setStatus(ContractTemplateStatus.DELETED);
+                template.setUpdatedAt(LocalDateTime.now());
+                templateRepository.save(template);
+                return true;
+            }
+            return false;
+        }
     }
