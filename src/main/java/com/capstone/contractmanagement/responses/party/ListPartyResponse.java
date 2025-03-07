@@ -20,6 +20,7 @@ public class ListPartyResponse {
     private String phone;
     private String email;
     private String note;
+    private String position;
     private Boolean isDeleted;
     private List<BankResponse> banking;
 }

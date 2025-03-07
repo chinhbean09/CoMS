@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.services.approvalworkflow;
 import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStageDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -17,11 +18,14 @@ import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageR
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
+import com.capstone.contractmanagement.services.workflow.IWorkflowService;
 import com.capstone.contractmanagement.utils.MailTemplate;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +42,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
     private final IMailService mailService;
+    private final IWorkflowService workflowService;
 
     @Override
     @Transactional
@@ -225,22 +230,20 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     }
 
     @Override
-    public void updateApprovalStageStatus(Long contractId, Long stageId, UpdateApprovalStageDTO dto) throws DataNotFoundException {
+    public void approvedStage(Long contractId, Long stageId) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
         // Tìm ApprovalStage theo id
         ApprovalStage stage = approvalStageRepository.findById(stageId)
                 .orElseThrow(() -> new DataNotFoundException("Approval stage not found with id " + stageId));
         // Cập nhật trạng thái mới
-        stage.setStatus(dto.getStatus());
-        // Nếu trạng thái được chuyển sang APPROVED (hoặc REJECTED), cập nhật approvedAt
-        if (dto.getStatus() == ApprovalStatus.APPROVED || dto.getStatus() == ApprovalStatus.REJECTED) {
-            stage.setApprovedAt(LocalDateTime.now());
-        }
+        stage.setStatus(ApprovalStatus.APPROVED);
+        stage.setApprovedAt(LocalDateTime.now());
+
         approvalStageRepository.save(stage);
 
         // Nếu trạng thái chuyển thành APPROVED, gửi thông báo qua WebSocket cho người duyệt ở đợt tiếp theo
-        if (dto.getStatus() == ApprovalStatus.APPROVED) {
+        if (stage.getStatus() == ApprovalStatus.APPROVED) {
             // Lấy workflow của stage hiện tại
             ApprovalWorkflow workflow = stage.getApprovalWorkflow();
             // Tìm đợt duyệt có stageOrder lớn hơn stage hiện tại, với thứ tự nhỏ nhất (đợt tiếp theo)
@@ -260,10 +263,29 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         notificationService.saveNotification(nextApprover, notificationMessage, contractId);
                     });
         }
+    }
 
-        if (dto.getStatus() == ApprovalStatus.REJECTED) {
-            // comment cho can sua trong hop dong
-        }
+    @Override
+    public void rejectStage(Long contractId, Long stageId, WorkflowDTO workflowDTO) throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+        // Tìm ApprovalStage theo id
+        ApprovalStage stage = approvalStageRepository.findById(stageId)
+                .orElseThrow(() -> new DataNotFoundException("Approval stage not found with id " + stageId));
+        // Cập nhật trạng thái mới
+        stage.setStatus(ApprovalStatus.REJECTED);
+        stage.setApprovedAt(LocalDateTime.now());
+        approvalStageRepository.save(stage);
+        workflowService.createWorkflow(contract, workflowDTO, currentUser);
+        Map<String, Object> payload = new HashMap<>();
+        String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
+        payload.put("message", notificationMessage);
+        payload.put("contractId", contractId);
+        // Gửi thông báo đến user, sử dụng username làm định danh user destination
+        messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
+        notificationService.saveNotification(contract.getUser(), notificationMessage, contractId);
     }
 
     private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
