@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities.approval_workflow;
 
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,7 @@ public class ApprovalStage {
 
     @ManyToOne
     @JoinColumn(name = "approver_id", nullable = false)
+    @JsonIgnore
     private User approver;
 
     // Trạng thái duyệt của bước (có thể là enum: PENDING, APPROVED, REJECTED)
@@ -41,5 +43,6 @@ public class ApprovalStage {
     // Liên kết với ApprovalWorkflow
     @ManyToOne
     @JoinColumn(name = "workflow_id", nullable = false)
+    @JsonIgnore
     private ApprovalWorkflow approvalWorkflow;
 }
