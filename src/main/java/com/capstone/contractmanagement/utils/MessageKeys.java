@@ -26,6 +26,7 @@ public class MessageKeys {
     public static final String ROLE_DOES_NOT_EXISTS = "Vai trò không tồn tại";
     public static final String ENABLE_USER_SUCCESSFULLY = "Mở khóa người dùng thành công";
     public static final String BLOCK_USER_SUCCESSFULLY = "Khóa người dùng thành công";
+    public static final String DUPLICATE_CONTRACT_SUCCESSFULLY = "Duplicate hợp đồng thành công";
     public static final String NOT_ALLOWED = "Không được phép";
     public static final String TOKEN_GENERATION_FAILED = "Không thể tạo token";
     public static final String CREATE_TERM_SUCCESSFULLY = "Tạo điều khoản thành công";
@@ -61,7 +62,7 @@ public class MessageKeys {
     public static final String CREATE_PARTY_SUCCESSFULLY = "Tạo đối tác thành công";
     public static final String UPDATE_PARTY_SUCCESSFULLY = "Cập nhật đối tác thành công";
     public static final String GET_PARTY_SUCCESSFULLY = "Lấy thông tin đối tác thành công";
-    public static final String GET_ALL_PARTIES_SUCCESSFULLY = "Lấy danh sách đối tác thành công";
+    public static final String GET_ALL_PARTIES_SUCCESSFULLY = "Lấy danh sách đối tDuplicate mẫu hợp đồng thành côngác thành công";
     public static final String GET_ALL_CONTRACTS_BY_TYPE_SUCCESSFULLY = "Lấy danh sách hợp đồng theo loại thành công";
 
     public static final String LOGOUT_SUCCESSFULLY = "Đăng xuất thành công";
@@ -70,7 +71,7 @@ public class MessageKeys {
     public static final String TOKEN_EXPIRED = "Token hết hạn";
     public static final String TOKEN_INVALID = "Token không hợp lệ";
     public static final String GET_ALL_CONTRACTS_BY_USER_SUCCESSFULLY = "Lấy danh sách hợp đồng theo người dùng thành công";
-    public static final String DUPLICATE_TEMPLATE_SUCCESSFULLY = "Trung mẫu hợp đồng thành công";
+    public static final String DUPLICATE_TEMPLATE_SUCCESSFULLY = "Duplicate mẫu hợp đồng thành công";
     public static final String CREATE_PAYMENT_SCHEDULE_SUCCESSFULLY = "Tạo lịch thanh toán hợp đồng thành công";
     public static final String GET_ALL_NOTIFICATION_SUCCESSFULLY = "Lấy danh sách thông báo thành công";
     public static final String GET_NOTIFICATION_SUCCESSFULLY = "Lấy thông tin thống báo thành công";
