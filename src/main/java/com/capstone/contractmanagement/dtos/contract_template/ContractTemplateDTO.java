@@ -1,10 +1,11 @@
-package com.capstone.contractmanagement.dtos.template;
+package com.capstone.contractmanagement.dtos.contract_template;
 
 import com.capstone.contractmanagement.dtos.IdDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -63,5 +64,7 @@ public class ContractTemplateDTO {
     private Boolean autoRenew;
 
     private Long contractTypeId;
+
+    private LocalDateTime updateAt;
 
 }
