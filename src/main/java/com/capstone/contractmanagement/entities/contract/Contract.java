@@ -4,6 +4,7 @@
     import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.enums.ContractStatus;
+    import com.fasterxml.jackson.annotation.JsonBackReference;
     import com.fasterxml.jackson.annotation.JsonIgnore;
     import jakarta.persistence.*;
     import lombok.*;
@@ -19,7 +20,7 @@
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public class   Contract {
+    public class Contract {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -125,7 +126,7 @@
         private Integer maxDateLate;
 
         @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "template_id", referencedColumnName = "template_id")
+        @JoinColumn(name = "template_id")
         @JsonIgnore
         private ContractTemplate template;
 

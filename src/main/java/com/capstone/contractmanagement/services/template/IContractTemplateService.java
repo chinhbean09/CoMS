@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.services.template;
 
-import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
+import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
