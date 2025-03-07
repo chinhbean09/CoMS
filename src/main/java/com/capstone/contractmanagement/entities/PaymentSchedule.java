@@ -31,7 +31,7 @@ public class PaymentSchedule {
     @Column(name = "notified_payment_date")
     private LocalDateTime notifyPaymentDate;
 
-    @Column(name = "payment_date", nullable = false)
+    @Column(name = "payment_date", nullable = true)
     private LocalDateTime paymentDate; // Ngày đến hạn thanh toán
 
     @Column(name = "status", length = 50)

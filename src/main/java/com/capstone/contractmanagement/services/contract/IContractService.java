@@ -23,4 +23,6 @@ public interface IContractService {
     Contract createContractFromTemplate(ContractDTO dto) throws DataNotFoundException;
 
     Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status);
+
+    Contract duplicateContract(Long contractId);
     }

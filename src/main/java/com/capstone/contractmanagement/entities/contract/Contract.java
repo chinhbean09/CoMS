@@ -52,6 +52,9 @@
         @Column(name = "updated_at")
         private LocalDateTime updatedAt;
 
+        @Column(name = "original_contract_id")
+        private Long originalContractId;
+
 //        // Các trường từ ContractDetails
 //        @Column(name = "scope", columnDefinition = "TEXT")
 //        private String scope; // Phạm vi hợp đồng
