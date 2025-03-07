@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.PartyType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -53,9 +54,11 @@ public class Party {
     private Boolean isDeleted = Boolean.FALSE;
 
     @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Bank> banking = new ArrayList<>();
     // One-to-Many với Contract
     @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
 
