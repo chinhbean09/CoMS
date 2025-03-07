@@ -1,6 +1,9 @@
 package com.capstone.contractmanagement.responses.contract;
 
+import com.capstone.contractmanagement.entities.Party;
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ContractStatus;
+import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.AllArgsConstructor;
@@ -19,6 +22,8 @@ import java.util.Map;
 public class ContractResponse {
     private Long id;
     private String title;
+    private UserContractResponse user;
+    private Party party;
     private String contractNumber;
     private ContractStatus status;
     private LocalDateTime createdAt;
@@ -26,6 +31,7 @@ public class ContractResponse {
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;
+    private String contractType;
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private LocalDateTime notifyEffectiveDate;

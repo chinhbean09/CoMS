@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,5 +23,6 @@ public class Bank {
 
     @ManyToOne
     @JoinColumn(name = "party_id")
+    @JsonIgnore
     private Party party;
 }
