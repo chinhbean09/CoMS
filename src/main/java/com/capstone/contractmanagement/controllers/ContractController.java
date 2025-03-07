@@ -43,7 +43,7 @@ public class ContractController {
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getContractById(@PathVariable Long id) throws DataNotFoundException {
         Optional<ContractResponse> contract = contractService.getContractById(id);
-        if(!contract.isPresent()) {
+        if(contract.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseObject.builder()
                     .status(HttpStatus.NOT_FOUND)
                     .message(MessageKeys.CONTRACT_NOT_FOUND)
@@ -86,7 +86,7 @@ public class ContractController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<ResponseObject> updateContract(
             @PathVariable Long id,
             @Valid @RequestBody ContractDTO contractDTO) {
