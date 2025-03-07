@@ -62,7 +62,7 @@ public class MessageKeys {
     public static final String CREATE_PARTY_SUCCESSFULLY = "Tạo đối tác thành công";
     public static final String UPDATE_PARTY_SUCCESSFULLY = "Cập nhật đối tác thành công";
     public static final String GET_PARTY_SUCCESSFULLY = "Lấy thông tin đối tác thành công";
-    public static final String GET_ALL_PARTIES_SUCCESSFULLY = "Lấy danh sách đối tDuplicate mẫu hợp đồng thành côngác thành công";
+    public static final String GET_ALL_PARTIES_SUCCESSFULLY = "Lấy danh sách thông tin các đối tác thành công";
     public static final String GET_ALL_CONTRACTS_BY_TYPE_SUCCESSFULLY = "Lấy danh sách hợp đồng theo loại thành công";
 
     public static final String LOGOUT_SUCCESSFULLY = "Đăng xuất thành công";

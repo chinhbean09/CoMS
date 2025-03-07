@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.enums;
 
-public enum ContracTemplateStatus {
+public enum ContractTemplateStatus {
 
     DRAFT,       // Bản nháp
     CREATED,     // Đã tạo

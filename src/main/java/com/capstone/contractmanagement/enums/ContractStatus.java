@@ -12,5 +12,7 @@ public enum ContractStatus {
     COMPLETED,   // Hoàn thành
     EXPIRED,     // Hết hạn
     CANCELLED,   // Đã hủy
-    ENDED        // Kết thúc
+    ENDED,        // Kết thúc
+    DELETED;     // Đã xóa
+
 }

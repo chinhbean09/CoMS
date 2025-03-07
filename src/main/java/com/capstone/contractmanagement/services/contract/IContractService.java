@@ -25,4 +25,7 @@ public interface IContractService {
     Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status);
 
     Contract duplicateContract(Long contractId);
+
+    boolean softDelete(Long id);
+
     }
