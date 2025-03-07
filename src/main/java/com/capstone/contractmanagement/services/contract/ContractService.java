@@ -15,6 +15,8 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
+import com.capstone.contractmanagement.responses.payment_one_time.PaymentOneTimeResponse;
+import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -373,11 +375,6 @@ public class ContractService implements IContractService{
                 });
     }
 
-    @Override
-    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
-        return null;
-    }
-
     private ContractResponse convertContractToResponse(Contract contract) {
         // Map các ContractTerm thành ContractTermResponse
         List<TermResponse> legalBasisTerms = contract.getContractTerms().stream()
@@ -469,10 +466,47 @@ public class ContractService implements IContractService{
                 .legalBasis(legalBasisTerms)
                 .generalTerms(generalTerms)
                 .otherTerms(otherTerms)
+                .paymentOneTime(convertPaymentOneTime(contract.getPaymentOneTime()))
+                .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)
                 .additionalConfig(additionalConfig)
                 .build();
     }
+    private PaymentOneTimeResponse convertPaymentOneTime(PaymentOneTime paymentOneTime) {
+        if (paymentOneTime == null) {
+            return null;
+        }
+        return PaymentOneTimeResponse.builder()
+                .id(paymentOneTime.getId())
+                .amount(paymentOneTime.getAmount())
+                .currency(paymentOneTime.getCurrency())
+                .dueDate(paymentOneTime.getDueDate())
+                .status(paymentOneTime.getStatus())
+                .build();
+    }
+
+    // Helper chuyển đổi danh sách PaymentSchedule thành danh sách PaymentScheduleResponse
+    private List<PaymentScheduleResponse> convertPaymentSchedules(List<PaymentSchedule> paymentSchedules) {
+        if (paymentSchedules == null || paymentSchedules.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return paymentSchedules.stream()
+                .map(schedule -> PaymentScheduleResponse.builder()
+                        .id(schedule.getId())
+                        .paymentOrder(schedule.getPaymentOrder())
+                        .amount(schedule.getAmount())
+                        .notifyPaymentDate(schedule.getNotifyPaymentDate())
+                        .paymentDate(schedule.getPaymentDate())
+                        .status(schedule.getStatus())
+                        .paymentMethod(schedule.getPaymentMethod())
+                        .notifyPaymentContent(schedule.getNotifyPaymentContent())
+                        .reminderEmailSent(schedule.isReminderEmailSent())
+                        .overdueEmailSent(schedule.isOverdueEmailSent())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
 
     // Helper method: chuyển List<AdditionalTermSnapshot> sang List<TermResponse>
     private List<TermResponse> convertAdditionalTermSnapshotsToTermResponseList(List<AdditionalTermSnapshot> snapshots) {
@@ -483,6 +517,11 @@ public class ContractService implements IContractService{
                         .value(snap.getTermValue())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ContractResponse updateContract(Long id, ContractDTO contractDTO) {
+        return null;
     }
 
 
