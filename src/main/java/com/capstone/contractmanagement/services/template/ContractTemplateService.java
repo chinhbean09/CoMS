@@ -641,7 +641,7 @@
                     .generalTerms(generalTerms)
                     .otherTerms(otherTerms)
                     .additionalTerms(additionalTerms)
-                    .contractTypeId(template.getContractType() != null ? template.getContractType().getId() : null)
+                    .contractTypeId( template.getContractType().getId())
                     .additionalConfig(additionalConfig)
                     .originalTemplateId(template.getOriginalTemplateId())
                     .duplicateVersion(template.getDuplicateVersion())
