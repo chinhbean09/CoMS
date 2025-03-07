@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface IContractService {
 
-    Optional<ContractResponse> getContractById(Long id);
+    Optional<ContractResponse> getContractById(Long id) throws DataNotFoundException;
 
 
     ContractResponse updateContract(Long id, ContractDTO contractDTO);
