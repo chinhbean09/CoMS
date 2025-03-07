@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.PaymentStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -54,5 +55,6 @@ public class PaymentSchedule {
     // Relationship với Contract
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = false)
+    @JsonIgnore
     private Contract contract;
 }
