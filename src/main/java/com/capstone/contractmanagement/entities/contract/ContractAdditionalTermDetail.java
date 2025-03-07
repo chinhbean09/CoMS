@@ -20,7 +20,7 @@ public class ContractAdditionalTermDetail {
     @Column(name = "additional_term_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contract_id", nullable = false)
     @JsonIgnore
     private Contract contract;

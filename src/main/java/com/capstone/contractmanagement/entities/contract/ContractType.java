@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities.contract;
 
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -29,11 +30,11 @@ public class ContractType {
 
     // loại hợp đồng có thể có nhiều template
     @OneToMany(mappedBy = "contractType", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnoreProperties("contractType") // Bỏ qua trường contractType trong ContractTemplate
     private List<ContractTemplate> templates = new ArrayList<>();
 
-    @OneToMany(mappedBy = "contractType", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @OneToMany(mappedBy = "contractType", fetch = FetchType.LAZY)
+    @JsonIgnore // Bỏ qua trường contractType trong ContractTemplate
     private List<Contract> contracts = new ArrayList<>();
 
 }
