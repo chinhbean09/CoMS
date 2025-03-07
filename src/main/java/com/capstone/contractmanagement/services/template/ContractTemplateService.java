@@ -62,8 +62,8 @@
             Set<Long> additionalTermsIds = new HashSet<>();
 
             // Legal Basis
-            if (dto.getLegalBasis() != null) {
-                legalBasisIds.addAll(dto.getLegalBasis());
+            if (dto.getLegalBasisTerms() != null) {
+                legalBasisIds.addAll(dto.getLegalBasisTerms());
                 for (Long id : legalBasisIds) {
                     Term term = termRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
@@ -370,8 +370,8 @@
             }
 
             // 5. Cập nhật danh sách legalBasisTerms nếu được cung cấp
-            if (dto.getLegalBasis() != null) {
-                Set<Long> legalBasisIds = new HashSet<>(dto.getLegalBasis());
+            if (dto.getLegalBasisTerms() != null) {
+                Set<Long> legalBasisIds = new HashSet<>(dto.getLegalBasisTerms());
                 for (Long id : legalBasisIds) {
                     Term term = termRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));

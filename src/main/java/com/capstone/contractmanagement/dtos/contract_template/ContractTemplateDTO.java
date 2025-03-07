@@ -17,7 +17,7 @@ public class ContractTemplateDTO {
     private String contractTitle;
 
     // Mỗi phần tử chứa id của type term (ví dụ: 1, 2)
-    private List<Long> legalBasis;
+    private List<Long> legalBasisTerms;
 
     private Boolean appendixEnabled;
 

@@ -93,8 +93,8 @@ public class ContractService implements IContractService{
         List<ContractTerm> contractTerms = new ArrayList<>();
 
         // Legal Basis
-        if (dto.getTemplateData().getLegalBasis() != null) {
-            for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasis()) {
+        if (dto.getTemplateData().getLegalBasisTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasisTerms()) {
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
@@ -463,7 +463,7 @@ public class ContractService implements IContractService{
                 .violate(contract.getViolate())
                 .suspend(contract.getSuspend())
                 .suspendContent(contract.getSuspendContent())
-                .legalBasis(legalBasisTerms)
+                .legalBasisTerms(legalBasisTerms)
                 .generalTerms(generalTerms)
                 .otherTerms(otherTerms)
                 .paymentOneTime(convertPaymentOneTime(contract.getPaymentOneTime()))
