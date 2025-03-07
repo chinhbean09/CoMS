@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.template;
 
 import com.capstone.contractmanagement.entities.contract.ContractType;
+import com.capstone.contractmanagement.enums.ContractTemplateStatus;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import lombok.Builder;
 import lombok.Data;
@@ -30,5 +31,5 @@ public class ContractTemplateSimpleResponse {
     private Boolean autoRenew;
     private ContractType contractType;
     private UserContractResponse user;
-
+    private ContractTemplateStatus status;
 }

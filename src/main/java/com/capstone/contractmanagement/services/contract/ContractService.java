@@ -300,19 +300,21 @@ public class ContractService implements IContractService{
         Page<Contract> contracts;
 
         if (hasSearch && hasStatusFilter) {
-            keyword = keyword.trim(); // Loại bỏ khoảng trắng dư thừa
+            keyword = keyword.trim();
             contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
         } else if (hasSearch) {
             keyword = keyword.trim();
-            contracts = contractRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+            contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
         } else if (hasStatusFilter) {
             contracts = contractRepository.findByStatus(status, pageable);
         } else {
-            contracts = contractRepository.findAll(pageable);
+            // Mặc định loại bỏ các hợp đồng có trạng thái DELETED
+            contracts = contractRepository.findByStatusNot(ContractStatus.DELETED, pageable);
         }
 
         return contracts.map(this::convertToGetAllContractResponse);
     }
+
 
     private ContractResponse convertToResponseDTO(Contract contract) {
         return ContractResponse.builder()
@@ -618,6 +620,19 @@ public class ContractService implements IContractService{
 
         // 6. Lưu hợp đồng mới vào cơ sở dữ liệu
         return contractRepository.save(duplicateContract);
+    }
+
+    @Override
+    public boolean softDelete(Long id) {
+        Optional<Contract> optionalContract = contractRepository.findById(id);
+        if (optionalContract.isPresent()) {
+            Contract contract = optionalContract.get();
+            contract.setStatus(ContractStatus.DELETED);
+            contract.setUpdatedAt(LocalDateTime.now());
+            contractRepository.save(contract);
+            return true;
+        }
+        return false;
     }
 
 }

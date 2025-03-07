@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.repositories;
 
 
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+import com.capstone.contractmanagement.enums.ContractTemplateStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -23,5 +24,16 @@ public interface IContractTemplateRepository extends JpaRepository<ContractTempl
 
     Optional<ContractTemplate> findByContractTitleAndIdNot(String contractTitle, Long id);
 
+    // Lọc theo cả title và status cụ thể
+    Page<ContractTemplate> findByContractTitleContainingIgnoreCaseAndStatus(String keyword, ContractTemplateStatus status, Pageable pageable);
+
+    // Lấy các template mà status không phải là DELETED
+    Page<ContractTemplate> findByStatusNot(ContractTemplateStatus status, Pageable pageable);
+
+    // Lấy các template theo title, loại bỏ những bản có status là DELETED
+    Page<ContractTemplate> findByContractTitleContainingIgnoreCaseAndStatusNot(String keyword, ContractTemplateStatus status, Pageable pageable);
+
+    // Lọc theo status cụ thể
+    Page<ContractTemplate> findByStatus(ContractTemplateStatus status, Pageable pageable);
 
 }

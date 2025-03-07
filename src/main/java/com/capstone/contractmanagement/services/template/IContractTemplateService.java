@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface IContractTemplateService {
     ContractTemplate createTemplate(ContractTemplateDTO dto) throws DataNotFoundException;
 
-    Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword);
+    Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status);
 
     Optional<ContractTemplateResponse> getTemplateById(Long id);
 
@@ -28,4 +28,6 @@ public interface IContractTemplateService {
     Page<ContractTemplateTitleResponse> getAllTemplateTitles(Pageable pageable);
 
     ContractTemplate updateTemplate(Long templateId, ContractTemplateDTO dto) throws DataNotFoundException, IllegalArgumentException;
+
+    boolean softDelete(Long id);
 }
