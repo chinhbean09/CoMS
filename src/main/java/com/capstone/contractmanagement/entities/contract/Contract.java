@@ -173,5 +173,9 @@
         @JoinColumn(name = "approval_workflow_id")
         private ApprovalWorkflow approvalWorkflow;
 
+        @ManyToOne
+        @JoinColumn(name = "contract_type_id", nullable = false)
+        @JsonIgnore
+        private ContractType contractType;
 
     }

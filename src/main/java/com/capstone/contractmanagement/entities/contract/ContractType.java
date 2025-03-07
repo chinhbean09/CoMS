@@ -32,4 +32,8 @@ public class ContractType {
     @JsonIgnore
     private List<ContractTemplate> templates = new ArrayList<>();
 
+    @OneToMany(mappedBy = "contractType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Contract> contracts = new ArrayList<>();
+
 }
