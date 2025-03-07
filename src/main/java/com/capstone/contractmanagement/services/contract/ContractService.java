@@ -15,6 +15,7 @@ import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.repositories.*;
+import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
@@ -81,6 +82,7 @@ public class ContractService implements IContractService{
                 .maxDateLate(dto.getTemplateData().getMaxDateLate())
                 .autoRenew(dto.getTemplateData().getAutoRenew())
                 .violate(dto.getTemplateData().getViolate())
+                .contractType(template.getContractType())
                 .suspend(dto.getTemplateData().getSuspend())
                 .suspendContent(dto.getTemplateData().getSuspendContent())
                 .status(ContractStatus.CREATED)
@@ -291,7 +293,7 @@ public class ContractService implements IContractService{
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ContractResponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status) {
+    public Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status) {
         boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
         boolean hasStatusFilter = status != null;
         Page<Contract> contracts;
@@ -308,7 +310,7 @@ public class ContractService implements IContractService{
             contracts = contractRepository.findAll(pageable);
         }
 
-        return contracts.map(this::convertToResponseDTO);
+        return contracts.map(this::convertToGetAllContractResponse);
     }
 
     private ContractResponse convertToResponseDTO(Contract contract) {
@@ -318,36 +320,31 @@ public class ContractService implements IContractService{
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
-                .updatedAt(contract.getUpdatedAt())
-                .signingDate(contract.getSigningDate())
-                .contractLocation(contract.getContractLocation())
                 .amount(contract.getAmount())
-                .effectiveDate(contract.getEffectiveDate())
-                .expiryDate(contract.getExpiryDate())
-                .notifyEffectiveDate(contract.getNotifyEffectiveDate())
-                .notifyExpiryDate(contract.getNotifyExpiryDate())
-                .notifyEffectiveContent(contract.getNotifyEffectiveContent())
-                .notifyExpiryContent(contract.getNotifyExpiryContent())
-                .specialTermsA(contract.getSpecialTermsA())
-                .specialTermsB(contract.getSpecialTermsB())
-                .contractContent(contract.getContractContent())
-                .appendixEnabled(contract.getAppendixEnabled())
-                .transferEnabled(contract.getTransferEnabled())
-                .autoAddVAT(contract.getAutoAddVAT())
-                .vatPercentage(contract.getVatPercentage())
-                .isDateLateChecked(contract.getIsDateLateChecked())
-                .maxDateLate(contract.getMaxDateLate())
-                .autoRenew(contract.getAutoRenew())
-                .violate(contract.getViolate())
-                .suspend(contract.getSuspend())
-                .suspendContent(contract.getSuspendContent())
-                .legalBasisTerms(Collections.emptyList())
-                .generalTerms(Collections.emptyList())
-                .otherTerms(Collections.emptyList())
-                .additionalTerms(Collections.emptyList())
-                .additionalConfig(Collections.emptyMap())
                 .build();
     }
+
+    private GetAllContractReponse convertToGetAllContractResponse(Contract contract) {
+        return GetAllContractReponse.builder()
+                .id(contract.getId())
+                .title(contract.getTitle())
+                .contractNumber(contract.getContractNumber())
+                .status(contract.getStatus())
+                .createdAt(contract.getCreatedAt())
+                .amount(contract.getAmount())
+                .contractType(contract.getContractType())  // giả sử entity Contract có field này
+                .party(contract.getParty())                // giả sử entity Contract có field này kiểu Party
+                .user(convertUserToUserContractResponse(contract.getUser())) // chuyển đổi đối tượng User
+                .build();
+    }
+
+    private UserContractResponse convertUserToUserContractResponse(User user) {
+        return UserContractResponse.builder()
+                .fullName(user.getFullName())
+                .userId(user.getId())
+                .build();
+    }
+
 
     @Override
     public void deleteContract(Long id) {
@@ -439,6 +436,8 @@ public class ContractService implements IContractService{
         return ContractResponse.builder()
                 .id(contract.getId())
                 .title(contract.getTitle())
+                .user(convertUserToUserContractResponse(contract.getUser()))
+                .party(contract.getParty())
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())

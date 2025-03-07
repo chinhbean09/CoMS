@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
+import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -62,7 +63,7 @@ public class ContractController {
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<ContractResponse> contracts = contractService.getAllContracts(pageable, keyword, status);
+            Page<GetAllContractReponse> contracts = contractService.getAllContracts(pageable, keyword, status);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
                     .status(HttpStatus.OK)
