@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.approvalworkflow;
 
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStageDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -24,5 +25,6 @@ public interface IApprovalWorkflowService {
 
     // assign approval workflow to contract
     void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException;
-    void updateApprovalStageStatus(Long contractId, Long stageId, UpdateApprovalStageDTO dto) throws DataNotFoundException;
+    void approvedStage(Long contractId, Long stageId) throws DataNotFoundException;
+    void rejectStage(Long contractId, Long stageId, WorkflowDTO workflowDTO) throws DataNotFoundException;
 }

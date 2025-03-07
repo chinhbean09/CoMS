@@ -31,8 +31,8 @@ public class Workflow {
     @JoinColumn(name = "updated_by", nullable = false)
     private User updatedBy;
 
-    @Column(name = "status", nullable = false, length = 50)
-    private String status; // Đang xử lý, Đã phê duyệt, Hủy bỏ
+//    @Column(name = "status", nullable = false, length = 50)
+//    private String status; // Đang xử lý, Đã phê duyệt, Hủy bỏ
 
     @Column(name = "comment", length = 500)
     private String comment;

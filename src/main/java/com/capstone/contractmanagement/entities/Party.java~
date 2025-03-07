@@ -49,9 +49,6 @@ public class Party {
     @Column(name = "note", length = 1000)
     private String note;
 
-    @Column(name = "position", length = 100)
-    private String position;
-
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
 
