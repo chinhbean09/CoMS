@@ -1,7 +1,9 @@
     package com.capstone.contractmanagement.services.template;
 
+    import com.capstone.contractmanagement.components.SecurityUtils;
     import com.capstone.contractmanagement.dtos.IdDTO;
     import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
+    import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplateAdditionalTermDetail;
     import com.capstone.contractmanagement.entities.contract.ContractType;
@@ -12,10 +14,12 @@
     import com.capstone.contractmanagement.repositories.IContractTypeRepository;
     import com.capstone.contractmanagement.repositories.ITermRepository;
     import com.capstone.contractmanagement.repositories.ITypeTermRepository;
+    import com.capstone.contractmanagement.responses.User.UserContractResponse;
     import com.capstone.contractmanagement.responses.template.*;
     import com.capstone.contractmanagement.responses.term.TermResponse;
     import com.capstone.contractmanagement.responses.term.TypeTermResponse;
     import lombok.RequiredArgsConstructor;
+    import org.springframework.dao.DuplicateKeyException;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.Pageable;
     import org.springframework.stereotype.Service;
@@ -31,6 +35,7 @@
         private final ITermRepository termRepository;
         private final IContractTypeRepository contractTypeRepository;
         private final ITypeTermRepository typeTermRepository;
+        private final SecurityUtils currentUser;
 
 
         @Override
@@ -39,6 +44,12 @@
 
             ContractType contractType = contractTypeRepository.findById(dto.getContractTypeId())
                     .orElseThrow(() -> new DataNotFoundException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()));
+
+            User user = currentUser.getLoggedInUser();
+
+            if (user == null) {
+                throw new DataNotFoundException("User không tồn tại");
+            }
 
             if (templateRepository.existsByContractTitle(dto.getContractTitle())) {
                 throw new IllegalArgumentException("Tiêu đề hợp đồng đã tồn tại: " + dto.getContractTitle());
@@ -69,7 +80,7 @@
                     Term term = termRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (GENERAL_TERMS)");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản chung (GENERAL_TERMS)");
                     }
                 }
             }
@@ -221,6 +232,7 @@
 
             // ContractTemplate
             ContractTemplate template = ContractTemplate.builder()
+                    .createdBy(user)
                     .contractTitle(dto.getContractTitle())
                     .specialTermsA(dto.getSpecialTermsA())
                     .specialTermsB(dto.getSpecialTermsB())
@@ -278,7 +290,6 @@
             return ContractTemplateSimpleResponse.builder()
                     .id(template.getId())
                     .contractTitle(template.getContractTitle())
-                    .partyInfo(template.getPartyInfo())
                     .specialTermsA(template.getSpecialTermsA())
                     .specialTermsB(template.getSpecialTermsB())
                     .appendixEnabled(template.getAppendixEnabled())
@@ -294,6 +305,7 @@
                     .isDateLateChecked(template.getIsDateLateChecked())
                     .maxDateLate(template.getMaxDateLate())
                     .autoRenew(template.getAutoRenew())
+                    .user(convertUserToUserContractResponse(template.getCreatedBy())) // chuyển đổi đối tượng User
                     .contractType(ContractType.builder()
                             .id(template.getContractType().getId())
                             .name(template.getContractType().getName())
@@ -301,7 +313,216 @@
                     .build();
         }
 
+        @Override
+        @Transactional
+        public ContractTemplate updateTemplate(Long templateId, ContractTemplateDTO dto) throws DataNotFoundException, IllegalArgumentException {
+            // 1. Lấy template hiện có từ cơ sở dữ liệu
+            ContractTemplate template = templateRepository.findById(templateId)
+                    .orElseThrow(() -> new DataNotFoundException("Không tìm thấy mẫu hợp đồng với id: " + templateId));
 
+            // Chỉ kiểm tra nếu tiêu đề thay đổi
+            if (!template.getContractTitle().equals(dto.getContractTitle())) {
+                Optional<ContractTemplate> existingTemplateWithTitle =
+                        templateRepository.findByContractTitleAndIdNot(dto.getContractTitle(), templateId);
+
+                if (existingTemplateWithTitle.isPresent() && !existingTemplateWithTitle.get().getId().equals(templateId)) {
+                    throw new DuplicateKeyException("Đã tồn tại Contract Template với tiêu đề này");
+                }
+            }
+
+            template.setContractTitle(dto.getContractTitle());
+
+            // 3. Cập nhật các trường đơn giản (nếu được cung cấp trong DTO)
+            if (dto.getSpecialTermsA() != null)
+                template.setSpecialTermsA(dto.getSpecialTermsA());
+            if (dto.getSpecialTermsB() != null)
+                template.setSpecialTermsB(dto.getSpecialTermsB());
+            if (dto.getAppendixEnabled() != null)
+                template.setAppendixEnabled(dto.getAppendixEnabled());
+            if (dto.getTransferEnabled() != null)
+                template.setTransferEnabled(dto.getTransferEnabled());
+            if (dto.getViolate() != null)
+                template.setViolate(dto.getViolate());
+            if (dto.getSuspend() != null)
+                template.setSuspend(dto.getSuspend());
+            if (dto.getSuspendContent() != null)
+                template.setSuspendContent(dto.getSuspendContent());
+            if (dto.getContractContent() != null)
+                template.setContractContent(dto.getContractContent());
+            if (dto.getAutoAddVAT() != null)
+                template.setAutoAddVAT(dto.getAutoAddVAT());
+            if (dto.getVatPercentage() != null)
+                template.setVatPercentage(dto.getVatPercentage());
+            if (dto.getIsDateLateChecked() != null)
+                template.setIsDateLateChecked(dto.getIsDateLateChecked());
+            if (dto.getMaxDateLate() != null)
+                template.setMaxDateLate(dto.getMaxDateLate());
+            if (dto.getAutoRenew() != null)
+                template.setAutoRenew(dto.getAutoRenew());
+            // 4. Cập nhật contractType từ contractTypeId trong DTO
+
+            if (dto.getContractTypeId() != null) {
+                ContractType contractType = contractTypeRepository.findById(dto.getContractTypeId())
+                        .orElseThrow(() -> new DataNotFoundException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()));
+                template.setContractType(contractType);
+            }
+
+            // 5. Cập nhật danh sách legalBasisTerms nếu được cung cấp
+            if (dto.getLegalBasis() != null) {
+                Set<Long> legalBasisIds = new HashSet<>(dto.getLegalBasis());
+                for (Long id : legalBasisIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lí (LEGAL_BASIS)");
+                    }
+                }
+                List<Term> legalBasisTerms = termRepository.findAllById(legalBasisIds);
+                template.setLegalBasisTerms(legalBasisTerms);
+            }
+
+            // 6. Cập nhật danh sách generalTerms nếu được cung cấp
+            if (dto.getGeneralTerms() != null) {
+                Set<Long> generalTermsIds = new HashSet<>(dto.getGeneralTerms());
+                for (Long id : generalTermsIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản chung (GENERAL_TERMS)");
+                    }
+                }
+                List<Term> generalTerms = termRepository.findAllById(generalTermsIds);
+                template.setGeneralTerms(generalTerms);
+            }
+
+            // 7. Cập nhật danh sách otherTerms nếu được cung cấp
+            if (dto.getOtherTerms() != null) {
+                Set<Long> otherTermsIds = new HashSet<>(dto.getOtherTerms());
+                for (Long id : otherTermsIds) {
+                    Term term = termRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với id: " + id));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (OTHER_TERMS)");
+                    }
+                }
+                List<Term> otherTerms = termRepository.findAllById(otherTermsIds);
+                template.setOtherTerms(otherTerms);
+            }
+
+            // 8. Cập nhật additionalTermConfigs nếu được cung cấp
+            if (dto.getAdditionalConfig() != null) {
+                // Xóa các cấu hình hiện có
+                template.getAdditionalTermConfigs().clear();
+
+                // Thêm các cấu hình mới từ DTO
+                for (Map.Entry<String, Map<String, List<IdDTO>>> entry : dto.getAdditionalConfig().entrySet()) {
+                    String key = entry.getKey();
+                    Long configTypeTermId;
+                    try {
+                        configTypeTermId = Long.parseLong(key);
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho type term id. Key sai: " + key);
+                    }
+                    Map<String, List<IdDTO>> groupConfig = entry.getValue();
+
+                    // Lấy danh sách term ID cho từng nhóm con
+                    List<Long> commonTermIds = groupConfig.containsKey("Common")
+                            ? groupConfig.get("Common").stream().map(IdDTO::getId).toList()
+                            : new ArrayList<>();
+                    List<Long> aTermIds = groupConfig.containsKey("A")
+                            ? groupConfig.get("A").stream().map(IdDTO::getId).toList()
+                            : new ArrayList<>();
+                    List<Long> bTermIds = groupConfig.containsKey("B")
+                            ? groupConfig.get("B").stream().map(IdDTO::getId).toList()
+                            : new ArrayList<>();
+
+                    // Kiểm tra xung đột giữa các nhóm
+                    Set<Long> unionCommonA = new HashSet<>(commonTermIds);
+                    unionCommonA.retainAll(aTermIds);
+                    if (!unionCommonA.isEmpty()) {
+                        List<String> conflictTerms = unionCommonA.stream()
+                                .map(id -> termRepository.findById(id).map(Term::getLabel).orElse(String.valueOf(id)))
+                                .toList();
+                        String typeName = commonTermIds.isEmpty() ? String.valueOf(configTypeTermId) :
+                                termRepository.findById(commonTermIds.iterator().next())
+                                        .map(t -> t.getTypeTerm().getName())
+                                        .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'Common' và 'A' cho loại điều khoản: " + typeName);
+                    }
+
+                    Set<Long> unionCommonB = new HashSet<>(commonTermIds);
+                    unionCommonB.retainAll(bTermIds);
+                    if (!unionCommonB.isEmpty()) {
+                        List<String> conflictTerms = unionCommonB.stream()
+                                .map(id -> termRepository.findById(id).map(Term::getLabel).orElse(String.valueOf(id)))
+                                .toList();
+                        String typeName = commonTermIds.isEmpty() ? String.valueOf(configTypeTermId) :
+                                termRepository.findById(commonTermIds.iterator().next())
+                                        .map(t -> t.getTypeTerm().getName())
+                                        .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'Common' và 'B' cho loại điều khoản: " + typeName);
+                    }
+
+                    Set<Long> unionAB = new HashSet<>(aTermIds);
+                    unionAB.retainAll(bTermIds);
+                    if (!unionAB.isEmpty()) {
+                        List<String> conflictTerms = unionAB.stream()
+                                .map(id -> termRepository.findById(id).map(Term::getLabel).orElse(String.valueOf(id)))
+                                .toList();
+                        String typeName = aTermIds.isEmpty() ? String.valueOf(configTypeTermId) :
+                                termRepository.findById(aTermIds.iterator().next())
+                                        .map(t -> t.getTypeTerm().getName())
+                                        .orElse(String.valueOf(configTypeTermId));
+                        throw new IllegalArgumentException("Các điều khoản " + conflictTerms
+                                + " không được chọn đồng thời ở 'A' và 'B' cho loại điều khoản: " + typeName);
+                    }
+
+                    // Xác thực các term thuộc đúng type term
+                    for (Long termId : commonTermIds) {
+                        Term term = termRepository.findById(termId)
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
+                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
+                        }
+                    }
+                    for (Long termId : aTermIds) {
+                        Term term = termRepository.findById(termId)
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
+                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
+                        }
+                    }
+                    for (Long termId : bTermIds) {
+                        Term term = termRepository.findById(termId)
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + termId));
+                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
+                                    + term.getTypeTerm().getName() + "\"");
+                        }
+                    }
+
+                    // Tạo cấu hình mới và thêm vào template
+                    ContractTemplateAdditionalTermDetail configRecord = ContractTemplateAdditionalTermDetail.builder()
+                            .typeTermId(configTypeTermId)
+                            .commonTermIds(commonTermIds)
+                            .aTermIds(aTermIds)
+                            .bTermIds(bTermIds)
+                            .contractTemplate(template)
+                            .build();
+                    template.getAdditionalTermConfigs().add(configRecord);
+                }
+            }
+
+            // 9. Cập nhật thời gian updatedAt
+            template.setUpdatedAt(LocalDateTime.now());
+
+            // 10. Lưu template đã cập nhật
+            return templateRepository.save(template);
+        }
 
         @Override
         @Transactional(readOnly = true)
@@ -401,7 +622,6 @@
             return ContractTemplateResponse.builder()
                     .id(template.getId())
                     .contractTitle(template.getContractTitle())
-                    .partyInfo(template.getPartyInfo())
                     .specialTermsA(template.getSpecialTermsA())
                     .specialTermsB(template.getSpecialTermsB())
                     .appendixEnabled(template.getAppendixEnabled())
@@ -425,6 +645,18 @@
                     .additionalConfig(additionalConfig)
                     .originalTemplateId(template.getOriginalTemplateId())
                     .duplicateVersion(template.getDuplicateVersion())
+                    .user(UserContractResponse.builder()
+                            .fullName(template.getCreatedBy().getFullName())
+                            .userId(template.getCreatedBy().getId())
+                            .build()) // chuyển đổi đối tượng User
+                    .build();
+        }
+
+
+        private UserContractResponse convertUserToUserContractResponse(User user) {
+            return UserContractResponse.builder()
+                    .fullName(user.getFullName())
+                    .userId(user.getId())
                     .build();
         }
 
@@ -533,7 +765,6 @@
                         String newTitle = originalTemplate.getContractTitle()
                                 + " (Copy " + (duplicateCount + 1) + ")";
                         duplicate.setContractTitle(newTitle);
-                        duplicate.setPartyInfo(originalTemplate.getPartyInfo());
                         duplicate.setSpecialTermsA(originalTemplate.getSpecialTermsA());
                         duplicate.setSpecialTermsB(originalTemplate.getSpecialTermsB());
                         duplicate.setAppendixEnabled(originalTemplate.getAppendixEnabled());

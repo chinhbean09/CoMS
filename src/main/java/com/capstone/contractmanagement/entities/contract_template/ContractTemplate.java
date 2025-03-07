@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities.contract_template;
 
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -25,11 +26,8 @@ public class ContractTemplate {
     @Column(name = "template_id")
     private Long id;
 
-    @Column(name = "contract_title", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "contract_title", nullable = false, columnDefinition = "TEXT", unique = true)
     private String contractTitle;
-
-    @Column(name = "party_info")
-    private String partyInfo;
 
     //specialTerms cua ben A
     @Column(name = "special_termsA", columnDefinition = "TEXT")
@@ -155,5 +153,12 @@ public class ContractTemplate {
 
     @Column(name = "duplicate_version")
     private Integer duplicateVersion; // 0 hoặc null nếu là bản gốc, >=1 đối với các duplicate
+
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false) // Trường lưu ID của user tạo template
+    @JsonIgnore
+    private User createdBy;
+
+
 
 }

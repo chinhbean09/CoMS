@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.template;
 
 import com.capstone.contractmanagement.dtos.term.TermSimpleDTO;
+import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.Builder;
@@ -16,7 +17,7 @@ public class ContractTemplateResponse {
 
     private Long id;
     private String contractTitle;
-    private String partyInfo;
+    private UserContractResponse user;
     private String specialTermsA;
     private String specialTermsB;
     private Boolean appendixEnabled;
