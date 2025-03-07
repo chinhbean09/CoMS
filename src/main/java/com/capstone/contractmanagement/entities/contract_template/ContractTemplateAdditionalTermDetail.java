@@ -20,9 +20,9 @@ public class ContractTemplateAdditionalTermDetail {
     @Column(name = "additional_term_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id")
     @JsonIgnore
-    @JoinColumn(name = "template_id", nullable = false)
     private ContractTemplate contractTemplate;
 
     @Column(name = "type_term_id", nullable = false)

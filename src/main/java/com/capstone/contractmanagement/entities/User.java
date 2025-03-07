@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -64,8 +65,8 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts = 0;
 
-    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<ContractTemplate> contractTemplates = new ArrayList<>();
 
 
