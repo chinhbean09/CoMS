@@ -41,7 +41,6 @@
         @Column(name = "special_terms_b", columnDefinition = "TEXT")
         private String specialTermsB;
 
-
         @Enumerated(EnumType.STRING)
         @Column(name = "status", nullable = false)
         private ContractStatus status; // Enum cho các trạng thái
@@ -125,7 +124,7 @@
         @Column(name = "max_date_late")
         private Integer maxDateLate;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "template_id", referencedColumnName = "template_id")
         @JsonIgnore
         private ContractTemplate template;
@@ -171,6 +170,7 @@
 
         @ManyToOne
         @JoinColumn(name = "approval_workflow_id")
+        @JsonIgnore
         private ApprovalWorkflow approvalWorkflow;
 
         @ManyToOne

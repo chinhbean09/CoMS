@@ -4,7 +4,9 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -70,7 +72,8 @@ public class ContractTemplate {
     @Column(name = "contract_content", columnDefinition = "TEXT")
     private String contractContent;
 
-    @OneToMany(mappedBy = "template", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "template", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
     //cho phép tự động add VAT
@@ -109,7 +112,6 @@ public class ContractTemplate {
     // Many-to-Many cho General Terms
     @ManyToMany
     @JsonIgnore
-
     @JoinTable(
             name = "contract_template_general_terms",
             joinColumns = @JoinColumn(name = "template_id"),
@@ -143,7 +145,7 @@ public class ContractTemplate {
     private List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
 
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contract_type_id", nullable = false)
     @JsonIgnore
     private ContractType contractType;
@@ -154,11 +156,10 @@ public class ContractTemplate {
     @Column(name = "duplicate_version")
     private Integer duplicateVersion; // 0 hoặc null nếu là bản gốc, >=1 đối với các duplicate
 
-    @ManyToOne
-    @JoinColumn(name = "created_by", nullable = false) // Trường lưu ID của user tạo template
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    @JsonIgnoreProperties({"contractTemplates", "hibernateLazyInitializer"}) // Add this
     private User createdBy;
-
 
 
 }
