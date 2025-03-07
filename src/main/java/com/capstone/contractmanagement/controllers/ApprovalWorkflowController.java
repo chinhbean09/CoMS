@@ -81,4 +81,24 @@ public class ApprovalWorkflowController {
                 .status(HttpStatus.OK)
                 .build());
     }
+
+    // api APPROVED stage
+    @PutMapping("/approve/{contractId}/{stageId}")
+    public ResponseEntity<ResponseObject> approveStage(@PathVariable Long contractId, @PathVariable Long stageId) throws DataNotFoundException {
+        approvalWorkflowService.approvedStage(contractId, stageId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.APPROVE_STAGE_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .build());
+    }
+
+    // api REJECTED stage
+    @PutMapping("/reject/{contractId}/{stageId}")
+    public ResponseEntity<ResponseObject> rejectStage(@PathVariable Long contractId, @PathVariable Long stageId) throws DataNotFoundException {
+        approvalWorkflowService.rejectStage(contractId, stageId, null);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.REJECT_STAGE_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .build());
+    }
 }
