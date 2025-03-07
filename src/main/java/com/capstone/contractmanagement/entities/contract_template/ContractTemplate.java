@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.entities.contract.Contract;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -72,7 +73,7 @@ public class ContractTemplate {
     @Column(name = "contract_content", columnDefinition = "TEXT")
     private String contractContent;
 
-    @OneToMany(mappedBy = "template", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "template", orphanRemoval = true)
     @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
@@ -145,7 +146,7 @@ public class ContractTemplate {
     private List<ContractTemplateAdditionalTermDetail> additionalTermConfigs = new ArrayList<>();
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "contract_type_id", nullable = false)
     @JsonIgnore
     private ContractType contractType;
@@ -156,9 +157,9 @@ public class ContractTemplate {
     @Column(name = "duplicate_version")
     private Integer duplicateVersion; // 0 hoặc null nếu là bản gốc, >=1 đối với các duplicate
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
-    @JsonIgnoreProperties({"contractTemplates", "hibernateLazyInitializer"}) // Add this
+    @JsonIgnore
     private User createdBy;
 
 

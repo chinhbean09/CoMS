@@ -2,7 +2,7 @@
 
     import com.capstone.contractmanagement.components.SecurityUtils;
     import com.capstone.contractmanagement.dtos.IdDTO;
-    import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
+    import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplateAdditionalTermDetail;
@@ -524,12 +524,7 @@
 
             // 10. Lưu template đã cập nhật
             ContractTemplate savedTemplate = templateRepository.save(template);
-
-            // Detach the entity from the persistence context to prevent lazy loading
-            // Load a clean version with only the necessary data
-            return templateRepository.findById(savedTemplate.getId()).orElseThrow(
-                    () -> new DataNotFoundException("Template not found after saving: " + savedTemplate.getId())
-            );
+            return savedTemplate;
         }
 
         @Override

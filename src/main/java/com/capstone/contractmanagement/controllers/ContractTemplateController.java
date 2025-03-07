@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.controllers;
 
-import com.capstone.contractmanagement.dtos.template.ContractTemplateDTO;
+import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
