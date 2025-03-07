@@ -4,6 +4,8 @@ import com.capstone.contractmanagement.entities.Party;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
+import com.capstone.contractmanagement.responses.payment_one_time.PaymentOneTimeResponse;
+import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import lombok.AllArgsConstructor;
@@ -56,5 +58,9 @@ public class ContractResponse {
     private List<TermResponse> otherTerms;
     private List<TypeTermResponse> additionalTerms;
     private Map<String, Map<String, List<TermResponse>>> additionalConfig;
+
+    // Thông tin thanh toán
+    private PaymentOneTimeResponse paymentOneTime;
+    private List<PaymentScheduleResponse> paymentSchedules;
 
 }

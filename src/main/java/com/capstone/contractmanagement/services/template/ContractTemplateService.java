@@ -330,6 +330,8 @@
                 }
             }
 
+
+
             template.setContractTitle(dto.getContractTitle());
 
             // 3. Cập nhật các trường đơn giản (nếu được cung cấp trong DTO)
@@ -521,7 +523,13 @@
             template.setUpdatedAt(LocalDateTime.now());
 
             // 10. Lưu template đã cập nhật
-            return templateRepository.save(template);
+            ContractTemplate savedTemplate = templateRepository.save(template);
+
+            // Detach the entity from the persistence context to prevent lazy loading
+            // Load a clean version with only the necessary data
+            return templateRepository.findById(savedTemplate.getId()).orElseThrow(
+                    () -> new DataNotFoundException("Template not found after saving: " + savedTemplate.getId())
+            );
         }
 
         @Override
