@@ -5,20 +5,19 @@ import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
-import com.capstone.contractmanagement.entities.contract.AdditionalTermSnapshot;
-import com.capstone.contractmanagement.entities.contract.Contract;
-import com.capstone.contractmanagement.entities.contract.ContractAdditionalTermDetail;
-import com.capstone.contractmanagement.entities.contract.ContractTerm;
+import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -332,9 +331,12 @@ public class ContractService implements IContractService{
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
                 .amount(contract.getAmount())
-                .contractType(contract.getContractType())  // giả sử entity Contract có field này
-                .party(contract.getParty())                // giả sử entity Contract có field này kiểu Party
-                .user(convertUserToUserContractResponse(contract.getUser())) // chuyển đổi đối tượng User
+                .contractType(contract.getContractType())
+                .party(Party.builder()
+                        .id(contract.getParty().getId())
+                        .partnerName(contract.getParty().getPartnerName())
+                        .build())
+                .user(convertUserToUserContractResponse(contract.getUser()))
                 .build();
     }
 
@@ -464,7 +466,7 @@ public class ContractService implements IContractService{
                 .violate(contract.getViolate())
                 .suspend(contract.getSuspend())
                 .suspendContent(contract.getSuspendContent())
-                .legalBasisTerms(legalBasisTerms)
+                .legalBasis(legalBasisTerms)
                 .generalTerms(generalTerms)
                 .otherTerms(otherTerms)
                 .additionalTerms(additionalTerms)
