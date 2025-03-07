@@ -47,11 +47,14 @@ public class MessageKeys {
     public static final String GET_ALL_TEMPLATES_SUCCESSFULLY = "Lấy danh sách mẫu hợp đồng thành công";
     public static final String GET_TEMPLATE_SUCCESSFULLY = "Lấy thông tin mẫu hợp đồng thành công";
     public static final String DELETE_TEMPLATE_SUCCESSFULLY = "Xóa mẫu hợp đồng thành công";
+    public static final String UPDATE_TEMPLATE_SUCCESSFULLY = "Cập nhật mẫu hợp đồng thành công";
     public static final String GET_ALL_CONTRACTS_SUCCESSFULLY = "Lấy danh sách hợp đồng thành công";
     public static final String GET_CONTRACT_SUCCESSFULLY = "Lấy thông tin hợp đồng thành công";
     public static final String CREATE_CONTRACT_SUCCESSFULLY = "Tạo hợp đồng thành công";
     public static final String UPDATE_CONTRACT_SUCCESSFULLY = "Cập nhật hợp đồng thành công";
     public static final String DELETE_CONTRACT_SUCCESSFULLY = "Xóa hợp đồng thành công";
+    public static final String GET_CONTRACTS_BY_TYPE_SUCCESSFULLY = "Lấy danh sách hợp đồng theo loại hợp đồng";
+    public static final String CONTRACT_NOT_FOUND = "Không tìm thấy hợp đồng";
     public static final String CREATE_TYPE_TERM_SUCCESSFULLY = "Tạo loại điều khoản thành công";
     public static final String PARTY_NOT_FOUND = "Không tìm thấy đối tác";
     public static final String DELETE_PARTY_SUCCESSFULLY = "Xóa đối tác thành công";
