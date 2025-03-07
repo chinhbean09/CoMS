@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,5 +36,6 @@ public class PaymentOneTime {
     // Relationship với Contract
     @OneToOne
     @JoinColumn(name = "contract_id", nullable = false)
+    @JsonIgnore
     private Contract contract;
 }
