@@ -28,9 +28,8 @@ public class ContractType {
     @Column(name = "isdeleted", nullable = false)
     private boolean isDeleted = false;
 
-    // loại hợp đồng có thể có nhiều template
     @OneToMany(mappedBy = "contractType", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("contractType") // Bỏ qua trường contractType trong ContractTemplate
+    @JsonIgnore
     private List<ContractTemplate> templates = new ArrayList<>();
 
     @OneToMany(mappedBy = "contractType", fetch = FetchType.LAZY)
