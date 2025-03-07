@@ -248,6 +248,10 @@ public class UserService implements IUserService {
                 throw new LockedException(MessageKeys.USER_IS_LOCKED);
             }
 
+            if (existingUser.getFailedLoginAttempts() == null) {
+                existingUser.setFailedLoginAttempts(0);
+            }
+
             // check failed login attempts
             if (existingUser.getFailedLoginAttempts() >= 5) {
                 existingUser.setActive(false);
