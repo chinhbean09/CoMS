@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities.approval_workflow;
 
 
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,11 +36,13 @@ public class ApprovalWorkflow {
 
     // Liên kết với hợp đồng (Contract)
     @OneToMany(mappedBy = "approvalWorkflow")
+    @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
     // Danh sách các bước duyệt
     @OneToMany(mappedBy = "approvalWorkflow", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("stageOrder ASC")
     @Builder.Default
+    @JsonIgnore
     private List<ApprovalStage> stages = new ArrayList<>();
 }
