@@ -49,6 +49,7 @@ public class PartyService implements IPartyService{
                 .phone(createPartyDTO.getPhone())
                 .email(createPartyDTO.getEmail())
                 .note(createPartyDTO.getNote())
+                .position(createPartyDTO.getPosition())
                 .isDeleted(false)
                 .build();
 
@@ -95,6 +96,7 @@ public class PartyService implements IPartyService{
                 .phone(party.getPhone())
                 .email(party.getEmail())
                 .note(party.getNote())
+                .position(party.getPosition())
                 .isDeleted(party.getIsDeleted())
                 .banking(bankResponses)
                 .build();
@@ -115,6 +117,7 @@ public class PartyService implements IPartyService{
         party.setTaxCode(updatePartyDTO.getTaxCode());
         party.setPhone(updatePartyDTO.getPhone());
         party.setEmail(updatePartyDTO.getEmail());
+        party.setPosition(updatePartyDTO.getPosition());
         partyRepository.save(party);
 
         // Lấy danh sách ngân hàng hiện có của Party
@@ -155,6 +158,7 @@ public class PartyService implements IPartyService{
                 .email(party.getEmail())
                 .banking(bankResponses)
                 .note(party.getNote())
+                .position(party.getPosition())
                 .isDeleted(party.getIsDeleted())
                 .build();
     }
@@ -173,11 +177,11 @@ public class PartyService implements IPartyService{
 
         if (search != null && !search.trim().isEmpty()) {
             search = search.trim(); // Loại bỏ khoảng trắng dư thừa
-            // Tìm kiếm với điều kiện isDeleted = false
+            // Tìm kiếm với điều kiện isDeleted = false và loại trừ id = 1
             partyPage = partyRepository.searchByFields(search, pageable);
         } else {
-            // Lấy tất cả với điều kiện isDeleted = false
-            partyPage = partyRepository.findByIsDeletedFalse(pageable);
+            // Lấy tất cả với điều kiện isDeleted = false và loại trừ id = 1
+            partyPage = partyRepository.findByIsDeletedFalseAndIdNot(pageable, 1L);
         }
 
         // Chuyển đổi đối tượng Party sang ListPartyResponse
@@ -193,6 +197,7 @@ public class PartyService implements IPartyService{
                         .phone(party.getPhone())
                         .email(party.getEmail())
                         .note(party.getNote())
+                        .position(party.getPosition())
                         .isDeleted(party.getIsDeleted())
                         .banking(party.getBanking().stream()
                                 .map(bank -> BankResponse.builder()
@@ -220,6 +225,7 @@ public class PartyService implements IPartyService{
                 .phone(party.getPhone())
                 .email(party.getEmail())
                 .note(party.getNote())
+                .position(party.getPosition())
                 .isDeleted(party.getIsDeleted())
                 .banking(party.getBanking().stream() // Nếu Party có danh sách Banks
                         .map(bank -> BankResponse.builder()
