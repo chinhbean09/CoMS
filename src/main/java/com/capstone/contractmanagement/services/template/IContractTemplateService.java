@@ -27,4 +27,5 @@ public interface IContractTemplateService {
 
     Page<ContractTemplateTitleResponse> getAllTemplateTitles(Pageable pageable);
 
+    ContractTemplate updateTemplate(Long templateId, ContractTemplateDTO dto) throws DataNotFoundException, IllegalArgumentException;
 }
