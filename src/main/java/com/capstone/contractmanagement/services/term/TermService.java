@@ -123,9 +123,11 @@ public class TermService implements ITermService{
 
         Term oldTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Term not found"));
+        TypeTerm typeTerm = typeTermRepository.findById(termRequest.getTypeTermId())
+                .orElseThrow(() -> new DataNotFoundException("TypeTerm not found"));
 
         // Tạo Term mới với dữ liệu cập nhật, version tăng thêm 1 và status là NEW
-        oldTerm.setTypeTerm(oldTerm.getTypeTerm());
+        oldTerm.setTypeTerm(typeTerm);
         oldTerm.setLabel(termRequest.getLabel());
         oldTerm.setValue(termRequest.getValue());
         oldTerm.setStatus(TermStatus.NEW);
