@@ -779,7 +779,7 @@
                         duplicate.setMaxDateLate(originalTemplate.getMaxDateLate());
                         duplicate.setAutoRenew(originalTemplate.getAutoRenew());
                         duplicate.setContractType(originalTemplate.getContractType());
-
+                        duplicate.setCreatedBy(originalTemplate.getCreatedBy());
                         // Copy các danh sách liên quan (nếu cần duplicate sâu)
                         duplicate.setLegalBasisTerms(new ArrayList<>(originalTemplate.getLegalBasisTerms()));
                         duplicate.setGeneralTerms(new ArrayList<>(originalTemplate.getGeneralTerms()));
