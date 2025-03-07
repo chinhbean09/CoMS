@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.approvalworkflow;
 
+import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStageDTO;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
@@ -15,17 +16,17 @@ import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
+import com.capstone.contractmanagement.services.sendmails.IMailService;
+import com.capstone.contractmanagement.utils.MailTemplate;
 import com.capstone.contractmanagement.utils.MessageKeys;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     private final IUserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
+    private final IMailService mailService;
 
     @Override
     @Transactional
@@ -46,8 +48,16 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // Tạo và thêm các stage nếu có
+        // Nếu có stages, kiểm tra xem approver của mỗi stage có bị trùng không
         if (approvalWorkflowDTO.getStages() != null) {
+            Set<Long> approverIds = new HashSet<>();
+            for (var stageDTO : approvalWorkflowDTO.getStages()) {
+                if (!approverIds.add(stageDTO.getApproverId())) {
+                    throw new RuntimeException("Duplicate approver found with id: " + stageDTO.getApproverId());
+                }
+            }
+
+            // Tạo và thêm các stage sau khi xác nhận không có duplicate
             approvalWorkflowDTO.getStages().forEach(stageDTO -> {
                 User approver = userRepository.findById(stageDTO.getApproverId())
                         .orElseThrow(() -> new RuntimeException("User not found with id " + stageDTO.getApproverId()));
@@ -60,6 +70,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 workflow.getStages().add(stage);
             });
         }
+
         // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
         workflow.setCustomStagesCount(workflow.getStages().size());
         // Lưu workflow
@@ -72,6 +83,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             contract.setApprovalWorkflow(workflow);
             contractRepository.save(contract);
         }
+
         // Trả về response với các thông tin cần thiết
         return ApprovalWorkflowResponse.builder()
                 .id(workflow.getId())
@@ -123,12 +135,20 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Nếu muốn thay thế hoàn toàn các stage cũ, xóa sạch collection hiện có
         workflow.getStages().clear();
 
-        // Sau đó duyệt qua danh sách stage mới từ DTO và thêm vào workflow
+        // Nếu có danh sách stage trong DTO, kiểm tra duplicate approver
         if (approvalWorkflowDTO.getStages() != null) {
-            approvalWorkflowDTO.getStages().forEach(stageDTO -> {
+            // Sử dụng Set để kiểm tra duplicate
+            Set<Long> approverIds = new HashSet<>();
+            for (var stageDTO : approvalWorkflowDTO.getStages()) {
                 if (stageDTO.getApproverId() == null) {
                     throw new RuntimeException("Approver id must not be null for stage with stageOrder: " + stageDTO.getStageOrder());
                 }
+                if (!approverIds.add(stageDTO.getApproverId())) {
+                    throw new RuntimeException("Duplicate approver found with id: " + stageDTO.getApproverId());
+                }
+            }
+            // Thêm các stage mới sau khi xác nhận không có duplicate
+            approvalWorkflowDTO.getStages().forEach(stageDTO -> {
                 User approver = userRepository.findById(stageDTO.getApproverId())
                         .orElseThrow(() -> new RuntimeException("User not found with id " + stageDTO.getApproverId()));
                 ApprovalStage stage = ApprovalStage.builder()
@@ -171,6 +191,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .createdAt(workflow.getCreatedAt())
                 .stages(workflow.getStages().stream()
                         .map(stage -> ApprovalStageResponse.builder()
+                                .stageId(stage.getId())
                                 .stageOrder(stage.getStageOrder())
                                 .approver(stage.getApprover().getId())
                                 .build())
@@ -198,6 +219,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     // Gửi thông báo đến user (sử dụng username làm định danh user destination)
                     User firstApprover = firstStage.getApprover();
                     messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
+                    sendEmailReminder(contract, firstApprover, firstStage);
                     notificationService.saveNotification(firstApprover, notificationMessage, contractId);
                 });
     }
@@ -234,12 +256,29 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         payload.put("contractId", contractId);
                         // Gửi thông báo đến user, sử dụng username làm định danh user destination
                         messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
+                        sendEmailReminder(contract, nextApprover, nextStage);
                         notificationService.saveNotification(nextApprover, notificationMessage, contractId);
                     });
         }
 
         if (dto.getStatus() == ApprovalStatus.REJECTED) {
             // comment cho can sua trong hop dong
+        }
+    }
+
+    private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_APPROVAL_NOTIFICATION);
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractTitle", contract.getTitle());
+            props.put("stage", stage.getStageOrder());
+            dataMailDTO.setProps(props); // Set props to dataMailDTO
+            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_APPROVAL_NOTIFICATION);
+        } catch (Exception e) {
+            // Xu ly loi
+            e.printStackTrace();
         }
     }
 }
