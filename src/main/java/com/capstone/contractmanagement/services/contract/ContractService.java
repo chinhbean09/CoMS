@@ -12,7 +12,6 @@ import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
-import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
@@ -20,7 +19,6 @@ import com.capstone.contractmanagement.responses.payment_one_time.PaymentOneTime
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
-import com.capstone.contractmanagement.utils.MessageKeys;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1403,28 +1401,116 @@ public class ContractService implements IContractService{
         return auditTrail;
     }
 
+    @Transactional
     @Override
     public boolean softDelete(Long id) {
         Optional<Contract> optionalContract = contractRepository.findById(id);
-        if (optionalContract.isPresent()) {
-            Contract contract = optionalContract.get();
-            contract.setStatus(ContractStatus.DELETED);
-            contract.setUpdatedAt(LocalDateTime.now());
-            contractRepository.save(contract);
-            return true;
+        if (optionalContract.isEmpty()) {
+            return false;
         }
-        return false;
-    }
-    @Override
-    public ContractStatus updateContractStatus(Long id, ContractStatus status) throws DataNotFoundException {
-        Contract contract = contractRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + id));
 
-        contract.setStatus(status);
+        Contract contract = optionalContract.get();
+        ContractStatus currentStatus = contract.getStatus();
+
+        // Kiểm tra trạng thái hiện tại có thể chuyển sang DELETED không
+        if (!isValidTransition(currentStatus, ContractStatus.DELETED)) {
+            throw new IllegalStateException(
+                    String.format("Không thể xóa mềm hợp đồng từ trạng thái %s", currentStatus.name())
+            );
+        }
+
+        // Cập nhật trạng thái
+        String oldValue = currentStatus.name();
+        contract.setStatus(ContractStatus.DELETED);
         contract.setUpdatedAt(LocalDateTime.now());
-        contractRepository.save(contract);
 
-        return contract.getStatus(); // Trả về trạng thái mới
+        // Lưu hợp đồng
+        Contract savedContract = contractRepository.save(contract);
+
+        // Ghi log vào audit trail
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(savedContract)
+                .entityName("Contract")
+                .entityId(savedContract.getId())
+                .action("UPDATE")
+                .fieldName("status")
+                .oldValue(oldValue)
+                .newValue(ContractStatus.DELETED.name())
+                .changedAt(LocalDateTime.now())
+                .changedBy(currentUser.getLoggedInUser().getFullName())
+                .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái %s sang %s", oldValue, ContractStatus.DELETED.name()))
+                .build();
+
+        auditTrailRepository.save(auditTrail);
+
+        return true;
+    }
+
+    private static final Map<ContractStatus, EnumSet<ContractStatus>> VALID_TRANSITIONS = new HashMap<>();
+
+    static {
+        VALID_TRANSITIONS.put(ContractStatus.DRAFT, EnumSet.of(ContractStatus.CREATED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.CREATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.APPROVAL_PENDING, EnumSet.of(ContractStatus.APPROVED, ContractStatus.REJECTED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.APPROVED, EnumSet.of(ContractStatus.PENDING, ContractStatus.REJECTED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.PENDING, EnumSet.of(ContractStatus.SIGNED, ContractStatus.CANCELLED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.SIGNED, EnumSet.of(ContractStatus.ACTIVE, ContractStatus.CANCELLED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.ACTIVE, EnumSet.of(ContractStatus.COMPLETED, ContractStatus.EXPIRED, ContractStatus.CANCELLED, ContractStatus.ENDED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.COMPLETED, EnumSet.of(ContractStatus.ENDED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.EXPIRED, EnumSet.of(ContractStatus.ENDED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.DRAFT));
+        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.noneOf(ContractStatus.class));
+    }
+
+    @Transactional
+    public ContractStatus updateContractStatus(Long contractId, ContractStatus newStatus) {
+        // Tìm hợp đồng
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+
+        // Kiểm tra trạng thái hiện tại và trạng thái mới có hợp lệ không
+        ContractStatus currentStatus = contract.getStatus();
+
+        if (!isValidTransition(currentStatus, newStatus)) {
+            throw new IllegalArgumentException(
+                    String.format("Không thể chuyển trạng thái từ %s sang %s", currentStatus.name(), newStatus.name())
+            );
+        }
+
+        // Cập nhật trạng thái
+        String oldValue = currentStatus.name();
+        contract.setStatus(newStatus);
+        contract.setUpdatedAt(LocalDateTime.now());
+
+        // Lưu hợp đồng
+        Contract savedContract = contractRepository.save(contract);
+
+        // Ghi log vào audit trail
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(savedContract)
+                .entityName("Contract")
+                .entityId(savedContract.getId())
+                .action("UPDATE")
+                .fieldName("status")
+                .oldValue(oldValue)
+                .newValue(newStatus.name())
+                .changedAt(LocalDateTime.now())
+                .changedBy(currentUser.getLoggedInUser().getFullName())
+                .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ %s sang %s", oldValue, newStatus.name()))
+                .build();
+
+        auditTrailRepository.save(auditTrail);
+
+        return savedContract.getStatus();
+    }
+
+    private boolean isValidTransition(ContractStatus fromStatus, ContractStatus toStatus) {
+        if (fromStatus == toStatus) {
+            return false; // Không cho phép cập nhật cùng trạng thái
+        }
+        return VALID_TRANSITIONS.getOrDefault(fromStatus, EnumSet.noneOf(ContractStatus.class)).contains(toStatus);
     }
 
 
