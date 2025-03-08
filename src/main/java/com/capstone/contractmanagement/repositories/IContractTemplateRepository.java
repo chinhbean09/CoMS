@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface IContractTemplateRepository extends JpaRepository<ContractTemplate, Long> {
+
     Page<ContractTemplate> findByContractTitleContainingIgnoreCase(String contractTitle, Pageable pageable);
 
     @EntityGraph(attributePaths = {"legalBasisTerms", "generalTerms", "otherTerms", "additionalTermConfigs"})
@@ -45,6 +46,5 @@ public interface IContractTemplateRepository extends JpaRepository<ContractTempl
     Page<ContractTemplate> findByStatusAndContractTypeId(ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
 
     Page<ContractTemplate> findByStatusNotAndContractTypeId(ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
-
 
 }
