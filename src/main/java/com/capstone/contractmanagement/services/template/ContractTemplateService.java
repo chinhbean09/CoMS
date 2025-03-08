@@ -271,11 +271,13 @@
 
             return templateRepository.save(template);
         }
+
         @Override
         @Transactional(readOnly = true)
-        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status) {
+        public Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status, Long contractTypeId) {
             boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
             boolean hasStatusFilter = status != null && !status.trim().isEmpty();
+            boolean hasContractTypeFilter = contractTypeId != null;
             Page<ContractTemplate> templates;
 
             if (hasStatusFilter) {
@@ -286,17 +288,35 @@
                     throw new IllegalArgumentException("Invalid status: " + status);
                 }
 
-                if (hasSearch) {
-                    templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatus(keyword, templateStatus, pageable);
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+                                keyword, templateStatus, contractTypeId, pageable);
+                    } else {
+                        templates = templateRepository.findByStatusAndContractTypeId(templateStatus, contractTypeId, pageable);
+                    }
                 } else {
-                    templates = templateRepository.findByStatus(templateStatus, pageable);
+                    if (hasSearch) {
+                        templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatus(keyword, templateStatus, pageable);
+                    } else {
+                        templates = templateRepository.findByStatus(templateStatus, pageable);
+                    }
                 }
             } else {
                 // Mặc định loại bỏ các template có status DELETED
-                if (hasSearch) {
-                    templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatusNot(keyword, ContractTemplateStatus.DELETED, pageable);
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+                                keyword, ContractTemplateStatus.DELETED, contractTypeId, pageable);
+                    } else {
+                        templates = templateRepository.findByStatusNotAndContractTypeId(ContractTemplateStatus.DELETED, contractTypeId, pageable);
+                    }
                 } else {
-                    templates = templateRepository.findByStatusNot(ContractTemplateStatus.DELETED, pageable);
+                    if (hasSearch) {
+                        templates = templateRepository.findByContractTitleContainingIgnoreCaseAndStatusNot(keyword, ContractTemplateStatus.DELETED, pageable);
+                    } else {
+                        templates = templateRepository.findByStatusNot(ContractTemplateStatus.DELETED, pageable);
+                    }
                 }
             }
 
