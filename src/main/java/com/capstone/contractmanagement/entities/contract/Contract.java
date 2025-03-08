@@ -120,13 +120,9 @@
         @Column(name = "is_date_late_checked")
         private Boolean isDateLateChecked = false;
 
-
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
         private List<AuditTrail> auditTrails = new ArrayList<>();
-
-        @Column(name = "max_date_late")
-        private Integer maxDateLate;
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "template_id")

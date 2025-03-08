@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
+import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -28,4 +29,8 @@ public interface IContractService {
 
     boolean softDelete(Long id);
 
-    }
+    ContractStatus updateContractStatus(Long id, ContractStatus status) throws DataNotFoundException;
+
+
+    Contract updateContract(Long contractId, ContractUpdateDTO dto);
+}
