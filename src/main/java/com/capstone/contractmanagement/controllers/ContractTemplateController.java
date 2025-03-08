@@ -82,7 +82,8 @@ public class ContractTemplateController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status, // Tham số lọc theo status (nếu có)
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long contractTypeId,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String order) {
         try {
@@ -90,7 +91,7 @@ public class ContractTemplateController {
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable, keyword, status);
+            Page<ContractTemplateSimpleResponse> templates = templateService.getAllTemplates(pageable, keyword, status, contractTypeId);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_ALL_TEMPLATES_SUCCESSFULLY)
                     .status(HttpStatus.OK)

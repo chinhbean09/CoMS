@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface IContractTemplateService {
     ContractTemplate createTemplate(ContractTemplateDTO dto) throws DataNotFoundException;
 
-    Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status);
+    Page<ContractTemplateSimpleResponse> getAllTemplates(Pageable pageable, String keyword, String status, Long contractTypeId);
 
     Optional<ContractTemplateResponse> getTemplateById(Long id);
 

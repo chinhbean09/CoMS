@@ -383,25 +383,49 @@ public class ContractService implements IContractService{
         return auditTrail;
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status) {
+    public Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status, Long contractTypeId) {
         boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
         boolean hasStatusFilter = status != null;
+        boolean hasContractTypeFilter = contractTypeId != null;
         Page<Contract> contracts;
 
-        if (hasSearch && hasStatusFilter) {
-            keyword = keyword.trim();
-            contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
-        } else if (hasSearch) {
-            keyword = keyword.trim();
-            contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
-        } else if (hasStatusFilter) {
-            contracts = contractRepository.findByStatus(status, pageable);
+        if (hasStatusFilter) {
+            if (hasContractTypeFilter) {
+                if (hasSearch) {
+                    keyword = keyword.trim();
+                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+                            keyword, status, contractTypeId, pageable);
+                } else {
+                    contracts = contractRepository.findByStatusAndContractTypeId(status, contractTypeId, pageable);
+                }
+            } else {
+                if (hasSearch) {
+                    keyword = keyword.trim();
+                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+                } else {
+                    contracts = contractRepository.findByStatus(status, pageable);
+                }
+            }
         } else {
             // Mặc định loại bỏ các hợp đồng có trạng thái DELETED
-            contracts = contractRepository.findByStatusNot(ContractStatus.DELETED, pageable);
+            if (hasContractTypeFilter) {
+                if (hasSearch) {
+                    keyword = keyword.trim();
+                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+                            keyword, ContractStatus.DELETED, contractTypeId, pageable);
+                } else {
+                    contracts = contractRepository.findByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
+                }
+            } else {
+                if (hasSearch) {
+                    keyword = keyword.trim();
+                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
+                } else {
+                    contracts = contractRepository.findByStatusNot(ContractStatus.DELETED, pageable);
+                }
+            }
         }
 
         return contracts.map(this::convertToGetAllContractResponse);

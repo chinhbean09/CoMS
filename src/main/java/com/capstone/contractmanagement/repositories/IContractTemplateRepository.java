@@ -36,4 +36,15 @@ public interface IContractTemplateRepository extends JpaRepository<ContractTempl
     // Lọc theo status cụ thể
     Page<ContractTemplate> findByStatus(ContractTemplateStatus status, Pageable pageable);
 
+    Page<ContractTemplate> findByContractTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+            String title, ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<ContractTemplate> findByContractTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+            String title, ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<ContractTemplate> findByStatusAndContractTypeId(ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<ContractTemplate> findByStatusNotAndContractTypeId(ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
+
+
 }

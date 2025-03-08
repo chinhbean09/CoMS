@@ -44,6 +44,36 @@ public class ContractController {
                 .build());
     }
 
+    @GetMapping
+    public ResponseEntity<ResponseObject> getAllContracts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ContractStatus status,
+            @RequestParam(required = false) Long contractTypeId, // Thêm tham số lọc theo contractType
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
+        try {
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<GetAllContractReponse> contracts = contractService.getAllContracts(pageable, keyword, status, contractTypeId);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
+                    .status(HttpStatus.OK)
+                    .data(contracts)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Error retrieving contracts: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getContractById(@PathVariable Long id) throws DataNotFoundException {
         Optional<ContractResponse> contract = contractService.getContractById(id);
@@ -60,36 +90,6 @@ public class ContractController {
                 .data(contract)
                 .build());
     }
-
-    @GetMapping
-    public ResponseEntity<ResponseObject> getAllContracts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) ContractStatus status,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String order) {
-        try {
-            Sort sort = order.equalsIgnoreCase("desc")
-                    ? Sort.by(sortBy).descending()
-                    : Sort.by(sortBy).ascending();
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<GetAllContractReponse> contracts = contractService.getAllContracts(pageable, keyword, status);
-            return ResponseEntity.ok(ResponseObject.builder()
-                    .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
-                    .status(HttpStatus.OK)
-                    .data(contracts)
-                    .build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseObject.builder()
-                            .message("Error retrieving contracts: " + e.getMessage())
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .data(null)
-                            .build());
-        }
-    }
-
 
     @PutMapping("/update/{id}")
     public ResponseEntity<ResponseObject> updateContract(
