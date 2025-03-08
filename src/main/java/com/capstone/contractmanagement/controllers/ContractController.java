@@ -168,12 +168,12 @@ public class ContractController {
         }
     }
 
-    @PutMapping("/{id}/status")
+    @PutMapping("/status/{contractId}")
     public ResponseEntity<ResponseObject> updateContractStatus(
-            @PathVariable Long id,
+            @PathVariable Long contractId,
             @RequestParam ContractStatus status) {
         try {
-            ContractStatus updatedContract = contractService.updateContractStatus(id, status);
+            ContractStatus updatedContract = contractService.updateContractStatus(contractId, status);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.UPDATE_CONTRACT_STATUS_SUCCESSFULLY)
