@@ -2,6 +2,9 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+import com.capstone.contractmanagement.enums.ContractStatus;
+import com.capstone.contractmanagement.enums.ContractTemplateStatus;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.template.*;
@@ -40,7 +43,7 @@ public class ContractTemplateController {
             );
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
-                    new ResponseObject(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR, null)
+                    new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
@@ -161,15 +164,14 @@ public class ContractTemplateController {
     }
 
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseObject> deleteTemplate(@PathVariable Long id) {
         try {
             templateService.deleteTemplate(id);
-            return ResponseEntity.ok(new ResponseObject(MessageKeys.DELETE_TEMPLATE_SUCCESSFULLY,HttpStatus.OK, null));
+            return ResponseEntity.ok(new ResponseObject(MessageKeys.DELETE_TEMPLATE_SUCCESSFULLY, HttpStatus.OK, null));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ResponseObject( e.getMessage(),HttpStatus.NOT_FOUND, null)
+                    new ResponseObject(e.getMessage(), HttpStatus.NOT_FOUND, null)
             );
         }
     }
@@ -205,7 +207,7 @@ public class ContractTemplateController {
     @PostMapping("/update/{templateId}")
     public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long templateId, @RequestBody ContractTemplateDTO dto) {
         try {
-            ContractTemplate template = templateService.updateTemplate(templateId,dto);
+            ContractTemplate template = templateService.updateTemplate(templateId, dto);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.CREATED)
                     .message(MessageKeys.UPDATE_TEMPLATE_SUCCESSFULLY)
@@ -217,7 +219,7 @@ public class ContractTemplateController {
             );
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
-                    new ResponseObject(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR, null)
+                    new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
     }
@@ -250,4 +252,31 @@ public class ContractTemplateController {
         }
     }
 
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ResponseObject> updateContractStatus(
+            @PathVariable Long id,
+            @RequestParam ContractTemplateStatus status) {
+        try {
+            ContractTemplateStatus updatedContract = templateService.updateContractStatus(id, status);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message(MessageKeys.UPDATE_CONTRACT_STATUS_SUCCESSFULLY)
+                    .data(updatedContract)
+                    .build());
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.NOT_FOUND)
+                            .message(e.getMessage())
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Error updating contract status: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
 }

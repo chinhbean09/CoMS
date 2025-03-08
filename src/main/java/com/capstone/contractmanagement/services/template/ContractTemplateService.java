@@ -865,4 +865,17 @@
             }
             return false;
         }
+
+        @Override
+        public ContractTemplateStatus updateContractStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException {
+            ContractTemplate contractTemplate = templateRepository.findById(id)
+                    .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + id));
+
+            contractTemplate.setStatus(status);
+            contractTemplate.setUpdatedAt(LocalDateTime.now());
+            templateRepository.save(contractTemplate);
+
+            return contractTemplate.getStatus(); // Trả về trạng thái mới
+        }
+
     }
