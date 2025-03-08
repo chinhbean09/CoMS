@@ -55,19 +55,6 @@
         @Column(name = "original_contract_id")
         private Long originalContractId;
 
-//        // Các trường từ ContractDetails
-//        @Column(name = "scope", columnDefinition = "TEXT")
-//        private String scope; // Phạm vi hợp đồng
-//
-//        @Column(name = "sla", length = 500)
-//        private String sla; // Cam kết chất lượng dịch vụ
-//
-//        @Column(name = "confidentiality", columnDefinition = "TEXT")
-//        private String confidentiality; // Điều khoản bảo mật
-//
-//        @Column(name = "obligations", columnDefinition = "TEXT")
-//        private String obligations; // Quyền và nghĩa vụ của các bên
-
         // Relationship với PaymentSchedules
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore

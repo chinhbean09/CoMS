@@ -29,6 +29,7 @@ public class ContractDTO {
     private LocalDateTime notifyExpiryDate;
     private String notifyEffectiveContent;
     private String notifyExpiryContent;
+    private String contractTitle;
 
     @JsonProperty("TemplateData")
     private TemplateData templateData;

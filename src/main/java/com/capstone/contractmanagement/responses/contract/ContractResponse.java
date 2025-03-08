@@ -33,7 +33,7 @@ public class ContractResponse {
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;
-    private String contractType;
+    private Long contractTypeId;
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private LocalDateTime notifyEffectiveDate;
