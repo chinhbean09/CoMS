@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +49,8 @@ public class ContractService implements IContractService{
     private final ITypeTermRepository typeTermRepository;
     private final IAuditTrailRepository auditTrailRepository;
     private final ObjectMapper objectMapper; // Để serialize object thành JSON
+
+
     @Transactional
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
@@ -57,10 +61,14 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Party với id: " + dto.getPartyId()));
         User user = currentUser.getLoggedInUser();
 
+        LocalDateTime createdAt = LocalDateTime.now();
+        String contractNumber = generateContractNumber(createdAt, dto.getContractTitle());
+
+
         // 2. Tạo hợp đồng mới, lấy dữ liệu từ DTO hoặc từ templateSnapshot
         Contract contract = Contract.builder()
                 .title(dto.getTemplateData().getContractTitle())
-                .contractNumber(dto.getContractNumber())
+                .contractNumber(contractNumber)
                 .party(party)
                 .user(user)
                 .template(template)
@@ -73,7 +81,7 @@ public class ContractService implements IContractService{
                 .notifyExpiryDate(dto.getNotifyExpiryDate())
                 .notifyEffectiveContent(dto.getNotifyEffectiveContent())
                 .notifyExpiryContent(dto.getNotifyExpiryContent())
-                .title(dto.getTemplateData().getContractTitle())
+                .title(dto.getContractTitle())
                 .specialTermsA(dto.getTemplateData().getSpecialTermsA())
                 .specialTermsB(dto.getTemplateData().getSpecialTermsB())
                 .contractContent(dto.getTemplateData().getContractContent())
@@ -88,6 +96,7 @@ public class ContractService implements IContractService{
                 .suspend(dto.getTemplateData().getSuspend())
                 .suspendContent(dto.getTemplateData().getSuspendContent())
                 .status(ContractStatus.CREATED)
+                .contractType(template.getContractType())
                 .createdAt(LocalDateTime.now())
                 .build();
         // 3. Map các điều khoản đơn giản sang ContractTerm
@@ -357,6 +366,35 @@ public class ContractService implements IContractService{
         return savedContract;
     }
 
+    private String generateContractNumber(LocalDateTime createdAt, String contractTitle) {
+        String datePart = createdAt.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String titleAbbreviation = generateTitleAbbreviation(contractTitle);
+        String prefix = datePart + "-";
+
+        LocalDateTime startOfDay = createdAt.truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        int count = contractRepository.countByContractNumberStartingWithAndDate(prefix + "%-" + titleAbbreviation, startOfDay, endOfDay) + 1;
+        String sequencePart = String.format("%03d", count);
+
+        return datePart + "-" + sequencePart + "-" + titleAbbreviation;
+    }
+
+    // Hàm tạo tên viết tắt từ title
+    private String generateTitleAbbreviation(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return "HD"; // Mặc định nếu title rỗng
+        }
+
+        // Tách các từ, lấy chữ cái đầu, viết hoa
+        String[] words = title.trim().split("\\s+");
+        return Arrays.stream(words)
+                .map(word -> word.isEmpty() ? "" : word.substring(0, 1).toUpperCase())
+                .collect(Collectors.joining());
+    }
+
+
+
     private AuditTrail createAuditTrail(Contract contract,
                                         String fieldName,
                                         String oldValue,
@@ -438,6 +476,7 @@ public class ContractService implements IContractService{
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
+                .updatedAt(contract.getUpdatedAt())
                 .amount(contract.getAmount())
                 .contractType(contract.getContractType())
                 .party(Party.builder()
@@ -461,9 +500,6 @@ public class ContractService implements IContractService{
         contractRepository.deleteById(id);
     }
 
-    private String generateContractNumber() {
-        return "HD" + System.currentTimeMillis();
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -570,6 +606,7 @@ public class ContractService implements IContractService{
                 .suspendContent(contract.getSuspendContent())
                 .legalBasisTerms(legalBasisTerms)
                 .generalTerms(generalTerms)
+                .contractTypeId(contract.getContractType().getId())
                 .otherTerms(otherTerms)
                 .paymentOneTime(convertPaymentOneTime(contract.getPaymentOneTime()))
                 .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))

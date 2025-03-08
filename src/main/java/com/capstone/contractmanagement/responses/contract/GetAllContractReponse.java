@@ -19,6 +19,7 @@ public class GetAllContractReponse {
     private Long id;
     private String title;
     private UserContractResponse user;
+    private LocalDateTime updatedAt;
     private String contractNumber;
     private LocalDateTime createdAt;
     private ContractType contractType;
