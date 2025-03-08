@@ -24,4 +24,15 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     boolean existsByTitle(String title);
 
+    Page<Contract> findByStatusAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<Contract> findByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<Contract> findByStatusNotAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
+
+    Page<Contract> findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
+
+
 }
