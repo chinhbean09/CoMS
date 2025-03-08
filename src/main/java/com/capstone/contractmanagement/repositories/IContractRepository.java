@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import java.time.LocalDateTime;
 
 public interface IContractRepository extends JpaRepository<Contract, Long> {
     boolean existsByContractNumber(@NotBlank(message = "Contract Number cannot be blank") String contractNumber);
@@ -34,5 +37,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     Page<Contract> findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
             String title, ContractStatus status, Long contractTypeId, Pageable pageable);
 
+    @Query("SELECT COUNT(c) FROM Contract c WHERE c.contractNumber LIKE :prefix% AND c.createdAt >= :startOfDay AND c.createdAt < :endOfDay")
+    int countByContractNumberStartingWithAndDate(String prefix, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
 }
