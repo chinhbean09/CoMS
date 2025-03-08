@@ -1,7 +1,10 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
+import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
+import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
@@ -164,5 +167,54 @@ public class ContractController {
                             .build());
         }
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ResponseObject> updateContractStatus(
+            @PathVariable Long id,
+            @RequestParam ContractStatus status) {
+        try {
+            ContractStatus updatedContract = contractService.updateContractStatus(id, status);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message(MessageKeys.UPDATE_CONTRACT_STATUS_SUCCESSFULLY)
+                    .data(updatedContract)
+                    .build());
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.NOT_FOUND)
+                            .message(e.getMessage())
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Error updating contract status: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+
+    @PostMapping("/update/{contractId}")
+    public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
+        try {
+            Contract contract = contractService.updateContract(contractId, dto);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .message(MessageKeys.UPDATE_TEMPLATE_SUCCESSFULLY)
+                    .data(contract)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    new ResponseObject(e.getMessage(), HttpStatus.BAD_REQUEST, null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
+    }
+
 
 }

@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.template;
 
 import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+import com.capstone.contractmanagement.enums.ContractTemplateStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.responses.template.ContractTemplateResponseIds;
@@ -30,4 +31,8 @@ public interface IContractTemplateService {
     ContractTemplate updateTemplate(Long templateId, ContractTemplateDTO dto) throws DataNotFoundException, IllegalArgumentException;
 
     boolean softDelete(Long id);
+
+    ContractTemplateStatus updateContractStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException;
+
 }
+

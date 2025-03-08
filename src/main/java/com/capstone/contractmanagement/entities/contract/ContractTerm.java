@@ -19,7 +19,7 @@ public class ContractTerm {
     private Long id;
 
     // Lưu lại label của điều khoản
-    @Column(name = "term_label_snapshot", length = 200)
+    @Column(name = "term_label_snapshot", columnDefinition = "TEXT")
     private String termLabel;
 
 

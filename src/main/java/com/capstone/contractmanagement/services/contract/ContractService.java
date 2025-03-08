@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
+import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
@@ -20,6 +21,9 @@ import com.capstone.contractmanagement.responses.payment_schedule.PaymentSchedul
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +47,8 @@ public class ContractService implements IContractService{
     private final IContractTypeRepository contractTypeRepository;
     private final SecurityUtils currentUser;
     private final ITypeTermRepository typeTermRepository;
-
-
+    private final IAuditTrailRepository auditTrailRepository;
+    private final ObjectMapper objectMapper; // Để serialize object thành JSON
     @Transactional
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
@@ -80,7 +84,6 @@ public class ContractService implements IContractService{
                 .autoAddVAT(dto.getTemplateData().getAutoAddVAT())
                 .vatPercentage(dto.getTemplateData().getVatPercentage())
                 .isDateLateChecked(dto.getTemplateData().getIsDateLateChecked())
-                .maxDateLate(dto.getTemplateData().getMaxDateLate())
                 .autoRenew(dto.getTemplateData().getAutoRenew())
                 .violate(dto.getTemplateData().getViolate())
                 .contractType(template.getContractType())
@@ -288,7 +291,98 @@ public class ContractService implements IContractService{
         contract.setPaymentSchedules(paymentSchedules);
 
         // 5. Lưu hợp đồng với toàn bộ snapshot điều khoản và additional config
-        return contractRepository.save(contract);
+        Contract savedContract = contractRepository.save(contract);
+
+        // 6. Ghi audit trail cho các trường quan trọng
+        List<AuditTrail> auditTrails = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = user.getFullName(); // Giả định lấy username từ user
+
+        // Ghi audit cho từng trường
+        auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "party", null, savedContract.getParty().getId().toString(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "signingDate", null,
+                savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : null, now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "contractLocation", null, savedContract.getContractLocation(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "amount", null,
+                savedContract.getAmount() != null ? savedContract.getAmount().toString() : null, now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "effectiveDate", null,
+                savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : null, now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "expiryDate", null,
+                savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : null, now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "status", null, savedContract.getStatus().name(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "createdAt", null, savedContract.getCreatedAt().toString(), now, changedBy));
+
+
+        for (ContractTerm term : savedContract.getContractTerms()) {
+            String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                    term.getOriginalTermId(), term.getTermLabel(), term.getTermValue(), term.getTermType().name());
+            auditTrails.add(AuditTrail.builder()
+                    .contract(savedContract)
+                    .entityName("ContractTerm")
+                    .entityId(term.getId())
+                    .action("CREATE")
+                    .fieldName("contractTerms")
+                    .oldValue(null)
+                    .newValue(newValue)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Created contract term for contract")
+                    .build());
+        }
+
+        for (ContractAdditionalTermDetail detail : savedContract.getAdditionalTermDetails()) {
+            try {
+                String newValue = objectMapper.writeValueAsString(detail);
+                auditTrails.add(AuditTrail.builder()
+                        .contract(savedContract)
+                        .entityName("ContractAdditionalTermDetail")
+                        .entityId(detail.getId())
+                        .action("CREATE")
+                        .fieldName("additionalTermDetails")
+                        .oldValue(null)
+                        .newValue(newValue)
+                        .changedAt(now)
+                        .changedBy(changedBy)
+                        .changeSummary("Created additional term detail for contract")
+                        .build());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize ContractAdditionalTermDetail to JSON", e);
+            }
+        }
+        // Lưu tất cả bản ghi audit trail
+        auditTrailRepository.saveAll(auditTrails);
+
+        return savedContract;
+    }
+
+    private AuditTrail createAuditTrail(Contract contract,
+                                        String fieldName,
+                                        String oldValue,
+                                        String newValue,
+                                        LocalDateTime changedAt,
+                                        String changedBy) {
+
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setEntityName("Contract");
+        auditTrail.setEntityId(contract.getId());
+        auditTrail.setContract(contract);
+        auditTrail.setAction("CREATE");
+        auditTrail.setFieldName(fieldName);
+        auditTrail.setOldValue(oldValue); // null vì là tạo mới
+        auditTrail.setNewValue(newValue);
+        auditTrail.setChangedAt(changedAt);
+        auditTrail.setChangedBy(changedBy);
+
+        // Kiểm tra trước khi trả về
+        if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
+            throw new IllegalStateException("Contract in AuditTrail is null or has no ID");
+        }
+
+        return auditTrail;
     }
 
 
@@ -313,18 +407,6 @@ public class ContractService implements IContractService{
         }
 
         return contracts.map(this::convertToGetAllContractResponse);
-    }
-
-
-    private ContractResponse convertToResponseDTO(Contract contract) {
-        return ContractResponse.builder()
-                .id(contract.getId())
-                .title(contract.getTitle())
-                .contractNumber(contract.getContractNumber())
-                .status(contract.getStatus())
-                .createdAt(contract.getCreatedAt())
-                .amount(contract.getAmount())
-                .build();
     }
 
     private GetAllContractReponse convertToGetAllContractResponse(Contract contract) {
@@ -460,7 +542,6 @@ public class ContractService implements IContractService{
                 .autoAddVAT(contract.getAutoAddVAT())
                 .vatPercentage(contract.getVatPercentage())
                 .isDateLateChecked(contract.getIsDateLateChecked())
-                .maxDateLate(contract.getMaxDateLate())
                 .autoRenew(contract.getAutoRenew())
                 .violate(contract.getViolate())
                 .suspend(contract.getSuspend())
@@ -562,7 +643,6 @@ public class ContractService implements IContractService{
                 .autoAddVAT(originalContract.getAutoAddVAT())
                 .vatPercentage(originalContract.getVatPercentage())
                 .isDateLateChecked(originalContract.getIsDateLateChecked())
-                .maxDateLate(originalContract.getMaxDateLate())
                 .autoRenew(originalContract.getAutoRenew())
                 .violate(originalContract.getViolate())
                 .suspend(originalContract.getSuspend())
@@ -622,6 +702,707 @@ public class ContractService implements IContractService{
         return contractRepository.save(duplicateContract);
     }
 
+    @Transactional
+    @Override
+    public Contract updateContract(Long contractId, ContractUpdateDTO dto) {
+
+        // 1. Tìm hợp đồng hiện tại
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+
+        List<AuditTrail> auditTrails = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = currentUser.getLoggedInUser().getFullName();
+
+        // 2. Cập nhật tất cả các trường của Contract
+        //title
+        if (dto.getTitle() != null && !dto.getTitle().equals(contract.getTitle())) {
+            auditTrails.add(createAuditTrail(contract, "title", contract.getTitle(), dto.getTitle(), now,
+                    changedBy, "UPDATE", "Cập nhật tiêu đề hợp đồng"));
+            contract.setTitle(dto.getTitle());
+        }
+
+        //ContractNumber
+        if (dto.getContractNumber() != null && !dto.getContractNumber().equals(contract.getContractNumber())) {
+            boolean exists = contractRepository.existsByContractNumber(dto.getContractNumber());
+
+            if (exists) {
+                throw new IllegalArgumentException("Contract number already exists in the database");
+            }
+            auditTrails.add(createAuditTrail(contract, "contractNumber", contract.getContractNumber(),
+                    dto.getContractNumber(), now,
+                    changedBy, "UPDATE", "Cập nhật mã hợp đồng"));
+            contract.setContractNumber(dto.getContractNumber());
+        }
+
+        //SigningDate
+        if (dto.getSigningDate() != null && !Objects.equals(dto.getSigningDate(), contract.getSigningDate())) {
+            auditTrails.add(createAuditTrail(contract, "signingDate",
+                    contract.getSigningDate() != null ? contract.getSigningDate().toString() : null,
+                    dto.getSigningDate() != null ? dto.getSigningDate().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật ngày ky hợp đồng"));
+            contract.setSigningDate(dto.getSigningDate());
+        }
+
+        //ContractLocation
+        if (dto.getContractLocation() != null && !dto.getContractLocation().equals(contract.getContractLocation())) {
+            auditTrails.add(createAuditTrail(contract, "contractLocation", contract.getContractLocation(), dto.getContractLocation(),
+                    now, changedBy, "UPDATE", "Cập nhật địa điểm hợp đồng"));
+            contract.setContractLocation(dto.getContractLocation());
+        }
+
+        //Amount
+        if (dto.getAmount() != null && !Objects.equals(dto.getAmount(), contract.getAmount())) {
+            auditTrails.add(createAuditTrail(contract, "amount",
+                    contract.getAmount() != null ? contract.getAmount().toString() : null,
+                    dto.getAmount() != null ? dto.getAmount().toString() : null, now, changedBy, "UPDATE", "Cập nhật số tiền hợp đồng"));
+            contract.setAmount(dto.getAmount());
+        }
+
+        //EffectiveDate
+        if (dto.getEffectiveDate() != null && !Objects.equals(dto.getEffectiveDate(), contract.getEffectiveDate())) {
+            auditTrails.add(createAuditTrail(contract, "effectiveDate",
+                    contract.getEffectiveDate() != null ? contract.getEffectiveDate().toString() : null,
+                    dto.getEffectiveDate() != null ? dto.getEffectiveDate().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật ngày hiệu lực hợp đồng"));
+            contract.setEffectiveDate(dto.getEffectiveDate());
+        }
+
+        //ExpiryDate
+        if (dto.getExpiryDate() != null && !Objects.equals(dto.getExpiryDate(), contract.getExpiryDate())) {
+            auditTrails.add(createAuditTrail(contract, "expiryDate",
+                    contract.getExpiryDate() != null ? contract.getExpiryDate().toString() : null,
+                    dto.getExpiryDate() != null ? dto.getExpiryDate().toString() : null, now,
+                    changedBy, "UPDATE", " Cập nhật ngày hết hạn"));
+            contract.setExpiryDate(dto.getExpiryDate());
+        }
+
+        //NotifyEffectiveDate
+        if (dto.getNotifyEffectiveDate() != null && !Objects.equals(dto.getNotifyEffectiveDate(), contract.getNotifyEffectiveDate())) {
+            auditTrails.add(createAuditTrail(contract, "notifyEffectiveDate",
+                    contract.getNotifyEffectiveDate() != null ? contract.getNotifyEffectiveDate().toString() : null,
+                    dto.getNotifyEffectiveDate() != null ? dto.getNotifyEffectiveDate().toString() : null,
+                    now, changedBy, "UPDATE", "Cập nhật ngày thông báo hiệu lực hợp đồng"));
+            contract.setNotifyEffectiveDate(dto.getNotifyEffectiveDate());
+        }
+
+        //NotifyExpiryDate
+
+        if (dto.getNotifyExpiryDate() != null && !Objects.equals(dto.getNotifyExpiryDate(), contract.getNotifyExpiryDate())) {
+            auditTrails.add(createAuditTrail(contract, "notifyExpiryDate",
+                    contract.getNotifyExpiryDate() != null ? contract.getNotifyExpiryDate().toString() : null,
+                    dto.getNotifyExpiryDate() != null ? dto.getNotifyExpiryDate().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật ngày thông báo hết hạn"));
+            contract.setNotifyExpiryDate(dto.getNotifyExpiryDate());
+        }
+
+        //NotifyEffectiveContent
+
+        if (dto.getNotifyEffectiveContent() != null && !dto.getNotifyEffectiveContent().equals(contract.getNotifyEffectiveContent())) {
+            auditTrails.add(createAuditTrail(contract, "notifyEffectiveContent", contract.getNotifyEffectiveContent(),
+                    dto.getNotifyEffectiveContent(), now, changedBy, "UPDATE", "Cập nhật nội dung thống báo hiệu lực hợp đồng"));
+            contract.setNotifyEffectiveContent(dto.getNotifyEffectiveContent());
+        }
+
+        //NotifyExpiryContent
+
+        if (dto.getNotifyExpiryContent() != null && !dto.getNotifyExpiryContent().equals(contract.getNotifyExpiryContent())) {
+            auditTrails.add(createAuditTrail(contract, "notifyExpiryContent", contract.getNotifyExpiryContent(),
+                    dto.getNotifyExpiryContent(), now, changedBy, "UPDATE", "Cập nhật nội dung thống báo hết hạn"));
+            contract.setNotifyExpiryContent(dto.getNotifyExpiryContent());
+        }
+
+        //SpecialTermsA
+
+        if (dto.getSpecialTermsA() != null && !dto.getSpecialTermsA().equals(contract.getSpecialTermsA())) {
+            auditTrails.add(createAuditTrail(contract, "specialTermsA", contract.getSpecialTermsA(),
+                    dto.getSpecialTermsA(), now, changedBy, "UPDATE", "Cập nhật điều khoản bên A"));
+            contract.setSpecialTermsA(dto.getSpecialTermsA());
+        }
+
+        //SpecialTermsB
+
+        if (dto.getSpecialTermsB() != null && !dto.getSpecialTermsB().equals(contract.getSpecialTermsB())) {
+            auditTrails.add(createAuditTrail(contract, "specialTermsB", contract.getSpecialTermsB(), dto.getSpecialTermsB(),
+                    now, changedBy, "UPDATE", "Cập nhật điều khoản bên B"));
+            contract.setSpecialTermsB(dto.getSpecialTermsB());
+        }
+
+        //ContractContent
+        if (dto.getContractContent() != null && !dto.getContractContent().equals(contract.getContractContent())) {
+            auditTrails.add(createAuditTrail(contract, "contractContent", contract.getContractContent(), dto.getContractContent()
+                    , now, changedBy, "UPDATE", "Cập nhật nội dung hợp đồng"));
+            contract.setContractContent(dto.getContractContent());
+        }
+
+        //AppendixEnabled
+        if (dto.getAppendixEnabled() != null && !dto.getAppendixEnabled().equals(contract.getAppendixEnabled())) {
+            auditTrails.add(createAuditTrail(contract, "appendixEnabled",
+                    contract.getAppendixEnabled() != null ? contract.getAppendixEnabled().toString() : null,
+                    dto.getAppendixEnabled() != null ? dto.getAppendixEnabled().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật phụ lục"));
+            contract.setAppendixEnabled(dto.getAppendixEnabled());
+        }
+
+        //TransferEnabled
+        if (dto.getTransferEnabled() != null && !dto.getTransferEnabled().equals(contract.getTransferEnabled())) {
+            auditTrails.add(createAuditTrail(contract, "transferEnabled",
+                    contract.getTransferEnabled() != null ? contract.getTransferEnabled().toString() : null,
+                    dto.getTransferEnabled() != null ? dto.getTransferEnabled().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật chuyển giao"));
+            contract.setTransferEnabled(dto.getTransferEnabled());
+        }
+
+        //AutoAddVAT
+        if (dto.getAutoAddVAT() != null && !dto.getAutoAddVAT().equals(contract.getAutoAddVAT())) {
+            auditTrails.add(createAuditTrail(contract, "autoAddVAT",
+                    contract.getAutoAddVAT() != null ? contract.getAutoAddVAT().toString() : null,
+                    dto.getAutoAddVAT() != null ? dto.getAutoAddVAT().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật VAT"));
+            contract.setAutoAddVAT(dto.getAutoAddVAT());
+        }
+
+
+        //VatPercentage
+        if (dto.getVatPercentage() != null && !Objects.equals(dto.getVatPercentage(), contract.getVatPercentage())) {
+            auditTrails.add(createAuditTrail(contract, "vatPercentage",
+                    contract.getVatPercentage() != null ? contract.getVatPercentage().toString() : null,
+                    dto.getVatPercentage() != null ? dto.getVatPercentage().toString() : null,
+                    now, changedBy, "UPDATE", "Cập nhật VAT %"));
+            contract.setVatPercentage(dto.getVatPercentage());
+        }
+
+        //IsDateLateChecked
+        if (dto.getIsDateLateChecked() != null && !dto.getIsDateLateChecked().equals(contract.getIsDateLateChecked())) {
+            auditTrails.add(createAuditTrail(contract, "isDateLateChecked",
+                    contract.getIsDateLateChecked() != null ? contract.getIsDateLateChecked().toString() : null,
+                    dto.getIsDateLateChecked() != null ? dto.getIsDateLateChecked().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật trễ ngày hợp đồng"));
+            contract.setIsDateLateChecked(dto.getIsDateLateChecked());
+        }
+
+        //AutoRenew
+        if (dto.getAutoRenew() != null && !dto.getAutoRenew().equals(contract.getAutoRenew())) {
+            auditTrails.add(createAuditTrail(contract, "autoRenew",
+                    contract.getAutoRenew() != null ? contract.getAutoRenew().toString() : null,
+                    dto.getAutoRenew() != null ? dto.getAutoRenew().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật renew cho hợp đồng"));
+            contract.setAutoRenew(dto.getAutoRenew());
+        }
+
+        //Violate
+        if (dto.getViolate() != null && !dto.getViolate().equals(contract.getViolate())) {
+            auditTrails.add(createAuditTrail(contract, "violate",
+                    contract.getViolate() != null ? contract.getViolate().toString() : null,
+                    dto.getViolate() != null ? dto.getViolate().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật vi phạm cho hợp đồng"));
+            contract.setViolate(dto.getViolate());
+        }
+
+        //Suspend
+        if (dto.getSuspend() != null && !dto.getSuspend().equals(contract.getSuspend())) {
+            auditTrails.add(createAuditTrail(contract, "suspend",
+                    contract.getSuspend() != null ? contract.getSuspend().toString() : null,
+                    dto.getSuspend() != null ? dto.getSuspend().toString() : null, now,
+                    changedBy, "UPDATE", "Cập nhật suspend cho hợp đồng"));
+            contract.setSuspend(dto.getSuspend());
+        }
+
+
+        //SuspendContent
+        if (dto.getSuspendContent() != null && !dto.getSuspendContent().equals(contract.getSuspendContent())) {
+            auditTrails.add(createAuditTrail(contract, "suspendContent", contract.getSuspendContent(),
+                    dto.getSuspendContent(), now, changedBy, "UPDATE", "Cập nhật nội dung suspend cho hợp đồng"));
+            contract.setSuspendContent(dto.getSuspendContent());
+        }
+
+
+        //Status
+        if (dto.getStatus() != null && !dto.getStatus().equals(contract.getStatus())) {
+            auditTrails.add(createAuditTrail(contract, "status", contract.getStatus().name(), dto.getStatus().name(),
+                    now, changedBy, "UPDATE", "Cập nhật trạng thái hợp đồng"));
+            contract.setStatus(dto.getStatus());
+        }
+
+        // 3. ContractTerm
+        List<ContractTerm> updatedTerms = new ArrayList<>();
+        Set<Long> newTermIds = new HashSet<>();
+        List<AuditTrail> termAuditTrails = new ArrayList<>(); // Tạm lưu audit trail để ghi sau khi có ID
+
+// Xử lý LegalBasisTerms
+        if (dto.getLegalBasisTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getLegalBasisTerms()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại LEGAL_BASIS");
+                }
+                newTermIds.add(term.getId());
+                ContractTerm existingTerm = contract.getContractTerms().stream()
+                        .filter(t -> t.getOriginalTermId().equals(term.getId()) && t.getTermType().equals(TypeTermIdentifier.LEGAL_BASIS))
+                        .findFirst()
+                        .orElse(null);
+
+                String oldValue = null;
+                String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                        term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.LEGAL_BASIS.name());
+
+                if (existingTerm != null) {
+                    oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                            existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
+                    if (!oldValue.equals(newValue)) {
+                        existingTerm.setTermLabel(term.getLabel());
+                        existingTerm.setTermValue(term.getValue());
+                        termAuditTrails.add(AuditTrail.builder()
+                                .contract(contract)
+                                .entityName("ContractTerm")
+                                .entityId(existingTerm.getId())
+                                .action("UPDATE")
+                                .fieldName("legalBasisTerms")
+                                .oldValue(oldValue)
+                                .newValue(newValue)
+                                .changedAt(now)
+                                .changedBy(changedBy)
+                                .changeSummary("Đã cập nhật điều khoản cơ sở pháp lý với Term ID: " + term.getId())
+                                .build());
+                    }
+                    updatedTerms.add(existingTerm);
+                } else {
+                    existingTerm = ContractTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
+                            .termType(TypeTermIdentifier.LEGAL_BASIS)
+                            .contract(contract)
+                            .build();
+                    termAuditTrails.add(AuditTrail.builder()
+                            .contract(contract)
+                            .entityName("ContractTerm")
+                            .entityId(null) // ID sẽ được cập nhật sau khi lưu
+                            .action("CREATE")
+                            .fieldName("legalBasisTerms")
+                            .oldValue(null)
+                            .newValue(newValue)
+                            .changedAt(now)
+                            .changedBy(changedBy)
+                            .changeSummary("Đã tạo điều khoản cơ sở pháp lý với Term ID: " + term.getId())
+                            .build());
+                    updatedTerms.add(existingTerm);
+                }
+            }
+        }
+
+// Xử lý GeneralTerms
+        if (dto.getGeneralTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getGeneralTerms()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại GENERAL_TERMS");
+                }
+                newTermIds.add(term.getId());
+                ContractTerm existingTerm = contract.getContractTerms().stream()
+                        .filter(t -> t.getOriginalTermId().equals(term.getId()) && t.getTermType().equals(TypeTermIdentifier.GENERAL_TERMS))
+                        .findFirst()
+                        .orElse(null);
+
+                String oldValue = null;
+                String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                        term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.GENERAL_TERMS.name());
+
+                if (existingTerm != null) {
+                    oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                            existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
+                    if (!oldValue.equals(newValue)) {
+                        existingTerm.setTermLabel(term.getLabel());
+                        existingTerm.setTermValue(term.getValue());
+                        termAuditTrails.add(AuditTrail.builder()
+                                .contract(contract)
+                                .entityName("ContractTerm")
+                                .entityId(existingTerm.getId())
+                                .action("UPDATE")
+                                .fieldName("generalTerms")
+                                .oldValue(oldValue)
+                                .newValue(newValue)
+                                .changedAt(now)
+                                .changedBy(changedBy)
+                                .changeSummary("Đã cập nhật điều khoản chung với Term ID: " + term.getId())
+                                .build());
+                    }
+                    updatedTerms.add(existingTerm);
+                } else {
+                    existingTerm = ContractTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
+                            .termType(TypeTermIdentifier.GENERAL_TERMS)
+                            .contract(contract)
+                            .build();
+                    termAuditTrails.add(AuditTrail.builder()
+                            .contract(contract)
+                            .entityName("ContractTerm")
+                            .entityId(null)
+                            .action("CREATE")
+                            .fieldName("generalTerms")
+                            .oldValue(null)
+                            .newValue(newValue)
+                            .changedAt(now)
+                            .changedBy(changedBy)
+                            .changeSummary("Đã tạo điều khoản chung với Term ID: " + term.getId())
+                            .build());
+                    updatedTerms.add(existingTerm);
+                }
+            }
+        }
+
+// Xử lý OtherTerms
+        if (dto.getOtherTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getOtherTerms()) {
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại OTHER_TERMS");
+                }
+                newTermIds.add(term.getId());
+                ContractTerm existingTerm = contract.getContractTerms().stream()
+                        .filter(t -> t.getOriginalTermId().equals(term.getId()) && t.getTermType().equals(TypeTermIdentifier.OTHER_TERMS))
+                        .findFirst()
+                        .orElse(null);
+
+                String oldValue = null;
+                String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                        term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.OTHER_TERMS.name());
+
+                if (existingTerm != null) {
+                    oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                            existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
+                    if (!oldValue.equals(newValue)) {
+                        existingTerm.setTermLabel(term.getLabel());
+                        existingTerm.setTermValue(term.getValue());
+                        termAuditTrails.add(AuditTrail.builder()
+                                .contract(contract)
+                                .entityName("ContractTerm")
+                                .entityId(existingTerm.getId())
+                                .action("UPDATE")
+                                .fieldName("otherTerms")
+                                .oldValue(oldValue)
+                                .newValue(newValue)
+                                .changedAt(now)
+                                .changedBy(changedBy)
+                                .changeSummary("Đã cập nhật điều khoản khác với Term ID: " + term.getId())
+                                .build());
+                    }
+                    updatedTerms.add(existingTerm);
+                } else {
+                    existingTerm = ContractTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
+                            .termType(TypeTermIdentifier.OTHER_TERMS)
+                            .contract(contract)
+                            .build();
+                    termAuditTrails.add(AuditTrail.builder()
+                            .contract(contract)
+                            .entityName("ContractTerm")
+                            .entityId(null)
+                            .action("CREATE")
+                            .fieldName("otherTerms")
+                            .oldValue(null)
+                            .newValue(newValue)
+                            .changedAt(now)
+                            .changedBy(changedBy)
+                            .changeSummary("Đã tạo điều khoản khác với Term ID: " + term.getId())
+                            .build());
+                    updatedTerms.add(existingTerm);
+                }
+            }
+        }
+
+        // 4. Cập nhật ContractAdditionalTermDetail
+        if (dto.getAdditionalConfig() != null) {
+            List<ContractAdditionalTermDetail> updatedDetails = new ArrayList<>();
+            List<AuditTrail> additionalTermAuditTrails = new ArrayList<>(); // Danh sách tạm cho audit trail
+            Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getAdditionalConfig();
+            Set<Long> newTypeTermIds = configMap.keySet().stream().map(Long::parseLong).collect(Collectors.toSet());
+
+            // Tạm lưu thông tin để cập nhật newValue sau khi lưu
+            record AuditTrailPending(ContractAdditionalTermDetail detail, String oldValue, String action, Long typeTermId) {}
+
+            List<AuditTrailPending> pendingAudits = new ArrayList<>();
+
+            // Xử lý các typeTermId có trong DTO
+            for (Map.Entry<String, Map<String, List<TermSnapshotDTO>>> entry : configMap.entrySet()) {
+                Long configTypeTermId = Long.parseLong(entry.getKey());
+                Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
+
+                List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("Common")) {
+                    commonSnapshots = groupConfig.get("Common").stream()
+                            .map(termDTO -> {
+                                Term term = termRepository.findById(termDTO.getId())
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                return AdditionalTermSnapshot.builder()
+                                        .termId(term.getId())
+                                        .termLabel(term.getLabel())
+                                        .termValue(term.getValue())
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+                }
+
+                List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("A")) {
+                    aSnapshots = groupConfig.get("A").stream()
+                            .map(termDTO -> {
+                                Term term = termRepository.findById(termDTO.getId())
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                return AdditionalTermSnapshot.builder()
+                                        .termId(term.getId())
+                                        .termLabel(term.getLabel())
+                                        .termValue(term.getValue())
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+                }
+
+                List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("B")) {
+                    bSnapshots = groupConfig.get("B").stream()
+                            .map(termDTO -> {
+                                Term term = termRepository.findById(termDTO.getId())
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                return AdditionalTermSnapshot.builder()
+                                        .termId(term.getId())
+                                        .termLabel(term.getLabel())
+                                        .termValue(term.getValue())
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+                }
+
+                Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonA.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'A'");
+                }
+                Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'B'");
+                }
+                Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionAB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'A' và 'B'");
+                }
+
+                ContractAdditionalTermDetail detail = contract.getAdditionalTermDetails().stream()
+                        .filter(d -> d.getTypeTermId().equals(configTypeTermId))
+                        .findFirst()
+                        .orElse(null);
+                String oldValue = null;
+                if (detail != null) {
+                    try {
+                        oldValue = objectMapper.writeValueAsString(detail);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to serialize old ContractAdditionalTermDetail to JSON", e);
+                    }
+                }
+                if (detail == null) {
+                    detail = ContractAdditionalTermDetail.builder()
+                            .contract(contract)
+                            .typeTermId(configTypeTermId)
+                            .build();
+                }
+                detail.setCommonTerms(commonSnapshots);
+                detail.setATerms(aSnapshots);
+                detail.setBTerms(bSnapshots);
+
+                String newValue;
+                try {
+                    newValue = objectMapper.writeValueAsString(detail);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Failed to serialize new ContractAdditionalTermDetail to JSON", e);
+                }
+
+                if (!Objects.equals(oldValue, newValue)) {
+                    pendingAudits.add(new AuditTrailPending(detail, oldValue, detail.getId() == null ? "CREATE" : "UPDATE", configTypeTermId));
+                }
+                updatedDetails.add(detail);
+            }
+
+            // Kiểm tra và ghi log các detail bị xóa
+            for (ContractAdditionalTermDetail oldDetail : contract.getAdditionalTermDetails()) {
+                if (!newTypeTermIds.contains(oldDetail.getTypeTermId())) {
+                    String oldValue;
+                    try {
+                        oldValue = objectMapper.writeValueAsString(oldDetail);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to serialize old ContractAdditionalTermDetail to JSON", e);
+                    }
+                    additionalTermAuditTrails.add(AuditTrail.builder()
+                            .contract(contract)
+                            .entityName("ContractAdditionalTermDetail")
+                            .entityId(oldDetail.getId())
+                            .action("DELETE")
+                            .fieldName("additionalTermDetails")
+                            .oldValue(oldValue)
+                            .newValue(null)
+                            .changedAt(now)
+                            .changedBy(changedBy)
+                            .changeSummary("Đã xóa chi tiết điều khoản bổ sung với ID: " + oldDetail.getId() + " và TypeTerm ID: " + oldDetail.getTypeTermId())
+                            .build());
+                }
+            }
+
+            // Cập nhật danh sách ContractAdditionalTermDetail
+            contract.getAdditionalTermDetails().clear();
+            contract.getAdditionalTermDetails().addAll(updatedDetails);
+
+            // Xử lý audit trail sau khi lưu
+            if (!pendingAudits.isEmpty() || !additionalTermAuditTrails.isEmpty()) {
+                Contract savedContract = contractRepository.save(contract); // Lưu để sinh ID
+
+                for (AuditTrailPending pending : pendingAudits) {
+                    ContractAdditionalTermDetail savedDetail = savedContract.getAdditionalTermDetails().stream()
+                            .filter(d -> d.getTypeTermId().equals(pending.typeTermId()))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy ContractAdditionalTermDetail vừa tạo"));
+
+                    String updatedNewValue;
+                    try {
+                        updatedNewValue = objectMapper.writeValueAsString(savedDetail); // newValue với id đã được cập nhật
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Failed to serialize updated ContractAdditionalTermDetail to JSON", e);
+                    }
+
+                    additionalTermAuditTrails.add(AuditTrail.builder()
+                            .contract(savedContract)
+                            .entityName("ContractAdditionalTermDetail")
+                            .entityId(savedDetail.getId())
+                            .action(pending.action())
+                            .fieldName("additionalTermDetails")
+                            .oldValue(pending.oldValue())
+                            .newValue(updatedNewValue)
+                            .changedAt(now)
+                            .changedBy(changedBy)
+                            .changeSummary(pending.action().equals("CREATE") ?
+                                    "Đã tạo chi tiết điều khoản bổ sung với ID: " + savedDetail.getId() + " và TypeTerm ID: " + savedDetail.getTypeTermId() :
+                                    "Đã cập nhật chi tiết điều khoản bổ sung với ID: " + savedDetail.getId())
+                            .build());
+                }
+                auditTrails.addAll(additionalTermAuditTrails);
+            }
+        }
+
+        // Kiểm tra term bị xóa
+        for (ContractTerm oldTerm : contract.getContractTerms()) {
+            if (!newTermIds.contains(oldTerm.getOriginalTermId())) {
+                String oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                        oldTerm.getOriginalTermId(), oldTerm.getTermLabel(),
+                        oldTerm.getTermValue(), oldTerm.getTermType().name());
+                String fieldName = switch (oldTerm.getTermType()) {
+                    case LEGAL_BASIS -> "legalBasisTerms";
+                    case GENERAL_TERMS -> "generalTerms";
+                    case OTHER_TERMS -> "otherTerms";
+                    default -> "contractTerms";
+                };
+                String changeSummary;
+                switch (fieldName) {
+                    case "legalBasisTerms":
+                        changeSummary = "Đã xóa điều khoản cơ sở pháp lý với Term ID: " + oldTerm.getOriginalTermId();
+                        break;
+                    case "generalTerms":
+                        changeSummary = "Đã xóa điều khoản chung với Term ID: " + oldTerm.getOriginalTermId();
+                        break;
+                    case "otherTerms":
+                        changeSummary = "Đã xóa điều khoản khác với Term ID: " + oldTerm.getOriginalTermId();
+                        break;
+                    default:
+                        changeSummary = "Đã xóa điều khoản hợp đồng với Term ID: " + oldTerm.getOriginalTermId();
+                }
+                termAuditTrails.add(AuditTrail.builder()
+                        .contract(contract)
+                        .entityName("ContractTerm")
+                        .entityId(oldTerm.getId())
+                        .action("DELETE")
+                        .fieldName(fieldName)
+                        .oldValue(oldValue)
+                        .newValue(null)
+                        .changedAt(now)
+                        .changedBy(changedBy)
+                        .changeSummary(changeSummary)
+                        .build());
+            } else {
+                if (updatedTerms.stream().noneMatch(t -> t.getOriginalTermId().equals(oldTerm.getOriginalTermId()) && t.getTermType().equals(oldTerm.getTermType()))) {
+                    updatedTerms.add(oldTerm);
+                }
+            }
+        }
+
+// Thay thế danh sách ContractTerm cũ bằng danh sách mới
+        contract.getContractTerms().clear();
+        contract.getContractTerms().addAll(updatedTerms);
+
+// Cập nhật thời gian và lưu
+        if (!auditTrails.isEmpty() || !termAuditTrails.isEmpty()) {
+            contract.setUpdatedAt(now);
+            Contract savedContract = contractRepository.save(contract);
+
+            // Cập nhật entityId cho các audit trail của ContractTerm mới
+            for (AuditTrail auditTrail : termAuditTrails) {
+                if ("CREATE".equals(auditTrail.getAction())) {
+                    ContractTerm savedTerm = savedContract.getContractTerms().stream()
+                            .filter(t -> t.getOriginalTermId().equals(getTermIdFromNewValue(auditTrail.getNewValue())))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy ContractTerm vừa tạo"));
+                    auditTrail.setEntityId(savedTerm.getId());
+                    // changeSummary đã có Term ID từ lúc tạo, không cần cập nhật lại
+                }
+                auditTrails.add(auditTrail);
+            }
+
+            // Lưu tất cả audit trail
+            auditTrailRepository.saveAll(auditTrails);
+
+        }
+
+        return contract;
+    }
+
+    private Long getTypeTermIdFromNewValue(String newValue) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(newValue);
+            return jsonNode.get("typeTermId").asLong();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Không thể phân tích typeTermId từ newValue", e);
+        }
+    }
+
+    private Long getTermIdFromNewValue(String newValue) {
+        String[] parts = newValue.split(",")[0].split(":");
+        return Long.parseLong(parts[1].trim());
+    }
+
+    private AuditTrail createAuditTrail(Contract contract, String fieldName, String oldValue, String newValue,
+                                        LocalDateTime changedAt, String changedBy, String action, String changeSummary) {
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setEntityName("Contract");
+        auditTrail.setEntityId(contract.getId());
+        auditTrail.setContract(contract);
+        auditTrail.setAction(action);
+        auditTrail.setFieldName(fieldName);
+        auditTrail.setOldValue(oldValue);
+        auditTrail.setNewValue(newValue);
+        auditTrail.setChangedAt(changedAt);
+        auditTrail.setChangedBy(changedBy);
+        auditTrail.setChangeSummary(changeSummary);
+        if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
+            throw new IllegalStateException("Contract in AuditTrail is null or has no ID");
+        }
+        return auditTrail;
+    }
+
     @Override
     public boolean softDelete(Long id) {
         Optional<Contract> optionalContract = contractRepository.findById(id);
@@ -634,5 +1415,17 @@ public class ContractService implements IContractService{
         }
         return false;
     }
+    @Override
+    public ContractStatus updateContractStatus(Long id, ContractStatus status) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + id));
+
+        contract.setStatus(status);
+        contract.setUpdatedAt(LocalDateTime.now());
+        contractRepository.save(contract);
+
+        return contract.getStatus(); // Trả về trạng thái mới
+    }
+
 
 }
