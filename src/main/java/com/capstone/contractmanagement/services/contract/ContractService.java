@@ -96,6 +96,7 @@ public class ContractService implements IContractService{
                 .suspend(dto.getTemplateData().getSuspend())
                 .suspendContent(dto.getTemplateData().getSuspendContent())
                 .status(ContractStatus.CREATED)
+                .maxDateLate(dto.getTemplateData().getMaxDateLate())
                 .contractType(template.getContractType())
                 .createdAt(LocalDateTime.now())
                 .build();
