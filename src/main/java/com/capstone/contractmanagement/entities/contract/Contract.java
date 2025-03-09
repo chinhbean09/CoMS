@@ -155,6 +155,9 @@
         @JsonIgnore
         private ApprovalWorkflow approvalWorkflow;
 
+        @Column(name = "max_date_late")
+        private Integer maxDateLate;
+
         @ManyToOne
         @JoinColumn(name = "contract_type_id", nullable = false)
         @JsonIgnore
