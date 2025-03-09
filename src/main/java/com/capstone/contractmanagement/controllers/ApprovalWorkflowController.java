@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -94,11 +95,22 @@ public class ApprovalWorkflowController {
 
     // api REJECTED stage
     @PutMapping("/reject/{contractId}/{stageId}")
-    public ResponseEntity<ResponseObject> rejectStage(@PathVariable Long contractId, @PathVariable Long stageId) throws DataNotFoundException {
-        approvalWorkflowService.rejectStage(contractId, stageId, null);
+    public ResponseEntity<ResponseObject> rejectStage(@PathVariable Long contractId, @PathVariable Long stageId, @RequestBody WorkflowDTO workflowDTO) throws DataNotFoundException {
+        approvalWorkflowService.rejectStage(contractId, stageId, workflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.REJECT_STAGE_SUCCESSFULLY)
                 .status(HttpStatus.OK)
+                .build());
+    }
+
+    // api get approval workflow by contract id
+    @GetMapping("/get-by-contract-id/{contractId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByContractId(@PathVariable Long contractId) throws DataNotFoundException {
+        ApprovalWorkflowResponse approvalWorkflowResponse = approvalWorkflowService.getWorkflowByContractId(contractId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
                 .build());
     }
 }
