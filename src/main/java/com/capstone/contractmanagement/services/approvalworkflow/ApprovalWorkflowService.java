@@ -288,6 +288,27 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         notificationService.saveNotification(contract.getUser(), notificationMessage, contractId);
     }
 
+    @Override
+    @Transactional
+    public ApprovalWorkflowResponse getWorkflowByContractId(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+        ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        return ApprovalWorkflowResponse.builder()
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .customStagesCount(workflow.getCustomStagesCount())
+                .createdAt(workflow.getCreatedAt())
+                .stages(workflow.getStages().stream()
+                        .map(stage -> ApprovalStageResponse.builder()
+                                .stageId(stage.getId())
+                                .stageOrder(stage.getStageOrder())
+                                .approver(stage.getApprover().getId())
+                                .build())
+                        .toList())
+                .build();
+    }
+
     private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
