@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -10,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -33,6 +35,13 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
 
     @Column(name = "address", length = 200)
     private String address;
+
+    @Column(name = "date_of_birth")
+    private LocalDateTime DateOfBirth;
+
+    @Column(name = "department", length = 100)
+    @Enumerated(EnumType.STRING)
+    private DepartmentList department;
 
     @Column(name = "email")
     private String email;

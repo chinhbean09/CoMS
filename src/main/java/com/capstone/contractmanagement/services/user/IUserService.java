@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.user;
 
 import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,6 @@ public interface IUserService {
      User getUserDetailsFromToken(String token) throws DataNotFoundException;
 
     void blockOrEnable(Long userId, Boolean active) throws Exception;
-    Page<UserResponse> getAllUsers(String keyword, PageRequest pageRequest);
 
     User getUser(Long id) throws DataNotFoundException;
 
@@ -29,7 +29,7 @@ public interface IUserService {
 
     User getUserDetailsFromRefreshToken(String refreshToken) throws Exception;
 
-    List<UserResponse> getAllUsers(Long roleId);
+    Page<UserResponse> getAllUsers(Long roleId, int page, int size, DepartmentList department, String search);
 
     void updatePassword(String email, String password) throws DataNotFoundException;
 
