@@ -611,6 +611,7 @@ public class ContractService implements IContractService{
                 .generalTerms(generalTerms)
                 .contractTypeId(contract.getContractType().getId())
                 .otherTerms(otherTerms)
+                .maxDateLate(contract.getMaxDateLate())
                 .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)
                 .additionalConfig(additionalConfig)
