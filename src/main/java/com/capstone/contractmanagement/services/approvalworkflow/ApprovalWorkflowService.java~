@@ -205,7 +205,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     }
 
     @Override
-    @Transactional
     public void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
