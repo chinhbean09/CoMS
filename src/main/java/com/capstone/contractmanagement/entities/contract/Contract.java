@@ -81,11 +81,6 @@
         @Column(name = "title", nullable = false, length = 200)
         private String title;
 
-        // Relationship với PaymentOneTime
-        @OneToOne(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-        @JsonIgnore
-        private PaymentOneTime paymentOneTime;
-
         @Column(name = "amount")
         private Double amount; // Số tiền
 
