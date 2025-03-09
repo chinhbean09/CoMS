@@ -27,4 +27,6 @@ public interface IApprovalWorkflowService {
     void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException;
     void approvedStage(Long contractId, Long stageId) throws DataNotFoundException;
     void rejectStage(Long contractId, Long stageId, WorkflowDTO workflowDTO) throws DataNotFoundException;
+
+    ApprovalWorkflowResponse getWorkflowByContractId(Long contractId) throws DataNotFoundException;
 }
