@@ -2,10 +2,12 @@ package com.capstone.contractmanagement.responses.User;
 
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -32,7 +34,9 @@ public class UserResponse {
     private boolean active;
 
     @JsonProperty("date_of_birth")
-    private Date dateOfBirth;
+    private LocalDateTime dateOfBirth;
+
+    private DepartmentList department;
 
     @JsonProperty("facebook_account_id")
     private String facebookAccountId;
@@ -61,6 +65,8 @@ public class UserResponse {
                 .phoneNumber(user.getPhoneNumber())
                 .address(user.getAddress())
                 .active(user.isActive())
+                .dateOfBirth(user.getDateOfBirth())
+                .department(user.getDepartment())
                 .facebookAccountId(user.getFacebookAccountId())
                 .googleAccountId(user.getGoogleAccountId())
                 .role(user.getRole())
