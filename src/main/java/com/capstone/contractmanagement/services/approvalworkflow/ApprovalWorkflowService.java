@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkfl
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IApprovalStageRepository;
 import com.capstone.contractmanagement.repositories.IApprovalWorkflowRepository;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.capstone.contractmanagement.enums.ContractStatus.APPROVAL_PENDING;
 
 @Service
 @RequiredArgsConstructor
@@ -205,12 +208,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     }
 
     @Override
+    @Transactional
     public void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
         ApprovalWorkflow workflow = approvalWorkflowRepository.findById(workflowId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
         contract.setApprovalWorkflow(workflow);
+        contract.setStatus(ContractStatus.APPROVAL_PENDING);
         contractRepository.save(contract);
         // Lấy stage có stageOrder nhỏ nhất
         workflow.getStages().stream()
@@ -286,6 +291,27 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Gửi thông báo đến user, sử dụng username làm định danh user destination
         messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
         notificationService.saveNotification(contract.getUser(), notificationMessage, contractId);
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowResponse getWorkflowByContractId(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+        ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        return ApprovalWorkflowResponse.builder()
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .customStagesCount(workflow.getCustomStagesCount())
+                .createdAt(workflow.getCreatedAt())
+                .stages(workflow.getStages().stream()
+                        .map(stage -> ApprovalStageResponse.builder()
+                                .stageId(stage.getId())
+                                .stageOrder(stage.getStageOrder())
+                                .approver(stage.getApprover().getId())
+                                .build())
+                        .toList())
+                .build();
     }
 
     private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
