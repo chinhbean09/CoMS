@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkfl
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IApprovalStageRepository;
 import com.capstone.contractmanagement.repositories.IApprovalWorkflowRepository;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.capstone.contractmanagement.enums.ContractStatus.APPROVAL_PENDING;
 
 @Service
 @RequiredArgsConstructor
@@ -212,6 +215,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         ApprovalWorkflow workflow = approvalWorkflowRepository.findById(workflowId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
         contract.setApprovalWorkflow(workflow);
+        contract.setStatus(ContractStatus.APPROVAL_PENDING);
         contractRepository.save(contract);
         // Lấy stage có stageOrder nhỏ nhất
         workflow.getStages().stream()
