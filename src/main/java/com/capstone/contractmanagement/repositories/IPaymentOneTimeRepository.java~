@@ -1,2 +1,0 @@
-package com.capstone.contractmanagement.repositories;public interface IPaymentOneTimeRepository {
-}
