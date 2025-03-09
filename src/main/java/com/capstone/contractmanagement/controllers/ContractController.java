@@ -91,18 +91,6 @@ public class ContractController {
                 .build());
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<ResponseObject> updateContract(
-            @PathVariable Long id,
-            @Valid @RequestBody ContractDTO contractDTO) {
-        ContractResponse contract = contractService.updateContract(id, contractDTO);
-        return ResponseEntity.ok(ResponseObject.builder()
-                .status(HttpStatus.OK)
-                .message(MessageKeys.UPDATE_CONTRACT_SUCCESSFULLY)
-                .data(contract)
-                .build());
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseObject> deleteContract(@PathVariable Long id) {
         contractService.deleteContract(id);
@@ -197,7 +185,7 @@ public class ContractController {
     }
 
     @PostMapping("/update/{contractId}")
-    public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
+    public ResponseEntity<ResponseObject> updateContract(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
         try {
             Contract contract = contractService.updateContract(contractId, dto);
             return ResponseEntity.ok(ResponseObject.builder()

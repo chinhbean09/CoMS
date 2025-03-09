@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.dtos.contract;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
+import com.capstone.contractmanagement.dtos.payment.PaymentScheduleDTO;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,4 +51,6 @@ public class ContractUpdateDTO {
 
     // Cấu trúc additionalConfig giống trong TemplateData
     private Map<String, Map<String, List<TermSnapshotDTO>>> additionalConfig;
+
+    private List<PaymentScheduleDTO> payments; // Danh sách PaymentSchedule để cập nhật
 }

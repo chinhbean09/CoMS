@@ -17,8 +17,6 @@ public interface IContractService {
     Optional<ContractResponse> getContractById(Long id) throws DataNotFoundException;
 
 
-    ContractResponse updateContract(Long id, ContractDTO contractDTO);
-
     void deleteContract(Long id);
 
     Contract createContractFromTemplate(ContractDTO dto) throws DataNotFoundException;
