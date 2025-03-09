@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.Token;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
@@ -237,45 +238,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/get-all-user")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STAFF')")
-    public ResponseEntity<UserListResponse> getAllUsers(
-            @RequestParam(defaultValue = "") String keyword,
-            @NonNull @RequestParam("page") int page,
-            @RequestParam("limit") int limit) {
-        try {
-            PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("fullName").ascending());
-            Page<UserResponse> userPage = userService.getAllUsers(keyword, pageRequest);
-
-            int totalPages = userPage.getTotalPages();
-            List<UserResponse> users = userPage.getContent();
-
-            UserListResponse userListResponse = UserListResponse.builder()
-                    .users(users)
-                    .totalPages(totalPages)
-                    .message(MessageKeys.RETRIEVED_ALL_USERS_SUCCESSFULLY)
-                    .build();
-
-            return ResponseEntity.ok(userListResponse);
-        } catch (IllegalArgumentException e) {
-            UserListResponse errorResponse = UserListResponse.builder()
-                    .users(Collections.emptyList())
-                    .totalPages(0)
-                    .message("Invalid parameters")
-                    .build();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(errorResponse);
-        } catch (Exception e) {
-            UserListResponse errorResponse = UserListResponse.builder()
-                    .users(Collections.emptyList())
-                    .totalPages(0)
-                    .message(MessageKeys.RETRIEVED_ALL_USERS_FAILED)
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(errorResponse);
-        }
-    }
-
     @GetMapping("/get-user/{id}")
     public ResponseEntity<UserResponse> getUser(@Valid @PathVariable Long id) {
         try {
@@ -347,15 +309,20 @@ public class UserController {
 
     }
 
-    @GetMapping("/get-all-users/{roleId}")
+    @GetMapping("/get-all-users")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<?> getUsers(@PathVariable Long roleId) {
+    public ResponseEntity<?> getUsers(
+            @RequestParam Long roleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) DepartmentList department,
+            @RequestParam(required = false) String search) {
         try {
-            List<UserResponse> users = userService.getAllUsers(roleId);
+            Page<UserResponse> users = userService.getAllUsers(roleId, page, size, department, search);
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid roleId: " + roleId);
+                    .body("Invalid input parameters");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving users: " + e.getMessage());
