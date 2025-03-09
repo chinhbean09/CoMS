@@ -238,45 +238,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/get-all-user")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STAFF')")
-    public ResponseEntity<UserListResponse> getAllUsers(
-            @RequestParam(defaultValue = "") String keyword,
-            @NonNull @RequestParam("page") int page,
-            @RequestParam("limit") int limit) {
-        try {
-            PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("fullName").ascending());
-            Page<UserResponse> userPage = userService.getAllUsers(keyword, pageRequest);
-
-            int totalPages = userPage.getTotalPages();
-            List<UserResponse> users = userPage.getContent();
-
-            UserListResponse userListResponse = UserListResponse.builder()
-                    .users(users)
-                    .totalPages(totalPages)
-                    .message(MessageKeys.RETRIEVED_ALL_USERS_SUCCESSFULLY)
-                    .build();
-
-            return ResponseEntity.ok(userListResponse);
-        } catch (IllegalArgumentException e) {
-            UserListResponse errorResponse = UserListResponse.builder()
-                    .users(Collections.emptyList())
-                    .totalPages(0)
-                    .message("Invalid parameters")
-                    .build();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(errorResponse);
-        } catch (Exception e) {
-            UserListResponse errorResponse = UserListResponse.builder()
-                    .users(Collections.emptyList())
-                    .totalPages(0)
-                    .message(MessageKeys.RETRIEVED_ALL_USERS_FAILED)
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(errorResponse);
-        }
-    }
-
     @GetMapping("/get-user/{id}")
     public ResponseEntity<UserResponse> getUser(@Valid @PathVariable Long id) {
         try {
