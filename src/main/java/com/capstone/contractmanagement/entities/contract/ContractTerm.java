@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities.contract;
 
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,6 +41,6 @@ public class ContractTerm {
     // Liên kết với hợp đồng chứa bản snapshot này
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = false)
-    @JsonIgnore
+    @JsonBackReference
     private Contract contract;
 }

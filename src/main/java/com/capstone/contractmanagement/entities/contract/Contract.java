@@ -6,6 +6,7 @@
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.fasterxml.jackson.annotation.JsonBackReference;
     import com.fasterxml.jackson.annotation.JsonIgnore;
+    import com.fasterxml.jackson.annotation.JsonManagedReference;
     import jakarta.persistence.*;
     import lombok.*;
 
@@ -52,9 +53,6 @@
         @Column(name = "updated_at")
         private LocalDateTime updatedAt;
 
-        @Column(name = "original_contract_id")
-        private Long originalContractId;
-
         // Relationship với PaymentSchedules
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
@@ -89,14 +87,6 @@
         @JoinColumn(name = "user_id", nullable = false)
         @JsonIgnore
         private User user;
-
-        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-        @JsonIgnore
-        private List<ContractTerm> contractTerms = new ArrayList<>();
-
-        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-        @JsonIgnore
-        private List<ContractAdditionalTermDetail> additionalTermDetails = new ArrayList<>();
 
         @Builder.Default
         @Column(name = "is_date_late_checked")
@@ -163,4 +153,20 @@
         @JsonIgnore
         private ContractType contractType;
 
+        @Column(name = "original_contract_id")
+        private Long originalContractId;
+
+        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+        @JsonManagedReference
+        private List<ContractTerm> contractTerms = new ArrayList<>();
+
+        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+        @JsonIgnore
+        private List<ContractAdditionalTermDetail> additionalTermDetails = new ArrayList<>();
+
+
+        //Việc tăng số phiên bản (version) trong hệ thống giúp phản ánh rằng hợp đồng
+        //đã được chỉnh sửa và cho phép bạn theo dõi trạng thái tổng thể của hợp đồng qua thời gian.
+        @Column(name = "version", nullable = false)
+        private Integer version = 1; // Mặc định là phiên bản 1
     }
