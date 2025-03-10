@@ -337,23 +337,23 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Page<UserResponse> getAllUsers(Long roleId, int page, int size, DepartmentList department, String search) {
+    public Page<UserResponse> getAllUsers(int page, int size, DepartmentList department, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage;
 
-        // Nếu có giá trị tìm kiếm thì sử dụng truy vấn chứa điều kiện fullName
+        // Nếu có tìm kiếm theo fullName
         if (search != null && !search.isEmpty()) {
             if (department != null) {
-                userPage = UserRepository.findByRoleIdAndDepartmentAndFullNameContainingIgnoreCase(roleId, department, search, pageable);
+                userPage = UserRepository.findByDepartmentAndFullNameContainingIgnoreCase(department, search, pageable);
             } else {
-                userPage = UserRepository.findByRoleIdAndFullNameContainingIgnoreCase(roleId, search, pageable);
+                userPage = UserRepository.findByFullNameContainingIgnoreCase(search, pageable);
             }
         } else {
-            // Không có tìm kiếm, chỉ sử dụng filter theo roleId và (nếu có) department
+            // Nếu không tìm kiếm theo fullName
             if (department != null) {
-                userPage = UserRepository.findByRoleIdAndDepartment(roleId, department, pageable);
+                userPage = UserRepository.findByDepartment(department, pageable);
             } else {
-                userPage = UserRepository.findByRoleId(roleId, pageable);
+                userPage = UserRepository.findAll(pageable);
             }
         }
         return userPage.map(UserResponse::fromUser);
