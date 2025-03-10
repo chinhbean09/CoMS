@@ -310,15 +310,14 @@ public class UserController {
     }
 
     @GetMapping("/get-all-users")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MANAGER')")
     public ResponseEntity<?> getUsers(
-            @RequestParam Long roleId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) DepartmentList department,
             @RequestParam(required = false) String search) {
         try {
-            Page<UserResponse> users = userService.getAllUsers(roleId, page, size, department, search);
+            Page<UserResponse> users = userService.getAllUsers(page, size, department, search);
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

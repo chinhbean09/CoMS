@@ -29,7 +29,7 @@ public interface IUserService {
 
     User getUserDetailsFromRefreshToken(String refreshToken) throws Exception;
 
-    Page<UserResponse> getAllUsers(Long roleId, int page, int size, DepartmentList department, String search);
+    Page<UserResponse> getAllUsers(int page, int size, DepartmentList department, String search);
 
     void updatePassword(String email, String password) throws DataNotFoundException;
 

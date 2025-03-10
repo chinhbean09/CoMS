@@ -82,7 +82,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 User user = payment.getContract().getUser();
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, reminderMessage, contractId);
+                notificationService.saveNotification(user, reminderMessage, payment.getContract());
                 sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
@@ -108,7 +108,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, overdueMessage, contractId);
+                notificationService.saveNotification(user, overdueMessage, payment.getContract());
                 sendEmailExpired(payment);
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
