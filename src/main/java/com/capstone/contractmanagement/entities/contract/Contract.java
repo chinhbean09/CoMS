@@ -157,10 +157,10 @@
         private Long originalContractId;
 
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
-        @JsonManagedReference
-        private List<ContractTerm> contractTerms = new ArrayList<>();
+        @JsonIgnore
+        private List<ContractTerm> contractTerms;
 
-        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL)
         @JsonIgnore
         private List<ContractAdditionalTermDetail> additionalTermDetails = new ArrayList<>();
 
