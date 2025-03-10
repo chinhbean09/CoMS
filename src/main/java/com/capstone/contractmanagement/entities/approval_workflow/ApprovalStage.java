@@ -40,7 +40,11 @@ public class ApprovalStage {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    // Liên kết với ApprovalWorkflow
+    // Nội dung comment (được lưu khi bước duyệt bị từ chối)
+    @Column(name = "comment", columnDefinition = "TEXT")
+    private String comment;
+
+    // Liên kết với quy trình phê duyệt
     @ManyToOne
     @JoinColumn(name = "workflow_id", nullable = false)
     @JsonIgnore
