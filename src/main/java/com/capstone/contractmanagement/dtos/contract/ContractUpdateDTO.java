@@ -19,7 +19,6 @@ import java.util.Map;
 public class ContractUpdateDTO {
 
     private String title;
-    private String contractNumber;
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;

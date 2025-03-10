@@ -41,6 +41,6 @@ public class ContractTerm {
     // Liên kết với hợp đồng chứa bản snapshot này
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     private Contract contract;
 }
