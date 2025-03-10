@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStage
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 
 import java.util.List;
