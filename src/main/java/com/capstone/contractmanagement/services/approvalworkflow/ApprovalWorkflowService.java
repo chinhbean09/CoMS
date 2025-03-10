@@ -19,7 +19,6 @@ import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageR
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
-import com.capstone.contractmanagement.services.workflow.IWorkflowService;
 import com.capstone.contractmanagement.utils.MailTemplate;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.mail.MessagingException;
@@ -45,7 +44,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
     private final IMailService mailService;
-    private final IWorkflowService workflowService;
 
     @Override
     @Transactional
@@ -230,7 +228,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     User firstApprover = firstStage.getApprover();
                     messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
                     sendEmailReminder(contract, firstApprover, firstStage);
-                    notificationService.saveNotification(firstApprover, notificationMessage, contractId);
+                    notificationService.saveNotification(firstApprover, notificationMessage, contract);
                 });
     }
 
@@ -265,7 +263,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         // Gửi thông báo đến user, sử dụng username làm định danh user destination
                         messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
                         sendEmailReminder(contract, nextApprover, nextStage);
-                        notificationService.saveNotification(nextApprover, notificationMessage, contractId);
+                        notificationService.saveNotification(nextApprover, notificationMessage, contract);
                     });
         }
     }
@@ -282,15 +280,16 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Cập nhật trạng thái mới
         stage.setStatus(ApprovalStatus.REJECTED);
         stage.setApprovedAt(LocalDateTime.now());
+        stage.setComment(workflowDTO.getComment());
         approvalStageRepository.save(stage);
-        workflowService.createWorkflow(contract, workflowDTO, currentUser);
+        //workflowService.createWorkflow(contract, workflowDTO, currentUser);
         Map<String, Object> payload = new HashMap<>();
         String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
         payload.put("message", notificationMessage);
         payload.put("contractId", contractId);
         // Gửi thông báo đến user, sử dụng username làm định danh user destination
         messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
-        notificationService.saveNotification(contract.getUser(), notificationMessage, contractId);
+        notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
     }
 
     @Override
@@ -309,6 +308,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                 .stageId(stage.getId())
                                 .stageOrder(stage.getStageOrder())
                                 .approver(stage.getApprover().getId())
+                                .approvedAt(stage.getApprovedAt())
+                                .status(stage.getStatus())
                                 .build())
                         .toList())
                 .build();
