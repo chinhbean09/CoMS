@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 
@@ -39,5 +40,8 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     @Query("SELECT COUNT(c) FROM Contract c WHERE c.contractNumber LIKE :prefix% AND c.createdAt >= :startOfDay AND c.createdAt < :endOfDay")
     int countByContractNumberStartingWithAndDate(String prefix, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    @Query("SELECT MAX(c.version) FROM Contract c WHERE c.originalContractId = :originalContractId")
+    Integer findMaxVersionByOriginalContractId(@Param("originalContractId") Long originalContractId);
 
 }
