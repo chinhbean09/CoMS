@@ -691,6 +691,7 @@ public class ContractService implements IContractService{
                 .isDateLateChecked(originalContract.getIsDateLateChecked())
                 .autoRenew(originalContract.getAutoRenew())
                 .violate(originalContract.getViolate())
+                .maxDateLate(originalContract.getMaxDateLate())
                 .suspend(originalContract.getSuspend())
                 .suspendContent(originalContract.getSuspendContent())
                 .contractType(originalContract.getContractType())
@@ -962,6 +963,12 @@ public class ContractService implements IContractService{
             contract.setSuspendContent(dto.getSuspendContent());
         }
 
+        //MaxDateLate
+        if (dto.getMaxDateLate() != null && !dto.getMaxDateLate().equals(contract.getMaxDateLate())) {
+            auditTrails.add(createAuditTrail(contract, "maxDateLate", String.valueOf(contract.getMaxDateLate()),
+                    String.valueOf(dto.getMaxDateLate()), now, changedBy, "UPDATE", "Cập nhật nội dung suspend cho hợp đồng"));
+            contract.setMaxDateLate(dto.getMaxDateLate());
+        }
 
         //Status
         if (dto.getStatus() != null && !dto.getStatus().equals(contract.getStatus())) {
