@@ -33,16 +33,15 @@ public interface IUserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByRole_RoleNameIn(List<String> roleNames, Pageable pageable);
 
-    // Phân trang theo roleId
-    Page<User> findByRoleId(Long roleId, Pageable pageable);
+    // Lấy tất cả người dùng có phân trang
+    Page<User> findAll(Pageable pageable);
 
-    // Phân trang theo roleId và department
-    Page<User> findByRoleIdAndDepartment(Long roleId, DepartmentList department, Pageable pageable);
+    // Lọc theo department có phân trang
+    Page<User> findByDepartment(DepartmentList department, Pageable pageable);
 
-    // Tìm kiếm theo fullName với roleId
-    Page<User> findByRoleIdAndFullNameContainingIgnoreCase(Long roleId, String fullName, Pageable pageable);
+    // Tìm kiếm theo fullName (không phân biệt hoa thường) có phân trang
+    Page<User> findByFullNameContainingIgnoreCase(String fullName, Pageable pageable);
 
-    // Tìm kiếm theo fullName với roleId và department
-    Page<User> findByRoleIdAndDepartmentAndFullNameContainingIgnoreCase(Long roleId, DepartmentList department, String fullName, Pageable pageable);
-
+    // Lọc theo department và tìm kiếm theo fullName có phân trang
+    Page<User> findByDepartmentAndFullNameContainingIgnoreCase(DepartmentList department, String fullName, Pageable pageable);
 }

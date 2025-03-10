@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.notification;
 
 import com.capstone.contractmanagement.entities.Notification;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.INotificationRepository;
 import com.capstone.contractmanagement.responses.notification.NotificationResponse;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -23,12 +25,13 @@ public class NotificationService implements INotificationService {
 
     private final INotificationRepository notificationRepository;
     @Override
-    public void saveNotification(User user, String message, Long contractId) {
+    @Transactional
+    public void saveNotification(User user, String message, Contract contract) {
         Notification notification = Notification.builder()
                 .user(user)
                 .message(message)
                 .isRead(false)
-                .contractId(contractId)
+                .contract(contract)
                 .createdAt(LocalDateTime.now())
                 .build();
         notificationRepository.save(notification);
@@ -47,7 +50,7 @@ public class NotificationService implements INotificationService {
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .userId(notification.getUser().getId())
-                .contractId(notification.getContractId())
+                .contractId(notification.getContract().getId())
                 .build());
     }
 
@@ -61,7 +64,7 @@ public class NotificationService implements INotificationService {
                     .isRead(notification.getIsRead())
                     .createdAt(notification.getCreatedAt())
                     .userId(notification.getUser().getId())
-                    .contractId(notification.getContractId())
+                    .contractId(notification.getContract().getId())
                     .build();
         }
     }
