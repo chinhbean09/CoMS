@@ -2,6 +2,8 @@ package com.capstone.contractmanagement.entities.approval_workflow;
 
 
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.entities.contract.ContractType;
+import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,10 +36,10 @@ public class ApprovalWorkflow {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Liên kết với hợp đồng (Contract)
-    @OneToMany(mappedBy = "approvalWorkflow")
+    // Liên kết với hợp đồng (mỗi hợp đồng có 1 quy trình duyệt)
+    @OneToOne(mappedBy = "approvalWorkflow")
     @JsonIgnore
-    private List<Contract> contracts = new ArrayList<>();
+    private Contract contract;
 
     // Danh sách các bước duyệt
     @OneToMany(mappedBy = "approvalWorkflow", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -45,4 +47,8 @@ public class ApprovalWorkflow {
     @Builder.Default
     @JsonIgnore
     private List<ApprovalStage> stages = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "contract_type_id")
+    private ContractType contractType;
 }
