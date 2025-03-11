@@ -140,7 +140,8 @@
         @Column(name = "contract_content", columnDefinition = "TEXT")
         private String contractContent;
 
-        @ManyToOne
+        // Liên kết với quy trình phê duyệt (mỗi hợp đồng có 1 quy trình duyệt riêng)
+        @OneToOne
         @JoinColumn(name = "approval_workflow_id")
         @JsonIgnore
         private ApprovalWorkflow approvalWorkflow;
