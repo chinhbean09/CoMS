@@ -34,7 +34,7 @@
         @Column(name = "contract_location", length = 255)
         private String contractLocation;
 
-        @Column(name = "contract_number", nullable = false, unique = true, length = 100)
+        @Column(name = "contract_number", nullable = false, unique = true, length = 255)
         private String contractNumber; // Số hợp đồng
 
         @Column(name = "special_terms_a", columnDefinition = "TEXT")
