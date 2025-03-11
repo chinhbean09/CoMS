@@ -86,4 +86,5 @@ public class MessageKeys {
     public static final String ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY = "Chọn quy trình phe duyet cho hợp đồng";
     public static final String APPROVE_STAGE_SUCCESSFULLY = "Phe duyet quy trình";
     public static final String REJECT_STAGE_SUCCESSFULLY = "Tu choi quy trình";
+    public static final String GET_APPROVAL_COMMENTS_SUCCESSFULLY = "Lấy danh sách binh luan phe duyet hợp đồng";
 }

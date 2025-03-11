@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 
 import java.util.List;
 
@@ -30,4 +31,9 @@ public interface IApprovalWorkflowService {
     void rejectStage(Long contractId, Long stageId, WorkflowDTO workflowDTO) throws DataNotFoundException;
 
     ApprovalWorkflowResponse getWorkflowByContractId(Long contractId) throws DataNotFoundException;
+
+    // get approval workflow by contractTypeId
+    List<ApprovalWorkflowResponse> getWorkflowByContractTypeId(Long contractTypeId) throws DataNotFoundException;
+
+    List<CommentResponse> getApprovalStageCommentDetailsByContractId(Long contractId) throws DataNotFoundException;
 }
