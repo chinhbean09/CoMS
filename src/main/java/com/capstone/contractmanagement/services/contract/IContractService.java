@@ -31,4 +31,6 @@ public interface IContractService {
 
 
     Contract updateContract(Long contractId, ContractUpdateDTO dto);
+
+    Contract rollbackContract(Long originalContractId, int targetVersion);
 }

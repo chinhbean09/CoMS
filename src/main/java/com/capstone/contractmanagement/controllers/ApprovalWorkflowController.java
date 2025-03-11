@@ -137,7 +137,6 @@ public class ApprovalWorkflowController {
                 .data(comments)
                 .build());
     }
-
     @GetMapping("/get-contract-for-approver/{approverId}")
     public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId) throws DataNotFoundException {
         List<ContractResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId);
@@ -147,4 +146,5 @@ public class ApprovalWorkflowController {
                 .data(contracts)
                 .build());
     }
+
 }
