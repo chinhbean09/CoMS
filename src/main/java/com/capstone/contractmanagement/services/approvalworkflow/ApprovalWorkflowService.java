@@ -16,6 +16,7 @@ import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
+import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MailTemplate;
@@ -420,6 +421,80 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         .commentedAt(stage.getApprovedAt())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<ContractResponse> getContractsForApprover(Long approverId) {
+        // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
+        List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
+
+        // Lọc hợp đồng để chọn những hợp đồng mà bước duyệt hiện tại (bước PENDING có stageOrder nhỏ nhất)
+        // có người duyệt (approver) trùng với approverId được truyền vào
+        List<Contract> filteredContracts = pendingContracts.stream()
+                .filter(contract -> {
+                    ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+                    if (workflow == null || workflow.getStages().isEmpty()) {
+                        return false;
+                    }
+                    // Tìm bước duyệt hiện tại: bước PENDING với stageOrder nhỏ nhất
+                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
+                            .filter(stage -> stage.getStatus() == ApprovalStatus.PENDING)
+                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
+                    return currentStageOpt.isPresent() &&
+                            currentStageOpt.get().getApprover().getId().equals(approverId);
+                })
+                .collect(Collectors.toList());
+
+        // Chuyển đổi các Contract được lọc sang ContractResponse
+        return filteredContracts.stream()
+                .map(this::mapContractToContractResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Hàm chuyển đổi Contract entity sang ContractResponse DTO
+    private ContractResponse mapContractToContractResponse(Contract contract) {
+        return ContractResponse.builder()
+                .id(contract.getId())
+                .title(contract.getTitle())
+                //.user(mapUserToUserContractResponse(contract.getUser()))
+                .party(contract.getParty())
+                .contractNumber(contract.getContractNumber())
+                .status(contract.getStatus())
+                .createdAt(contract.getCreatedAt())
+                .updatedAt(contract.getUpdatedAt())
+                .signingDate(contract.getSigningDate())
+                .contractLocation(contract.getContractLocation())
+                .amount(contract.getAmount())
+                .contractTypeId(contract.getContractType() != null ? contract.getContractType().getId() : null)
+                .effectiveDate(contract.getEffectiveDate())
+                .expiryDate(contract.getExpiryDate())
+                .notifyEffectiveDate(contract.getNotifyEffectiveDate())
+                .notifyExpiryDate(contract.getNotifyExpiryDate())
+                .notifyEffectiveContent(contract.getNotifyEffectiveContent())
+                .notifyExpiryContent(contract.getNotifyExpiryContent())
+                .specialTermsA(contract.getSpecialTermsA())
+                .specialTermsB(contract.getSpecialTermsB())
+                .contractContent(contract.getContractContent())
+                .appendixEnabled(contract.getAppendixEnabled())
+                .transferEnabled(contract.getTransferEnabled())
+                .autoAddVAT(contract.getAutoAddVAT())
+                .vatPercentage(contract.getVatPercentage())
+                .isDateLateChecked(contract.getIsDateLateChecked())
+                .maxDateLate(contract.getMaxDateLate())
+                .autoRenew(contract.getAutoRenew())
+                .violate(contract.getViolate())
+                .suspend(contract.getSuspend())
+                .suspendContent(contract.getSuspendContent())
+                .version(contract.getVersion())
+                // Các danh sách term, additional config, payment schedules có thể được map theo logic riêng nếu cần.
+                .legalBasisTerms(new ArrayList<>())
+                .generalTerms(new ArrayList<>())
+                .otherTerms(new ArrayList<>())
+                .additionalTerms(new ArrayList<>())
+                .additionalConfig(new HashMap<>())
+                .paymentSchedules(new ArrayList<>())
+                .build();
     }
 
     private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
