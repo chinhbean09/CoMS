@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
+import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
@@ -339,6 +340,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         stage.setApprovedAt(LocalDateTime.now());
         stage.setComment(workflowDTO.getComment());
         approvalStageRepository.save(stage);
+        contract.setStatus(ContractStatus.REJECTED);
+        contractRepository.save(contract);
         //workflowService.createWorkflow(contract, workflowDTO, currentUser);
         Map<String, Object> payload = new HashMap<>();
         String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
@@ -458,7 +461,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         return ContractResponse.builder()
                 .id(contract.getId())
                 .title(contract.getTitle())
-                //.user(mapUserToUserContractResponse(contract.getUser()))
+                .user(mapUserToUserContractResponse(contract.getUser()))
                 .party(contract.getParty())
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
@@ -495,6 +498,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .additionalTerms(new ArrayList<>())
                 .additionalConfig(new HashMap<>())
                 .paymentSchedules(new ArrayList<>())
+                .build();
+    }
+
+    // Hàm chuyển đổi User entity sang UserContractResponse DTO (giả sử DTO này có các field: id, username, fullName, email,...)
+    private UserContractResponse mapUserToUserContractResponse(User user) {
+        return UserContractResponse.builder()
+                .userId(user.getId())
+                .fullName(user.getFullName())
                 .build();
     }
 
