@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import java.util.Optional;
 
 public interface IContractRepository extends JpaRepository<Contract, Long> {
@@ -40,6 +42,8 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     @Query("SELECT MAX(c.version) FROM Contract c WHERE c.originalContractId = :originalContractId")
     Integer findMaxVersionByOriginalContractId(@Param("originalContractId") Long originalContractId);
+
+    List<Contract> findByStatus(ContractStatus status);
 
     // Truy vấn lấy hợp đồng phiên bản mới nhất theo status
     @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.version = " +
