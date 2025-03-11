@@ -304,7 +304,8 @@ public class ContractService implements IContractService{
 
         // 5. Lưu hợp đồng với toàn bộ snapshot điều khoản và additional config
         Contract savedContract = contractRepository.save(contract);
-
+        savedContract.setOriginalContractId(savedContract.getId());
+        contractRepository.save(savedContract);
         // 6. Ghi audit trail cho các trường quan trọng
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
@@ -428,7 +429,10 @@ public class ContractService implements IContractService{
 
     @Override
     @Transactional(readOnly = true)
-    public Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status, Long contractTypeId) {
+    public Page<GetAllContractReponse> getAllContracts(Pageable pageable,
+                                                       String keyword,
+                                                       ContractStatus status,
+                                                       Long contractTypeId) {
         boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
         boolean hasStatusFilter = status != null;
         boolean hasContractTypeFilter = contractTypeId != null;
@@ -438,17 +442,17 @@ public class ContractService implements IContractService{
             if (hasContractTypeFilter) {
                 if (hasSearch) {
                     keyword = keyword.trim();
-                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
                             keyword, status, contractTypeId, pageable);
                 } else {
-                    contracts = contractRepository.findByStatusAndContractTypeId(status, contractTypeId, pageable);
+                    contracts = contractRepository.findLatestByStatusAndContractTypeId(status, contractTypeId, pageable);
                 }
             } else {
                 if (hasSearch) {
                     keyword = keyword.trim();
-                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
                 } else {
-                    contracts = contractRepository.findByStatus(status, pageable);
+                    contracts = contractRepository.findLatestByStatus(status, pageable);
                 }
             }
         } else {
@@ -456,17 +460,17 @@ public class ContractService implements IContractService{
             if (hasContractTypeFilter) {
                 if (hasSearch) {
                     keyword = keyword.trim();
-                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
                             keyword, ContractStatus.DELETED, contractTypeId, pageable);
                 } else {
-                    contracts = contractRepository.findByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
+                    contracts = contractRepository.findLatestByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
                 }
             } else {
                 if (hasSearch) {
                     keyword = keyword.trim();
-                    contracts = contractRepository.findByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
+                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
                 } else {
-                    contracts = contractRepository.findByStatusNot(ContractStatus.DELETED, pageable);
+                    contracts = contractRepository.findLatestByStatusNot(ContractStatus.DELETED, pageable);
                 }
             }
         }
@@ -488,6 +492,8 @@ public class ContractService implements IContractService{
                         .id(contract.getParty().getId())
                         .partnerName(contract.getParty().getPartnerName())
                         .build())
+                .version(contract.getVersion())
+                .originalContractId(contract.getOriginalContractId())
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .build();
     }
@@ -2031,5 +2037,131 @@ public class ContractService implements IContractService{
         return VALID_TRANSITIONS.getOrDefault(fromStatus, EnumSet.noneOf(ContractStatus.class)).contains(toStatus);
     }
 
+
+    @Transactional
+    @Override
+    public Contract rollbackContract(Long originalContractId, int targetVersion) {
+        // 1. Tìm hợp đồng cần rollback về
+        Contract targetContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, targetVersion)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với originalContractId: " + originalContractId + " và version: " + targetVersion));
+
+        // 2. Tìm phiên bản hiện tại (mới nhất) để so sánh và ghi log
+        Integer currentMaxVersion = contractRepository.findMaxVersionByOriginalContractId(originalContractId);
+        if (currentMaxVersion == null || currentMaxVersion < targetVersion) {
+            throw new RuntimeException("Phiên bản hiện tại không tồn tại hoặc nhỏ hơn phiên bản rollback");
+        }
+        Contract currentContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, currentMaxVersion)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên bản hiện tại"));
+
+        // 3. Tính toán phiên bản mới
+        int newVersion = currentMaxVersion + 1;
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = currentUser.getLoggedInUser().getFullName();
+
+        // 4. Tạo hợp đồng mới dựa trên targetContract
+        Contract rollbackContract = Contract.builder()
+                .originalContractId(originalContractId)
+                .version(newVersion)
+                .signingDate(targetContract.getSigningDate())
+                .contractLocation(targetContract.getContractLocation())
+                .contractNumber(generateNewContractNumber(targetContract, newVersion)) // Tạo contractNumber mới
+                .specialTermsA(targetContract.getSpecialTermsA())
+                .specialTermsB(targetContract.getSpecialTermsB())
+                .status(targetContract.getStatus())
+                .createdAt(now)
+                .updatedAt(now)
+                .effectiveDate(targetContract.getEffectiveDate())
+                .expiryDate(targetContract.getExpiryDate())
+                .notifyEffectiveDate(targetContract.getNotifyEffectiveDate())
+                .notifyExpiryDate(targetContract.getNotifyExpiryDate())
+                .notifyEffectiveContent(targetContract.getNotifyEffectiveContent())
+                .notifyExpiryContent(targetContract.getNotifyExpiryContent())
+                .title(targetContract.getTitle())
+                .amount(targetContract.getAmount())
+                .user(targetContract.getUser())
+                .isDateLateChecked(targetContract.getIsDateLateChecked())
+                .template(targetContract.getTemplate())
+                .party(targetContract.getParty())
+                .appendixEnabled(targetContract.getAppendixEnabled())
+                .transferEnabled(targetContract.getTransferEnabled())
+                .autoAddVAT(targetContract.getAutoAddVAT())
+                .vatPercentage(targetContract.getVatPercentage())
+                .autoRenew(targetContract.getAutoRenew())
+                .violate(targetContract.getViolate())
+                .suspend(targetContract.getSuspend())
+                .suspendContent(targetContract.getSuspendContent())
+                .contractContent(targetContract.getContractContent())
+                .approvalWorkflow(targetContract.getApprovalWorkflow())
+                .maxDateLate(targetContract.getMaxDateLate())
+                .contractType(targetContract.getContractType())
+                .build();
+
+        // 5. Sao chép ContractTerms
+        List<ContractTerm> rollbackTerms = new ArrayList<>();
+        for (ContractTerm oldTerm : targetContract.getContractTerms()) {
+            ContractTerm newTerm = ContractTerm.builder()
+                    .originalTermId(oldTerm.getOriginalTermId())
+                    .termLabel(oldTerm.getTermLabel())
+                    .termValue(oldTerm.getTermValue())
+                    .termType(oldTerm.getTermType())
+                    .contract(rollbackContract)
+                    .build();
+            rollbackTerms.add(newTerm);
+        }
+        rollbackContract.setContractTerms(rollbackTerms);
+
+        // 6. Sao chép ContractAdditionalTermDetails
+        List<ContractAdditionalTermDetail> rollbackDetails = new ArrayList<>();
+        for (ContractAdditionalTermDetail oldDetail : targetContract.getAdditionalTermDetails()) {
+            ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
+                    .contract(rollbackContract)
+                    .typeTermId(oldDetail.getTypeTermId())
+                    .commonTerms(new ArrayList<>(oldDetail.getCommonTerms()))
+                    .aTerms(new ArrayList<>(oldDetail.getATerms()))
+                    .bTerms(new ArrayList<>(oldDetail.getBTerms()))
+                    .build();
+            rollbackDetails.add(newDetail);
+        }
+        rollbackContract.setAdditionalTermDetails(rollbackDetails);
+
+        // 7. Sao chép PaymentSchedules
+        List<PaymentSchedule> rollbackPayments = new ArrayList<>();
+        for (PaymentSchedule oldPayment : targetContract.getPaymentSchedules()) {
+            PaymentSchedule newPayment = new PaymentSchedule();
+            newPayment.setContract(rollbackContract);
+            newPayment.setPaymentOrder(oldPayment.getPaymentOrder());
+            newPayment.setAmount(oldPayment.getAmount());
+            newPayment.setNotifyPaymentDate(oldPayment.getNotifyPaymentDate());
+            newPayment.setPaymentDate(oldPayment.getPaymentDate());
+            newPayment.setStatus(oldPayment.getStatus());
+            newPayment.setPaymentMethod(oldPayment.getPaymentMethod());
+            newPayment.setNotifyPaymentContent(oldPayment.getNotifyPaymentContent());
+            newPayment.setReminderEmailSent(oldPayment.isReminderEmailSent());
+            newPayment.setOverdueEmailSent(oldPayment.isOverdueEmailSent());
+            rollbackPayments.add(newPayment);
+        }
+        rollbackContract.setPaymentSchedules(rollbackPayments);
+
+        // 8. Lưu hợp đồng rollback
+        Contract savedRollbackContract = contractRepository.save(rollbackContract);
+
+        // 9. Ghi audit trail cho hành động rollback
+        AuditTrail rollbackAuditTrail = AuditTrail.builder()
+                .contract(savedRollbackContract)
+                .entityName("Contract")
+                .entityId(savedRollbackContract.getId())
+                .action("ROLLBACK")
+                .fieldName("contract")
+                .oldValue(serializeContract(currentContract))
+                .newValue(serializeContract(savedRollbackContract))
+                .changedAt(now)
+                .changedBy(changedBy)
+                .changeSummary("Đã rollback hợp đồng từ phiên bản " + currentMaxVersion + " về phiên bản " + targetVersion +
+                        " (tạo phiên bản mới " + newVersion + ")")
+                .build();
+        auditTrailRepository.save(rollbackAuditTrail);
+
+        return savedRollbackContract;
+    }
 
 }

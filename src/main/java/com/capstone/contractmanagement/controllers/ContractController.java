@@ -2,15 +2,12 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
-import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
 import com.capstone.contractmanagement.entities.contract.Contract;
-import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
-import com.capstone.contractmanagement.responses.template.ContractTemplateResponse;
 import com.capstone.contractmanagement.services.contract.IContractService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -202,6 +199,13 @@ public class ContractController {
                     new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null)
             );
         }
+    }
+
+    @PostMapping("/rollback")
+    public ResponseEntity<Contract> rollbackContract(@RequestParam Long originalContractId,
+                                                     @RequestParam int version) {
+        Contract rollbackContract = contractService.rollbackContract(originalContractId, version);
+        return ResponseEntity.ok(rollbackContract);
     }
 
 

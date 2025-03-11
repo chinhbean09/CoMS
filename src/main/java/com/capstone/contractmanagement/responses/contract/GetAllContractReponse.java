@@ -26,5 +26,7 @@ public class GetAllContractReponse {
     private Party party;
     private Double amount;
     private ContractStatus status;
+    private Integer version;
+    private Long originalContractId;
 
 }
