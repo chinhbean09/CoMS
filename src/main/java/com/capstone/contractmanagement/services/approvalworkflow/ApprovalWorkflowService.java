@@ -429,7 +429,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
         List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
 
-        // Lọc hợp đồng để chọn những hợp đồng mà bước duyệt hiện tại (bước PENDING có stageOrder nhỏ nhất)
+        // Lọc hợp đồng để chọn những hợp đồng mà bước duyệt hiện tại (bước có trạng thái PENDING hoặc REJECTED, với stageOrder nhỏ nhất)
         // có người duyệt (approver) trùng với approverId được truyền vào
         List<Contract> filteredContracts = pendingContracts.stream()
                 .filter(contract -> {
@@ -437,9 +437,10 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     if (workflow == null || workflow.getStages().isEmpty()) {
                         return false;
                     }
-                    // Tìm bước duyệt hiện tại: bước PENDING với stageOrder nhỏ nhất
+                    // Tìm bước duyệt hiện tại: bước có trạng thái PENDING hoặc REJECTED với stageOrder nhỏ nhất
                     Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
-                            .filter(stage -> stage.getStatus() == ApprovalStatus.PENDING)
+                            .filter(stage -> stage.getStatus() == ApprovalStatus.PENDING
+                                    || stage.getStatus() == ApprovalStatus.REJECTED)
                             .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
                     return currentStageOpt.isPresent() &&
                             currentStageOpt.get().getApprover().getId().equals(approverId);
