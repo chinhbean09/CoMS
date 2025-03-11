@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 public class ApprovalWorkflowDTO {
     private Long contractId;
+    private Long contractTypeId;
     private String name;
     private List<ApprovalStageDTO> stages;
 }
