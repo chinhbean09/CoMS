@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.services.approvalworkflow.IApprovalWorkflowService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.prefix}/approval-workflows")
@@ -111,6 +113,27 @@ public class ApprovalWorkflowController {
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
                 .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    // api get approval workflow by contract type id
+    @GetMapping("/get-by-contract-type-id/{contractTypeId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByContractTypeId(@PathVariable Long contractTypeId) throws DataNotFoundException {
+        List<ApprovalWorkflowResponse> approvalWorkflowResponse = approvalWorkflowService.getWorkflowByContractTypeId(contractTypeId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    @GetMapping("/get-contract-comments/{contractId}")
+    public ResponseEntity<ResponseObject> getApprovalComments(@PathVariable Long contractId) throws DataNotFoundException {
+        List<CommentResponse> comments = approvalWorkflowService.getApprovalStageCommentDetailsByContractId(contractId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(comments)
                 .build());
     }
 }
