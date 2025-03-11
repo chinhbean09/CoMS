@@ -273,7 +273,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             IUserRepository.save(user);
             System.out.println("Staff initialized!");
         }
-        initializeApprovalWorkflow();
+        //initializeApprovalWorkflow();
 
         System.out.println("Hello, I'm System Manager!");
     }
