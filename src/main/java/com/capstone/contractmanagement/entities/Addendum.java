@@ -1,7 +1,51 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.contract.Contract;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
 //Phụ lục là một tài liệu bổ sung, ghi nhận các thay đổi cụ thể trong điều khoản hợp đồng mà không thay thế toàn bộ hợp đồng gốc.
 //Đây là thực tiễn phổ biến trong pháp lý, giúp giữ nguyên tính liên tục của hợp đồng
 //và dễ dàng theo dõi những thay đổi riêng lẻ (ví dụ: "Điều khoản X sửa từ A thành B").
+@Entity
+@Table(name = "addenda")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Addendum {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // Tiêu đề phụ lục
+    @Column(name = "title", nullable = false, length = 200)
+    private String title;
+
+    // Nội dung phụ lục, ghi nhận các thay đổi cụ thể
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
+
+    // Ngày có hiệu lực của phụ lục
+    @Column(name = "effective_date")
+    private LocalDateTime effectiveDate;
+
+    @Column(name = "status")
+    private String status;
+
+    // Thời gian tạo phụ lục
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    // Thời gian cập nhật phụ lục
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Liên kết với hợp đồng gốc
+    @ManyToOne
+    @JoinColumn(name = "contract_id", nullable = true)
+    private Contract contract;
 }

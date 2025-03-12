@@ -143,9 +143,8 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             return;
         }
         try {
-            User approver1 = IUserRepository.findById(1L).orElse(null);
-            User approver2 = IUserRepository.findById(2L).orElse(null);
-            User approver3 = IUserRepository.findById(3L).orElse(null);
+            User approver1 = IUserRepository.findById(2L).orElse(null);
+            User approver2 = IUserRepository.findById(3L).orElse(null);
 
             // Tạo quy trình duyệt mới
             ApprovalWorkflow workflow = ApprovalWorkflow.builder()
@@ -168,18 +167,11 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                     .approvalWorkflow(workflow)
                     .build();
 
-            ApprovalStage stage3 = ApprovalStage.builder()
-                    .stageOrder(3)
-                    .approver(approver3)
-                    .status(ApprovalStatus.PENDING)
-                    .approvalWorkflow(workflow)
-                    .build();
 
             // Thêm các stage vào quy trình
             List<ApprovalStage> stages = new ArrayList<>();
             stages.add(stage1);
             stages.add(stage2);
-            stages.add(stage3);
             workflow.setStages(stages);
             workflow.setCustomStagesCount(stages.size());
 
@@ -273,7 +265,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             IUserRepository.save(user);
             System.out.println("Staff initialized!");
         }
-        //initializeApprovalWorkflow();
+        initializeApprovalWorkflow();
 
         System.out.println("Hello, I'm System Manager!");
     }
