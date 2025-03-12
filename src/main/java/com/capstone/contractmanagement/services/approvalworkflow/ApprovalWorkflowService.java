@@ -381,7 +381,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     public List<ApprovalWorkflowResponse> getWorkflowByContractTypeId(Long contractTypeId) throws DataNotFoundException {
 
         // Tìm ApprovalWorkflow theo contractTypeId (bạn cần định nghĩa phương thức này trong IApprovalWorkflowRepository)
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findByContractType_Id(contractTypeId);
+        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByContractType_IdOrderByCreatedAtDesc(contractTypeId);
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
         return workflow.stream()
@@ -454,6 +454,54 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         return filteredContracts.stream()
                 .map(this::mapContractToContractResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void resubmitContractForApproval(Long contractId) throws DataNotFoundException {
+        // Tìm hợp đồng theo contractId
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
+
+        // Lấy workflow của hợp đồng
+        ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        if (workflow == null || workflow.getStages().isEmpty()) {
+            throw new DataNotFoundException("Approval workflow not found for contract id: " + contractId);
+        }
+
+        // Reset lại tất cả các bước duyệt: đặt trạng thái về PENDING, xóa approvedAt và comment
+        workflow.getStages().forEach(stage -> {
+            stage.setStatus(ApprovalStatus.PENDING);
+            stage.setApprovedAt(null);
+            stage.setComment(null);
+            approvalStageRepository.save(stage);
+        });
+
+        // Cập nhật lại trạng thái của hợp đồng về APPROVAL_PENDING (để báo hiệu đang chờ duyệt lại)
+        contract.setStatus(ContractStatus.APPROVAL_PENDING);
+        contractRepository.save(contract);
+
+        // Tìm bước duyệt đầu tiên (stage có stageOrder nhỏ nhất)
+        Optional<ApprovalStage> firstStageOpt = workflow.getStages().stream()
+                .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
+
+        if (firstStageOpt.isPresent()) {
+            ApprovalStage firstStage = firstStageOpt.get();
+            User firstApprover = firstStage.getApprover();
+
+            // Tạo payload thông báo cho người duyệt ở bước đầu tiên
+            Map<String, Object> payload = new HashMap<>();
+            String notificationMessage = "Hợp đồng '" + contract.getTitle() + "' đã được chỉnh sửa và nộp lại để phê duyệt. Bạn có hợp đồng cần phê duyệt đợt "
+                    + firstStage.getStageOrder();
+            payload.put("message", notificationMessage);
+            payload.put("contractId", contractId);
+
+            // Gửi thông báo qua WebSocket
+            messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
+            // Gửi email nhắc nhở nếu cần
+            sendEmailReminder(contract, firstApprover, firstStage);
+            // Lưu thông báo vào hệ thống thông báo
+            notificationService.saveNotification(firstApprover, notificationMessage, contract);
+        }
     }
 
     // Hàm chuyển đổi Contract entity sang ContractResponse DTO
