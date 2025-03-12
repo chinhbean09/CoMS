@@ -616,12 +616,14 @@ public class ContractService implements IContractService{
                 .suspend(contract.getSuspend())
                 .suspendContent(contract.getSuspendContent())
                 .legalBasisTerms(legalBasisTerms)
+                .originalContractId(contract.getOriginalContractId())
                 .generalTerms(generalTerms)
                 .contractTypeId(contract.getContractType().getId())
                 .otherTerms(otherTerms)
                 .maxDateLate(contract.getMaxDateLate())
                 .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)
+
                 .version(contract.getVersion())
                 .additionalConfig(additionalConfig)
                 .build();
@@ -784,6 +786,8 @@ public class ContractService implements IContractService{
         } catch ( Exception e) {
             e.printStackTrace();
         }
+
+
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
         String changedBy = currentUser.getLoggedInUser().getFullName();
@@ -833,9 +837,7 @@ public class ContractService implements IContractService{
                 .contractType(currentContract.getContractType())
                 .build();
 
-        Contract savedNewContract = contractRepository.save(newContract);
-
-
+// Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
         // 3. ContractTerm
 
 /*
@@ -1355,6 +1357,15 @@ public class ContractService implements IContractService{
         // 7. Xử lý PaymentSchedule
         List<PaymentSchedule> updatedPayments = new ArrayList<>();
         List<AuditTrail> paymentAuditTrails = new ArrayList<>();
+        Map<AuditTrail, PaymentSchedule> auditTrailToPaymentMap = new HashMap<>(); // Lưu ánh xạ tạm thời
+
+        // Debug dữ liệu đầu vào
+        System.out.println("DTO Payments:");
+        if (dto.getPayments() != null) {
+            dto.getPayments().forEach(paymentDTO -> System.out.println("PaymentDTO: ID=" + paymentDTO.getId() + ", Order=" + paymentDTO.getPaymentOrder()));
+        } else {
+            System.out.println("dto.getPayments() is null");
+        }
 
         if (dto.getPayments() != null) {
             Set<Long> newPaymentIds = dto.getPayments().stream()
@@ -1363,27 +1374,16 @@ public class ContractService implements IContractService{
                     .collect(Collectors.toSet());
 
             for (PaymentScheduleDTO paymentDTO : dto.getPayments()) {
-                // Tìm PaymentSchedule cũ nếu có
                 PaymentSchedule oldPayment = paymentDTO.getId() != null ? currentContract.getPaymentSchedules().stream()
                         .filter(p -> p.getId().equals(paymentDTO.getId()))
                         .findFirst()
                         .orElse(null) : null;
 
-                if (oldPayment != null) {
-                    // Kiểm tra xem có thay đổi hay không
-                    boolean hasChanges = !Objects.equals(oldPayment.getPaymentOrder(), paymentDTO.getPaymentOrder()) ||
-                            !Objects.equals(oldPayment.getAmount(), paymentDTO.getAmount()) ||
-                            !Objects.equals(oldPayment.getNotifyPaymentDate(), paymentDTO.getNotifyPaymentDate()) ||
-                            !Objects.equals(oldPayment.getPaymentDate(), paymentDTO.getPaymentDate()) ||
-                            !Objects.equals(oldPayment.getStatus(), paymentDTO.getStatus()) ||
-                            !Objects.equals(oldPayment.getPaymentMethod(), paymentDTO.getPaymentMethod()) ||
-                            !Objects.equals(oldPayment.getNotifyPaymentContent(), paymentDTO.getNotifyPaymentContent()) ||
-                            oldPayment.isReminderEmailSent() != paymentDTO.isReminderEmailSent() ||
-                            oldPayment.isOverdueEmailSent() != paymentDTO.isOverdueEmailSent();
+                PaymentSchedule newPayment = new PaymentSchedule();
+                newPayment.setContract(newContract);
 
-                    // Tạo bản sao của oldPayment cho phiên bản mới
-                    PaymentSchedule newPayment = new PaymentSchedule();
-                    newPayment.setContract(newContract);
+                if (oldPayment != null) {
+                    // Sao chép dữ liệu từ oldPayment hoặc DTO
                     newPayment.setPaymentOrder(paymentDTO.getPaymentOrder() != null ? paymentDTO.getPaymentOrder() : oldPayment.getPaymentOrder());
                     newPayment.setAmount(paymentDTO.getAmount() != null ? paymentDTO.getAmount() : oldPayment.getAmount());
                     newPayment.setNotifyPaymentDate(paymentDTO.getNotifyPaymentDate() != null ? paymentDTO.getNotifyPaymentDate() : oldPayment.getNotifyPaymentDate());
@@ -1391,19 +1391,29 @@ public class ContractService implements IContractService{
                     newPayment.setStatus(paymentDTO.getStatus() != null ? paymentDTO.getStatus() : oldPayment.getStatus());
                     newPayment.setPaymentMethod(paymentDTO.getPaymentMethod() != null ? paymentDTO.getPaymentMethod() : oldPayment.getPaymentMethod());
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent() != null ? paymentDTO.getNotifyPaymentContent() : oldPayment.getNotifyPaymentContent());
-                    newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent() ? paymentDTO.isReminderEmailSent() : oldPayment.isReminderEmailSent());
-                    newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent() ? paymentDTO.isOverdueEmailSent() : oldPayment.isOverdueEmailSent());
+                    newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
+                    newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
+
+                    // Kiểm tra thay đổi
+                    boolean hasChanges = !Objects.equals(oldPayment.getPaymentOrder(), newPayment.getPaymentOrder()) ||
+                            !Objects.equals(oldPayment.getAmount(), newPayment.getAmount()) ||
+                            !Objects.equals(oldPayment.getNotifyPaymentDate(), newPayment.getNotifyPaymentDate()) ||
+                            !Objects.equals(oldPayment.getPaymentDate(), newPayment.getPaymentDate()) ||
+                            !Objects.equals(oldPayment.getStatus(), newPayment.getStatus()) ||
+                            !Objects.equals(oldPayment.getPaymentMethod(), newPayment.getPaymentMethod()) ||
+                            !Objects.equals(oldPayment.getNotifyPaymentContent(), newPayment.getNotifyPaymentContent()) ||
+                            oldPayment.isReminderEmailSent() != newPayment.isReminderEmailSent() ||
+                            oldPayment.isOverdueEmailSent() != newPayment.isOverdueEmailSent();
 
                     updatedPayments.add(newPayment);
 
                     if (hasChanges) {
-                        // Ghi log UPDATE cho bản sao mới
                         String oldValue = serializePaymentSchedule(oldPayment);
                         String newValue = serializePaymentSchedule(newPayment);
-                        paymentAuditTrails.add(AuditTrail.builder()
+                        AuditTrail auditTrail = AuditTrail.builder()
                                 .contract(newContract)
                                 .entityName("PaymentSchedule")
-                                .entityId(oldPayment.getId()) // Ghi lại ID cũ để tham chiếu
+                                .entityId(oldPayment.getId()) // ID gốc để tham chiếu
                                 .action("UPDATE")
                                 .fieldName("paymentSchedules")
                                 .oldValue(oldValue)
@@ -1411,12 +1421,13 @@ public class ContractService implements IContractService{
                                 .changedAt(now)
                                 .changedBy(changedBy)
                                 .changeSummary("Đã cập nhật PaymentSchedule với ID gốc: " + oldPayment.getId() + " trong phiên bản mới")
-                                .build());
+                                .build();
+                        paymentAuditTrails.add(auditTrail);
+                        auditTrailToPaymentMap.put(auditTrail, newPayment); // Lưu ánh xạ
+                        System.out.println("Added to map (UPDATE): " + newValue);
                     }
                 } else {
                     // Tạo mới PaymentSchedule
-                    PaymentSchedule newPayment = new PaymentSchedule();
-                    newPayment.setContract(newContract);
                     newPayment.setPaymentOrder(paymentDTO.getPaymentOrder());
                     newPayment.setAmount(paymentDTO.getAmount());
                     newPayment.setNotifyPaymentDate(paymentDTO.getNotifyPaymentDate());
@@ -1428,12 +1439,11 @@ public class ContractService implements IContractService{
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
                     updatedPayments.add(newPayment);
 
-                    // Ghi log CREATE
                     String newValue = serializePaymentSchedule(newPayment);
-                    paymentAuditTrails.add(AuditTrail.builder()
+                    AuditTrail auditTrail = AuditTrail.builder()
                             .contract(newContract)
                             .entityName("PaymentSchedule")
-                            .entityId(null) // ID sẽ được gán sau khi lưu
+                            .entityId(null)
                             .action("CREATE")
                             .fieldName("paymentSchedules")
                             .oldValue(null)
@@ -1441,15 +1451,17 @@ public class ContractService implements IContractService{
                             .changedAt(now)
                             .changedBy(changedBy)
                             .changeSummary("Đã tạo PaymentSchedule mới")
-                            .build());
+                            .build();
+                    paymentAuditTrails.add(auditTrail);
+                    auditTrailToPaymentMap.put(auditTrail, newPayment); // Lưu ánh xạ
+                    System.out.println("Added to map (CREATE): " + newValue);
                 }
             }
 
-            // Xử lý DELETE
             for (PaymentSchedule oldPayment : currentContract.getPaymentSchedules()) {
                 if (!newPaymentIds.contains(oldPayment.getId())) {
                     String oldValue = serializePaymentSchedule(oldPayment);
-                    paymentAuditTrails.add(AuditTrail.builder()
+                    AuditTrail auditTrail = AuditTrail.builder()
                             .contract(newContract)
                             .entityName("PaymentSchedule")
                             .entityId(oldPayment.getId())
@@ -1460,11 +1472,12 @@ public class ContractService implements IContractService{
                             .changedAt(now)
                             .changedBy(changedBy)
                             .changeSummary("Đã xóa PaymentSchedule với ID: " + oldPayment.getId() + " trong phiên bản mới")
-                            .build());
+                            .build();
+                    paymentAuditTrails.add(auditTrail);
+                    // Không cần thêm vào map vì DELETE không cần cập nhật newValue
                 }
             }
         } else {
-            // Nếu dto.getPayments() là null, sao chép tất cả PaymentSchedule cũ
             for (PaymentSchedule oldPayment : currentContract.getPaymentSchedules()) {
                 PaymentSchedule newPayment = new PaymentSchedule();
                 newPayment.setContract(newContract);
@@ -1481,22 +1494,27 @@ public class ContractService implements IContractService{
             }
         }
         newContract.setPaymentSchedules(updatedPayments);
+        Contract savedNewContract = contractRepository.save(newContract);
 
-        Contract savedNewContractForPayment = contractRepository.save(newContract);
-        for (AuditTrail auditTrail : paymentAuditTrails) {
-            if ("CREATE".equals(auditTrail.getAction()) && auditTrail.getEntityId() == null) {
-                PaymentSchedule savedPayment = savedNewContract.getPaymentSchedules().stream()
-                        .filter(p -> p.getPaymentOrder().equals(getPaymentOrderFromNewValue(auditTrail.getNewValue())))
-                        .findFirst()
-                        .orElse(null);
-                if (savedPayment != null) {
-                    auditTrail.setEntityId(savedPayment.getId());
-                }
-            }
-            auditTrail.setContract(savedNewContract);
-        }
+        System.out.println("PaymentSchedules in savedNewContract:");
+        savedNewContract.getPaymentSchedules().forEach(p -> System.out.println(serializePaymentSchedule(p)));
+
+//        for (AuditTrail auditTrail : paymentAuditTrails) {
+//            if ("CREATE".equals(auditTrail.getAction()) && auditTrail.getEntityId() == null) {
+//                String newValue = auditTrail.getNewValue();
+//                PaymentSchedule savedPayment = savedNewContract.getPaymentSchedules().stream()
+//                        .filter(p -> serializePaymentSchedule(p).equals(newValue))
+//                        .findFirst()
+//                        .orElse(null);
+//                if (savedPayment != null) {
+//                    auditTrail.setEntityId(savedPayment.getId());
+//                } else {
+//                    System.err.println("Không tìm thấy PaymentSchedule tương ứng cho audit trail: " + newValue);
+//                }
+//            }
+//            auditTrail.setContract(savedNewContract); // Đảm bảo contract được gán đúng
+//        }
         // 8. Lưu hợp đồng mới
-         savedNewContract = contractRepository.save(newContract);
 
 // 4. Ghi audit trail cho các thay đổi trên hợp đồng chính
         if (dto.getTitle() != null && !dto.getTitle().equals(currentContract.getTitle())) {
@@ -1599,12 +1617,23 @@ public class ContractService implements IContractService{
         }
         for (AuditTrail auditTrail : paymentAuditTrails) {
             if ("CREATE".equals(auditTrail.getAction()) || "UPDATE".equals(auditTrail.getAction())) {
-                PaymentSchedule savedPayment = savedNewContract.getPaymentSchedules().stream()
-                        .filter(p -> p.getPaymentOrder().equals(getPaymentOrderFromNewValue(auditTrail.getNewValue())))
-                        .findFirst()
-                        .orElse(null);
-                if (savedPayment != null) {
-                    auditTrail.setEntityId(savedPayment.getId());
+                PaymentSchedule newPayment = auditTrailToPaymentMap.get(auditTrail);
+                if (newPayment != null) {
+                    PaymentSchedule savedPayment = savedNewContract.getPaymentSchedules().stream()
+                            .filter(p -> p.getPaymentOrder().equals(newPayment.getPaymentOrder())
+                                    && p.getAmount().equals(newPayment.getAmount())
+                                    && p.getNotifyPaymentDate().equals(newPayment.getNotifyPaymentDate()))
+                            .findFirst()
+                            .orElse(null);
+                    if (savedPayment != null) {
+                        auditTrail.setEntityId(savedPayment.getId());
+                        auditTrail.setNewValue(serializePaymentSchedule(savedPayment));
+                        System.out.println("Updated audit trail: " + auditTrail.getNewValue());
+                    } else {
+                        System.err.println("Không tìm thấy PaymentSchedule tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
+                    }
+                } else {
+                    System.err.println("Không tìm thấy PaymentSchedule trong map cho audit trail: " + auditTrail.getNewValue());
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -2050,12 +2079,15 @@ public class ContractService implements IContractService{
         if (currentMaxVersion == null || currentMaxVersion < targetVersion) {
             throw new RuntimeException("Phiên bản hiện tại không tồn tại hoặc nhỏ hơn phiên bản rollback");
         }
+
         Contract currentContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, currentMaxVersion)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên bản hiện tại"));
 
         // 3. Tính toán phiên bản mới
         int newVersion = currentMaxVersion + 1;
+
         LocalDateTime now = LocalDateTime.now();
+
         String changedBy = currentUser.getLoggedInUser().getFullName();
 
         // 4. Tạo hợp đồng mới dựa trên targetContract
