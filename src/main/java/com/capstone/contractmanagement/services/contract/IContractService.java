@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -21,7 +22,11 @@ public interface IContractService {
 
     Contract createContractFromTemplate(ContractDTO dto) throws DataNotFoundException;
 
-    Page<GetAllContractReponse> getAllContracts(Pageable pageable, String keyword, ContractStatus status, Long contractTypeId);
+    Page<GetAllContractReponse> getAllContracts(Pageable pageable,
+                                                String keyword,
+                                                ContractStatus status,
+                                                Long contractTypeId,
+                                                User currentUser);
 
     Contract duplicateContract(Long contractId);
 
