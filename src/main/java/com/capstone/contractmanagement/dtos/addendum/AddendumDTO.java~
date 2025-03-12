@@ -1,0 +1,9 @@
+package com.capstone.contractmanagement.dtos.addendum;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class AddendumDTO {
+}
