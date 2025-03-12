@@ -87,4 +87,13 @@ public class MessageKeys {
     public static final String APPROVE_STAGE_SUCCESSFULLY = "Phe duyet quy trình";
     public static final String REJECT_STAGE_SUCCESSFULLY = "Tu choi quy trình";
     public static final String GET_APPROVAL_COMMENTS_SUCCESSFULLY = "Lấy danh sách binh luan phe duyet hợp đồng";
+    public static final String ROLLBACK_CONTRACT_SUCCESSFULLY = "Rollback hợp đồng thành công";
+    public static final String GET_ALL_AUDIT_TRAILS_SUCCESSFULLY = "Lấy tất cả audit trails thành công";
+    public static final String GET_AUDIT_TRAILS_BY_CONTRACT_SUCCESSFULLY = "Lấy audit trails theo contract thành công";
+    public static final String GET_AUDIT_TRAILS_BY_ENTITY_SUCCESSFULLY = "Lấy audit trails theo entity thành công";
+    public static final String GET_AUDIT_TRAILS_BY_TIME_RANGE_SUCCESSFULLY = "Lấy audit trails trong khoảng thời gian thành công";
+    public static final String AUDIT_TRAILS_NOT_FOUND_FOR_CONTRACT = "Không tìm thấy audit trails cho contract với id: ";
+    public static final String AUDIT_TRAILS_NOT_FOUND_FOR_ENTITY = "Không tìm thấy audit trails cho entity ";
+    public static final String AUDIT_TRAILS_NOT_FOUND_IN_TIME_RANGE = "Không tìm thấy audit trails trong khoảng thời gian đã chọn";
+
 }
