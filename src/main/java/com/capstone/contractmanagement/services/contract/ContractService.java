@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -432,47 +433,100 @@ public class ContractService implements IContractService{
     public Page<GetAllContractReponse> getAllContracts(Pageable pageable,
                                                        String keyword,
                                                        ContractStatus status,
-                                                       Long contractTypeId) {
+                                                       Long contractTypeId,
+                                                       User currentUser) {
         boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
         boolean hasStatusFilter = status != null;
         boolean hasContractTypeFilter = contractTypeId != null;
         Page<Contract> contracts;
 
-        if (hasStatusFilter) {
-            if (hasContractTypeFilter) {
-                if (hasSearch) {
-                    keyword = keyword.trim();
-                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
-                            keyword, status, contractTypeId, pageable);
+        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
+        boolean isStaff = currentUser.getRole() != null &&
+                "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
+        if (isStaff && !isCeo) {
+            // Nếu là STAFF (và không phải CEO), chỉ lấy hợp đồng của user hiện tại
+            if (hasStatusFilter) {
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeIdAndUser(
+                                keyword, status, contractTypeId, currentUser, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusAndContractTypeIdAndUser(
+                                status, contractTypeId, currentUser, pageable);
+                    }
                 } else {
-                    contracts = contractRepository.findLatestByStatusAndContractTypeId(status, contractTypeId, pageable);
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndUser(
+                                keyword, status, currentUser, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusAndUser(
+                                status, currentUser, pageable);
+                    }
                 }
             } else {
-                if (hasSearch) {
-                    keyword = keyword.trim();
-                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeIdAndUser(
+                                keyword, ContractStatus.DELETED, contractTypeId, currentUser, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusNotAndContractTypeIdAndUser(
+                                ContractStatus.DELETED, contractTypeId, currentUser, pageable);
+                    }
                 } else {
-                    contracts = contractRepository.findLatestByStatus(status, pageable);
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndUser(
+                                keyword, ContractStatus.DELETED, currentUser, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusNotAndUser(
+                                ContractStatus.DELETED, currentUser, pageable);
+                    }
+                }
+            }
+        } else if (isCeo) {
+            // Nếu là CEO, thấy tất cả hợp đồng
+            if (hasStatusFilter) {
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+                                keyword, status, contractTypeId, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusAndContractTypeId(status, contractTypeId, pageable);
+                    }
+                } else {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatus(status, pageable);
+                    }
+                }
+            } else {
+                if (hasContractTypeFilter) {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+                                keyword, ContractStatus.DELETED, contractTypeId, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
+                    }
+                } else {
+                    if (hasSearch) {
+                        keyword = keyword.trim();
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
+                    } else {
+                        contracts = contractRepository.findLatestByStatusNot(ContractStatus.DELETED, pageable);
+                    }
                 }
             }
         } else {
-            // Mặc định loại bỏ các hợp đồng có trạng thái DELETED
-            if (hasContractTypeFilter) {
-                if (hasSearch) {
-                    keyword = keyword.trim();
-                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
-                            keyword, ContractStatus.DELETED, contractTypeId, pageable);
-                } else {
-                    contracts = contractRepository.findLatestByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
-                }
-            } else {
-                if (hasSearch) {
-                    keyword = keyword.trim();
-                    contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
-                } else {
-                    contracts = contractRepository.findLatestByStatusNot(ContractStatus.DELETED, pageable);
-                }
-            }
+            // Các role khác (bao gồm ADMIN), trả về danh sách rỗng
+            contracts = new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
         return contracts.map(this::convertToGetAllContractResponse);
