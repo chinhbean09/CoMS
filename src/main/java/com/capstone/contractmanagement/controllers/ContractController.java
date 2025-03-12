@@ -195,7 +195,7 @@
             try {
                 Contract contract = contractService.updateContract(contractId, dto);
                 return ResponseEntity.ok(ResponseObject.builder()
-                        .status(HttpStatus.CREATED)
+                        .status(HttpStatus.OK)
                         .message(MessageKeys.UPDATE_CONTRACT_SUCCESSFULLY)
                         .data(contract)
                         .build());
