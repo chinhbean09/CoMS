@@ -862,7 +862,7 @@ public class ContractService implements IContractService{
                 .contractNumber(newContractNumber)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
-                .status(dto.getStatus() != null ? dto.getStatus() : currentContract.getStatus())
+                .status(ContractStatus.UPDATED)
                 .createdAt(now)
                 .updatedAt(now)
                 .effectiveDate(dto.getEffectiveDate() != null ? dto.getEffectiveDate() : currentContract.getEffectiveDate())
