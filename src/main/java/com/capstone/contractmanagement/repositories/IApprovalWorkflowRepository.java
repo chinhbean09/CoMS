@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface IApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, Long> {
     List<ApprovalWorkflow> findByContractType_Id(Long contractTypeId);
+    List<ApprovalWorkflow> findTop3ByContractType_IdOrderByCreatedAtDesc(Long contractTypeId);
 }
