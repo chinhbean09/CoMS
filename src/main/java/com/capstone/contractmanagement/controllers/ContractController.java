@@ -181,13 +181,13 @@ public class ContractController {
         }
     }
 
-    @PostMapping("/update/{contractId}")
+    @PutMapping("/update/{contractId}")
     public ResponseEntity<ResponseObject> updateContract(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
         try {
             Contract contract = contractService.updateContract(contractId, dto);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.CREATED)
-                    .message(MessageKeys.UPDATE_TEMPLATE_SUCCESSFULLY)
+                    .message(MessageKeys.UPDATE_CONTRACT_SUCCESSFULLY)
                     .data(contract)
                     .build());
         } catch (IllegalArgumentException e) {
@@ -202,11 +202,26 @@ public class ContractController {
     }
 
     @PostMapping("/rollback")
-    public ResponseEntity<Contract> rollbackContract(@RequestParam Long originalContractId,
+    public ResponseEntity<ResponseObject> rollbackContract(@RequestParam Long originalContractId,
                                                      @RequestParam int version) {
-        Contract rollbackContract = contractService.rollbackContract(originalContractId, version);
-        return ResponseEntity.ok(rollbackContract);
+        try {
+            Contract rollbackContract = contractService.rollbackContract(originalContractId, version);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.CREATED)
+                    .message(MessageKeys.ROLLBACK_CONTRACT_SUCCESSFULLY)
+                    .data(rollbackContract)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    new ResponseObject(e.getMessage(), HttpStatus.BAD_REQUEST, null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null)
+            );
+        }
     }
+
 
 
 }

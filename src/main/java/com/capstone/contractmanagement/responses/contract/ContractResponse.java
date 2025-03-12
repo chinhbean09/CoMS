@@ -53,6 +53,7 @@ public class ContractResponse {
     private Boolean suspend;
     private String suspendContent;
     private Integer version;
+    private Long originalContractId;
     private List<TermResponse> legalBasisTerms;
     private List<TermResponse> generalTerms;
     private List<TermResponse> otherTerms;
