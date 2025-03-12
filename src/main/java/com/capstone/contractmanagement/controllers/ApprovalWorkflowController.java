@@ -147,4 +147,17 @@ public class ApprovalWorkflowController {
                 .build());
     }
 
+    @PostMapping("/resubmit/{contractId}")
+    public ResponseEntity<String> resubmitContract(@PathVariable Long contractId) {
+        try {
+            approvalWorkflowService.resubmitContractForApproval(contractId);
+            return ResponseEntity.ok("Contract resubmitted for approval successfully.");
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while resubmitting the contract.");
+        }
+    }
+
 }
