@@ -338,21 +338,19 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Tìm ApprovalStage theo id
         ApprovalStage stage = approvalStageRepository.findById(stageId)
                 .orElseThrow(() -> new DataNotFoundException("Approval stage not found with id " + stageId));
-        Long workflowId = contract.getApprovalWorkflow().getId();
         // Cập nhật trạng thái mới
         stage.setStatus(ApprovalStatus.REJECTED);
         stage.setApprovedAt(LocalDateTime.now());
         stage.setComment(workflowDTO.getComment());
         approvalStageRepository.save(stage);
         contract.setStatus(ContractStatus.REJECTED);
-        contract.setApprovalWorkflow(null);
+        //contract.setApprovalWorkflow(null);
         contractRepository.save(contract);
         //workflowService.createWorkflow(contract, workflowDTO, currentUser);
         Map<String, Object> payload = new HashMap<>();
         String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
         payload.put("message", notificationMessage);
         payload.put("contractId", contractId);
-        payload.put("workflowId", workflowId);
         // Gửi thông báo đến user, sử dụng username làm định danh user destination
         messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
         notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
@@ -463,28 +461,28 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     }
 
     @Override
-    @Transactional
-    public void resubmitContractForApproval(Long contractId, Long workflowId) throws DataNotFoundException {
+    public void resubmitContractForApproval(Long contractId) throws DataNotFoundException {
         // Tìm hợp đồng theo contractId
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
 
-        // Lấy lại workflow từ workflowId đã lưu trước đó
-        ApprovalWorkflow workflow = approvalWorkflowRepository.findById(workflowId)
-                .orElseThrow(() -> new DataNotFoundException("Approval workflow not found with id: " + workflowId));
+        // Lấy workflow của hợp đồng
+        ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        if (workflow == null || workflow.getStages().isEmpty()) {
+            throw new DataNotFoundException("Approval workflow not found for contract id: " + contractId);
+        }
 
-        // Gán lại workflow cho hợp đồng
-        contract.setApprovalWorkflow(workflow);
-        contract.setStatus(ContractStatus.APPROVAL_PENDING);
-        contractRepository.save(contract);
-
-        // Reset lại trạng thái của tất cả các stage: PENDING, xóa approvedAt và comment
+        // Reset lại tất cả các bước duyệt: đặt trạng thái về PENDING, xóa approvedAt và comment
         workflow.getStages().forEach(stage -> {
             stage.setStatus(ApprovalStatus.PENDING);
             stage.setApprovedAt(null);
             stage.setComment(null);
             approvalStageRepository.save(stage);
         });
+
+        // Cập nhật lại trạng thái của hợp đồng về APPROVAL_PENDING (để báo hiệu đang chờ duyệt lại)
+        contract.setStatus(ContractStatus.APPROVAL_PENDING);
+        contractRepository.save(contract);
 
         // Tìm bước duyệt đầu tiên (stage có stageOrder nhỏ nhất)
         Optional<ApprovalStage> firstStageOpt = workflow.getStages().stream()
@@ -497,15 +495,18 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             approvalStageRepository.save(firstStage);
             User firstApprover = firstStage.getApprover();
 
-            // Gửi thông báo cho người duyệt bước đầu tiên
+            // Tạo payload thông báo cho người duyệt ở bước đầu tiên
             Map<String, Object> payload = new HashMap<>();
-            String notificationMessage = "Hợp đồng '" + contract.getTitle() +
-                    "' đã được chỉnh sửa và nộp lại để phê duyệt. Bạn có hợp đồng cần phê duyệt đợt " +
-                    firstStage.getStageOrder();
+            String notificationMessage = "Hợp đồng '" + contract.getTitle() + "' đã được chỉnh sửa và nộp lại để phê duyệt. Bạn có hợp đồng cần phê duyệt đợt "
+                    + firstStage.getStageOrder();
             payload.put("message", notificationMessage);
             payload.put("contractId", contractId);
+
+            // Gửi thông báo qua WebSocket
             messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
+            // Gửi email nhắc nhở nếu cần
             sendEmailReminder(contract, firstApprover, firstStage);
+            // Lưu thông báo vào hệ thống thông báo
             notificationService.saveNotification(firstApprover, notificationMessage, contract);
         }
     }
