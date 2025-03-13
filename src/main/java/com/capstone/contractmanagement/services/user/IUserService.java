@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.User.UserListCustom;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,8 @@ public interface IUserService {
     void changePassword(Long id, UpdatePasswordDTO changePasswordDTO) throws DataNotFoundException;
 
     Page<UserResponse> getAllStaffAndManager(Pageable pageable);
+
+    List<UserListCustom> getAll();
 
 
 }
