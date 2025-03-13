@@ -22,6 +22,7 @@ public class ContractUpdateDTO {
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;
+
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private LocalDateTime notifyEffectiveDate;
@@ -52,4 +53,6 @@ public class ContractUpdateDTO {
     private Map<String, Map<String, List<TermSnapshotDTO>>> additionalConfig;
 
     private List<PaymentScheduleDTO> payments; // Danh sách PaymentSchedule để cập nhật
+
+    private Long contractTypeId; // ID của loại hợp đồng
 }

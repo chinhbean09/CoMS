@@ -31,5 +31,17 @@ public interface IAuditTrailRepository extends JpaRepository<AuditTrail, Long> {
                 @Param("entityName") String entityName,
                 Pageable pageable);
 
+    List<AuditTrail> findByContract_OriginalContractIdAndContract_VersionBetween(
+            Long originalContractId,
+            Integer versionStart,
+            Integer versionEnd
+    );
 
+    @Query("SELECT a FROM AuditTrail a WHERE a.contract.originalContractId = :originalContractId " +
+            "AND a.contract.version BETWEEN :versionStart AND :versionEnd")
+    List<AuditTrail> findByContractOriginalContractIdAndVersionBetween(
+            @Param("originalContractId") Long originalContractId,
+            @Param("versionStart") Integer versionStart,
+            @Param("versionEnd") Integer versionEnd
+    );
 }

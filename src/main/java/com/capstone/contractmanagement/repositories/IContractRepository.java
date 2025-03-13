@@ -150,4 +150,13 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
                                                                                              @Param("contractTypeId") Long contractTypeId,
                                                                                              @Param("user") User user,
                                                                                              Pageable pageable);
+    Optional<Contract> findByOriginalContractIdAndVersion(Long originalContractId, Integer version);
+
+    @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
+    Page<Contract> findAllByOriginalContractId(@Param("originalContractId") Long originalContractId, Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId AND c.user = :user")
+    Page<Contract> findAllByOriginalContractIdAndUser(@Param("originalContractId") Long originalContractId,
+                                                      @Param("user") User user,
+                                                      Pageable pageable);
 }
