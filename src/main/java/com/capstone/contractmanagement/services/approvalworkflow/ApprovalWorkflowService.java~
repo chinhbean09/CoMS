@@ -17,7 +17,6 @@ import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageR
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
-import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MailTemplate;
@@ -425,7 +424,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
     @Override
     @Transactional
-    public List<GetContractForApproverResponse> getContractsForApprover(Long approverId) {
+    public List<ContractResponse> getContractsForApprover(Long approverId) {
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
         List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
 
@@ -502,8 +501,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     }
 
     // Hàm chuyển đổi Contract entity sang ContractResponse DTO
-    private GetContractForApproverResponse mapContractToContractResponse(Contract contract) {
-        return GetContractForApproverResponse.builder()
+    private ContractResponse mapContractToContractResponse(Contract contract) {
+        return ContractResponse.builder()
                 .id(contract.getId())
                 .title(contract.getTitle())
                 .user(mapUserToUserContractResponse(contract.getUser()))
@@ -515,7 +514,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .signingDate(contract.getSigningDate())
                 .contractLocation(contract.getContractLocation())
                 .amount(contract.getAmount())
-                .contractTypeName(contract.getContractType().getName())
+                .contractTypeId(contract.getContractType() != null ? contract.getContractType().getId() : null)
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
                 .notifyEffectiveDate(contract.getNotifyEffectiveDate())

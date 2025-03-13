@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageR
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
+import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public interface IApprovalWorkflowService {
 
     List<CommentResponse> getApprovalStageCommentDetailsByContractId(Long contractId) throws DataNotFoundException;
 
-    List<ContractResponse> getContractsForApprover(Long approverId);
+    List<GetContractForApproverResponse> getContractsForApprover(Long approverId);
     void resubmitContractForApproval(Long contractId) throws DataNotFoundException;
 
 }
