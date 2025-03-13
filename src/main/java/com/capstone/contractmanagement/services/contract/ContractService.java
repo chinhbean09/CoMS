@@ -801,6 +801,7 @@ public class ContractService implements IContractService{
                 .signingDate(dto.getSigningDate() != null ? dto.getSigningDate() : currentContract.getSigningDate())
                 .contractLocation(dto.getContractLocation() != null ? dto.getContractLocation() : currentContract.getContractLocation())
                 .contractNumber(newContractNumber)
+                .approvalWorkflow(currentContract.getApprovalWorkflow() != null ? currentContract.getApprovalWorkflow() : null)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(dto.getStatus() != null ? dto.getStatus() : currentContract.getStatus())
