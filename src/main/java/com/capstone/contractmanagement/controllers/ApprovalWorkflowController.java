@@ -148,10 +148,10 @@ public class ApprovalWorkflowController {
                 .build());
     }
 
-    @PostMapping("/resubmit/{contractId}/{workflowId}")
-    public ResponseEntity<String> resubmitContract(@PathVariable Long contractId, @PathVariable Long workflowId) {
+    @PostMapping("/resubmit/{contractId}/")
+    public ResponseEntity<String> resubmitContract(@PathVariable Long contractId) {
         try {
-            approvalWorkflowService.resubmitContractForApproval(contractId, workflowId);
+            approvalWorkflowService.resubmitContractForApproval(contractId);
             return ResponseEntity.ok("Contract resubmitted for approval successfully.");
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
