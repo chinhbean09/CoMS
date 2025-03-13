@@ -4,9 +4,7 @@
     import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.enums.ContractStatus;
-    import com.fasterxml.jackson.annotation.JsonBackReference;
     import com.fasterxml.jackson.annotation.JsonIgnore;
-    import com.fasterxml.jackson.annotation.JsonManagedReference;
     import jakarta.persistence.*;
     import lombok.*;
 
@@ -104,7 +102,7 @@
         @ManyToOne
         @JoinColumn(name = "party_id", nullable = false)
         @JsonIgnore
-        private Party party;
+        private Partner partner;
 
         @Builder.Default
         @Column(name = "appendix_enabled")
