@@ -49,4 +49,7 @@ public class ApprovalStage {
     @JoinColumn(name = "workflow_id", nullable = false)
     @JsonIgnore
     private ApprovalWorkflow approvalWorkflow;
+
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
 }
