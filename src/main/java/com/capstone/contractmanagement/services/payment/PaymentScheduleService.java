@@ -120,7 +120,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getParty().getEmail());
+            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
@@ -139,7 +139,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getParty().getEmail());
+            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();

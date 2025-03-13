@@ -1,17 +1,16 @@
 package com.capstone.contractmanagement.services.party;
 
 import com.capstone.contractmanagement.dtos.bank.CreateBankDTO;
-import com.capstone.contractmanagement.dtos.party.CreatePartyDTO;
-import com.capstone.contractmanagement.dtos.party.UpdatePartyDTO;
+import com.capstone.contractmanagement.dtos.party.CreatePartnerDTO;
+import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
 import com.capstone.contractmanagement.entities.Bank;
-import com.capstone.contractmanagement.entities.Party;
-import com.capstone.contractmanagement.enums.PartyType;
+import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IBankRepository;
-import com.capstone.contractmanagement.repositories.IPartyRepository;
+import com.capstone.contractmanagement.repositories.IPartnerRepository;
 import com.capstone.contractmanagement.responses.bank.BankResponse;
-import com.capstone.contractmanagement.responses.party.CreatePartyResponse;
-import com.capstone.contractmanagement.responses.party.ListPartyResponse;
+import com.capstone.contractmanagement.responses.party.CreatePartnerResponse;
+import com.capstone.contractmanagement.responses.party.ListPartnerResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -29,52 +27,52 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PartyService implements IPartyService{
-    private final IPartyRepository partyRepository;
+    private final IPartnerRepository partyRepository;
     private final IBankRepository bankRepository;
 
     @Transactional
     @Override
-    public CreatePartyResponse createParty(CreatePartyDTO createPartyDTO) {
+    public CreatePartnerResponse createParty(CreatePartnerDTO createPartnerDTO) {
         // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
         String partnerCode = "P" + String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
 
-        // Tạo Party mới với thông tin từ DTO và partnerCode tự tạo
-        Party party = Party.builder()
+        // Tạo Partner mới với thông tin từ DTO và partnerCode tự tạo
+        Partner partner = Partner.builder()
                 .partnerCode(partnerCode)
-                .partnerType(createPartyDTO.getPartnerType())
-                .partnerName(createPartyDTO.getPartnerName())
-                .spokesmanName(createPartyDTO.getSpokesmanName())
-                .address(createPartyDTO.getAddress())
-                .taxCode(createPartyDTO.getTaxCode())
-                .phone(createPartyDTO.getPhone())
-                .email(createPartyDTO.getEmail())
-                .note(createPartyDTO.getNote())
-                .position(createPartyDTO.getPosition())
+                .partnerType(createPartnerDTO.getPartnerType())
+                .partnerName(createPartnerDTO.getPartnerName())
+                .spokesmanName(createPartnerDTO.getSpokesmanName())
+                .address(createPartnerDTO.getAddress())
+                .taxCode(createPartnerDTO.getTaxCode())
+                .phone(createPartnerDTO.getPhone())
+                .email(createPartnerDTO.getEmail())
+                .note(createPartnerDTO.getNote())
+                .position(createPartnerDTO.getPosition())
                 .isDeleted(false)
                 .build();
 
-        // Lưu Party để lấy được ID
-        party = partyRepository.save(party);
+        // Lưu Partner để lấy được ID
+        partner = partyRepository.save(partner);
 
         // Khởi tạo danh sách Bank từ danh sách DTO
         List<Bank> banks = new ArrayList<>();
-        if (createPartyDTO.getBanking() != null && !createPartyDTO.getBanking().isEmpty()) {
-            for (CreateBankDTO bankDTO : createPartyDTO.getBanking()) {
+        if (createPartnerDTO.getBanking() != null && !createPartnerDTO.getBanking().isEmpty()) {
+            for (CreateBankDTO bankDTO : createPartnerDTO.getBanking()) {
                 Bank bank = Bank.builder()
                         .bankName(bankDTO.getBankName())
                         .backAccountNumber(bankDTO.getBackAccountNumber())
-                        .party(party)
+                        .partner(partner)
                         .build();
                 banks.add(bank);
             }
         }
 
-        // Lưu tất cả các Bank và cập nhật lại danh sách ngân hàng cho Party
+        // Lưu tất cả các Bank và cập nhật lại danh sách ngân hàng cho Partner
         if (!banks.isEmpty()) {
             bankRepository.saveAll(banks);
-            party.setBanking(banks);
-            // Nếu muốn cập nhật lại Party với danh sách ngân hàng mới (cascade có thể tự động xử lý)
-            party = partyRepository.save(party);
+            partner.setBanking(banks);
+            // Nếu muốn cập nhật lại Partner với danh sách ngân hàng mới (cascade có thể tự động xử lý)
+            partner = partyRepository.save(partner);
         }
 
         // Chuyển đổi danh sách Bank thành danh sách BankResponse
@@ -85,43 +83,43 @@ public class PartyService implements IPartyService{
                         .build())
                 .collect(Collectors.toList());
 
-        return CreatePartyResponse.builder()
-                .partyId(party.getId())
-                .partnerCode(party.getPartnerCode())
-                .partnerType(party.getPartnerType())
-                .partnerName(party.getPartnerName())
-                .spokesmanName(party.getSpokesmanName())
-                .address(party.getAddress())
-                .taxCode(party.getTaxCode())
-                .phone(party.getPhone())
-                .email(party.getEmail())
-                .note(party.getNote())
-                .position(party.getPosition())
-                .isDeleted(party.getIsDeleted())
+        return CreatePartnerResponse.builder()
+                .partyId(partner.getId())
+                .partnerCode(partner.getPartnerCode())
+                .partnerType(partner.getPartnerType())
+                .partnerName(partner.getPartnerName())
+                .spokesmanName(partner.getSpokesmanName())
+                .address(partner.getAddress())
+                .taxCode(partner.getTaxCode())
+                .phone(partner.getPhone())
+                .email(partner.getEmail())
+                .note(partner.getNote())
+                .position(partner.getPosition())
+                .isDeleted(partner.getIsDeleted())
                 .banking(bankResponses)
                 .build();
     }
 
     @Override
     @Transactional
-    public CreatePartyResponse updateParty(Long id, UpdatePartyDTO updatePartyDTO) throws DataNotFoundException {
-        // Lấy party hiện tại, nếu không có thì ném exception
-        Party party = partyRepository.findById(id)
+    public CreatePartnerResponse updateParty(Long id, UpdatePartnerDTO updatePartnerDTO) throws DataNotFoundException {
+        // Lấy partner hiện tại, nếu không có thì ném exception
+        Partner partner = partyRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
 
-        // Cập nhật thông tin Party
-        party.setPartnerType(updatePartyDTO.getPartnerType());
-        party.setPartnerName(updatePartyDTO.getPartnerName());
-        party.setSpokesmanName(updatePartyDTO.getSpokesmanName());
-        party.setAddress(updatePartyDTO.getAddress());
-        party.setTaxCode(updatePartyDTO.getTaxCode());
-        party.setPhone(updatePartyDTO.getPhone());
-        party.setEmail(updatePartyDTO.getEmail());
-        party.setPosition(updatePartyDTO.getPosition());
-        partyRepository.save(party);
+        // Cập nhật thông tin Partner
+        partner.setPartnerType(updatePartnerDTO.getPartnerType());
+        partner.setPartnerName(updatePartnerDTO.getPartnerName());
+        partner.setSpokesmanName(updatePartnerDTO.getSpokesmanName());
+        partner.setAddress(updatePartnerDTO.getAddress());
+        partner.setTaxCode(updatePartnerDTO.getTaxCode());
+        partner.setPhone(updatePartnerDTO.getPhone());
+        partner.setEmail(updatePartnerDTO.getEmail());
+        partner.setPosition(updatePartnerDTO.getPosition());
+        partyRepository.save(partner);
 
-        // Lấy danh sách ngân hàng hiện có của Party
-        List<Bank> existingBanks = bankRepository.findByParty(party);
+        // Lấy danh sách ngân hàng hiện có của Partner
+        List<Bank> existingBanks = bankRepository.findByPartner(partner);
 
         // Xóa hết các ngân hàng cũ
         if (!existingBanks.isEmpty()) {
@@ -129,11 +127,11 @@ public class PartyService implements IPartyService{
         }
 
         // Tạo mới các đối tượng Bank từ danh sách được gửi lên (UpdateBankDTO)
-        List<Bank> updatedBanks = updatePartyDTO.getBanking().stream().map(updateBankDTO -> {
+        List<Bank> updatedBanks = updatePartnerDTO.getBanking().stream().map(updateBankDTO -> {
             Bank bank = Bank.builder()
                     .bankName(updateBankDTO.getBankName())
                     .backAccountNumber(updateBankDTO.getBackAccountNumber())
-                    .party(party)
+                    .partner(partner)
                     .build();
             return bankRepository.save(bank);
         }).collect(Collectors.toList());
@@ -146,34 +144,34 @@ public class PartyService implements IPartyService{
                         .build())
                 .collect(Collectors.toList());
 
-        return CreatePartyResponse.builder()
-                .partyId(party.getId())
-                .partnerCode(party.getPartnerCode())
-                .partnerType(party.getPartnerType())
-                .partnerName(party.getPartnerName())
-                .spokesmanName(party.getSpokesmanName())
-                .address(party.getAddress())
-                .taxCode(party.getTaxCode())
-                .phone(party.getPhone())
-                .email(party.getEmail())
+        return CreatePartnerResponse.builder()
+                .partyId(partner.getId())
+                .partnerCode(partner.getPartnerCode())
+                .partnerType(partner.getPartnerType())
+                .partnerName(partner.getPartnerName())
+                .spokesmanName(partner.getSpokesmanName())
+                .address(partner.getAddress())
+                .taxCode(partner.getTaxCode())
+                .phone(partner.getPhone())
+                .email(partner.getEmail())
                 .banking(bankResponses)
-                .note(party.getNote())
-                .position(party.getPosition())
-                .isDeleted(party.getIsDeleted())
+                .note(partner.getNote())
+                .position(partner.getPosition())
+                .isDeleted(partner.getIsDeleted())
                 .build();
     }
     @Override
     public void deleteParty(Long id) throws DataNotFoundException {
-        Party party = partyRepository.findById(id).orElseThrow(
+        Partner partner = partyRepository.findById(id).orElseThrow(
                 () -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
-        partyRepository.delete(party);
+        partyRepository.delete(partner);
     }
 
     @Override
     @Transactional
-    public Page<ListPartyResponse> getAllParties(String search, int page, int size) {
+    public Page<ListPartnerResponse> getAllParties(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Party> partyPage;
+        Page<Partner> partyPage;
 
         if (search != null && !search.trim().isEmpty()) {
             search = search.trim(); // Loại bỏ khoảng trắng dư thừa
@@ -184,9 +182,9 @@ public class PartyService implements IPartyService{
             partyPage = partyRepository.findByIsDeletedFalseAndIdNot(pageable, 1L);
         }
 
-        // Chuyển đổi đối tượng Party sang ListPartyResponse
+        // Chuyển đổi đối tượng Partner sang ListPartnerResponse
         return partyPage.map(party ->
-                ListPartyResponse.builder()
+                ListPartnerResponse.builder()
                         .partyId(party.getId())
                         .partnerCode(party.getPartnerCode())
                         .partnerType(party.getPartnerType())
@@ -210,24 +208,24 @@ public class PartyService implements IPartyService{
 
     @Override
     @Transactional
-    public ListPartyResponse getPartyById(Long id) throws DataNotFoundException {
-        // get party by id
-        Party party = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
+    public ListPartnerResponse getPartyById(Long id) throws DataNotFoundException {
+        // get partner by id
+        Partner partner = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
         // convert to response
-        return ListPartyResponse.builder()
-                .partyId(party.getId())
-                .partnerCode(party.getPartnerCode())
-                .partnerType(party.getPartnerType())
-                .partnerName(party.getPartnerName())
-                .spokesmanName(party.getSpokesmanName())
-                .address(party.getAddress())
-                .taxCode(party.getTaxCode())
-                .phone(party.getPhone())
-                .email(party.getEmail())
-                .note(party.getNote())
-                .position(party.getPosition())
-                .isDeleted(party.getIsDeleted())
-                .banking(party.getBanking().stream() // Nếu Party có danh sách Banks
+        return ListPartnerResponse.builder()
+                .partyId(partner.getId())
+                .partnerCode(partner.getPartnerCode())
+                .partnerType(partner.getPartnerType())
+                .partnerName(partner.getPartnerName())
+                .spokesmanName(partner.getSpokesmanName())
+                .address(partner.getAddress())
+                .taxCode(partner.getTaxCode())
+                .phone(partner.getPhone())
+                .email(partner.getEmail())
+                .note(partner.getNote())
+                .position(partner.getPosition())
+                .isDeleted(partner.getIsDeleted())
+                .banking(partner.getBanking().stream() // Nếu Partner có danh sách Banks
                         .map(bank -> BankResponse.builder()
                                 .bankName(bank.getBankName())
                                 .backAccountNumber(bank.getBackAccountNumber())
@@ -238,9 +236,9 @@ public class PartyService implements IPartyService{
 
     @Override
     public void updatePartyStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException {
-        Party existingParty = partyRepository.findById(partyId)
+        Partner existingPartner = partyRepository.findById(partyId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
-        existingParty.setIsDeleted(isDeleted);
-        partyRepository.save(existingParty);
+        existingPartner.setIsDeleted(isDeleted);
+        partyRepository.save(existingPartner);
     }
 }
