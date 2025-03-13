@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
+import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.approvalworkflow.IApprovalWorkflowService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -139,7 +140,7 @@ public class ApprovalWorkflowController {
     }
     @GetMapping("/get-contract-for-approver/{approverId}")
     public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId) throws DataNotFoundException {
-        List<ContractResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId);
+        List<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
