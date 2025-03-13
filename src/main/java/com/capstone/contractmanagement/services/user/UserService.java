@@ -14,6 +14,7 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.repositories.IRoleRepository;
  import com.capstone.contractmanagement.repositories.ITokenRepository;
  import com.capstone.contractmanagement.repositories.IUserRepository;
+ import com.capstone.contractmanagement.responses.User.UserListCustom;
  import com.capstone.contractmanagement.responses.User.UserResponse;
  import com.capstone.contractmanagement.services.sendmails.IMailService;
  import com.capstone.contractmanagement.utils.MailTemplate;
@@ -416,5 +417,17 @@ public class UserService implements IUserService {
         List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
         Page<User> usersPage = UserRepository.findByRole_RoleNameIn(roleNames, pageable);
         return usersPage.map(UserResponse::fromUser);
+    }
+
+    @Override
+    public List<UserListCustom> getAll() {
+        List<User> userList = UserRepository.findAll();
+        return userList.stream()
+                .map(user -> UserListCustom.builder()
+                        .fullName(user.getFullName())
+                        .userId(user.getId())
+                        .department(user.getDepartment())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
