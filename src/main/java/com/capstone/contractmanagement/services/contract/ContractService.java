@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.components.SecurityUtils;
+import com.capstone.contractmanagement.dtos.contract.ContractComparisonDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
@@ -13,6 +14,7 @@ import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
@@ -32,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -887,7 +890,10 @@ public class ContractService implements IContractService{
                 .contractContent(dto.getContractContent() != null ? dto.getContractContent() : currentContract.getContractContent())
                 .approvalWorkflow(currentContract.getApprovalWorkflow())
                 .maxDateLate(dto.getMaxDateLate() != null ? dto.getMaxDateLate() : currentContract.getMaxDateLate())
-                .contractType(currentContract.getContractType())
+                .contractType(dto.getContractTypeId() != null
+                        ? contractTypeRepository.findById(dto.getContractTypeId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
+                        : currentContract.getContractType())
                 .build();
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
@@ -1639,8 +1645,15 @@ public class ContractService implements IContractService{
         if (dto.getMaxDateLate() != null && !dto.getMaxDateLate().equals(currentContract.getMaxDateLate())) {
             auditTrails.add(createAuditTrail(savedNewContract, "maxDateLate", String.valueOf(currentContract.getMaxDateLate()), String.valueOf(dto.getMaxDateLate()), now, changedBy, "UPDATE", "Cập nhật số ngày trễ tối đa"));
         }
-        if (dto.getStatus() != null && !dto.getStatus().equals(currentContract.getStatus())) {
-            auditTrails.add(createAuditTrail(savedNewContract, "status", currentContract.getStatus().name(), dto.getStatus().name(), now, changedBy, "UPDATE", "Cập nhật trạng thái hợp đồng"));
+//        if (dto.getStatus() != null && !dto.getStatus().equals(currentContract.getStatus())) {
+//            auditTrails.add(createAuditTrail(savedNewContract, "status", currentContract.getStatus().name(), dto.getStatus().name(), now, changedBy, "UPDATE", "Cập nhật trạng thái hợp đồng"));
+//        }
+
+        if (dto.getContractTypeId() != null && !dto.getContractTypeId().equals(currentContract.getContractType().getId())) {
+            auditTrails.add(createAuditTrail(savedNewContract, "contractTypeId",
+                    currentContract.getContractType().getId().toString(),
+                    dto.getContractTypeId().toString(),
+                    now, changedBy, "UPDATE", "Cập nhật loại hợp đồng"));
         }
 
         // 9. Cập nhật entityId cho audit trails
@@ -1776,7 +1789,9 @@ public class ContractService implements IContractService{
         if (dto.getSuspendContent() != null && !dto.getSuspendContent().equals(currentContract.getSuspendContent())) return true;
         if (dto.getMaxDateLate() != null && !Objects.equals(dto.getMaxDateLate(), currentContract.getMaxDateLate())) return true;
         if (dto.getStatus() != null && !dto.getStatus().equals(currentContract.getStatus())) return true;
-
+        if (dto.getContractTypeId() != null && !dto.getContractTypeId().equals(currentContract.getContractType().getId())) {
+            return true;
+        }
         // Kiểm tra thay đổi trong terms
         if (dto.getLegalBasisTerms() != null && hasTermChanges(currentContract.getContractTerms(), dto.getLegalBasisTerms(), TypeTermIdentifier.LEGAL_BASIS)) return true;
         if (dto.getGeneralTerms() != null && hasTermChanges(currentContract.getContractTerms(), dto.getGeneralTerms(), TypeTermIdentifier.GENERAL_TERMS)) return true;
@@ -2247,6 +2262,172 @@ public class ContractService implements IContractService{
         auditTrailRepository.save(rollbackAuditTrail);
 
         return savedRollbackContract;
+    }
+
+    @Override
+    @Transactional
+    // ContractServiceImpl.java
+    public List<ContractComparisonDTO> compareVersions(Long originalContractId, Integer version1, Integer version2) throws DataNotFoundException {
+        Contract v1 = contractRepository.findByOriginalContractIdAndVersion(originalContractId, version1)
+                .orElseThrow(() -> new DataNotFoundException("Version " + version1 + " not found"));
+
+        Contract v2 = contractRepository.findByOriginalContractIdAndVersion(originalContractId, version2)
+                .orElseThrow(() -> new DataNotFoundException("Version " + version2 + " not found"));
+
+        List<ContractComparisonDTO> changes = new ArrayList<>();
+
+        // Compare basic info
+        compareBasicInfo(v1, v2, changes);
+
+        // Compare contract terms
+        compareContractTerms(v1.getContractTerms(), v2.getContractTerms(), changes);
+
+        // Compare additional terms
+        compareAdditionalTerms(v1.getAdditionalTermDetails(), v2.getAdditionalTermDetails(), changes);
+
+        return changes;
+    }
+
+    private void compareBasicInfo(Contract v1, Contract v2, List<ContractComparisonDTO> changes) {
+        compareField("Title", "BASIC", v1.getTitle(), v2.getTitle(), changes);
+        compareField("Amount", "BASIC", v1.getAmount(), v2.getAmount(), changes);
+        compareField("Status", "BASIC", v1.getStatus(), v2.getStatus(), changes);
+        compareField("Effective Date", "BASIC", v1.getEffectiveDate(), v2.getEffectiveDate(), changes);
+        // Add more fields as needed
+    }
+
+    private void compareContractTerms(List<ContractTerm> v1Terms, List<ContractTerm> v2Terms,
+                                      List<ContractComparisonDTO> changes) {
+
+        Map<Long, ContractTerm> v1Map = v1Terms.stream()
+                .collect(Collectors.toMap(ContractTerm::getOriginalTermId, Function.identity()));
+
+        for (ContractTerm v2Term : v2Terms) {
+            ContractTerm v1Term = v1Map.get(v2Term.getOriginalTermId());
+
+            if (v1Term == null) {
+                changes.add(createTermDTO(v2Term, "ADDED", null));
+                continue;
+            }
+
+            if (!Objects.equals(v1Term.getTermValue(), v2Term.getTermValue())) {
+                changes.add(createTermDTO(v2Term, "MODIFIED", v1Term.getTermValue()));
+            }
+
+            v1Map.remove(v2Term.getOriginalTermId());
+        }
+
+        // Remaining terms in v1Map are removed
+        v1Map.values().forEach(term ->
+                changes.add(createTermDTO(term, "REMOVED", null)));
+    }
+
+    private void compareAdditionalTerms(List<ContractAdditionalTermDetail> v1Details,
+                                        List<ContractAdditionalTermDetail> v2Details,
+                                        List<ContractComparisonDTO> changes) {
+
+        // Compare Common terms
+        compareTermGroup("COMMON",
+                v1Details.stream().flatMap(d -> d.getCommonTerms().stream()).collect(Collectors.toList()),
+                v2Details.stream().flatMap(d -> d.getCommonTerms().stream()).collect(Collectors.toList()),
+                changes);
+
+        // Compare A terms
+        compareTermGroup("A",
+                v1Details.stream().flatMap(d -> d.getATerms().stream()).collect(Collectors.toList()),
+                v2Details.stream().flatMap(d -> d.getATerms().stream()).collect(Collectors.toList()),
+                changes);
+
+        // Compare B terms
+        compareTermGroup("B",
+                v1Details.stream().flatMap(d -> d.getBTerms().stream()).collect(Collectors.toList()),
+                v2Details.stream().flatMap(d -> d.getBTerms().stream()).collect(Collectors.toList()),
+                changes);
+    }
+
+    private void compareTermGroup(String groupName,
+                                  List<AdditionalTermSnapshot> v1Terms,
+                                  List<AdditionalTermSnapshot> v2Terms,
+                                  List<ContractComparisonDTO> changes) {
+
+        Map<Long, AdditionalTermSnapshot> v1Map = v1Terms.stream()
+                .collect(Collectors.toMap(AdditionalTermSnapshot::getTermId, Function.identity()));
+
+        for (AdditionalTermSnapshot v2Term : v2Terms) {
+            AdditionalTermSnapshot v1Term = v1Map.get(v2Term.getTermId());
+
+            if (v1Term == null) {
+                changes.add(createAdditionalTermDTO(v2Term, groupName, "ADDED", null));
+                continue;
+            }
+
+            if (!Objects.equals(v1Term.getTermValue(), v2Term.getTermValue())) {
+                changes.add(createAdditionalTermDTO(v2Term, groupName, "MODIFIED", v1Term.getTermValue()));
+            }
+
+            v1Map.remove(v2Term.getTermId());
+        }
+
+        // Remaining terms are removed
+        v1Map.values().forEach(term ->
+                changes.add(createAdditionalTermDTO(term, groupName, "REMOVED", null)));
+    }
+
+    private ContractComparisonDTO createTermDTO(ContractTerm term, String changeType, Object oldValue) {
+        return ContractComparisonDTO.builder()
+                .fieldName(term.getTermLabel())
+                .fieldType("TERM")
+                .oldValue(oldValue)
+                .newValue(term.getTermValue())
+                .changeType(changeType)
+                .build();
+    }
+
+    private ContractComparisonDTO createAdditionalTermDTO(AdditionalTermSnapshot term, String groupName,
+                                                          String changeType, Object oldValue) {
+        return ContractComparisonDTO.builder()
+                .fieldName(term.getTermLabel())
+                .fieldType("ADDITIONAL_TERM")
+                .groupName(groupName)
+                .oldValue(oldValue)
+                .newValue(term.getTermValue())
+                .changeType(changeType)
+                .build();
+    }
+
+    private void compareField(String fieldName, String fieldType,
+                              Object v1Value, Object v2Value,
+                              List<ContractComparisonDTO> changes) {
+        if (!Objects.equals(v1Value, v2Value)) {
+            changes.add(ContractComparisonDTO.builder()
+                    .fieldName(fieldName)
+                    .fieldType(fieldType)
+                    .oldValue(v1Value)
+                    .newValue(v2Value)
+                    .changeType("MODIFIED")
+                    .build());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GetAllContractReponse> getAllVersionsByOriginalContractId(Long originalContractId, Pageable pageable, User currentUser) {
+        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
+        boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
+        Page<Contract> versions;
+        if (isStaff && !isCeo) {
+            // Nếu là STAFF (không phải CEO), chỉ lấy các phiên bản của user hiện tại
+            versions = contractRepository.findAllByOriginalContractIdAndUser(originalContractId, currentUser, pageable);
+        } else if (isCeo) {
+            // Nếu là CEO, lấy tất cả các phiên bản
+            versions = contractRepository.findAllByOriginalContractId(originalContractId, pageable);
+        } else {
+            // Các role khác không được phép xem, trả về danh sách rỗng
+            versions = new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        return versions.map(this::convertToGetAllContractResponse);
     }
 
 }
