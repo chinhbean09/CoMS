@@ -1,24 +1,20 @@
 package com.capstone.contractmanagement.services.party;
 
-import com.capstone.contractmanagement.dtos.party.CreatePartyDTO;
-import com.capstone.contractmanagement.dtos.party.UpdatePartyDTO;
-import com.capstone.contractmanagement.entities.Party;
+import com.capstone.contractmanagement.dtos.party.CreatePartnerDTO;
+import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
-import com.capstone.contractmanagement.responses.party.CreatePartyResponse;
-import com.capstone.contractmanagement.responses.party.ListPartyResponse;
+import com.capstone.contractmanagement.responses.party.CreatePartnerResponse;
+import com.capstone.contractmanagement.responses.party.ListPartnerResponse;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
-
-import java.util.List;
 
 public interface IPartyService {
-    CreatePartyResponse createParty(CreatePartyDTO createPartyDTO);
+    CreatePartnerResponse createParty(CreatePartnerDTO createPartnerDTO);
 
-    CreatePartyResponse updateParty(Long id, UpdatePartyDTO updatePartyDTO) throws DataNotFoundException;
+    CreatePartnerResponse updateParty(Long id, UpdatePartnerDTO updatePartnerDTO) throws DataNotFoundException;
     void deleteParty(Long id) throws DataNotFoundException;
 //
-    Page<ListPartyResponse> getAllParties(String search, int page, int size);
-    ListPartyResponse getPartyById(Long id) throws DataNotFoundException;
+    Page<ListPartnerResponse> getAllParties(String search, int page, int size);
+    ListPartnerResponse getPartyById(Long id) throws DataNotFoundException;
 
     void updatePartyStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException;
 

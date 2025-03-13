@@ -1,6 +1,5 @@
 package com.capstone.contractmanagement.responses.party;
 
-import com.capstone.contractmanagement.dtos.bank.CreateBankDTO;
 import com.capstone.contractmanagement.enums.PartyType;
 import com.capstone.contractmanagement.responses.bank.BankResponse;
 import lombok.Builder;
@@ -10,7 +9,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class CreatePartyResponse {
+public class ListPartnerResponse {
     private Long partyId;
     private String partnerCode;
     private PartyType partnerType; // Loại bên (Bên A, Bên B)
