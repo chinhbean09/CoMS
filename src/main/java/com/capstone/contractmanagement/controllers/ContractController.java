@@ -1,12 +1,17 @@
     package com.capstone.contractmanagement.controllers;
 
     import com.capstone.contractmanagement.components.SecurityUtils;
-    import com.capstone.contractmanagement.dtos.contract.ContractDTO;
-    import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
+    import com.capstone.contractmanagement.dtos.contract.*;
+    import com.capstone.contractmanagement.entities.AuditTrail;
+    import com.capstone.contractmanagement.entities.PaymentSchedule;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.entities.contract.Contract;
+    import com.capstone.contractmanagement.entities.contract.ContractAdditionalTermDetail;
+    import com.capstone.contractmanagement.entities.contract.ContractTerm;
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+    import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
+    import com.capstone.contractmanagement.repositories.IContractRepository;
     import com.capstone.contractmanagement.responses.ResponseObject;
     import com.capstone.contractmanagement.responses.contract.ContractResponse;
     import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
@@ -24,7 +29,8 @@
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
 
-    import java.util.Optional;
+    import java.util.*;
+    import java.util.stream.Collectors;
 
     @RestController
     @RequestMapping("${api.prefix}/contracts")
@@ -33,6 +39,8 @@
     public class ContractController {
         private final IContractService contractService;
         private final SecurityUtils securityUtils;
+        private final IContractRepository contractRepository;
+        private final IAuditTrailRepository auditTrailRepository;
 
         @PostMapping
         @Transactional
@@ -230,6 +238,38 @@
                 );
             }
         }
+
+        @GetMapping("/original/{originalContractId}/versions")
+        public ResponseEntity<ResponseObject> getAllVersions(
+                @PathVariable Long originalContractId,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(defaultValue = "version") String sortBy,
+                @RequestParam(defaultValue = "asc") String order) {
+            try {
+                User currentUser = securityUtils.getLoggedInUser();
+                Sort sort = order.equalsIgnoreCase("desc")
+                        ? Sort.by(sortBy).descending()
+                        : Sort.by(sortBy).ascending();
+                Pageable pageable = PageRequest.of(page, size, sort);
+
+                Page<GetAllContractReponse> versions = contractService.getAllVersionsByOriginalContractId(originalContractId, pageable, currentUser);
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message("Lấy tất cả phiên bản hợp đồng thành công")
+                        .status(HttpStatus.OK)
+                        .data(versions)
+                        .build());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Lỗi khi lấy phiên bản hợp đồng: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .data(null)
+                                .build());
+            }
+        }
+
 
 
     }
