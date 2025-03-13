@@ -2,9 +2,6 @@ package com.capstone.contractmanagement.dtos.party;
 
 import com.capstone.contractmanagement.dtos.bank.CreateBankDTO;
 import com.capstone.contractmanagement.enums.PartyType;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreatePartyDTO {
+public class CreatePartnerDTO {
     private PartyType partnerType; // Loại bên (Bên A, Bên B)
     private String partnerName; // Tên công ty hoặc cá nhân
     private String spokesmanName;
