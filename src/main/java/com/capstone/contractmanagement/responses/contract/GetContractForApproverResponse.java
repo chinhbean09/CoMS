@@ -19,7 +19,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContractResponse {
+public class GetContractForApproverResponse {
     private Long id;
     private String title;
     private UserContractResponse user;
@@ -31,7 +31,7 @@ public class ContractResponse {
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;
-    private Long contractTypeId;
+    private String contractTypeName;
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private LocalDateTime notifyEffectiveDate;
@@ -60,5 +60,4 @@ public class ContractResponse {
 
     // Thông tin thanh toán
     private List<PaymentScheduleResponse> paymentSchedules;
-
 }

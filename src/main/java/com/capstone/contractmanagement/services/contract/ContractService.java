@@ -20,7 +20,6 @@ import com.capstone.contractmanagement.responses.payment_schedule.PaymentSchedul
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -42,7 +41,7 @@ public class ContractService implements IContractService{
     private final IContractRepository contractRepository;
     private final IContractTemplateRepository contractTemplateRepository;
     private final IUserRepository userRepository;
-    private final IPartyRepository partyRepository;
+    private final IPartnerRepository partyRepository;
     private final ITermRepository termRepository;
     private final IContractTypeRepository contractTypeRepository;
     private final SecurityUtils currentUser;
@@ -58,8 +57,8 @@ public class ContractService implements IContractService{
         // 1. Load các entity cần thiết
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với id: " + dto.getTemplateId()));
-        Party party = partyRepository.findById(dto.getPartyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Party với id: " + dto.getPartyId()));
+        Partner partner = partyRepository.findById(dto.getPartyId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Partner với id: " + dto.getPartyId()));
         User user = currentUser.getLoggedInUser();
 
         LocalDateTime createdAt = LocalDateTime.now();
@@ -69,7 +68,7 @@ public class ContractService implements IContractService{
         Contract contract = Contract.builder()
                 .title(dto.getTemplateData().getContractTitle())
                 .contractNumber(contractNumber)
-                .party(party)
+                .partner(partner)
                 .user(user)
                 .template(template)
                 .signingDate(dto.getSigningDate())
@@ -314,7 +313,7 @@ public class ContractService implements IContractService{
         // Ghi audit cho từng trường
         auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy));
         auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "party", null, savedContract.getParty().getId().toString(), now, changedBy));
+        auditTrails.add(createAuditTrail(savedContract, "partner", null, savedContract.getPartner().getId().toString(), now, changedBy));
         auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy));
         auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy));
         auditTrails.add(createAuditTrail(savedContract, "signingDate", null,
@@ -488,9 +487,9 @@ public class ContractService implements IContractService{
                 .updatedAt(contract.getUpdatedAt())
                 .amount(contract.getAmount())
                 .contractType(contract.getContractType())
-                .party(Party.builder()
-                        .id(contract.getParty().getId())
-                        .partnerName(contract.getParty().getPartnerName())
+                .partner(Partner.builder()
+                        .id(contract.getPartner().getId())
+                        .partnerName(contract.getPartner().getPartnerName())
                         .build())
                 .version(contract.getVersion())
                 .originalContractId(contract.getOriginalContractId())
@@ -589,7 +588,7 @@ public class ContractService implements IContractService{
                 .id(contract.getId())
                 .title(contract.getTitle())
                 .user(convertUserToUserContractResponse(contract.getUser()))
-                .party(contract.getParty())
+                .partner(contract.getPartner())
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
@@ -677,7 +676,7 @@ public class ContractService implements IContractService{
                 .title(originalContract.getTitle() + " (Copy " + copyNumber + ")") //Hợp đồng thuê nhà (Copy 2)
                 .contractNumber(originalContract.getContractNumber() + "__" + copyNumber) //HD-001__2
                 .originalContractId(originalContract.getId()) // Liên kết với hợp đồng gốc
-                .party(originalContract.getParty())
+                .partner(originalContract.getPartner())
                 .user(originalContract.getUser())
                 .template(originalContract.getTemplate())
                 .signingDate(null) // Đặt null hoặc giữ nguyên tùy yêu cầu
@@ -818,7 +817,7 @@ public class ContractService implements IContractService{
                 .user(currentContract.getUser())
                 .isDateLateChecked(dto.getIsDateLateChecked() != null ? dto.getIsDateLateChecked() : currentContract.getIsDateLateChecked())
                 .template(currentContract.getTemplate())
-                .party(currentContract.getParty())
+                .partner(currentContract.getPartner())
                 .appendixEnabled(dto.getAppendixEnabled() != null ? dto.getAppendixEnabled() : currentContract.getAppendixEnabled())
                 .transferEnabled(dto.getTransferEnabled() != null ? dto.getTransferEnabled() : currentContract.getTransferEnabled())
                 .autoAddVAT(dto.getAutoAddVAT() != null ? dto.getAutoAddVAT() : currentContract.getAutoAddVAT())
@@ -2081,7 +2080,7 @@ public class ContractService implements IContractService{
                 .user(targetContract.getUser())
                 .isDateLateChecked(targetContract.getIsDateLateChecked())
                 .template(targetContract.getTemplate())
-                .party(targetContract.getParty())
+                .partner(targetContract.getPartner())
                 .appendixEnabled(targetContract.getAppendixEnabled())
                 .transferEnabled(targetContract.getTransferEnabled())
                 .autoAddVAT(targetContract.getAutoAddVAT())

@@ -1,10 +1,9 @@
 package com.capstone.contractmanagement;
 
-import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
-import com.capstone.contractmanagement.entities.Party;
+import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
@@ -34,7 +33,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private IPartyRepository partyRepository;
+    private IPartnerRepository partyRepository;
 
     @Autowired
     private ITypeTermRepository typeTermRepository;
@@ -89,10 +88,10 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     public void initializeParty() {
 
         if (partyRepository.count() > 0) {
-            System.out.println("Party already initialized!");
+            System.out.println("Partner already initialized!");
             return;
         }
-        Party party = Party.builder()
+        Partner partner = Partner.builder()
                 .address("Khu công nghệ cao")
                 .email("fsoftd1@gmail.com")
                 .isDeleted(false)
@@ -104,7 +103,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .spokesmanName("Đặng Nam Tiến")
                 .taxCode("93245244534467")
                 .build();
-        partyRepository.save(party);
+        partyRepository.save(partner);
     }
     public void initializeTypeTerms() {
         if (typeTermRepository.count() > 0) {
