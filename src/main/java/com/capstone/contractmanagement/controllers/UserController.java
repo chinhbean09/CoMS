@@ -11,6 +11,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.User.LoginResponse;
+import com.capstone.contractmanagement.responses.User.UserListCustom;
 import com.capstone.contractmanagement.responses.User.UserListResponse;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.responses.token.RefreshTokenDTO;
@@ -367,6 +368,15 @@ public class UserController {
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(usersPage)
+                .build());
+    }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<ResponseObject> getAll() {
+        List<UserListCustom> list = userService.getAll();
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(list)
                 .build());
     }
 
