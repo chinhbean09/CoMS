@@ -155,14 +155,14 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             ApprovalStage stage1 = ApprovalStage.builder()
                     .stageOrder(1)
                     .approver(approver1)
-                    .status(ApprovalStatus.PENDING)
+                    .status(ApprovalStatus.NOT_STARTED)
                     .approvalWorkflow(workflow)
                     .build();
             // Tạo đợt duyệt 2: Admin (đóng vai CEO)
             ApprovalStage stage2 = ApprovalStage.builder()
                     .stageOrder(2)
                     .approver(approver2)
-                    .status(ApprovalStatus.PENDING)
+                    .status(ApprovalStatus.NOT_STARTED)
                     .approvalWorkflow(workflow)
                     .build();
 
