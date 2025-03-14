@@ -1,7 +1,9 @@
 package com.capstone.contractmanagement.enums;
 
 public enum ApprovalStatus {
-    PENDING,
+    NOT_STARTED,
     APPROVED,
-    REJECTED
+    REJECTED,
+    APPROVING,
+    SKIPPED,
 }
