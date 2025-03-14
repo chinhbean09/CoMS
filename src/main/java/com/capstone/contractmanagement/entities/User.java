@@ -39,9 +39,19 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "date_of_birth")
     private LocalDateTime DateOfBirth;
 
-    @Column(name = "department", length = 100)
-    @Enumerated(EnumType.STRING)
-    private DepartmentList department;
+//    @Column(name = "department", length = 100)
+//    @Enumerated(EnumType.STRING)
+//    private DepartmentList department;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "department_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_department",
+                    foreignKeyDefinition = "FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL"
+            )
+    )
+    private Department department;
 
     @Column(name = "email")
     private String email;

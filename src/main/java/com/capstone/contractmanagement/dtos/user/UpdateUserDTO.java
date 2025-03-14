@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.dtos.user;
 
+import com.capstone.contractmanagement.entities.Department;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +26,7 @@ public class UpdateUserDTO {
     private Boolean isCeo;
 
     private LocalDateTime dateOfBirth;
-    private DepartmentList department;
+    private Long departmentId;
 
     @JsonProperty("role_id")
     private Long roleId;
