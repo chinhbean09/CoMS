@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -44,4 +45,14 @@ public interface IAuditTrailRepository extends JpaRepository<AuditTrail, Long> {
             @Param("versionStart") Integer versionStart,
             @Param("versionEnd") Integer versionEnd
     );
+
+//    @Query("SELECT DISTINCT DATE(a.changedAt) FROM AuditTrail a WHERE a.contract.originalContractId = :originalContractId ORDER BY DATE(a.changedAt) DESC")
+//    Page<LocalDate> findDistinctChangeDatesByOriginalContractId(@Param("originalContractId") Long originalContractId, Pageable pageable);
+
+    @Query("SELECT DISTINCT DATE(a.changedAt) FROM AuditTrail a WHERE a.contract.originalContractId = :originalContractId ORDER BY DATE(a.changedAt) DESC")
+    Page<java.sql.Date> findDistinctChangeDatesByOriginalContractId(@Param("originalContractId") Long originalContractId, Pageable pageable);
+
+    @Query("SELECT a FROM AuditTrail a WHERE a.contract.originalContractId = :originalContractId AND DATE(a.changedAt) = :date")
+    Page<AuditTrail> findByOriginalContractIdAndChangedAtDate(@Param("originalContractId") Long originalContractId, @Param("date") LocalDate date, Pageable pageable);
+
 }
