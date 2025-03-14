@@ -17,6 +17,7 @@ import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
@@ -2447,6 +2448,17 @@ public class ContractService implements IContractService{
         }
 
         return versions.map(this::convertToGetAllContractResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContractResponse> getContractsByOriginalIdAndVersions(Long originalContractId, Integer version1, Integer version2) {
+        List<Contract> contracts = contractRepository.findByOriginalContractIdAndVersionIn(
+                originalContractId,
+                Arrays.asList(version1, version2)
+        );
+        return contracts.stream()
+                .map(this::convertContractToResponse)
+                .collect(Collectors.toList());
     }
 
 }
