@@ -159,4 +159,11 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     Page<Contract> findAllByOriginalContractIdAndUser(@Param("originalContractId") Long originalContractId,
                                                       @Param("user") User user,
                                                       Pageable pageable);
+
+        List<Contract> findByOriginalContractIdOrderByVersionDesc(Long originalContractId);
+
+
+
+    List<Contract> findByOriginalContractIdAndVersionIn(Long originalContractId, List<Integer> versions);
+
 }
