@@ -29,7 +29,7 @@ public class CreateUserDTO {
     @JsonProperty("date_of_birth")
     private LocalDateTime dateOfBirth;
 
-    private DepartmentList department;
+    private Long DepartmentId;
 
     @JsonProperty("role_id")
     private Long roleId;
