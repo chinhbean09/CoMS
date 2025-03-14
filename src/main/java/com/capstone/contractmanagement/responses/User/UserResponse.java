@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.User;
 
+import com.capstone.contractmanagement.entities.Department;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.DepartmentList;
@@ -36,7 +37,7 @@ public class UserResponse {
     @JsonProperty("date_of_birth")
     private LocalDateTime dateOfBirth;
 
-    private DepartmentList department;
+    private Department department;
 
     @JsonProperty("facebook_account_id")
     private String facebookAccountId;
