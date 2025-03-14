@@ -112,10 +112,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                 .stageId(stage.getId())
                                 .stageOrder(stage.getStageOrder())
                                 .approver(stage.getApprover().getId())
-                                .approverName(stage.getApprover().getFullName())
-                                .status(stage.getStatus())
-                                .startDate(stage.getStartDate())
-                                .endDate(stage.getDueDate())
                                 .build())
                         .toList())
                 .build();
@@ -137,10 +133,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                         .stageId(stage.getId())
                                         .stageOrder(stage.getStageOrder())
                                         .approver(stage.getApprover().getId())
-                                        .approverName(stage.getApprover().getFullName())
-                                        .startDate(stage.getStartDate())
-                                        .endDate(stage.getDueDate())
-                                        .status(stage.getStatus())
                                         .build())
                                 .toList())
                         .build())
@@ -219,7 +211,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                 .stageId(stage.getId())
                                 .stageOrder(stage.getStageOrder())
                                 .approver(stage.getApprover().getId())
-                                .approverName(stage.getApprover().getFullName())
                                 .build())
                         .toList())
                 .build();
@@ -283,7 +274,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     sendEmailReminder(contract, firstApprover, firstStage);
                     notificationService.saveNotification(firstApprover, notificationMessage, contract);
                     // Đặt hạn duyệt cho bước này (2 ngày kể từ bây giờ)
-                    firstStage.setStartDate(LocalDateTime.now());
                     firstStage.setDueDate(LocalDateTime.now().plusDays(2));
                     firstStage.setStatus(ApprovalStatus.APPROVING);
                     approvalStageRepository.save(firstStage);
@@ -319,7 +309,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             if (nextStageOptional.isPresent()) {
                 ApprovalStage nextStage = nextStageOptional.get();
                 // Đặt hạn duyệt cho bước tiếp theo (2 ngày kể từ thời điểm duyệt)
-                nextStage.setStartDate(LocalDateTime.now());
                 nextStage.setDueDate(LocalDateTime.now().plusDays(2));
                 nextStage.setStatus(ApprovalStatus.APPROVING);
                 approvalStageRepository.save(nextStage);
@@ -386,9 +375,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                 .stageId(stage.getId())
                                 .stageOrder(stage.getStageOrder())
                                 .approver(stage.getApprover().getId())
-                                .approverName(stage.getApprover().getFullName())
-                                .startDate(stage.getStartDate())
-                                .endDate(stage.getDueDate())
                                 .approvedAt(stage.getApprovedAt())
                                 .status(stage.getStatus())
                                 .comment(stage.getComment())
@@ -416,7 +402,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                         .stageId(stage.getId())
                                         .stageOrder(stage.getStageOrder())
                                         .approver(stage.getApprover().getId())
-                                        .approverName(stage.getApprover().getFullName())
                                         .build())
                                 .toList())
                         .build())
@@ -465,8 +450,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     // Tìm bước duyệt hiện tại: bước có trạng thái PENDING hoặc REJECTED với stageOrder nhỏ nhất
                     Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
                             .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
-                                    || stage.getStatus() == ApprovalStatus.REJECTED
-                                    || stage.getStatus() == ApprovalStatus.APPROVING)
+                                    || stage.getStatus() == ApprovalStatus.REJECTED)
                             .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
                     return currentStageOpt.isPresent() &&
                             currentStageOpt.get().getApprover().getId().equals(approverId);
@@ -510,7 +494,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         if (firstStageOpt.isPresent()) {
             ApprovalStage firstStage = firstStageOpt.get();
             // Đặt hạn duyệt cho bước đầu tiên: 2 ngày kể từ thời điểm resubmit
-            firstStage.setStartDate(LocalDateTime.now());
             firstStage.setDueDate(LocalDateTime.now().plusDays(2));
             firstStage.setStatus(ApprovalStatus.APPROVING);
             approvalStageRepository.save(firstStage);
@@ -627,7 +610,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             if (nextStageOptional.isPresent()) {
                 ApprovalStage nextStage = nextStageOptional.get();
                 // Cập nhật hạn duyệt cho bước tiếp theo
-                nextStage.setStartDate(now);
                 nextStage.setDueDate(now.plusDays(2));
                 nextStage.setStatus(ApprovalStatus.APPROVING);
                 approvalStageRepository.save(nextStage);

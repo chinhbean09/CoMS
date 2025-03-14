@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentScheduleDTO;
 import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.entities.term.Term;
@@ -794,6 +795,10 @@ public class ContractService implements IContractService{
         int newVersion = calculateNewVersion(originalContractId, currentContract);
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
 
+        ApprovalWorkflow workflow = currentContract.getApprovalWorkflow();
+        currentContract.setApprovalWorkflow(null);
+        contractRepository.save(currentContract);
+
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -801,7 +806,7 @@ public class ContractService implements IContractService{
                 .signingDate(dto.getSigningDate() != null ? dto.getSigningDate() : currentContract.getSigningDate())
                 .contractLocation(dto.getContractLocation() != null ? dto.getContractLocation() : currentContract.getContractLocation())
                 .contractNumber(newContractNumber)
-                .approvalWorkflow(currentContract.getApprovalWorkflow() != null ? currentContract.getApprovalWorkflow() : null)
+                .approvalWorkflow(workflow)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(dto.getStatus() != null ? dto.getStatus() : currentContract.getStatus())
