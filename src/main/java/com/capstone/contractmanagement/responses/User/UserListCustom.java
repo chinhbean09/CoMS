@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.User;
 
+import com.capstone.contractmanagement.entities.Department;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -18,5 +19,5 @@ public class UserListCustom {
     @JsonProperty("user_id")
     private Long userId;
 
-    private DepartmentList department;
+    private Department department;
 }
