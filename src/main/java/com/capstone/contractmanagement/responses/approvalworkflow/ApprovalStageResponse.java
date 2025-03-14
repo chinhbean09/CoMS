@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.approvalworkflow;
 
 import com.capstone.contractmanagement.enums.ApprovalStatus;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ public class ApprovalStageResponse {
     private Integer stageOrder;
     private Long approver;
     private String approverName;
+    private DepartmentList department;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private ApprovalStatus status;
