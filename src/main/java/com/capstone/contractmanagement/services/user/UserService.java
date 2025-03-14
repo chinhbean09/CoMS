@@ -4,6 +4,7 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.components.LocalizationUtils;
  import com.capstone.contractmanagement.dtos.DataMailDTO;
  import com.capstone.contractmanagement.dtos.user.*;
+ import com.capstone.contractmanagement.entities.Department;
  import com.capstone.contractmanagement.entities.Role;
  import com.capstone.contractmanagement.entities.Token;
  import com.capstone.contractmanagement.entities.User;
@@ -11,6 +12,7 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.exceptions.DataNotFoundException;
  import com.capstone.contractmanagement.exceptions.InvalidParamException;
  import com.capstone.contractmanagement.exceptions.PermissionDenyException;
+ import com.capstone.contractmanagement.repositories.IDepartmentRepository;
  import com.capstone.contractmanagement.repositories.IRoleRepository;
  import com.capstone.contractmanagement.repositories.ITokenRepository;
  import com.capstone.contractmanagement.repositories.IUserRepository;
@@ -66,6 +68,7 @@ public class UserService implements IUserService {
     private final ITokenRepository TokenRepository;
     private final Cloudinary cloudinary;
     private final IMailService mailService;
+    private final IDepartmentRepository departmentRepository;
 
     @Override
     @Transactional
@@ -93,6 +96,10 @@ public class UserService implements IUserService {
             throw new PermissionDenyException("Not allowed to register for an Admin account");
         }
 
+        Department department = departmentRepository.findById(userDTO.getDepartmentId())
+                .orElseThrow(() -> new DataNotFoundException(
+                        localizationUtils.getLocalizedMessage(MessageKeys.DEPARTMENT_NOT_FOUND)));
+
         // Create a new user instance
         User newUser = User.builder()
                 .email(userDTO.getEmail())
@@ -101,7 +108,7 @@ public class UserService implements IUserService {
                 .active(true)
                 .address(userDTO.getAddress())
                 .isCeo(userDTO.getIsCeo())
-                .department(userDTO.getDepartment())
+                .department(department)
                 .DateOfBirth(userDTO.getDateOfBirth())
                 .build();
         newUser.setRole(role);
@@ -317,13 +324,19 @@ public class UserService implements IUserService {
         // Check if the user exists
         User user = UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
+        Department department = null;
+        if (userDTO.getDepartmentId() != null) {
+            department = departmentRepository.findById(userDTO.getDepartmentId())
+                    .orElseThrow(() -> new DataNotFoundException(MessageKeys.DEPARTMENT_NOT_FOUND));
+        }
+
         // Update the user's information
         user.setFullName(userDTO.getFullName());
         user.setPhoneNumber(userDTO.getPhoneNumber());
         user.setEmail(userDTO.getEmail());
         user.setAddress(userDTO.getAddress());
         user.setIsCeo(userDTO.getIsCeo());
-        user.setDepartment(userDTO.getDepartment());
+        user.setDepartment(department);
         user.setDateOfBirth(userDTO.getDateOfBirth());
         user.setRole(RoleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
 

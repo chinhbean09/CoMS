@@ -87,4 +87,9 @@ public class MessageKeys {
     public static final String APPROVE_STAGE_SUCCESSFULLY = "Phe duyet quy trình";
     public static final String REJECT_STAGE_SUCCESSFULLY = "Tu choi quy trình";
     public static final String GET_APPROVAL_COMMENTS_SUCCESSFULLY = "Lấy danh sách binh luan phe duyet hợp đồng";
+    public static final String DEPARTMENT_NOT_FOUND = "Phòng ban không tìm thấy";
+    public static final String CREATE_DEPARTMENT_SUCCESSFULLY = "Tạo phòng ban thành công";
+    public static final String UPDATE_DEPARTMENT_SUCCESSFULLY = "Cập nhật phòng ban thành công";
+    public static final String DELETE_DEPARTMENT_SUCCESSFULLY = "Xóa phòng ban";
+    public static final String GET_ALL_DEPARTMENT_SUCCESSFULLY = "Lấy danh sách phòng ban";
 }
