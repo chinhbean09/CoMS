@@ -52,4 +52,7 @@ public class ApprovalStage {
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;
+
+    @Column(name = "start_date")
+    private LocalDateTime startDate;
 }
