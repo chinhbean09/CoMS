@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.entities.AuditTrail;
 import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
+import com.capstone.contractmanagement.responses.ChangeDateResponse;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -203,4 +205,78 @@ public class AuditTrailController {
                 .build());
     }
 
+    @GetMapping("/original-contract/{originalContractId}/change-dates")
+    public ResponseEntity<ResponseObject> getChangeDatesByOriginalContractId(
+            @PathVariable Long originalContractId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size); // Không thêm Sort vì đã có trong truy vấn
+            Page<java.sql.Date> changeDatesSql = auditTrailRepository.findDistinctChangeDatesByOriginalContractId(originalContractId, pageable);
+
+            // Chuyển đổi java.sql.Date sang LocalDate và ánh xạ sang ChangeDateResponse
+            Page<ChangeDateResponse> formattedDates = changeDatesSql.map(sqlDate ->
+                    new ChangeDateResponse(sqlDate.toLocalDate())
+            );
+
+            if (formattedDates.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.NOT_FOUND)
+                                .message("Không tìm thấy ngày thay đổi cho originalContractId: " + originalContractId)
+                                .data(null)
+                                .build());
+            }
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Lấy danh sách ngày thay đổi thành công")
+                    .data(formattedDates)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi khi lấy ngày thay đổi: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+
+
+    @GetMapping("/original-contract/{originalContractId}/changes-by-date")
+    public ResponseEntity<ResponseObject> getAuditTrailsByDate(
+            @PathVariable Long originalContractId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
+        try {
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<AuditTrail> auditTrails = auditTrailRepository.findByOriginalContractIdAndChangedAtDate(originalContractId, date, pageable);
+            if (auditTrails.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.NOT_FOUND)
+                                .message("Không tìm thấy thay đổi cho originalContractId: " + originalContractId + " vào ngày " + date)
+                                .data(null)
+                                .build());
+            }
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Lấy danh sách thay đổi thành công")
+                    .data(auditTrails)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi khi lấy thay đổi: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
 }

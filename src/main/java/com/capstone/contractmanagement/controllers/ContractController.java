@@ -10,6 +10,7 @@
     import com.capstone.contractmanagement.entities.contract.ContractTerm;
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+    import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
     import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
     import com.capstone.contractmanagement.repositories.IContractRepository;
     import com.capstone.contractmanagement.responses.ResponseObject;
@@ -268,6 +269,18 @@
                                 .data(null)
                                 .build());
             }
+        }
+
+        @GetMapping("/compare-versions")
+        public ResponseEntity<List<ContractResponse>> getContractVersions(
+                @RequestParam("originalContractId") Long originalContractId,
+                @RequestParam("version1") Integer version1,
+                @RequestParam("version2") Integer version2
+        ) {
+            List<ContractResponse> responses = contractService.getContractsByOriginalIdAndVersions(
+                    originalContractId, version1, version2
+            );
+            return ResponseEntity.ok(responses);
         }
 
 

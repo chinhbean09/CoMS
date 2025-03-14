@@ -47,4 +47,7 @@ public interface IContractService {
 
     Page<GetAllContractReponse> getAllVersionsByOriginalContractId(Long originalContractId, Pageable pageable, User currentUser);
 
+
+    public List<ContractResponse> getContractsByOriginalIdAndVersions(Long originalContractId, Integer version1, Integer version2);
+
     }
