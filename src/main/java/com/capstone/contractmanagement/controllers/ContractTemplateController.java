@@ -205,7 +205,7 @@ public class ContractTemplateController {
         }
     }
 
-    @PostMapping("/update/{templateId}")
+    @PutMapping("/update/{templateId}")
     public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long templateId, @RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.updateTemplate(templateId, dto);
