@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.responses.party;
 
-import com.capstone.contractmanagement.enums.PartyType;
+import com.capstone.contractmanagement.enums.PartnerType;
 import com.capstone.contractmanagement.responses.bank.BankResponse;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.util.List;
 public class ListPartnerResponse {
     private Long partyId;
     private String partnerCode;
-    private PartyType partnerType; // Loại bên (Bên A, Bên B)
+    private PartnerType partnerType; // Loại bên (Bên A, Bên B)
     private String partnerName; // Tên công ty hoặc cá nhân
     private String spokesmanName;
     private String address;

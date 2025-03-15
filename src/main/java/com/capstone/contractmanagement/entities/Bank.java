@@ -22,7 +22,7 @@ public class Bank {
     private String backAccountNumber;
 
     @ManyToOne
-    @JoinColumn(name = "party_id")
+    @JoinColumn(name = "partner_id")
     @JsonIgnore
     private Partner partner;
 }
