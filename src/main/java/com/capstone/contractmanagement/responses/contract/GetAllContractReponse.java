@@ -28,5 +28,5 @@ public class GetAllContractReponse {
     private ContractStatus status;
     private Integer version;
     private Long originalContractId;
-
+    private Long approvalWorkflowId;
 }
