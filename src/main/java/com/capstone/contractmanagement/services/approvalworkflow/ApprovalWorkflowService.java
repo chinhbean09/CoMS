@@ -277,7 +277,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         contractRepository.save(contract);
 
         String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
-        logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.APPROVED.name(), changedBy);
+        logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.APPROVAL_PENDING.name(), changedBy);
 
         // Lấy stage có stageOrder nhỏ nhất để gửi thông báo
         workflowToAssign.getStages().stream()
