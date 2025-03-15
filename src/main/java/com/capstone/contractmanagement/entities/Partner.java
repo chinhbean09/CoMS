@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract.Contract;
-import com.capstone.contractmanagement.enums.PartyType;
+import com.capstone.contractmanagement.enums.PartnerType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "parties")
+@Table(name = "partners")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,15 +20,15 @@ public class Partner {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "party_id")
+    @Column(name = "partner_id")
     private Long id;
 
     @Column(name = "partner_code", nullable = false, length = 50)
     private String partnerCode;
 
-    @Column(name = "party_type", nullable = false, length = 50)
+    @Column(name = "partner_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private PartyType partnerType; // Loại bên (Bên A, Bên B)
+    private PartnerType partnerType; // Loại bên (Bên A, Bên B)
 
     @Column(name = "name", nullable = false, length = 200)
     private String partnerName; // Tên công ty hoặc cá nhân
