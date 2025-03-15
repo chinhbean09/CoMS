@@ -894,7 +894,7 @@ public class ContractService implements IContractService{
         int newVersion = calculateNewVersion(originalContractId, currentContract);
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
 
-        ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
+        //ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
 
@@ -905,7 +905,7 @@ public class ContractService implements IContractService{
                 .signingDate(dto.getSigningDate() != null ? dto.getSigningDate() : currentContract.getSigningDate())
                 .contractLocation(dto.getContractLocation() != null ? dto.getContractLocation() : currentContract.getContractLocation())
                 .contractNumber(newContractNumber)
-                .approvalWorkflow(tempWorkflow)
+                .approvalWorkflow(workflow)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(ContractStatus.UPDATED)
