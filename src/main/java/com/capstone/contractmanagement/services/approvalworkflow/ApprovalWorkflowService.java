@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.services.approvalworkflow;
 import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
+import com.capstone.contractmanagement.entities.AuditTrail;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -45,6 +46,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     private final INotificationService notificationService;
     private final IMailService mailService;
     private final IContractTypeRepository contractTypeRepository;
+    private final IAuditTrailRepository auditTrailRepository;
+
 
     @Override
     @Transactional
@@ -268,9 +271,13 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         }
 
         // Gán workflow (mới hoặc gốc nếu chưa gán) cho hợp đồng
+        String oldStatus = contract.getStatus().name();
         contract.setApprovalWorkflow(workflowToAssign);
         contract.setStatus(ContractStatus.APPROVAL_PENDING);
         contractRepository.save(contract);
+
+        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.APPROVED.name(), changedBy);
 
         // Lấy stage có stageOrder nhỏ nhất để gửi thông báo
         workflowToAssign.getStages().stream()
@@ -291,6 +298,22 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     firstStage.setStatus(ApprovalStatus.APPROVING);
                     approvalStageRepository.save(firstStage);
                 });
+    }
+
+    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract)
+                .entityName("Contract") // Tên thực thể là "Contract"
+                .entityId(contract.getId()) // ID của hợp đồng
+                .action(action) // Hành động: "Status updated"
+                .fieldName(fieldName) // Trường thay đổi: "status"
+                .oldValue(oldValue) // Giá trị cũ
+                .newValue(newValue) // Giá trị mới
+                .changedBy(changedBy) // Người thực hiện thay đổi
+                .changedAt(LocalDateTime.now()) // Thời điểm thay đổi
+                .changeSummary(String.format("Field '%s' changed from '%s' to '%s'", fieldName, oldValue, newValue)) // Tóm tắt thay đổi
+                .build();
+        auditTrailRepository.save(auditTrail);
     }
 
     @Override
@@ -338,10 +361,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 sendEmailReminder(contract, nextApprover, nextStage);
                 notificationService.saveNotification(nextApprover, notificationMessage, contract);
             } else {
-                // Nếu không có bước duyệt tiếp theo => đây là bước duyệt cuối cùng, cập nhật status hợp đồng thành APPROVED
+// Bước cuối cùng: Cập nhật trạng thái hợp đồng và ghi audit trail
+                String oldStatus = contract.getStatus().name();
                 contract.setStatus(ContractStatus.APPROVED);
                 contractRepository.save(contract);
-            }
+
+                // Ghi audit trail
+                String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+                logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.APPROVED.name(), changedBy);            }
         }
     }
 
@@ -360,9 +387,15 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         stage.setApprovedAt(LocalDateTime.now());
         stage.setComment(workflowDTO.getComment());
         approvalStageRepository.save(stage);
-        contract.setStatus(ContractStatus.REJECTED);
+
+        String oldStatus = contract.getStatus().name();
+        contract.setStatus(ContractStatus.REJECTED) ;
         //contract.setApprovalWorkflow(null);
         contractRepository.save(contract);
+
+        String changedBy = currentUser.getUsername(); // Hoặc getFullName() tùy cấu hình
+        logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.REJECTED.name(), changedBy);
+
         //workflowService.createWorkflow(contract, workflowDTO, currentUser);
         Map<String, Object> payload = new HashMap<>();
         String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
@@ -505,12 +538,17 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         });
 
         // Cập nhật lại trạng thái của hợp đồng về APPROVAL_PENDING (để báo hiệu đang chờ duyệt lại)
+
+        String oldStatus = contract.getStatus().name();
         contract.setStatus(ContractStatus.APPROVAL_PENDING);
         contractRepository.save(contract);
 
         // Tìm bước duyệt đầu tiên (stage có stageOrder nhỏ nhất)
         Optional<ApprovalStage> firstStageOpt = workflow.getStages().stream()
                 .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
+
+        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        logAuditTrail(contract, "Status updated", "status", oldStatus, ContractStatus.APPROVAL_PENDING.name(), changedBy);
 
         if (firstStageOpt.isPresent()) {
             ApprovalStage firstStage = firstStageOpt.get();
