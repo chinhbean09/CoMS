@@ -575,8 +575,8 @@ public class ContractService implements IContractService{
                         .partnerName(contract.getPartner().getPartnerName())
                         .build())
                 .version(contract.getVersion())
-                .originalContractId(contract.getOriginalContractId()==null?null:contract.getOriginalContractId())
-                .approvalWorkflowId(contract.getApprovalWorkflow().getId())
+                .originalContractId(contract.getOriginalContractId())
+                .approvalWorkflowId(contract.getApprovalWorkflow() == null ? null : contract.getApprovalWorkflow().getId())
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .build();
     }
