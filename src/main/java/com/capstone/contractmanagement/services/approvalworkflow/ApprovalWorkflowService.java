@@ -66,14 +66,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             Set<Long> approverIds = new HashSet<>();
             for (var stageDTO : approvalWorkflowDTO.getStages()) {
                 if (!approverIds.add(stageDTO.getApproverId())) {
-                    throw new RuntimeException("Duplicate approver found with id: " + stageDTO.getApproverId());
+                    throw new RuntimeException("Trùng người duyệt tại stage: " + stageDTO.getApproverId());
                 }
             }
 
             // Tạo và thêm các stage sau khi xác nhận không có duplicate
             approvalWorkflowDTO.getStages().forEach(stageDTO -> {
                 User approver = userRepository.findById(stageDTO.getApproverId())
-                        .orElseThrow(() -> new RuntimeException("User not found with id " + stageDTO.getApproverId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt  " + stageDTO.getApproverId()));
                 ApprovalStage stage = ApprovalStage.builder()
                         .stageOrder(stageDTO.getStageOrder())
                         .approver(approver)
@@ -92,14 +92,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Nếu DTO có chứa contractId, gán workflow vừa tạo cho Contract tương ứng
         if (approvalWorkflowDTO.getContractId() != null) {
             Contract contract = contractRepository.findById(approvalWorkflowDTO.getContractId())
-                    .orElseThrow(() -> new RuntimeException("Contract not found with id " + approvalWorkflowDTO.getContractId()));
+                    .orElseThrow(() -> new RuntimeException("Hợp đồng không tìm thấy với id " + approvalWorkflowDTO.getContractId()));
             contract.setApprovalWorkflow(workflow);
             contractRepository.save(contract);
         }
 
         if (approvalWorkflowDTO.getContractTypeId() != null) {
             ContractType contractTypes = contractTypeRepository.findById(approvalWorkflowDTO.getContractTypeId())
-                    .orElseThrow(() -> new RuntimeException("Contract type not found with id " + approvalWorkflowDTO.getContractTypeId()));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id " + approvalWorkflowDTO.getContractTypeId()));
             workflow.setContractType(contractTypes);
             approvalWorkflowRepository.save(workflow);
         }
