@@ -15,6 +15,10 @@
     # Run Stage: Sử dụng OpenJDK alpine cho image nhẹ hơn
     FROM openjdk:17-alpine
 
+    RUN apk add --no-cache tzdata && \
+        ln -snf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime && \
+        echo "Asia/Ho_Chi_Minh" > /etc/timezone
+
     # Tạo user không root (ví dụ: coms-chinhbean)
     RUN adduser -D coms-chinhbean
 

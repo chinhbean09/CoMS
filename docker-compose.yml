@@ -10,6 +10,8 @@
         SPRING_DATASOURCE_PASSWORD: 12345
       depends_on:
         - db
+      volumes:
+        - /etc/localtime:/etc/localtime:ro
 
     db:
       image: postgres:14
@@ -22,6 +24,7 @@
         - "5432:5432"
       volumes:
         - postgres_data:/var/lib/postgresql/data
+        - /etc/localtime:/etc/localtime:ro
 
   volumes:
     postgres_data:
