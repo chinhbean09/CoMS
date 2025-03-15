@@ -66,14 +66,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             Set<Long> approverIds = new HashSet<>();
             for (var stageDTO : approvalWorkflowDTO.getStages()) {
                 if (!approverIds.add(stageDTO.getApproverId())) {
-                    throw new RuntimeException("Duplicate approver found with id: " + stageDTO.getApproverId());
+                    throw new RuntimeException("Trùng người duyệt tại stage: " + stageDTO.getApproverId());
                 }
             }
 
             // Tạo và thêm các stage sau khi xác nhận không có duplicate
             approvalWorkflowDTO.getStages().forEach(stageDTO -> {
                 User approver = userRepository.findById(stageDTO.getApproverId())
-                        .orElseThrow(() -> new RuntimeException("User not found with id " + stageDTO.getApproverId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt  " + stageDTO.getApproverId()));
                 ApprovalStage stage = ApprovalStage.builder()
                         .stageOrder(stageDTO.getStageOrder())
                         .approver(approver)
@@ -92,14 +92,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Nếu DTO có chứa contractId, gán workflow vừa tạo cho Contract tương ứng
         if (approvalWorkflowDTO.getContractId() != null) {
             Contract contract = contractRepository.findById(approvalWorkflowDTO.getContractId())
-                    .orElseThrow(() -> new RuntimeException("Contract not found with id " + approvalWorkflowDTO.getContractId()));
+                    .orElseThrow(() -> new RuntimeException("Hợp đồng không tìm thấy với id " + approvalWorkflowDTO.getContractId()));
             contract.setApprovalWorkflow(workflow);
             contractRepository.save(contract);
         }
 
         if (approvalWorkflowDTO.getContractTypeId() != null) {
             ContractType contractTypes = contractTypeRepository.findById(approvalWorkflowDTO.getContractTypeId())
-                    .orElseThrow(() -> new RuntimeException("Contract type not found with id " + approvalWorkflowDTO.getContractTypeId()));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id " + approvalWorkflowDTO.getContractTypeId()));
             workflow.setContractType(contractTypes);
             approvalWorkflowRepository.save(workflow);
         }
@@ -171,16 +171,16 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             Set<Long> approverIds = new HashSet<>();
             for (var stageDTO : approvalWorkflowDTO.getStages()) {
                 if (stageDTO.getApproverId() == null) {
-                    throw new RuntimeException("Approver id must not be null for stage with stageOrder: " + stageDTO.getStageOrder());
+                    throw new RuntimeException("Trùng người duyệt tại stage: " + stageDTO.getStageOrder());
                 }
                 if (!approverIds.add(stageDTO.getApproverId())) {
-                    throw new RuntimeException("Duplicate approver found with id: " + stageDTO.getApproverId());
+                    throw new RuntimeException("Trùng ID người duyệt: " + stageDTO.getApproverId());
                 }
             }
             // Thêm các stage mới sau khi xác nhận không có duplicate
             approvalWorkflowDTO.getStages().forEach(stageDTO -> {
                 User approver = userRepository.findById(stageDTO.getApproverId())
-                        .orElseThrow(() -> new RuntimeException("User not found with id " + stageDTO.getApproverId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt với id " + stageDTO.getApproverId()));
                 ApprovalStage stage = ApprovalStage.builder()
                         .stageOrder(stageDTO.getStageOrder())
                         .approver(approver)
@@ -236,7 +236,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     public void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException {
         // Tìm hợp đồng cần gán workflow
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+                .orElseThrow(() -> new DataNotFoundException("Khong tìm thấy hợp đồng với id " + contractId));
 
         // Tìm workflow gốc theo workflowId
         ApprovalWorkflow originalWorkflow = approvalWorkflowRepository.findById(workflowId)
@@ -289,9 +289,9 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     payload.put("message", notificationMessage);
                     payload.put("contractId", contractId);
                     User firstApprover = firstStage.getApprover();
-                    messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
                     sendEmailReminder(contract, firstApprover, firstStage);
                     notificationService.saveNotification(firstApprover, notificationMessage, contract);
+                    messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
                     // Đặt hạn duyệt cho bước này (2 ngày kể từ bây giờ)
                     firstStage.setStartDate(LocalDateTime.now());
                     firstStage.setDueDate(LocalDateTime.now().plusDays(2));
@@ -357,9 +357,9 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 payload.put("message", notificationMessage);
                 payload.put("contractId", contractId);
                 // Gửi thông báo qua WebSocket đến người duyệt tiếp theo
-                messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
                 sendEmailReminder(contract, nextApprover, nextStage);
                 notificationService.saveNotification(nextApprover, notificationMessage, contract);
+                messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
             } else {
 // Bước cuối cùng: Cập nhật trạng thái hợp đồng và ghi audit trail
                 String oldStatus = contract.getStatus().name();
@@ -402,8 +402,9 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         payload.put("message", notificationMessage);
         payload.put("contractId", contractId);
         // Gửi thông báo đến user, sử dụng username làm định danh user destination
-        messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
+        sendUpdateContractReminder(contract, contract.getUser());
         notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
+        messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
     }
 
     @Override
@@ -466,12 +467,12 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     public List<CommentResponse> getApprovalStageCommentDetailsByContractId(Long contractId) throws DataNotFoundException {
         // Tìm hợp đồng theo contractId
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng với id : " + contractId));
 
         // Lấy quy trình phê duyệt của hợp đồng
         ApprovalWorkflow workflow = contract.getApprovalWorkflow();
         if (workflow == null) {
-            throw new DataNotFoundException("Approval workflow not found for contract id: " + contractId);
+            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho hợp đồng với id : " + contractId);
         }
 
         // Lấy danh sách thông tin comment từ các bước duyệt
@@ -522,12 +523,12 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     public void resubmitContractForApproval(Long contractId) throws DataNotFoundException {
         // Tìm hợp đồng theo contractId
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng với id : " + contractId));
 
         // Lấy workflow của hợp đồng
         ApprovalWorkflow workflow = contract.getApprovalWorkflow();
         if (workflow == null || workflow.getStages().isEmpty()) {
-            throw new DataNotFoundException("Approval workflow not found for contract id: " + contractId);
+            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho hợp đồng với id : " + contractId);
         }
 
         // Reset lại tất cả các bước duyệt: đặt trạng thái về PENDING, xóa approvedAt và comment
@@ -567,12 +568,12 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             payload.put("message", notificationMessage);
             payload.put("contractId", contractId);
 
-            // Gửi thông báo qua WebSocket
-            messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
             // Gửi email nhắc nhở nếu cần
             sendEmailReminder(contract, firstApprover, firstStage);
             // Lưu thông báo vào hệ thống thông báo
             notificationService.saveNotification(firstApprover, notificationMessage, contract);
+            // Gửi thông báo qua WebSocket
+            messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
         }
     }
 
@@ -639,6 +640,21 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             props.put("stage", stage.getStageOrder());
             dataMailDTO.setProps(props); // Set props to dataMailDTO
             mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_APPROVAL_NOTIFICATION);
+        } catch (Exception e) {
+            // Xu ly loi
+            e.printStackTrace();
+        }
+    }
+
+    private void sendUpdateContractReminder(Contract contract, User user) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractTitle", contract.getTitle());
+            dataMailDTO.setProps(props); // Set props to dataMailDTO
+            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_CONTRACT_REQUEST);
         } catch (Exception e) {
             // Xu ly loi
             e.printStackTrace();
