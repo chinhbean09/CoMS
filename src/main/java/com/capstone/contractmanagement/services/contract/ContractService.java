@@ -58,6 +58,7 @@ public class ContractService implements IContractService{
     private final ObjectMapper objectMapper; // Để serialize object thành JSON
     private final IContractTermRepository contractTermRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
+    private final IApprovalWorkflowRepository workflowRepository;
 
     @Transactional
     @Override
@@ -897,6 +898,8 @@ public class ContractService implements IContractService{
         //ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
+        workflow.setContract(null);
+        workflowRepository.save(workflow);
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
