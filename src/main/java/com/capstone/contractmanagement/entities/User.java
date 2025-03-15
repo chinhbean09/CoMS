@@ -30,7 +30,7 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "full_name", length = 100)
     private String fullName;
 
-    @Column(name = "phone_number", length = 10)
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
     @Column(name = "address", length = 200)
