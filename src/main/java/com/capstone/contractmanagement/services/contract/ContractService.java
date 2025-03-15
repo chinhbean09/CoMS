@@ -896,10 +896,16 @@ public class ContractService implements IContractService{
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
 
         //ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
+        // 4. Tách workflow khỏi hợp đồng cũ và cập nhật xuống CSDL
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
-        workflow.setContract(null);
-        workflowRepository.save(workflow);
+        contractRepository.flush(); // đảm bảo cập nhật vào DB
+
+        if (workflow != null) {
+            workflow.setContract(null);
+            workflowRepository.save(workflow);
+            workflowRepository.flush();
+        }
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
