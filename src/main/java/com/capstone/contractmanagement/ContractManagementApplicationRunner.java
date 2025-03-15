@@ -20,15 +20,16 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class ContractManagementApplicationRunner implements ApplicationRunner {
-    @Autowired
-    private IUserRepository IUserRepository;
 
     @Autowired
-    private IRoleRepository IRoleRepository;
+    private IUserRepository userRepository;
+
+    @Autowired
+    private IRoleRepository roleRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -41,6 +42,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Autowired
     private IApprovalWorkflowRepository approvalWorkflowRepository;
 
+    @Autowired
     private IApprovalStageRepository approvalStageRepository;
 
     @Value("${contract.admin.email}")
@@ -67,7 +69,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.manager.address}")
     private String managerAddress;
 
-    @Value("${contract.manager.address}")
+    @Value("${contract.staff.address}") // Sửa từ manager.address thành staff.address
     private String staffAddress;
 
     @Value("${contract.admin.phoneNumber}")
@@ -85,8 +87,20 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.admin.active}")
     private Boolean active;
 
-    public void initializeParty() {
+    private void initializeRoles() {
+        if (roleRepository.count() == 0) {
+            roleRepository.saveAll(List.of(
+                    Role.builder().id(1L).roleName("ADMIN").build(),
+                    Role.builder().id(2L).roleName("MANAGER").build(),
+                    Role.builder().id(3L).roleName("STAFF").build()
+            ));
+            System.out.println("Roles initialized!");
+        } else {
+            System.out.println("Roles already initialized!");
+        }
+    }
 
+    private void initializeParty() {
         if (partyRepository.count() > 0) {
             System.out.println("Partner already initialized!");
             return;
@@ -104,15 +118,15 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .taxCode("93245244534467")
                 .build();
         partyRepository.save(partner);
+        System.out.println("Partner initialized!");
     }
-    public void initializeTypeTerms() {
+
+    private void initializeTypeTerms() {
         if (typeTermRepository.count() > 0) {
             System.out.println("Type terms already initialized!");
             return;
         }
-        //generalTerms, additionalTerms, otherTerms, legalbasis
         List<TypeTerm> typeTerms = List.of(
-                // Additional Terms
                 TypeTerm.builder().name("Điều khoản bổ sung").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
                 TypeTerm.builder().name("Điều khoản Quyền và nghĩa vụ các bên").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
                 TypeTerm.builder().name("Điều khoản Bảo hành và bảo trì").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
@@ -120,45 +134,64 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 TypeTerm.builder().name("Điều khoản chấm dứt hợp đồng").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
                 TypeTerm.builder().name("Điều khoản giải quyết tranh chấp").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
                 TypeTerm.builder().name("Điều khoản bảo mật").identifier(TypeTermIdentifier.ADDITIONAL_TERMS).build(),
-
-                // Legal basis
                 TypeTerm.builder().name("Căn cứ pháp lí").identifier(TypeTermIdentifier.LEGAL_BASIS).build(),
-
-                // General terms
                 TypeTerm.builder().name("Điều khoản chung").identifier(TypeTermIdentifier.GENERAL_TERMS).build(),
-
-                // Other terms
                 TypeTerm.builder().name("Các điều khoản khác").identifier(TypeTermIdentifier.OTHER_TERMS).build()
         );
-
         typeTermRepository.saveAll(typeTerms);
         System.out.println("Type terms initialized successfully!");
     }
 
+    private void initializeUser(String email, String phoneNumber, String fullName, String address,
+                                String password, String roleName, Long roleId) {
+        if (userRepository.findByPhoneNumber(phoneNumber).isEmpty()) {
+            Role role = roleRepository.findById(roleId)
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            String encodedPassword = passwordEncoder.encode(password);
+
+            User user = User.builder()
+                    .email(email)
+                    .phoneNumber(phoneNumber)
+                    .fullName(fullName)
+                    .address(address)
+                    .password(encodedPassword)
+                    .role(role)
+                    .active(true)
+                    .build();
+
+            userRepository.save(user);
+            System.out.println(roleName + " initialized!");
+        } else {
+            System.out.println(roleName + " already exists!");
+        }
+    }
+
     private void initializeApprovalWorkflow() {
-        // Nếu đã có quy trình duyệt, không cần tạo lại
         if (approvalWorkflowRepository.count() > 0) {
             System.out.println("Approval workflows already initialized!");
             return;
         }
         try {
-            User approver1 = IUserRepository.findById(2L).orElse(null);
-            User approver2 = IUserRepository.findById(3L).orElse(null);
+            User approver1 = userRepository.findById(2L).orElse(null); // Manager
+            User approver2 = userRepository.findById(3L).orElse(null); // Staff (có thể sửa thành Admin nếu cần)
 
-            // Tạo quy trình duyệt mới
+            if (approver1 == null || approver2 == null) {
+                System.err.println("Approvers not found, skipping approval workflow initialization.");
+                return;
+            }
+
             ApprovalWorkflow workflow = ApprovalWorkflow.builder()
                     .name("Standard Approval Workflow")
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            // Tạo đợt duyệt 1: Manager
             ApprovalStage stage1 = ApprovalStage.builder()
                     .stageOrder(1)
                     .approver(approver1)
                     .status(ApprovalStatus.NOT_STARTED)
                     .approvalWorkflow(workflow)
                     .build();
-            // Tạo đợt duyệt 2: Admin (đóng vai CEO)
+
             ApprovalStage stage2 = ApprovalStage.builder()
                     .stageOrder(2)
                     .approver(approver2)
@@ -166,8 +199,6 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                     .approvalWorkflow(workflow)
                     .build();
 
-
-            // Thêm các stage vào quy trình
             List<ApprovalStage> stages = new ArrayList<>();
             stages.add(stage1);
             stages.add(stage2);
@@ -183,87 +214,19 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        // Khởi tạo Roles trước
+        initializeRoles();
 
-
-        Optional<User> findAccountResult = IUserRepository.findByPhoneNumber(phoneNumber);
-        Optional<Role> existRolePermission = IRoleRepository.findById((long) 1);
-        Optional<User> findAccountManager = IUserRepository.findByPhoneNumber(managerPhoneNumber);
-        Optional<User> findAccountStaff = IUserRepository.findByPhoneNumber(staffPhoneNumber);
-
-        // Initialize type terms
+        // Khởi tạo các dữ liệu khác
         initializeTypeTerms();
         initializeParty();
 
+        // Khởi tạo các tài khoản
+        initializeUser(email, phoneNumber, fullName, address, password, "ADMIN", 1L);
+        initializeUser(managerEmail, managerPhoneNumber, managerFullName, managerAddress, password, "MANAGER", 2L);
+        initializeUser(staffEmail, staffPhoneNumber, staffFullName, staffAddress, password, "STAFF", 3L);
 
-        Role AdminRole = Role.builder()
-                .id(1L)
-                .roleName("ADMIN")
-                .build();
-        Role ManagerRole = Role.builder()
-                .id(2L)
-                .roleName("MANAGER")
-                .build();
-        Role StaffRole = Role.builder()
-                .id(3L)
-                .roleName("STAFF")
-                .build();
-
-        if (existRolePermission.isEmpty()) {
-            System.out.println("There is no role Initialing...!");
-        }
-
-        IRoleRepository.save(AdminRole);
-        IRoleRepository.save(ManagerRole);
-        IRoleRepository.save(StaffRole);
-
-
-        if (findAccountResult.isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(password);
-
-            User user = new User();
-            user.setEmail(email);
-            user.setAddress(address);
-            user.setPassword(encodedPassword);
-            user.setActive(active);
-            user.setFullName(fullName);
-            user.setPhoneNumber(phoneNumber);
-            user.setRole(AdminRole);
-            user.setActive(true);
-            IUserRepository.save(user);
-            System.out.println("Admin initialized!");
-        }
-
-        if (findAccountManager.isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(password);
-
-            User user = new User();
-            user.setEmail(managerEmail);
-            user.setAddress(managerAddress);
-            user.setPassword(encodedPassword);
-            user.setActive(active);
-            user.setFullName(managerFullName);
-            user.setPhoneNumber(managerPhoneNumber);
-            user.setRole(ManagerRole);
-            user.setActive(true);
-            IUserRepository.save(user);
-            System.out.println("Manager initialized!");
-        }
-
-        if (findAccountStaff.isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(password);
-
-            User user = new User();
-            user.setEmail(staffEmail);
-            user.setAddress(staffAddress);
-            user.setPassword(encodedPassword);
-            user.setActive(active);
-            user.setFullName(staffFullName);
-            user.setPhoneNumber(staffPhoneNumber);
-            user.setRole(StaffRole);
-            user.setActive(true);
-            IUserRepository.save(user);
-            System.out.println("Staff initialized!");
-        }
+        // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
 
         System.out.println("Hello, I'm System Manager!");
