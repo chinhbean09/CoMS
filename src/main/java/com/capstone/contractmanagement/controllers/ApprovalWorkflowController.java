@@ -148,7 +148,7 @@ public class ApprovalWorkflowController {
                 .build());
     }
 
-    @PostMapping("/resubmit/{contractId}/")
+    @PostMapping("/resubmit/{contractId}")
     public ResponseEntity<String> resubmitContract(@PathVariable Long contractId) {
         try {
             approvalWorkflowService.resubmitContractForApproval(contractId);
