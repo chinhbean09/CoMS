@@ -324,10 +324,11 @@ public class UserService implements IUserService {
         // Check if the user exists
         User user = UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
-        Department department = null;
+
         if (userDTO.getDepartmentId() != null) {
-            department = departmentRepository.findById(userDTO.getDepartmentId())
+            Department department = departmentRepository.findById(userDTO.getDepartmentId())
                     .orElseThrow(() -> new DataNotFoundException(MessageKeys.DEPARTMENT_NOT_FOUND));
+            user.setDepartment(department);
         }
 
         // Update the user's information
@@ -336,7 +337,6 @@ public class UserService implements IUserService {
         user.setEmail(userDTO.getEmail());
         user.setAddress(userDTO.getAddress());
         user.setIsCeo(userDTO.getIsCeo());
-        user.setDepartment(department);
         user.setDateOfBirth(userDTO.getDateOfBirth());
         user.setRole(RoleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
