@@ -895,8 +895,8 @@ public class ContractService implements IContractService{
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
 
         //ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
-
-
+        currentContract.setApprovalWorkflow(null);
+        contractRepository.save(currentContract);
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -931,16 +931,12 @@ public class ContractService implements IContractService{
                 .suspend(dto.getSuspend() != null ? dto.getSuspend() : currentContract.getSuspend())
                 .suspendContent(dto.getSuspendContent() != null ? dto.getSuspendContent() : currentContract.getSuspendContent())
                 .contractContent(dto.getContractContent() != null ? dto.getContractContent() : currentContract.getContractContent())
-                .approvalWorkflow(currentContract.getApprovalWorkflow())
                 .maxDateLate(dto.getMaxDateLate() != null ? dto.getMaxDateLate() : currentContract.getMaxDateLate())
                 .contractType(dto.getContractTypeId() != null
                         ? contractTypeRepository.findById(dto.getContractTypeId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
                         : currentContract.getContractType())
                 .build();
-
-        currentContract.setApprovalWorkflow(null);
-        contractRepository.save(currentContract);
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
         // 3. ContractTerm
