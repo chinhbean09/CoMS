@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -62,16 +63,20 @@ public class ContractService implements IContractService{
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
         // 1. Load các entity cần thiết
+        // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với id: " + dto.getTemplateId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
         Partner partner = partyRepository.findById(dto.getPartyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Partner với id: " + dto.getPartyId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartyId()));
         User user = currentUser.getLoggedInUser();
+        if (user == null) {
+            throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
+        }
 
         LocalDateTime createdAt = LocalDateTime.now();
         String contractNumber = generateContractNumber(createdAt, dto.getContractTitle());
 
-        // 2. Tạo hợp đồng mới, lấy dữ liệu từ DTO hoặc từ templateSnapshot
+        // 2. Tạo hợp đồng mới
         Contract contract = Contract.builder()
                 .title(dto.getTemplateData().getContractTitle())
                 .contractNumber(contractNumber)
@@ -107,16 +112,20 @@ public class ContractService implements IContractService{
                 .createdAt(LocalDateTime.now())
                 .version(1)
                 .build();
+
         // 3. Map các điều khoản đơn giản sang ContractTerm
         List<ContractTerm> contractTerms = new ArrayList<>();
 
-        // Legal Basis
+        // Căn cứ pháp lý
         if (dto.getTemplateData().getLegalBasisTerms() != null) {
             for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasisTerms()) {
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
+                }
                 Term term = termRepository.findById(termDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lí (LEGAL_BASIS)");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
                 }
                 contractTerms.add(ContractTerm.builder()
                         .originalTermId(term.getId())
@@ -127,13 +136,17 @@ public class ContractService implements IContractService{
                         .build());
             }
         }
-        // General Terms
+
+        // Các điều khoản chung
         if (dto.getTemplateData().getGeneralTerms() != null) {
             for (TermSnapshotDTO termDTO : dto.getTemplateData().getGeneralTerms()) {
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
+                }
                 Term term = termRepository.findById(termDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản chung (GENERAL_TERMS)");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
                 }
                 contractTerms.add(ContractTerm.builder()
                         .originalTermId(term.getId())
@@ -144,15 +157,18 @@ public class ContractService implements IContractService{
                         .build());
             }
         }
-        // Other Terms
+
+        // Các điều khoản khác
         if (dto.getTemplateData().getOtherTerms() != null) {
             for (TermSnapshotDTO termDTO : dto.getTemplateData().getOtherTerms()) {
-                Term term = termRepository.findById(termDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
-                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Các điều khoản khác (OTHER_TERMS)");
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
                 }
-
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
+                }
                 contractTerms.add(ContractTerm.builder()
                         .originalTermId(term.getId())
                         .termLabel(term.getLabel())
@@ -166,7 +182,6 @@ public class ContractService implements IContractService{
         contract.setContractTerms(contractTerms);
 
         // 4. Map additionalConfig sang ContractAdditionalTermDetail
-        // additionalConfig: Map<String, Map<String, List<TermSnapshotDTO>>>
         List<ContractAdditionalTermDetail> additionalDetails = new ArrayList<>();
         if (dto.getTemplateData().getAdditionalConfig() != null) {
             Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getTemplateData().getAdditionalConfig();
@@ -176,35 +191,36 @@ public class ContractService implements IContractService{
                 try {
                     configTypeTermId = Long.parseLong(key);
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho type term id. Key sai: " + key);
+                    throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
                 }
                 Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
-
-
 
                 // Map nhóm Common
                 List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("Common")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("Common")) {
-                        // Lấy term gốc từ DB
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
+                        }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
-
-                        // Gán label, value từ term gốc
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         commonSnapshots.add(AdditionalTermSnapshot.builder()
-                                .termId(term.getId())          // Lấy id thực của term
-                                .termLabel(term.getLabel())    // Lấy label từ DB
-                                .termValue(term.getValue())    // Lấy value từ DB
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
+
                 // Map nhóm A
                 List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("A")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("A")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
+                        }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
-
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         aSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -212,13 +228,16 @@ public class ContractService implements IContractService{
                                 .build());
                     }
                 }
+
                 // Map nhóm B
                 List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
                 if (groupConfig.containsKey("B")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("B")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
+                        }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với id: " + termDTO.getId()));
-
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         bSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -227,53 +246,46 @@ public class ContractService implements IContractService{
                     }
                 }
 
-                // Thực hiện các kiểm tra trùng lặp
+                // Kiểm tra trùng lặp
                 Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionCommonA.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'A'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
                 }
                 Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionCommonB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
                 }
                 Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionAB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'A' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
                 }
 
-
-                // Thêm bước kiểm tra: đảm bảo tất cả các term trong từng nhóm thuộc đúng type term (so sánh với configTypeTermId)
+                // Kiểm tra type term
                 for (AdditionalTermSnapshot snap : commonSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
-                                + term.getTypeTerm().getName() + "\"");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
                 }
-
                 for (AdditionalTermSnapshot snap : aSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
-                                + term.getTypeTerm().getName() + "\"");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
                 }
-
                 for (AdditionalTermSnapshot snap : bSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \""
-                                + term.getTypeTerm().getName() + "\"");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
                 }
 
-                // Tạo đối tượng ContractAdditionalTermDetail snapshot
                 ContractAdditionalTermDetail configDetail = ContractAdditionalTermDetail.builder()
                         .typeTermId(configTypeTermId)
                         .commonTerms(commonSnapshots)
@@ -286,11 +298,17 @@ public class ContractService implements IContractService{
         }
         contract.setAdditionalTermDetails(additionalDetails);
 
-        // Ánh xạ payments
+        // 5. Ánh xạ lịch thanh toán
         List<PaymentSchedule> paymentSchedules = new ArrayList<>();
         if (dto.getPayments() != null) {
             int order = 1;
             for (PaymentDTO paymentDTO : dto.getPayments()) {
+                if (paymentDTO.getAmount() == null || paymentDTO.getAmount() <= 0.0) {
+                    throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0.");
+                }
+                if (paymentDTO.getPaymentDate() == null) {
+                    throw new IllegalArgumentException("Ngày thanh toán không được để trống.");
+                }
                 PaymentSchedule paymentSchedule = PaymentSchedule.builder()
                         .amount(paymentDTO.getAmount())
                         .paymentDate(paymentDTO.getPaymentDate())
@@ -304,38 +322,49 @@ public class ContractService implements IContractService{
                 paymentSchedules.add(paymentSchedule);
             }
         }
-
-
         contract.setPaymentSchedules(paymentSchedules);
 
-        // 5. Lưu hợp đồng với toàn bộ snapshot điều khoản và additional config
+        // 6. Lưu hợp đồng
         Contract savedContract = contractRepository.save(contract);
         savedContract.setOriginalContractId(savedContract.getId());
         contractRepository.save(savedContract);
-        // 6. Ghi audit trail cho các trường quan trọng
+
+        // 7. Ghi audit trail cho các trường quan trọng
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
-        String changedBy = user.getFullName(); // Giả định lấy username từ user
+        String changedBy = user.getFullName();
 
-        // Ghi audit cho từng trường
-        auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "partner", null, savedContract.getPartner().getId().toString(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy));
+        // Ghi audit cho từng trường với change summary bằng tiếng Việt
+        auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy,
+                "Tạo hợp đồng mới với tiêu đề: " + savedContract.getTitle()));
+        auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy,
+                "Gán số hợp đồng: " + savedContract.getContractNumber()));
+        auditTrails.add(createAuditTrail(savedContract, "partner", null, savedContract.getPartner().getId().toString(), now, changedBy,
+                "Liên kết với đối tác có ID: " + savedContract.getPartner().getId()));
+        auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy,
+                "Gán cho người dùng có ID: " + savedContract.getUser().getId()));
+        auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy,
+                "Sử dụng mẫu hợp đồng có ID: " + savedContract.getTemplate().getId()));
         auditTrails.add(createAuditTrail(savedContract, "signingDate", null,
-                savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : null, now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "contractLocation", null, savedContract.getContractLocation(), now, changedBy));
+                savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : null, now, changedBy,
+                "Đặt ngày ký hợp đồng: " + (savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "contractLocation", null, savedContract.getContractLocation(), now, changedBy,
+                "Đặt địa điểm ký hợp đồng: " + savedContract.getContractLocation()));
         auditTrails.add(createAuditTrail(savedContract, "amount", null,
-                savedContract.getAmount() != null ? savedContract.getAmount().toString() : null, now, changedBy));
+                savedContract.getAmount() != null ? savedContract.getAmount().toString() : null, now, changedBy,
+                "Đặt giá trị hợp đồng: " + (savedContract.getAmount() != null ? savedContract.getAmount().toString() : "không có")));
         auditTrails.add(createAuditTrail(savedContract, "effectiveDate", null,
-                savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : null, now, changedBy));
+                savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : null, now, changedBy,
+                "Đặt ngày hiệu lực: " + (savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : "không có")));
         auditTrails.add(createAuditTrail(savedContract, "expiryDate", null,
-                savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : null, now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "status", null, savedContract.getStatus().name(), now, changedBy));
-        auditTrails.add(createAuditTrail(savedContract, "createdAt", null, savedContract.getCreatedAt().toString(), now, changedBy));
+                savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : null, now, changedBy,
+                "Đặt ngày hết hạn: " + (savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "status", null, savedContract.getStatus().name(), now, changedBy,
+                "Đặt trạng thái ban đầu: " + savedContract.getStatus().name()));
+        auditTrails.add(createAuditTrail(savedContract, "createdAt", null, savedContract.getCreatedAt().toString(), now, changedBy,
+                "Hợp đồng được tạo vào: " + savedContract.getCreatedAt().toString()));
 
-
+        // Ghi audit cho ContractTerm
         for (ContractTerm term : savedContract.getContractTerms()) {
             String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                     term.getOriginalTermId(), term.getTermLabel(), term.getTermValue(), term.getTermType().name());
@@ -349,10 +378,11 @@ public class ContractService implements IContractService{
                     .newValue(newValue)
                     .changedAt(now)
                     .changedBy(changedBy)
-                    .changeSummary("Created contract term for contract")
+                    .changeSummary("Tạo điều khoản hợp đồng mới")
                     .build());
         }
 
+        // Ghi audit cho ContractAdditionalTermDetail
         for (ContractAdditionalTermDetail detail : savedContract.getAdditionalTermDetails()) {
             try {
                 String newValue = objectMapper.writeValueAsString(detail);
@@ -366,18 +396,42 @@ public class ContractService implements IContractService{
                         .newValue(newValue)
                         .changedAt(now)
                         .changedBy(changedBy)
-                        .changeSummary("Created additional term detail for contract")
+                        .changeSummary("Tạo chi tiết điều khoản bổ sung cho hợp đồng")
                         .build());
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize ContractAdditionalTermDetail to JSON", e);
+                throw new RuntimeException("Không thể chuyển đổi ContractAdditionalTermDetail thành JSON: " + e.getMessage());
             }
         }
+
         // Lưu tất cả bản ghi audit trail
         auditTrailRepository.saveAll(auditTrails);
 
         return savedContract;
     }
 
+    // Phương thức createAuditTrail
+    private AuditTrail createAuditTrail(Contract contract, String fieldName, String oldValue, String newValue,
+                                        LocalDateTime changedAt, String changedBy, String changeSummary) {
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setEntityName("Contract");
+        auditTrail.setEntityId(contract.getId());
+        auditTrail.setContract(contract);
+        auditTrail.setAction("CREATE");
+        auditTrail.setFieldName(fieldName);
+        auditTrail.setOldValue(oldValue);
+        auditTrail.setNewValue(newValue);
+        auditTrail.setChangedAt(changedAt);
+        auditTrail.setChangedBy(changedBy);
+        auditTrail.setChangeSummary(changeSummary);
+
+        if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
+            throw new IllegalStateException("Hợp đồng trong AuditTrail không tồn tại hoặc không có ID.");
+        }
+
+        return auditTrail;
+    }
+
+    // Phương thức generateContractNumber
     private String generateContractNumber(LocalDateTime createdAt, String contractTitle) {
         String datePart = createdAt.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String titleAbbreviation = generateTitleAbbreviation(contractTitle);
@@ -392,47 +446,16 @@ public class ContractService implements IContractService{
         return datePart + "-" + sequencePart + "-" + titleAbbreviation;
     }
 
-    // Hàm tạo tên viết tắt từ title
+    // Phương thức generateTitleAbbreviation
     private String generateTitleAbbreviation(String title) {
         if (title == null || title.trim().isEmpty()) {
             return "HD";
         }
-
-        // Tách các từ, lấy chữ cái đầu, viết hoa
         String[] words = title.trim().split("\\s+");
         return Arrays.stream(words)
                 .map(word -> word.isEmpty() ? "" : word.substring(0, 1).toUpperCase())
                 .collect(Collectors.joining());
     }
-
-
-
-    private AuditTrail createAuditTrail(Contract contract,
-                                        String fieldName,
-                                        String oldValue,
-                                        String newValue,
-                                        LocalDateTime changedAt,
-                                        String changedBy) {
-
-        AuditTrail auditTrail = new AuditTrail();
-        auditTrail.setEntityName("Contract");
-        auditTrail.setEntityId(contract.getId());
-        auditTrail.setContract(contract);
-        auditTrail.setAction("CREATE");
-        auditTrail.setFieldName(fieldName);
-        auditTrail.setOldValue(oldValue); // null vì là tạo mới
-        auditTrail.setNewValue(newValue);
-        auditTrail.setChangedAt(changedAt);
-        auditTrail.setChangedBy(changedBy);
-
-        // Kiểm tra trước khi trả về
-        if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
-            throw new IllegalStateException("Contract in AuditTrail is null or has no ID");
-        }
-
-        return auditTrail;
-    }
-
     @Override
     @Transactional(readOnly = true)
     public Page<GetAllContractReponse> getAllContracts(Pageable pageable,
