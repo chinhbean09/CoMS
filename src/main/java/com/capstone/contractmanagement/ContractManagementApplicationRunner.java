@@ -7,7 +7,7 @@ import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.enums.PartyType;
+import com.capstone.contractmanagement.enums.PartnerType;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +112,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .note(null)
                 .partnerCode("P40076")
                 .partnerName("FPT software HCM")
-                .partnerType(PartyType.COMPANY)
+                .partnerType(PartnerType.COMPANY)
                 .phone("0922343454")
                 .spokesmanName("Đặng Nam Tiến")
                 .taxCode("93245244534467")
