@@ -13,6 +13,8 @@ public class MailTemplate {
         public final static String CONTRACT_PAYMENT_NOTIFICATION = "NHẮC NHỞ THANH TOÁN HỢP ĐỔNG";
 
         public final static String CONTRACT_APPROVAL_NOTIFICATION = "NHẮC NHỞ DUYỆT HỢP ĐỔNG";
+
+        public final static String UPDATE_CONTRACT_REQUEST = "NHẮC NHỞ CẠP NHẤT HỢP ĐỔNG";
 //
 //        public final static String BOOKING_PAYMENT_SUCCESS = "BOOKING PAYMENT SUCCESSFUL!";
 //
@@ -32,6 +34,7 @@ public class MailTemplate {
 
         public final static String CONTRACT_PAYMENT_EXPIRED = "contract-payment-expired";
         public final static String CONTRACT_APPROVAL_NOTIFICATION = "contract-approval-notification";
+        public final static String UPDATE_CONTRACT_REQUEST = "update-contract-request";
 
 //        public final static String NEW_PASSWORD = "new-password";
 //        public final static String BOOKING_PAYMENT_SUCCESS_TEMPLATE = "booking";
