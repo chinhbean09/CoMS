@@ -7,7 +7,7 @@ import com.capstone.contractmanagement.repositories.IPartnerRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.party.CreatePartnerResponse;
 import com.capstone.contractmanagement.responses.party.ListPartnerResponse;
-import com.capstone.contractmanagement.services.party.IPartyService;
+import com.capstone.contractmanagement.services.party.IPartnerService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PartyController {
     private final IPartnerRepository partyRepository;
-    private final IPartyService partyService;
+    private final IPartnerService partyService;
 
     @PostMapping("/create")
     public ResponseEntity<ResponseObject> createParty(@RequestBody CreatePartnerDTO createPartnerDTO) {
-        CreatePartnerResponse response = partyService.createParty(createPartnerDTO);
+        CreatePartnerResponse response = partyService.createPartner(createPartnerDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message(MessageKeys.CREATE_PARTY_SUCCESSFULLY)
@@ -34,7 +34,7 @@ public class PartyController {
 
     @PutMapping("/update/{partyId}")
     public ResponseEntity<ResponseObject> updateParty(@PathVariable Long partyId, @RequestBody UpdatePartnerDTO createPartyDTO) throws DataNotFoundException {
-        CreatePartnerResponse response = partyService.updateParty(partyId, createPartyDTO);
+        CreatePartnerResponse response = partyService.updatePartner(partyId, createPartyDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message(MessageKeys.UPDATE_PARTY_SUCCESSFULLY)
@@ -48,7 +48,7 @@ public class PartyController {
             @RequestParam(defaultValue = "0", required = false) int page,
             @RequestParam(defaultValue = "10", required = false) int size) {
 
-        Page<ListPartnerResponse> response = partyService.getAllParties(keyword, page, size);
+        Page<ListPartnerResponse> response = partyService.getAllPartners(keyword, page, size);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(HttpStatus.OK)
@@ -60,7 +60,7 @@ public class PartyController {
 
     @GetMapping("/get-by-id/{partyId}")
     public ResponseEntity<ResponseObject> getPartyById(@PathVariable Long partyId) throws DataNotFoundException {
-        ListPartnerResponse response = partyService.getPartyById(partyId);
+        ListPartnerResponse response = partyService.getPartnerById(partyId);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message(MessageKeys.GET_PARTY_SUCCESSFULLY)
@@ -81,7 +81,7 @@ public class PartyController {
     @PutMapping("/update-status/{partyId}/{isDeleted}")
     public ResponseEntity<String> updatePartyStatus(@PathVariable Long partyId, @PathVariable Boolean isDeleted) {
         try {
-            partyService.updatePartyStatus(partyId, isDeleted);
+            partyService.updatePartnerStatus(partyId, isDeleted);
             String message = isDeleted ? "Xóa mềm quan hệ" : "Khôi phục quan hệ";
             return ResponseEntity.ok(message);
         } catch (DataNotFoundException e) {

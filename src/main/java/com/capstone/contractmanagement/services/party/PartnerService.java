@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PartyService implements IPartyService{
+public class PartnerService implements IPartnerService {
     private final IPartnerRepository partyRepository;
     private final IBankRepository bankRepository;
 
     @Transactional
     @Override
-    public CreatePartnerResponse createParty(CreatePartnerDTO createPartnerDTO) {
+    public CreatePartnerResponse createPartner(CreatePartnerDTO createPartnerDTO) {
         // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
         String partnerCode = "P" + String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
 
@@ -102,7 +102,7 @@ public class PartyService implements IPartyService{
 
     @Override
     @Transactional
-    public CreatePartnerResponse updateParty(Long id, UpdatePartnerDTO updatePartnerDTO) throws DataNotFoundException {
+    public CreatePartnerResponse updatePartner(Long id, UpdatePartnerDTO updatePartnerDTO) throws DataNotFoundException {
         // Lấy partner hiện tại, nếu không có thì ném exception
         Partner partner = partyRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
@@ -169,7 +169,7 @@ public class PartyService implements IPartyService{
 
     @Override
     @Transactional
-    public Page<ListPartnerResponse> getAllParties(String search, int page, int size) {
+    public Page<ListPartnerResponse> getAllPartners(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Partner> partyPage;
 
@@ -208,7 +208,7 @@ public class PartyService implements IPartyService{
 
     @Override
     @Transactional
-    public ListPartnerResponse getPartyById(Long id) throws DataNotFoundException {
+    public ListPartnerResponse getPartnerById(Long id) throws DataNotFoundException {
         // get partner by id
         Partner partner = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
         // convert to response
@@ -235,7 +235,7 @@ public class PartyService implements IPartyService{
     }
 
     @Override
-    public void updatePartyStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException {
+    public void updatePartnerStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException {
         Partner existingPartner = partyRepository.findById(partyId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
         existingPartner.setIsDeleted(isDeleted);
