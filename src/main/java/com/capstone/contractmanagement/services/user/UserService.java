@@ -321,26 +321,42 @@ public class UserService implements IUserService {
     }
     @Override
     public void updateUser(Long userId, UpdateUserDTO userDTO) throws DataNotFoundException {
-        // Check if the user exists
-        User user = UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
+        // Kiểm tra xem user có tồn tại không
+        User user = UserRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
 
+        // Kiểm tra số điện thoại: chỉ khi số điện thoại mới khác với số hiện tại mới thực hiện kiểm tra trùng lặp
+        String phoneNumber = userDTO.getPhoneNumber();
+        if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber()) && UserRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+        }
 
+        // Kiểm tra email: chỉ khi email mới khác với email hiện tại mới thực hiện kiểm tra trùng lặp
+        String email = userDTO.getEmail();
+        if (email != null && !email.equals(user.getEmail()) && UserRepository.existsByEmail(email)) {
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+        }
+
+        // Nếu có departmentId thì kiểm tra và cập nhật
         if (userDTO.getDepartmentId() != null) {
             Department department = departmentRepository.findById(userDTO.getDepartmentId())
                     .orElseThrow(() -> new DataNotFoundException(MessageKeys.DEPARTMENT_NOT_FOUND));
             user.setDepartment(department);
         }
 
-        // Update the user's information
+        // Cập nhật thông tin của user
         user.setFullName(userDTO.getFullName());
         user.setPhoneNumber(userDTO.getPhoneNumber());
         user.setEmail(userDTO.getEmail());
         user.setAddress(userDTO.getAddress());
         user.setIsCeo(userDTO.getIsCeo());
         user.setDateOfBirth(userDTO.getDateOfBirth());
-        user.setRole(RoleRepository.findById(userDTO.getRoleId()).orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+        user.setRole(RoleRepository.findById(userDTO.getRoleId())
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
-        // Save the updated user entity
+        // Lưu thông tin cập nhật của user
         UserRepository.save(user);
     }
 
