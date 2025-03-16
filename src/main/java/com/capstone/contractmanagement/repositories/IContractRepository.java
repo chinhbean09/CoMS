@@ -140,6 +140,10 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
     Page<Contract> findAllByOriginalContractId(@Param("originalContractId") Long originalContractId, Pageable pageable);
 
+    @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
+    List<Contract> findAllByOriginalContractId(@Param("originalContractId") Long originalContractId);
+
+
     @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId AND c.user = :user")
     Page<Contract> findAllByOriginalContractIdAndUser(@Param("originalContractId") Long originalContractId,
                                                       @Param("user") User user,
@@ -160,6 +164,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             "  AND (:status IS NULL OR c.status = :status) " +
             "  AND (:signingDate IS NULL OR c.signingDate = :signingDate) " +
             "  AND c.status IN (?#{#statuses})")
+
     Page<Contract> searchContractsByPartnerAndFilters(
             @Param("partnerId") Long partnerId,
             @Param("keyword") String keyword,
