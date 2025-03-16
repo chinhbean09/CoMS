@@ -30,6 +30,7 @@
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
 
+    import java.time.LocalDateTime;
     import java.util.*;
     import java.util.stream.Collectors;
 
@@ -283,6 +284,42 @@
             return ResponseEntity.ok(responses);
         }
 
+        @GetMapping("/partner/{partnerId}")
+        public ResponseEntity<ResponseObject> getAllContractsByPartnerId(
+                @PathVariable Long partnerId,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(required = false) String keyword,
+                @RequestParam(required = false) ContractStatus status,
+                @RequestParam(required = false) LocalDateTime signingDate,
+                @RequestParam(defaultValue = "id") String sortBy,
+                @RequestParam(defaultValue = "asc") String order) {
+            try {
+                Sort sort = order.equalsIgnoreCase("desc")
+                        ? Sort.by(sortBy).descending()
+                        : Sort.by(sortBy).ascending();
+                Pageable pageable = PageRequest.of(page, size, sort);
 
+                Page<GetAllContractReponse> contracts = contractService.getAllContractsByPartnerId(
+                        partnerId,
+                        pageable,
+                        keyword,
+                        status,
+                        signingDate
+                );
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message("Lấy hợp đồng theo partner thành công")
+                        .status(HttpStatus.OK)
+                        .data(contracts)
+                        .build());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Lỗi khi lấy hợp đồng theo partner: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .build());
+            }
+        }
 
     }

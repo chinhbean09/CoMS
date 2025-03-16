@@ -100,7 +100,7 @@
         private ContractTemplate template;
 
         @ManyToOne
-        @JoinColumn(name = "party_id", nullable = false)
+        @JoinColumn(name = "partner_id", nullable = false)
         @JsonIgnore
         private Partner partner;
 
