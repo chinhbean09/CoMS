@@ -59,6 +59,7 @@ public class ContractService implements IContractService{
     private final IContractTermRepository contractTermRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final SecurityUtils securityUtils;
+    private final IApprovalWorkflowRepository workflowRepository;
 
     @Transactional
     @Override
@@ -755,19 +756,17 @@ public class ContractService implements IContractService{
         Contract originalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
 
-        User currentUser = securityUtils.getLoggedInUser();
-
-        originalContract.setDuplicateNumber(originalContract.getDuplicateNumber() + 1);
-        contractRepository.save(originalContract);
-
-        int duplicateVersion = originalContract.getDuplicateNumber();
+        //hop dong nay da co bao nhieu bang copy
+        long copyCount = contractRepository.countByOriginalContractId(originalContract.getId());
+        long copyNumber = copyCount + 1;
 
         // 2. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
         Contract duplicateContract = Contract.builder()
-                .title(originalContract.getTitle() + " (Copy " + duplicateVersion + ")") //Hợp đồng thuê nhà (Copy 2)
-                .contractNumber(originalContract.getContractNumber() + "_" + duplicateVersion) //HD-001__2
+                .title(originalContract.getTitle() + " (Copy " + copyNumber + ")") //Hợp đồng thuê nhà (Copy 2)
+                .contractNumber(originalContract.getContractNumber() + "__" + copyNumber) //HD-001__2
+                .originalContractId(originalContract.getId()) // Liên kết với hợp đồng gốc
                 .partner(originalContract.getPartner())
-                .user(currentUser)
+                .user(originalContract.getUser())
                 .template(originalContract.getTemplate())
                 .signingDate(null) // Đặt null hoặc giữ nguyên tùy yêu cầu
                 .contractLocation(originalContract.getContractLocation())
@@ -796,16 +795,7 @@ public class ContractService implements IContractService{
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .version(1)
-                .isLatestVersion(true)
-                .duplicateNumber(0)
                 .build();
-
-        // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
-//        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(originalContract.getId());
-//        for (Contract oldContract : oldContracts) {
-//            oldContract.setIsLatestVersion(false);
-//            contractRepository.save(oldContract);
-//        }
 
         // 3. Sao chép các điều khoản (ContractTerm) từ hợp đồng gốc
         List<ContractTerm> duplicateTerms = new ArrayList<>();
@@ -851,11 +841,9 @@ public class ContractService implements IContractService{
             duplicatePaymentSchedules.add(newPayment);
         }
         duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
-        Contract savedContract = contractRepository.save(duplicateContract);
-        savedContract.setOriginalContractId(savedContract.getId());
 
         // 6. Lưu hợp đồng mới vào cơ sở dữ liệu
-        return contractRepository.save(savedContract);
+        return contractRepository.save(duplicateContract);
     }
 
     public int calculateNewVersion(Long originalContractId, Contract currentContract) {
@@ -898,7 +886,6 @@ public class ContractService implements IContractService{
         }
 
 
-
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
         String changedBy = currentUser.getLoggedInUser().getFullName();
@@ -914,14 +901,6 @@ public class ContractService implements IContractService{
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
 
-
-        // Cập nhật is_latest_version của các hợp đồng cũ
-        List<Contract> oldVersions = contractRepository.findByOriginalContractId(originalContractId);
-        for (Contract oldContract : oldVersions) {
-            oldContract.setIsLatestVersion(false);
-            contractRepository.save(oldContract);
-        }
-
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -933,7 +912,7 @@ public class ContractService implements IContractService{
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(ContractStatus.UPDATED)
-                .createdAt(currentContract.getCreatedAt())
+                .createdAt(now)
                 .updatedAt(now)
                 .effectiveDate(dto.getEffectiveDate() != null ? dto.getEffectiveDate() : currentContract.getEffectiveDate())
                 .expiryDate(dto.getExpiryDate() != null ? dto.getExpiryDate() : currentContract.getExpiryDate())
@@ -962,8 +941,6 @@ public class ContractService implements IContractService{
                         ? contractTypeRepository.findById(dto.getContractTypeId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
                         : currentContract.getContractType())
-                .isLatestVersion(true)
-                .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
@@ -2228,13 +2205,6 @@ public class ContractService implements IContractService{
 
         String changedBy = currentUser.getLoggedInUser().getFullName();
 
-        // Cập nhật is_latest_version của các hợp đồng cũ
-        List<Contract> oldVersions = contractRepository.findByOriginalContractId(originalContractId);
-        for (Contract oldContract : oldVersions) {
-            oldContract.setIsLatestVersion(false);
-            contractRepository.save(oldContract);
-        }
-
         // 4. Tạo hợp đồng mới dựa trên targetContract
         Contract rollbackContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -2271,9 +2241,6 @@ public class ContractService implements IContractService{
                 .approvalWorkflow(targetContract.getApprovalWorkflow())
                 .maxDateLate(targetContract.getMaxDateLate())
                 .contractType(targetContract.getContractType())
-                .duplicateNumber(targetContract.getDuplicateNumber())
-                .isLatestVersion(true)
-//                .originalContractId(targetContract.getOriginalContractId())
                 .build();
 
         // 5. Sao chép ContractTerms
@@ -2519,6 +2486,63 @@ public class ContractService implements IContractService{
         return contracts.stream()
                 .map(this::convertContractToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId,
+                                                                  Pageable pageable,
+                                                                  String keyword,
+                                                                  ContractStatus status,
+                                                                  LocalDateTime signingDate) {
+        // Danh sách trạng thái hợp lệ: đã ký và các trạng thái hậu ký
+        List<ContractStatus> validStatuses = Arrays.asList(
+                ContractStatus.SIGNED,    // Đã ký
+                ContractStatus.ACTIVE,    // Đang có hiệu lực
+                ContractStatus.COMPLETED, // Đã thanh toán/hoàn thành
+                ContractStatus.EXPIRED,   // Hết hạn
+                ContractStatus.ENDED,     // Đã thanh lý
+                ContractStatus.CANCELLED  // Đã hủy
+        );
+
+        // Lấy dữ liệu theo partner và trạng thái hợp lệ (phân trang ban đầu)
+        Page<Contract> basePage = contractRepository.findByPartner_IdAndStatusIn(partnerId, validStatuses, pageable);
+
+        // Lọc kết quả theo keyword, signingDate và status nếu có (lấy kết quả từ danh sách của trang)
+        List<Contract> filteredList = basePage.getContent().stream()
+                .filter(contract -> {
+                    boolean matches = true;
+
+                    // Lọc theo keyword: kiểm tra nếu keyword có trong title hoặc contractNumber
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        String kw = keyword.toLowerCase();
+                        matches = contract.getTitle().toLowerCase().contains(kw) ||
+                                contract.getContractNumber().toLowerCase().contains(kw);
+                    }
+
+                    // Lọc theo signingDate: kiểm tra ngày ký đúng bằng
+                    if (matches && signingDate != null) {
+                        matches = contract.getSigningDate() != null &&
+                                contract.getSigningDate().equals(signingDate);
+                    }
+
+                    // Lọc theo status bổ sung (nếu được truyền)
+                    if (matches && status != null) {
+                        matches = contract.getStatus() == status;
+                    }
+
+                    return matches;
+                })
+                .collect(Collectors.toList());
+
+        // Vì đã dùng phân trang ban đầu nhưng sau đó lọc lại theo điều kiện,
+        // ta cần tái tạo Page từ kết quả đã lọc
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredList.size());
+        List<Contract> pagedFiltered = filteredList.subList(start, end);
+        Page<Contract> filteredPage = new PageImpl<>(pagedFiltered, pageable, filteredList.size());
+
+        return filteredPage.map(this::convertToGetAllContractResponse);
     }
 
 }
