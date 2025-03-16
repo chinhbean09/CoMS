@@ -283,6 +283,35 @@
             return ResponseEntity.ok(responses);
         }
 
+        @GetMapping("/partner/{partnerId}")
+        public ResponseEntity<ResponseObject> getAllContractsByPartnerId(
+                @PathVariable Long partnerId,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(defaultValue = "id") String sortBy,
+                @RequestParam(defaultValue = "asc") String order) {
+            try {
+                // Xây dựng phân trang và sắp xếp
+                Sort sort = order.equalsIgnoreCase("desc")
+                        ? Sort.by(sortBy).descending()
+                        : Sort.by(sortBy).ascending();
+                Pageable pageable = PageRequest.of(page, size, sort);
 
+                // Gọi service để lấy danh sách hợp đồng theo partnerId với các trạng thái hợp lệ
+                Page<GetAllContractReponse> contracts = contractService.getAllContractsByPartnerId(partnerId, pageable);
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message("Lấy hợp đồng theo partner thành công")
+                        .status(HttpStatus.OK)
+                        .data(contracts)
+                        .build());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Lỗi khi lấy hợp đồng theo partner: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .build());
+            }
+        }
 
     }

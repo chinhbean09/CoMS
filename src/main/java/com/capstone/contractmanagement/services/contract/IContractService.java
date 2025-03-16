@@ -50,4 +50,6 @@ public interface IContractService {
 
     public List<ContractResponse> getContractsByOriginalIdAndVersions(Long originalContractId, Integer version1, Integer version2);
 
+    Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId, Pageable pageable);
+
     }
