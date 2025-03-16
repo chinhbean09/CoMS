@@ -30,6 +30,7 @@
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
 
+    import java.time.LocalDateTime;
     import java.util.*;
     import java.util.stream.Collectors;
 
@@ -288,17 +289,24 @@
                 @PathVariable Long partnerId,
                 @RequestParam(defaultValue = "0") int page,
                 @RequestParam(defaultValue = "10") int size,
+                @RequestParam(required = false) String keyword,
+                @RequestParam(required = false) ContractStatus status,
+                @RequestParam(required = false) LocalDateTime signingDate,
                 @RequestParam(defaultValue = "id") String sortBy,
                 @RequestParam(defaultValue = "asc") String order) {
             try {
-                // Xây dựng phân trang và sắp xếp
                 Sort sort = order.equalsIgnoreCase("desc")
                         ? Sort.by(sortBy).descending()
                         : Sort.by(sortBy).ascending();
                 Pageable pageable = PageRequest.of(page, size, sort);
 
-                // Gọi service để lấy danh sách hợp đồng theo partnerId với các trạng thái hợp lệ
-                Page<GetAllContractReponse> contracts = contractService.getAllContractsByPartnerId(partnerId, pageable);
+                Page<GetAllContractReponse> contracts = contractService.getAllContractsByPartnerId(
+                        partnerId,
+                        pageable,
+                        keyword,
+                        status,
+                        signingDate
+                );
 
                 return ResponseEntity.ok(ResponseObject.builder()
                         .message("Lấy hợp đồng theo partner thành công")
