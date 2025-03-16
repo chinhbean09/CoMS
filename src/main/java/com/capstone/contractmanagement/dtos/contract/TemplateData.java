@@ -14,7 +14,6 @@ import java.util.Map;
 @Builder
 public class TemplateData {
     private String contractTitle;
-    private String partyInfo;
     private String specialTermsA;
     private String specialTermsB;
     private Boolean appendixEnabled;

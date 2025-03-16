@@ -68,8 +68,8 @@ public class ContractService implements IContractService{
         // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
-        Partner partner = partyRepository.findById(dto.getPartyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartyId()));
+        Partner partner = partyRepository.findById(dto.getParterId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getParterId()));
         User user = currentUser.getLoggedInUser();
         if (user == null) {
             throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
