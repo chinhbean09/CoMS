@@ -151,19 +151,20 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     List<Contract> findByOriginalContractIdAndVersionIn(Long originalContractId, List<Integer> versions);
 
-    // Lấy tất cả hợp đồng có is_latest_version = true
-    List<Contract> findByIsLatestVersionTrue();
+    Page<Contract> findByPartner_IdAndStatusIn(Long partnerId, List<ContractStatus> statuses, Pageable pageable);
 
-    // Đếm số hợp đồng theo trạng thái và chỉ lấy phiên bản mới nhất
-    long countByStatusAndIsLatestVersionTrue(ContractStatus status);
-
-    // Đếm hợp đồng theo tháng và chỉ lấy phiên bản mới nhất
-    @Query("SELECT FUNCTION('MONTHNAME', c.createdAt), COUNT(c) FROM Contract c WHERE c.isLatestVersion = true GROUP BY FUNCTION('MONTH', c.createdAt), FUNCTION('YEAR', c.createdAt) ORDER BY FUNCTION('YEAR', c.createdAt), FUNCTION('MONTH', c.createdAt)")
-    List<Object[]> countLatestContractsByMonth();
-
-    @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
-    List<Contract> findByOriginalContractId(@Param("originalContractId") Long originalContractId);
-
-    boolean existsByContractNumber(String contractNumber);
-
+    @Query("SELECT c FROM Contract c " +
+            "WHERE c.partner.id = :partnerId " +
+            "  AND (:keyword IS NULL OR (lower(c.title) LIKE :keyword " +
+            "       OR lower(c.contractNumber) LIKE :keyword)) " +
+            "  AND (:status IS NULL OR c.status = :status) " +
+            "  AND (:signingDate IS NULL OR c.signingDate = :signingDate) " +
+            "  AND c.status IN (?#{#statuses})")
+    Page<Contract> searchContractsByPartnerAndFilters(
+            @Param("partnerId") Long partnerId,
+            @Param("keyword") String keyword,
+            @Param("status") ContractStatus status,
+            @Param("signingDate") LocalDateTime signingDate,
+            @Param("statuses") List<ContractStatus> statuses,
+            Pageable pageable);
 }
