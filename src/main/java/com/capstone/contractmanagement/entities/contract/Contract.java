@@ -172,4 +172,12 @@
         //đã được chỉnh sửa và cho phép bạn theo dõi trạng thái tổng thể của hợp đồng qua thời gian.
         @Column(name = "version", nullable = false)
         private Integer version = 1; // Mặc định là phiên bản 1
+
+        @Column(name = "is_latest_version")
+        private Boolean isLatestVersion = false; // Mặc định là false
+
+        @Column(name = "duplicate_number")
+        private Integer duplicateNumber = 0; // Giá trị mặc định là 0 cho hợp đồng gốc
+
+
     }
