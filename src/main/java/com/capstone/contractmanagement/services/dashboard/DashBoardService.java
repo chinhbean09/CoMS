@@ -31,7 +31,7 @@ public class DashBoardService implements IDashBoardService {
         List<MonthlyContractCount> monthlyCounts = monthCountsRaw.stream()
                 .map(row -> {
                     String fullMonthName = (String) row[0]; // Ví dụ: "January"
-                    String monthAbbr = fullMonthName.substring(0, 3).toUpperCase(); // Ví dụ: "JAN"
+                    String monthAbbr = fullMonthName.substring(0, 3); // Ví dụ: "JAN"
                     long count = (Long) row[1];
                     return new MonthlyContractCount(monthAbbr, count);
                 })
