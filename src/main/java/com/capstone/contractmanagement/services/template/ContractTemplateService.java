@@ -829,10 +829,10 @@
                         duplicate.setLegalBasisTerms(new ArrayList<>(originalTemplate.getLegalBasisTerms()));
                         duplicate.setGeneralTerms(new ArrayList<>(originalTemplate.getGeneralTerms()));
                         duplicate.setOtherTerms(new ArrayList<>(originalTemplate.getOtherTerms()));
-
+                        duplicate.setStatus(originalTemplate.getStatus());
                         // Đặt lại thời gian tạo, cập nhật
                         duplicate.setCreatedAt(LocalDateTime.now());
-                        duplicate.setUpdatedAt(LocalDateTime.now());
+                        duplicate.setUpdatedAt(null);
 
                         // Set thông tin version:
                         // Gán originalTemplateId = id của template gốc
