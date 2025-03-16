@@ -58,6 +58,7 @@ public class ContractService implements IContractService{
     private final ObjectMapper objectMapper; // Để serialize object thành JSON
     private final IContractTermRepository contractTermRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
+    private final SecurityUtils securityUtils;
 
     @Transactional
     @Override
@@ -111,6 +112,8 @@ public class ContractService implements IContractService{
                 .contractType(template.getContractType())
                 .createdAt(LocalDateTime.now())
                 .version(1)
+                .isLatestVersion(true)
+                .duplicateNumber(0)
                 .build();
 
         // 3. Map các điều khoản đơn giản sang ContractTerm
@@ -752,17 +755,19 @@ public class ContractService implements IContractService{
         Contract originalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
 
-        //hop dong nay da co bao nhieu bang copy
-        long copyCount = contractRepository.countByOriginalContractId(originalContract.getId());
-        long copyNumber = copyCount + 1;
+        User currentUser = securityUtils.getLoggedInUser();
+
+        originalContract.setDuplicateNumber(originalContract.getDuplicateNumber() + 1);
+        contractRepository.save(originalContract);
+
+        int duplicateVersion = originalContract.getDuplicateNumber();
 
         // 2. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
         Contract duplicateContract = Contract.builder()
-                .title(originalContract.getTitle() + " (Copy " + copyNumber + ")") //Hợp đồng thuê nhà (Copy 2)
-                .contractNumber(originalContract.getContractNumber() + "__" + copyNumber) //HD-001__2
-                .originalContractId(originalContract.getId()) // Liên kết với hợp đồng gốc
+                .title(originalContract.getTitle() + " (Copy " + duplicateVersion + ")") //Hợp đồng thuê nhà (Copy 2)
+                .contractNumber(originalContract.getContractNumber() + "_" + duplicateVersion) //HD-001__2
                 .partner(originalContract.getPartner())
-                .user(originalContract.getUser())
+                .user(currentUser)
                 .template(originalContract.getTemplate())
                 .signingDate(null) // Đặt null hoặc giữ nguyên tùy yêu cầu
                 .contractLocation(originalContract.getContractLocation())
@@ -791,7 +796,16 @@ public class ContractService implements IContractService{
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .version(1)
+                .isLatestVersion(true)
+                .duplicateNumber(0)
                 .build();
+
+        // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
+//        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(originalContract.getId());
+//        for (Contract oldContract : oldContracts) {
+//            oldContract.setIsLatestVersion(false);
+//            contractRepository.save(oldContract);
+//        }
 
         // 3. Sao chép các điều khoản (ContractTerm) từ hợp đồng gốc
         List<ContractTerm> duplicateTerms = new ArrayList<>();
@@ -837,9 +851,11 @@ public class ContractService implements IContractService{
             duplicatePaymentSchedules.add(newPayment);
         }
         duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
+        Contract savedContract = contractRepository.save(duplicateContract);
+        savedContract.setOriginalContractId(savedContract.getId());
 
         // 6. Lưu hợp đồng mới vào cơ sở dữ liệu
-        return contractRepository.save(duplicateContract);
+        return contractRepository.save(savedContract);
     }
 
     public int calculateNewVersion(Long originalContractId, Contract currentContract) {
@@ -882,6 +898,7 @@ public class ContractService implements IContractService{
         }
 
 
+
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
         String changedBy = currentUser.getLoggedInUser().getFullName();
@@ -897,6 +914,14 @@ public class ContractService implements IContractService{
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
 
+
+        // Cập nhật is_latest_version của các hợp đồng cũ
+        List<Contract> oldVersions = contractRepository.findByOriginalContractId(originalContractId);
+        for (Contract oldContract : oldVersions) {
+            oldContract.setIsLatestVersion(false);
+            contractRepository.save(oldContract);
+        }
+
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -908,7 +933,7 @@ public class ContractService implements IContractService{
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(ContractStatus.UPDATED)
-                .createdAt(now)
+                .createdAt(currentContract.getCreatedAt())
                 .updatedAt(now)
                 .effectiveDate(dto.getEffectiveDate() != null ? dto.getEffectiveDate() : currentContract.getEffectiveDate())
                 .expiryDate(dto.getExpiryDate() != null ? dto.getExpiryDate() : currentContract.getExpiryDate())
@@ -937,6 +962,8 @@ public class ContractService implements IContractService{
                         ? contractTypeRepository.findById(dto.getContractTypeId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
                         : currentContract.getContractType())
+                .isLatestVersion(true)
+                .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
@@ -2201,6 +2228,13 @@ public class ContractService implements IContractService{
 
         String changedBy = currentUser.getLoggedInUser().getFullName();
 
+        // Cập nhật is_latest_version của các hợp đồng cũ
+        List<Contract> oldVersions = contractRepository.findByOriginalContractId(originalContractId);
+        for (Contract oldContract : oldVersions) {
+            oldContract.setIsLatestVersion(false);
+            contractRepository.save(oldContract);
+        }
+
         // 4. Tạo hợp đồng mới dựa trên targetContract
         Contract rollbackContract = Contract.builder()
                 .originalContractId(originalContractId)
@@ -2237,6 +2271,9 @@ public class ContractService implements IContractService{
                 .approvalWorkflow(targetContract.getApprovalWorkflow())
                 .maxDateLate(targetContract.getMaxDateLate())
                 .contractType(targetContract.getContractType())
+                .duplicateNumber(targetContract.getDuplicateNumber())
+                .isLatestVersion(true)
+//                .originalContractId(targetContract.getOriginalContractId())
                 .build();
 
         // 5. Sao chép ContractTerms

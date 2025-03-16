@@ -44,47 +44,39 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     List<Contract> findByStatus(ContractStatus status);
 
-    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatus(@Param("status") ContractStatus status, Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatus(@Param("title") String title,
                                                                   @Param("status") ContractStatus status,
                                                                   Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusNot(@Param("status") ContractStatus status, Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusNot(@Param("title") String title,
                                                                      @Param("status") ContractStatus status,
                                                                      Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.contractType.id = :contractTypeId AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusAndContractTypeId(@Param("status") ContractStatus status,
                                                        @Param("contractTypeId") Long contractTypeId,
                                                        Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.contractType.id = :contractTypeId AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeId(@Param("title") String title,
                                                                                    @Param("status") ContractStatus status,
                                                                                    @Param("contractTypeId") Long contractTypeId,
                                                                                    Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.contractType.id = :contractTypeId AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusNotAndContractTypeId(@Param("status") ContractStatus status,
                                                           @Param("contractTypeId") Long contractTypeId,
                                                           Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.contractType.id = :contractTypeId AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(@Param("title") String title,
                                                                                       @Param("status") ContractStatus status,
                                                                                       @Param("contractTypeId") Long contractTypeId,
@@ -95,61 +87,54 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
                                                           @Param("version") int version);
 
     // Các phương thức mới dùng 'user' thay vì 'createdBy'
-    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusAndUser(@Param("status") ContractStatus status,
                                              @Param("user") User user,
                                              Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusAndUser(@Param("title") String title,
                                                                          @Param("status") ContractStatus status,
                                                                          @Param("user") User user,
                                                                          Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusNotAndUser(@Param("status") ContractStatus status,
                                                 @Param("user") User user,
                                                 Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusNotAndUser(@Param("title") String title,
                                                                             @Param("status") ContractStatus status,
                                                                             @Param("user") User user,
                                                                             Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusAndContractTypeIdAndUser(@Param("status") ContractStatus status,
                                                               @Param("contractTypeId") Long contractTypeId,
                                                               @Param("user") User user,
                                                               Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status = :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeIdAndUser(@Param("title") String title,
                                                                                           @Param("status") ContractStatus status,
                                                                                           @Param("contractTypeId") Long contractTypeId,
                                                                                           @Param("user") User user,
                                                                                           Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.status != :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusNotAndContractTypeIdAndUser(@Param("status") ContractStatus status,
                                                                  @Param("contractTypeId") Long contractTypeId,
                                                                  @Param("user") User user,
                                                                  Pageable pageable);
 
-    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.version = " +
-            "(SELECT MAX(c2.version) FROM Contract c2 WHERE c2.originalContractId = c.originalContractId)")
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeIdAndUser(@Param("title") String title,
                                                                                              @Param("status") ContractStatus status,
                                                                                              @Param("contractTypeId") Long contractTypeId,
                                                                                              @Param("user") User user,
                                                                                              Pageable pageable);
+
     Optional<Contract> findByOriginalContractIdAndVersion(Long originalContractId, Integer version);
 
     @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
@@ -165,5 +150,20 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
 
     List<Contract> findByOriginalContractIdAndVersionIn(Long originalContractId, List<Integer> versions);
+
+    // Lấy tất cả hợp đồng có is_latest_version = true
+    List<Contract> findByIsLatestVersionTrue();
+
+    // Đếm số hợp đồng theo trạng thái và chỉ lấy phiên bản mới nhất
+    long countByStatusAndIsLatestVersionTrue(ContractStatus status);
+
+    // Đếm hợp đồng theo tháng và chỉ lấy phiên bản mới nhất
+    @Query("SELECT FUNCTION('MONTHNAME', c.createdAt), COUNT(c) FROM Contract c WHERE c.isLatestVersion = true GROUP BY FUNCTION('MONTH', c.createdAt), FUNCTION('YEAR', c.createdAt) ORDER BY FUNCTION('YEAR', c.createdAt), FUNCTION('MONTH', c.createdAt)")
+    List<Object[]> countLatestContractsByMonth();
+
+    @Query("SELECT c FROM Contract c WHERE c.originalContractId = :originalContractId")
+    List<Contract> findByOriginalContractId(@Param("originalContractId") Long originalContractId);
+
+    boolean existsByContractNumber(String contractNumber);
 
 }
