@@ -168,4 +168,18 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     Page<Contract> findByPartner_IdAndStatusIn(Long partnerId, List<ContractStatus> statuses, Pageable pageable);
 
+    @Query("SELECT c FROM Contract c " +
+            "WHERE c.partner.id = :partnerId " +
+            "  AND (:keyword IS NULL OR (lower(c.title) LIKE :keyword " +
+            "       OR lower(c.contractNumber) LIKE :keyword)) " +
+            "  AND (:status IS NULL OR c.status = :status) " +
+            "  AND (:signingDate IS NULL OR c.signingDate = :signingDate) " +
+            "  AND c.status IN (?#{#statuses})")
+    Page<Contract> searchContractsByPartnerAndFilters(
+            @Param("partnerId") Long partnerId,
+            @Param("keyword") String keyword,
+            @Param("status") ContractStatus status,
+            @Param("signingDate") LocalDateTime signingDate,
+            @Param("statuses") List<ContractStatus> statuses,
+            Pageable pageable);
 }

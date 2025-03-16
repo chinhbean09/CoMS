@@ -2494,21 +2494,59 @@ public class ContractService implements IContractService{
 
     @Override
     @Transactional(readOnly = true)
-    public Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId, Pageable pageable) {
-        // Danh sách các trạng thái hợp đồng hợp lệ theo yêu cầu:
+    public Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId,
+                                                                  Pageable pageable,
+                                                                  String keyword,
+                                                                  ContractStatus status,
+                                                                  LocalDateTime signingDate) {
+        // Danh sách trạng thái hợp lệ: đã ký và các trạng thái hậu ký
         List<ContractStatus> validStatuses = Arrays.asList(
                 ContractStatus.SIGNED,    // Đã ký
                 ContractStatus.ACTIVE,    // Đang có hiệu lực
-                ContractStatus.COMPLETED, // Giả sử đại diện cho đã thanh toán/hoàn thành
+                ContractStatus.COMPLETED, // Đã thanh toán/hoàn thành
                 ContractStatus.EXPIRED,   // Hết hạn
                 ContractStatus.ENDED,     // Đã thanh lý
                 ContractStatus.CANCELLED  // Đã hủy
         );
 
-        // Lấy danh sách hợp đồng từ repository theo partnerId và các trạng thái hợp lệ
-        Page<Contract> contractPage = contractRepository.findByPartner_IdAndStatusIn(partnerId, validStatuses, pageable);
+        // Lấy dữ liệu theo partner và trạng thái hợp lệ (phân trang ban đầu)
+        Page<Contract> basePage = contractRepository.findByPartner_IdAndStatusIn(partnerId, validStatuses, pageable);
 
-        return contractPage.map(this::convertToGetAllContractResponse);
+        // Lọc kết quả theo keyword, signingDate và status nếu có (lấy kết quả từ danh sách của trang)
+        List<Contract> filteredList = basePage.getContent().stream()
+                .filter(contract -> {
+                    boolean matches = true;
+
+                    // Lọc theo keyword: kiểm tra nếu keyword có trong title hoặc contractNumber
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        String kw = keyword.toLowerCase();
+                        matches = contract.getTitle().toLowerCase().contains(kw) ||
+                                contract.getContractNumber().toLowerCase().contains(kw);
+                    }
+
+                    // Lọc theo signingDate: kiểm tra ngày ký đúng bằng
+                    if (matches && signingDate != null) {
+                        matches = contract.getSigningDate() != null &&
+                                contract.getSigningDate().equals(signingDate);
+                    }
+
+                    // Lọc theo status bổ sung (nếu được truyền)
+                    if (matches && status != null) {
+                        matches = contract.getStatus() == status;
+                    }
+
+                    return matches;
+                })
+                .collect(Collectors.toList());
+
+        // Vì đã dùng phân trang ban đầu nhưng sau đó lọc lại theo điều kiện,
+        // ta cần tái tạo Page từ kết quả đã lọc
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredList.size());
+        List<Contract> pagedFiltered = filteredList.subList(start, end);
+        Page<Contract> filteredPage = new PageImpl<>(pagedFiltered, pageable, filteredList.size());
+
+        return filteredPage.map(this::convertToGetAllContractResponse);
     }
 
 }
