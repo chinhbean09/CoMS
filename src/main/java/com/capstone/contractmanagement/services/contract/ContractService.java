@@ -886,7 +886,7 @@ public class ContractService implements IContractService{
         }
 
         // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
-        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getId());
+        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getOriginalContractId());
         for (Contract oldContract : oldContracts) {
             oldContract.setIsLatestVersion(false);
             contractRepository.save(oldContract);
@@ -918,7 +918,7 @@ public class ContractService implements IContractService{
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(ContractStatus.UPDATED)
-                .createdAt(now)
+                .createdAt(currentContract.getCreatedAt())
                 .updatedAt(now)
                 .effectiveDate(dto.getEffectiveDate() != null ? dto.getEffectiveDate() : currentContract.getEffectiveDate())
                 .expiryDate(dto.getExpiryDate() != null ? dto.getExpiryDate() : currentContract.getExpiryDate())
@@ -947,6 +947,8 @@ public class ContractService implements IContractService{
                         ? contractTypeRepository.findById(dto.getContractTypeId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
                         : currentContract.getContractType())
+                .isLatestVersion(true)
+                .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này

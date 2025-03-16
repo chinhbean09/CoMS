@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -22,9 +23,9 @@ public class DashboardController {
     private final IDashBoardService dashBoardService;
 
     @GetMapping("/statistics")
-    public ResponseEntity<ResponseObject> getDashboardStatistics() {
+    public ResponseEntity<ResponseObject> getDashboardStatistics(@RequestParam("year") int year) {
         try {
-            DashboardStatisticsResponse response = dashBoardService.getDashboardData();
+            DashboardStatisticsResponse response = dashBoardService.getDashboardData(year);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message(MessageKeys.GET_DASHBOARD_STATISTICS_SUCCESSFULLY)
                     .status(HttpStatus.OK)
@@ -36,6 +37,4 @@ public class DashboardController {
                     .status(HttpStatus.BAD_REQUEST)
                     .build());
         }
-
-    }
-}
+    }}
