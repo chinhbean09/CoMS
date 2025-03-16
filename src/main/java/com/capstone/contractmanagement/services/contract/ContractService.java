@@ -2492,4 +2492,23 @@ public class ContractService implements IContractService{
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId, Pageable pageable) {
+        // Danh sách các trạng thái hợp đồng hợp lệ theo yêu cầu:
+        List<ContractStatus> validStatuses = Arrays.asList(
+                ContractStatus.SIGNED,    // Đã ký
+                ContractStatus.ACTIVE,    // Đang có hiệu lực
+                ContractStatus.COMPLETED, // Giả sử đại diện cho đã thanh toán/hoàn thành
+                ContractStatus.EXPIRED,   // Hết hạn
+                ContractStatus.ENDED,     // Đã thanh lý
+                ContractStatus.CANCELLED  // Đã hủy
+        );
+
+        // Lấy danh sách hợp đồng từ repository theo partnerId và các trạng thái hợp lệ
+        Page<Contract> contractPage = contractRepository.findByPartner_IdAndStatusIn(partnerId, validStatuses, pageable);
+
+        return contractPage.map(this::convertToGetAllContractResponse);
+    }
+
 }
