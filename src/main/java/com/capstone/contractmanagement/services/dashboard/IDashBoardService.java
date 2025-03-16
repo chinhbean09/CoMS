@@ -4,7 +4,7 @@ import com.capstone.contractmanagement.responses.dashboard.DashboardStatisticsRe
 
 public interface IDashBoardService {
 
-     DashboardStatisticsResponse getDashboardData();
+     DashboardStatisticsResponse getDashboardData(int year);
 
 
 }

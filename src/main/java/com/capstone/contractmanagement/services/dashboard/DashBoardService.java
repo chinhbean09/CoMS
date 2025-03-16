@@ -18,25 +18,22 @@ public class DashBoardService implements IDashBoardService {
     private final IContractRepository contractRepository;
 
     @Override
-    public DashboardStatisticsResponse getDashboardData() {
-        // 1. Trạng thái (chỉ lấy phiên bản mới nhất)
+    public DashboardStatisticsResponse getDashboardData(int year) {
+        // 1. Thống kê theo trạng thái (chỉ lấy phiên bản mới nhất)
         Map<ContractStatus, Long> statusCounts = new HashMap<>();
         for (ContractStatus status : ContractStatus.values()) {
-            long count = contractRepository.countByStatusAndIsLatestVersionTrue(status);
+            long count = contractRepository.countByStatusAndIsLatestVersionTrue(status, year);
             statusCounts.put(status, count);
         }
-
-        // 2. Theo tháng (chỉ lấy phiên bản mới nhất)
-        List<Object[]> monthCountsRaw = contractRepository.countLatestContractsByMonth();
+        // 2. Thống kê theo tháng (chỉ lấy phiên bản mới nhất và theo năm)
+        List<Object[]> monthCountsRaw = contractRepository.countLatestContractsByMonth(year);
         List<MonthlyContractCount> monthlyCounts = monthCountsRaw.stream()
                 .map(row -> {
-                    String fullMonthName = (String) row[0]; // Ví dụ: "January"
-                    String monthAbbr = fullMonthName.substring(0, 3); // Ví dụ: "JAN"
-                    long count = (Long) row[1];
+                    String monthAbbr = (String) row[0]; // Ví dụ: "Jan"
+                    long count = ((Number) row[1]).longValue(); // Chuyển đổi số lượng hợp đồng
                     return new MonthlyContractCount(monthAbbr, count);
                 })
                 .collect(Collectors.toList());
 
         return new DashboardStatisticsResponse(statusCounts, monthlyCounts);
-    }
-}
+    }}
