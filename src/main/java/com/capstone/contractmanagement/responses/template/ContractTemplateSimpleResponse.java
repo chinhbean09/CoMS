@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 public class ContractTemplateSimpleResponse {
     private Long id;
     private String contractTitle;
-    private String partyInfo;
     private String specialTermsA;
     private String specialTermsB;
     private Boolean appendixEnabled;
