@@ -173,11 +173,26 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("statuses") List<ContractStatus> statuses,
             Pageable pageable);
 
-    long countByStatusAndIsLatestVersionTrue(ContractStatus status);
+    @Query("SELECT COUNT(c) FROM Contract c WHERE c.status = :status AND c.isLatestVersion = true AND EXTRACT(YEAR FROM c.createdAt) = :year")
+    long countByStatusAndIsLatestVersionTrue(@Param("status") ContractStatus status, @Param("year") int year);
 
-
-    // Đếm hợp đồng theo tháng và chỉ lấy phiên bản mới nhất (dùng is_latest_version)
-    @Query(value = "SELECT TO_CHAR(c.created_at, 'Mon'), COUNT(c) FROM contracts c WHERE c.is_latest_version = true GROUP BY TO_CHAR(c.created_at, 'Mon'), EXTRACT(MONTH FROM c.created_at), EXTRACT(YEAR FROM c.created_at) ORDER BY EXTRACT(YEAR FROM c.created_at), EXTRACT(MONTH FROM c.created_at)", nativeQuery = true)
-    List<Object[]> countLatestContractsByMonth();
+    @Query(value = """
+    SELECT 
+        TO_CHAR(TO_DATE(m.month::text, 'MM'), 'Mon'), 
+        COALESCE(COUNT(c.contract_id), 0) 
+    FROM 
+        generate_series(1, 12) AS m(month) 
+    LEFT JOIN 
+        contracts c 
+        ON EXTRACT(MONTH FROM c.created_at) = m.month 
+        AND EXTRACT(YEAR FROM c.created_at) = :year 
+        AND c.is_latest_version = true 
+    GROUP BY 
+        TO_CHAR(TO_DATE(m.month::text, 'MM'), 'Mon'), 
+        m.month 
+    ORDER BY 
+        m.month
+""", nativeQuery = true)
+    List<Object[]> countLatestContractsByMonth(@Param("year") int year);
 
 }
