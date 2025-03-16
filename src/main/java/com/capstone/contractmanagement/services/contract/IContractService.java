@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +51,11 @@ public interface IContractService {
 
     public List<ContractResponse> getContractsByOriginalIdAndVersions(Long originalContractId, Integer version1, Integer version2);
 
-    Page<GetAllContractReponse> getAllContractsByPartnerId(Long partnerId, Pageable pageable);
+    Page<GetAllContractReponse> getAllContractsByPartnerId(
+            Long partnerId,
+            Pageable pageable,
+            String keyword,
+            ContractStatus status,
+            LocalDateTime signingDate);
 
     }
