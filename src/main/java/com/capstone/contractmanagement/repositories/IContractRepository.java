@@ -166,4 +166,6 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     List<Contract> findByOriginalContractIdAndVersionIn(Long originalContractId, List<Integer> versions);
 
+    Page<Contract> findByPartner_IdAndStatusIn(Long partnerId, List<ContractStatus> statuses, Pageable pageable);
+
 }
