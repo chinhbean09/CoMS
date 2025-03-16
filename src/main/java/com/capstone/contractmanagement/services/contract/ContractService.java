@@ -885,6 +885,12 @@ public class ContractService implements IContractService{
             e.printStackTrace();
         }
 
+        // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
+        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getId());
+        for (Contract oldContract : oldContracts) {
+            oldContract.setIsLatestVersion(false);
+            contractRepository.save(oldContract);
+        }
 
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
