@@ -17,7 +17,7 @@ import java.util.List;
 @Builder
 public class ContractDTO {
     private Long templateId;
-    private Long partyId;
+    private Long parterId;
     private String contractNumber;
     private LocalDateTime signingDate;
     private String contractLocation;
