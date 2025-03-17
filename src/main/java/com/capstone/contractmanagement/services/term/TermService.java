@@ -393,13 +393,13 @@ public class TermService implements ITermService{
         // Kiểm tra trong các mối quan hệ ManyToMany của ContractTemplate
         long countInTemplates = termRepository.countTemplatesUsingTerm(existingTerm);
         if (countInTemplates > 0) {
-            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInTemplates + " template (qua legalBasisTerms, generalTerms, hoặc otherTerms).");
+            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInTemplates + " template");
         }
 
         // Kiểm tra trong ContractTemplateAdditionalTermDetail
         long countInAdditional = contractTemplateAdditionalTermDetailRepository.countByTermIdInLists(termId);
         if (countInAdditional > 0) {
-            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInAdditional + " cấu hình điều khoản bổ sung (qua commonTermIds, aTermIds, hoặc bTermIds).");
+            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInAdditional + " template");
         }
 
         // Nếu không có tham chiếu, tiến hành xóa mềm
