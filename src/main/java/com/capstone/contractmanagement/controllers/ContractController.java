@@ -60,7 +60,7 @@
                 @RequestParam(defaultValue = "0") int page,
                 @RequestParam(defaultValue = "10") int size,
                 @RequestParam(required = false) String keyword,
-                @RequestParam(required = false) ContractStatus status,
+                @RequestParam(required = false) List<ContractStatus> statuses,  // Thay đổi thành danh sách
                 @RequestParam(required = false) Long contractTypeId,
                 @RequestParam(defaultValue = "id") String sortBy,
                 @RequestParam(defaultValue = "asc") String order) {  // Thêm thông tin user hiện tại
@@ -74,7 +74,7 @@
 
                 // Truyền thêm currentUser vào service
                 Page<GetAllContractReponse> contracts = contractService.getAllContracts(
-                        pageable, keyword, status, contractTypeId, currentUser);
+                        pageable, keyword, statuses, contractTypeId, currentUser);
 
                 return ResponseEntity.ok(ResponseObject.builder()
                         .message(MessageKeys.GET_ALL_CONTRACTS_SUCCESSFULLY)
