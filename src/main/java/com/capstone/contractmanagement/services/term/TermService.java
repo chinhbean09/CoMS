@@ -388,6 +388,13 @@ public class TermService implements ITermService{
     public void updateTermStatus(Long termId, Boolean isDeleted) throws DataNotFoundException {
         Term existingTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy điều khoản với id: " + termId));
+
+        // Kiểm tra xem điều khoản có đang được sử dụng không
+        long count = termRepository.countTemplatesUsingTerm(existingTerm);
+        if (count > 0) {
+            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + count + " template.");
+        }
+
         existingTerm.setStatus(TermStatus.SOFT_DELETED);
         termRepository.save(existingTerm);
     }
