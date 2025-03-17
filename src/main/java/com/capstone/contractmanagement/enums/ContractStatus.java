@@ -8,6 +8,7 @@ public enum ContractStatus {
     APPROVED,    // Đã phê duyệt
     PENDING,     // Chưa ký
     REJECTED,    // Bị từ chối
+    FIXED,       // Đã chính sửa
     SIGNED,      // Đã ký
     ACTIVE,      // Đang có hiệu lực
     COMPLETED,   // Hoàn thành
