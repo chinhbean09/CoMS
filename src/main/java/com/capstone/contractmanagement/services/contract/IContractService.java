@@ -26,7 +26,7 @@ public interface IContractService {
 
     Contract createContractFromTemplate(ContractDTO dto) throws DataNotFoundException;
 
-    public Page<GetAllContractReponse> getAllContracts(Pageable pageable,
+    Page<GetAllContractReponse> getAllContracts(Pageable pageable,
                                                        String keyword,
                                                        List<ContractStatus> statuses,  // Thay đổi thành danh sách
                                                        Long contractTypeId,
