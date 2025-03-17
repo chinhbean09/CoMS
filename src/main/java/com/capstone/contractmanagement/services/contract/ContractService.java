@@ -893,6 +893,7 @@ public class ContractService implements IContractService{
         List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getOriginalContractId());
         for (Contract oldContract : oldContracts) {
             oldContract.setIsLatestVersion(false);
+            oldContract.setApprovalWorkflow(null);
             contractRepository.save(oldContract);
         }
 
@@ -906,11 +907,6 @@ public class ContractService implements IContractService{
                 : currentContract.getId();
         int newVersion = calculateNewVersion(originalContractId, currentContract);
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
-
-        // 4. Tách workflow khỏi hợp đồng cũ và cập nhật xuống CSDL
-        currentContract.setApprovalWorkflow(null);
-        contractRepository.save(currentContract);
-        contractRepository.flush(); // đảm bảo cập nhật vào DB
 
         if (workflow != null) {
             workflow.setContract(null);
