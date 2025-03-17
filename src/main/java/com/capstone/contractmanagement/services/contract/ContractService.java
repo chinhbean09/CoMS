@@ -2153,9 +2153,9 @@ public class ContractService implements IContractService{
 
         // Các trạng thái kết thúc không cho phép chuyển tiếp
         VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED));
+        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED, ContractStatus.APPROVAL_PENDING));
         VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.DRAFT));
 
         // Xử lý hợp đồng được cập nhật: có thể cần tái phê duyệt hoặc hủy bỏ
         VALID_TRANSITIONS.put(ContractStatus.UPDATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
