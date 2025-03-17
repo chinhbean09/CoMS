@@ -289,7 +289,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     payload.put("message", notificationMessage);
                     payload.put("contractId", contractId);
                     User firstApprover = firstStage.getApprover();
-                    sendEmailReminder(contract, firstApprover, firstStage);
+                    mailService.sendEmailReminder(contract, firstApprover, firstStage);
                     notificationService.saveNotification(firstApprover, notificationMessage, contract);
                     messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
                     // Đặt hạn duyệt cho bước này (2 ngày kể từ bây giờ)
@@ -357,7 +357,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 payload.put("message", notificationMessage);
                 payload.put("contractId", contractId);
                 // Gửi thông báo qua WebSocket đến người duyệt tiếp theo
-                sendEmailReminder(contract, nextApprover, nextStage);
+                mailService.sendEmailReminder(contract, nextApprover, nextStage);
                 notificationService.saveNotification(nextApprover, notificationMessage, contract);
                 messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
             } else {
@@ -402,7 +402,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         payload.put("message", notificationMessage);
         payload.put("contractId", contractId);
         // Gửi thông báo đến user, sử dụng username làm định danh user destination
-        sendUpdateContractReminder(contract, contract.getUser());
+        mailService.sendUpdateContractReminder(contract, contract.getUser());
         notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
         messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
     }
@@ -569,7 +569,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             payload.put("contractId", contractId);
 
             // Gửi email nhắc nhở nếu cần
-            sendEmailReminder(contract, firstApprover, firstStage);
+            mailService.sendEmailReminder(contract, firstApprover, firstStage);
             // Lưu thông báo vào hệ thống thông báo
             notificationService.saveNotification(firstApprover, notificationMessage, contract);
             // Gửi thông báo qua WebSocket
@@ -630,36 +630,36 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .build();
     }
 
-    private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
-        try {
-            DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
-            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_APPROVAL_NOTIFICATION);
-            Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", contract.getTitle());
-            props.put("stage", stage.getStageOrder());
-            dataMailDTO.setProps(props); // Set props to dataMailDTO
-            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_APPROVAL_NOTIFICATION);
-        } catch (Exception e) {
-            // Xu ly loi
-            e.printStackTrace();
-        }
-    }
+//    private void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
+//        try {
+//            DataMailDTO dataMailDTO = new DataMailDTO();
+//            dataMailDTO.setTo(user.getEmail());
+//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_APPROVAL_NOTIFICATION);
+//            Map<String, Object> props = new HashMap<>();
+//            props.put("contractTitle", contract.getTitle());
+//            props.put("stage", stage.getStageOrder());
+//            dataMailDTO.setProps(props); // Set props to dataMailDTO
+//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_APPROVAL_NOTIFICATION);
+//        } catch (Exception e) {
+//            // Xu ly loi
+//            e.printStackTrace();
+//        }
+//    }
 
-    private void sendUpdateContractReminder(Contract contract, User user) {
-        try {
-            DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
-            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
-            Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", contract.getTitle());
-            dataMailDTO.setProps(props); // Set props to dataMailDTO
-            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_CONTRACT_REQUEST);
-        } catch (Exception e) {
-            // Xu ly loi
-            e.printStackTrace();
-        }
-    }
+//    private void sendUpdateContractReminder(Contract contract, User user) {
+//        try {
+//            DataMailDTO dataMailDTO = new DataMailDTO();
+//            dataMailDTO.setTo(user.getEmail());
+//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
+//            Map<String, Object> props = new HashMap<>();
+//            props.put("contractTitle", contract.getTitle());
+//            dataMailDTO.setProps(props); // Set props to dataMailDTO
+//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_CONTRACT_REQUEST);
+//        } catch (Exception e) {
+//            // Xu ly loi
+//            e.printStackTrace();
+//        }
+//    }
 
     // Phương thức chạy mỗi phút (hoặc theo tần suất phù hợp)
     @Scheduled(fixedDelay = 60000)
@@ -698,6 +698,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         ": Hợp đồng " + contract.getTitle();
                 payload.put("message", notificationMessage);
                 payload.put("contractId", contract.getId());
+                mailService.sendEmailReminder(contract, nextApprover, nextStage);
                 messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
                 notificationService.saveNotification(nextApprover, notificationMessage, contract);
             } else {
