@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.TermStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.repositories.IContractTemplateAdditionalTermDetailRepository;
 import com.capstone.contractmanagement.repositories.ITermRepository;
 import com.capstone.contractmanagement.repositories.ITypeTermRepository;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
@@ -33,7 +34,7 @@ public class TermService implements ITermService{
 
     private final ITermRepository termRepository;
     private final ITypeTermRepository typeTermRepository;
-
+    private final IContractTemplateAdditionalTermDetailRepository contractTemplateAdditionalTermDetailRepository;
 
     @Override
     public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
@@ -389,15 +390,21 @@ public class TermService implements ITermService{
         Term existingTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy điều khoản với id: " + termId));
 
-        // Kiểm tra xem điều khoản có đang được sử dụng không
-        long count = termRepository.countTemplatesUsingTerm(existingTerm);
-        if (count > 0) {
-            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + count + " template.");
+        // Kiểm tra trong các mối quan hệ ManyToMany của ContractTemplate
+        long countInTemplates = termRepository.countTemplatesUsingTerm(existingTerm);
+        if (countInTemplates > 0) {
+            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInTemplates + " template (qua legalBasisTerms, generalTerms, hoặc otherTerms).");
         }
 
+        // Kiểm tra trong ContractTemplateAdditionalTermDetail
+        long countInAdditional = contractTemplateAdditionalTermDetailRepository.countByTermIdInLists(termId);
+        if (countInAdditional > 0) {
+            throw new IllegalStateException("Không thể xóa điều khoản vì nó đang được sử dụng trong " + countInAdditional + " cấu hình điều khoản bổ sung (qua commonTermIds, aTermIds, hoặc bTermIds).");
+        }
+
+        // Nếu không có tham chiếu, tiến hành xóa mềm
         existingTerm.setStatus(TermStatus.SOFT_DELETED);
         termRepository.save(existingTerm);
     }
-
 
 }
