@@ -74,4 +74,7 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     @Query(value = "SELECT COUNT(DISTINCT contract_id) FROM contract_terms_snapshot WHERE original_term_id = :termId", nativeQuery = true)
     int countContractUsage(@Param("termId") Long termId);
 
+    @Query("SELECT COUNT(t) FROM ContractTemplate t WHERE :term MEMBER OF t.legalBasisTerms OR :term MEMBER OF t.generalTerms OR :term MEMBER OF t.otherTerms")
+    long countTemplatesUsingTerm(@Param("term") Term term);
+
 }
