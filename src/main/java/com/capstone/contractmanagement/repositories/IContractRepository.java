@@ -195,4 +195,56 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 """, nativeQuery = true)
     List<Object[]> countLatestContractsByMonth(@Param("year") int year);
 
+    // Phương thức cho CEO: lọc theo danh sách statuses
+    @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.isLatestVersion = true")
+    Page<Contract> findLatestByStatusIn(@Param("statuses") List<ContractStatus> statuses, Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status IN :statuses AND c.isLatestVersion = true")
+    Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusIn(
+            @Param("title") String title,
+            @Param("statuses") List<ContractStatus> statuses,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
+    Page<Contract> findLatestByStatusInAndContractTypeId(
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("contractTypeId") Long contractTypeId,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status IN :statuses AND c.contractType.id = :contractTypeId AND c.isLatestVersion = true")
+    Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeId(
+            @Param("title") String title,
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("contractTypeId") Long contractTypeId,
+            Pageable pageable);
+
+    // Phương thức cho STAFF: lọc theo danh sách statuses và user
+    @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.user = :user AND c.isLatestVersion = true")
+    Page<Contract> findLatestByStatusInAndUser(
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("user") User user,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status IN :statuses AND c.user = :user AND c.isLatestVersion = true")
+    Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusInAndUser(
+            @Param("title") String title,
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("user") User user,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
+    Page<Contract> findLatestByStatusInAndContractTypeIdAndUser(
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("contractTypeId") Long contractTypeId,
+            @Param("user") User user,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status IN :statuses AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
+    Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeIdAndUser(
+            @Param("title") String title,
+            @Param("statuses") List<ContractStatus> statuses,
+            @Param("contractTypeId") Long contractTypeId,
+            @Param("user") User user,
+            Pageable pageable);
+
 }
