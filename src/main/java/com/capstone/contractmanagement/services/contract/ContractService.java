@@ -907,9 +907,16 @@ public class ContractService implements IContractService{
         int newVersion = calculateNewVersion(originalContractId, currentContract);
         String newContractNumber = generateNewContractNumber(currentContract, newVersion);
 
-        ApprovalWorkflow tempWorkflow = currentContract.getApprovalWorkflow();
+        // 4. Tách workflow khỏi hợp đồng cũ và cập nhật xuống CSDL
         currentContract.setApprovalWorkflow(null);
         contractRepository.save(currentContract);
+        contractRepository.flush(); // đảm bảo cập nhật vào DB
+
+        if (workflow != null) {
+            workflow.setContract(null);
+            workflowRepository.save(workflow);
+            workflowRepository.flush();
+        }
 
         // 3. Tạo hợp đồng mới với các giá trị từ currentContract và cập nhật từ DTO
         Contract newContract = Contract.builder()
@@ -918,7 +925,7 @@ public class ContractService implements IContractService{
                 .signingDate(dto.getSigningDate() != null ? dto.getSigningDate() : currentContract.getSigningDate())
                 .contractLocation(dto.getContractLocation() != null ? dto.getContractLocation() : currentContract.getContractLocation())
                 .contractNumber(newContractNumber)
-                .approvalWorkflow(tempWorkflow)
+                .approvalWorkflow(workflow)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
                 .status(ContractStatus.UPDATED)
@@ -945,7 +952,6 @@ public class ContractService implements IContractService{
                 .suspend(dto.getSuspend() != null ? dto.getSuspend() : currentContract.getSuspend())
                 .suspendContent(dto.getSuspendContent() != null ? dto.getSuspendContent() : currentContract.getSuspendContent())
                 .contractContent(dto.getContractContent() != null ? dto.getContractContent() : currentContract.getContractContent())
-                .approvalWorkflow(currentContract.getApprovalWorkflow())
                 .maxDateLate(dto.getMaxDateLate() != null ? dto.getMaxDateLate() : currentContract.getMaxDateLate())
                 .contractType(dto.getContractTypeId() != null
                         ? contractTypeRepository.findById(dto.getContractTypeId())
