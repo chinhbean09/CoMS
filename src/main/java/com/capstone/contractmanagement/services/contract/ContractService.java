@@ -584,6 +584,7 @@ public class ContractService implements IContractService{
                         .build())
                 .version(contract.getVersion())
                 .originalContractId(contract.getOriginalContractId())
+                .approvalWorkflowId(contract.getApprovalWorkflow().getId())
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .build();
     }
@@ -924,7 +925,7 @@ public class ContractService implements IContractService{
                 .approvalWorkflow(workflow)
                 .specialTermsA(dto.getSpecialTermsA() != null ? dto.getSpecialTermsA() : currentContract.getSpecialTermsA())
                 .specialTermsB(dto.getSpecialTermsB() != null ? dto.getSpecialTermsB() : currentContract.getSpecialTermsB())
-                .status(ContractStatus.UPDATED)
+                .status( currentContract.getStatus() == ContractStatus.REJECTED ? ContractStatus.FIXED : ContractStatus.UPDATED)
                 .createdAt(currentContract.getCreatedAt())
                 .updatedAt(now)
                 .effectiveDate(dto.getEffectiveDate() != null ? dto.getEffectiveDate() : currentContract.getEffectiveDate())
