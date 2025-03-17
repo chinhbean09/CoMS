@@ -493,26 +493,38 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
         List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
 
-        // Lọc hợp đồng để chọn những hợp đồng mà bước duyệt hiện tại (bước có trạng thái PENDING hoặc REJECTED, với stageOrder nhỏ nhất)
-        // có người duyệt (approver) trùng với approverId được truyền vào
         List<Contract> filteredContracts = pendingContracts.stream()
                 .filter(contract -> {
                     ApprovalWorkflow workflow = contract.getApprovalWorkflow();
                     if (workflow == null || workflow.getStages().isEmpty()) {
                         return false;
                     }
-                    // Tìm bước duyệt hiện tại: bước có trạng thái PENDING hoặc REJECTED với stageOrder nhỏ nhất
-                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
+
+                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
+                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
                             .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
                                     || stage.getStatus() == ApprovalStatus.REJECTED
                                     || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
-                    return currentStageOpt.isPresent() &&
-                            currentStageOpt.get().getApprover().getId().equals(approverId);
+                            .mapToInt(ApprovalStage::getStageOrder)
+                            .min();
+                    if (!currentStageOrderOpt.isPresent()) {
+                        return false;
+                    }
+                    int currentStageOrder = currentStageOrderOpt.getAsInt();
+
+                    // Điều kiện mới:
+                    // Nếu trong các bước có stageOrder nhỏ hơn hoặc bằng bước hiện tại
+                    // tồn tại bước có người duyệt trùng với approverId, thì hiển thị hợp đồng.
+                    // Điều này giúp hiển thị hợp đồng cho:
+                    // - Người duyệt đang ở bước hiện tại (stageOrder == currentStageOrder)
+                    // - Người duyệt đã xử lý ở các bước trước (stageOrder < currentStageOrder)
+                    return workflow.getStages().stream()
+                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
+                                    && stage.getApprover().getId().equals(approverId));
                 })
                 .collect(Collectors.toList());
 
-        // Chuyển đổi các Contract được lọc sang ContractResponse
+        // Chuyển đổi các Contract được lọc sang dạng ContractResponse
         return filteredContracts.stream()
                 .map(this::mapContractToContractResponse)
                 .collect(Collectors.toList());
