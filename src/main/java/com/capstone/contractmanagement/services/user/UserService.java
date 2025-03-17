@@ -119,28 +119,28 @@ public class UserService implements IUserService {
         newUser.setPassword(encodedPassword);
 
         // Send the generated password via email (if needed)
-        sendAccountPassword(newUser.getEmail(), generatedPassword);
+        mailService.sendAccountPassword(newUser.getEmail(), generatedPassword);
 
         // Save the new user
         User user = UserRepository.save(newUser);
         return user;
     }
 
-    private void sendAccountPassword(String email, String password) {
-        try {
-            DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(email);
-            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
-
-            Map<String, Object> props = new HashMap<>();
-            props.put("password", password);
-            dataMailDTO.setProps(props); // Set props to dataMailDTO
-
-            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
-        } catch (MessagingException e) {
-            logger.error("Failed to send OTP email", e);
-        }
-    }
+//    private void sendAccountPassword(String email, String password) {
+//        try {
+//            DataMailDTO dataMailDTO = new DataMailDTO();
+//            dataMailDTO.setTo(email);
+//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
+//
+//            Map<String, Object> props = new HashMap<>();
+//            props.put("password", password);
+//            dataMailDTO.setProps(props); // Set props to dataMailDTO
+//
+//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
+//        } catch (MessagingException e) {
+//            logger.error("Failed to send OTP email", e);
+//        }
+//    }
 
     /**
      * Generates a random 8-character password that includes at least one uppercase letter,
