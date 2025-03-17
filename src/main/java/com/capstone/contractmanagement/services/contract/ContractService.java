@@ -464,11 +464,11 @@ public class ContractService implements IContractService{
     @Transactional(readOnly = true)
     public Page<GetAllContractReponse> getAllContracts(Pageable pageable,
                                                        String keyword,
-                                                       ContractStatus status,
+                                                       List<ContractStatus> statuses,  // Thay đổi thành danh sách
                                                        Long contractTypeId,
                                                        User currentUser) {
         boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
-        boolean hasStatusFilter = status != null;
+        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();  // Kiểm tra danh sách không rỗng
         boolean hasContractTypeFilter = contractTypeId != null;
         Page<Contract> contracts;
 
@@ -482,20 +482,20 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeIdAndUser(
-                                keyword, status, contractTypeId, currentUser, pageable);
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeIdAndUser(
+                                keyword, statuses, contractTypeId, currentUser, pageable);
                     } else {
-                        contracts = contractRepository.findLatestByStatusAndContractTypeIdAndUser(
-                                status, contractTypeId, currentUser, pageable);
+                        contracts = contractRepository.findLatestByStatusInAndContractTypeIdAndUser(
+                                statuses, contractTypeId, currentUser, pageable);
                     }
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndUser(
-                                keyword, status, currentUser, pageable);
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndUser(
+                                keyword, statuses, currentUser, pageable);
                     } else {
-                        contracts = contractRepository.findLatestByStatusAndUser(
-                                status, currentUser, pageable);
+                        contracts = contractRepository.findLatestByStatusInAndUser(
+                                statuses, currentUser, pageable);
                     }
                 }
             } else {
@@ -525,17 +525,19 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
-                                keyword, status, contractTypeId, pageable);
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeId(
+                                keyword, statuses, contractTypeId, pageable);
                     } else {
-                        contracts = contractRepository.findLatestByStatusAndContractTypeId(status, contractTypeId, pageable);
+                        contracts = contractRepository.findLatestByStatusInAndContractTypeId(
+                                statuses, contractTypeId, pageable);
                     }
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatus(keyword, status, pageable);
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusIn(
+                                keyword, statuses, pageable);
                     } else {
-                        contracts = contractRepository.findLatestByStatus(status, pageable);
+                        contracts = contractRepository.findLatestByStatusIn(statuses, pageable);
                     }
                 }
             } else {
@@ -545,12 +547,14 @@ public class ContractService implements IContractService{
                         contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
                                 keyword, ContractStatus.DELETED, contractTypeId, pageable);
                     } else {
-                        contracts = contractRepository.findLatestByStatusNotAndContractTypeId(ContractStatus.DELETED, contractTypeId, pageable);
+                        contracts = contractRepository.findLatestByStatusNotAndContractTypeId(
+                                ContractStatus.DELETED, contractTypeId, pageable);
                     }
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNot(keyword, ContractStatus.DELETED, pageable);
+                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNot(
+                                keyword, ContractStatus.DELETED, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusNot(ContractStatus.DELETED, pageable);
                     }
@@ -2125,19 +2129,37 @@ public class ContractService implements IContractService{
     private static final Map<ContractStatus, EnumSet<ContractStatus>> VALID_TRANSITIONS = new HashMap<>();
 
     static {
-        VALID_TRANSITIONS.put(ContractStatus.DRAFT, EnumSet.of(ContractStatus.CREATED, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.DRAFT, EnumSet.of(ContractStatus.CREATED,ContractStatus.DELETED));
+
+        // Từ CREATED, cho phép gửi phê duyệt hoặc xóa hợp đồng
         VALID_TRANSITIONS.put(ContractStatus.CREATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.APPROVAL_PENDING, EnumSet.of(ContractStatus.APPROVED, ContractStatus.REJECTED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.APPROVED, EnumSet.of(ContractStatus.PENDING, ContractStatus.REJECTED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.PENDING, EnumSet.of(ContractStatus.SIGNED, ContractStatus.CANCELLED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.SIGNED, EnumSet.of(ContractStatus.ACTIVE, ContractStatus.CANCELLED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.ACTIVE, EnumSet.of(ContractStatus.COMPLETED, ContractStatus.EXPIRED, ContractStatus.CANCELLED, ContractStatus.ENDED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.COMPLETED, EnumSet.of(ContractStatus.ENDED, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.EXPIRED, EnumSet.of(ContractStatus.ENDED, ContractStatus.DELETED));
+
+        // Từ chờ phê duyệt, hợp đồng có thể được phê duyệt hoặc bị từ chối
+        VALID_TRANSITIONS.put(ContractStatus.APPROVAL_PENDING, EnumSet.of(ContractStatus.APPROVED, ContractStatus.REJECTED));
+
+        // Sau khi được phê duyệt, hợp đồng chuyển sang trạng thái Pending (chờ thực hiện)
+        VALID_TRANSITIONS.put(ContractStatus.APPROVED, EnumSet.of(ContractStatus.PENDING));
+
+        // Các bước tiếp theo của hợp đồng
+        VALID_TRANSITIONS.put(ContractStatus.PENDING, EnumSet.of(ContractStatus.SIGNED));
+        VALID_TRANSITIONS.put(ContractStatus.SIGNED, EnumSet.of(ContractStatus.ACTIVE));
+
+        // Khi hợp đồng đang hoạt động, nó có thể kết thúc theo các cách khác nhau
+        VALID_TRANSITIONS.put(ContractStatus.ACTIVE, EnumSet.of(ContractStatus.COMPLETED, ContractStatus.EXPIRED, ContractStatus.CANCELLED));
+
+        // Sau khi hoàn thành hoặc hết hạn, hợp đồng chuyển sang ENDED (trạng thái kết thúc)
+        VALID_TRANSITIONS.put(ContractStatus.COMPLETED, EnumSet.of(ContractStatus.ENDED));
+        VALID_TRANSITIONS.put(ContractStatus.EXPIRED, EnumSet.of(ContractStatus.ENDED));
+
+        // Các trạng thái kết thúc không cho phép chuyển tiếp
         VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED));
         VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.DRAFT));
-        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.noneOf(ContractStatus.class));
+
+        // Xử lý hợp đồng được cập nhật: có thể cần tái phê duyệt hoặc hủy bỏ
+        VALID_TRANSITIONS.put(ContractStatus.UPDATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
+
     }
 
     @Transactional
