@@ -7,6 +7,10 @@ pipeline {
         IMAGE_VERSION = ""
     }
 
+    parameters {
+        booleanParam(name: 'CLEAN_VOLUMES', defaultValue: false, description: 'Xóa volume khi down?')
+    }
+
     stages {
         stage('get project information') {
             steps {
@@ -49,7 +53,11 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'docker-hub-repo', variable: 'DOCKER_HUB_REPO')]) {
                         IMAGE_VERSION = "${DOCKER_HUB_REPO}:${CI_COMMIT_SHORT_SHA}"
-                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && docker compose down"
+                        def downCommand = "docker compose down"
+                            if (params.CLEAN_VOLUMES) {
+                                downCommand += " -v"
+                            }
+                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && ${downCommand}"
                         sh "export BACKEND_IMAGE=${IMAGE_VERSION} && docker compose up -d"
                     }
                 }
