@@ -17,4 +17,5 @@ import java.util.Map;
 public class DashboardStatisticsResponse {
     private Map<ContractStatus, Long> statusCounts;
     private List<MonthlyContractCount> monthlyCounts;
+    private List<PieChartData> pieChartData; // Thêm trường này để chứa dữ liệu pie chart
 }
