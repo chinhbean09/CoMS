@@ -83,7 +83,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 notificationService.saveNotification(user, reminderMessage, payment.getContract());
-                sendEmailReminder(payment);
+                mailService.sendEmailReminder(payment);
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
                 paymentScheduleRepository.save(payment);
@@ -109,49 +109,49 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 User user = payment.getContract().getUser();
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 notificationService.saveNotification(user, overdueMessage, payment.getContract());
-                sendEmailExpired(payment);
+                mailService.sendEmailExpired(payment);
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
             }
         }
     }
 
-    private void sendEmailReminder(PaymentSchedule payment) {
-        // Gửi email nhắc nhỏ
-        try {
-            DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
-            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
-
-            Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getPaymentDate());
-            dataMailDTO.setProps(props);
-            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
-        } catch (Exception e) {
-            // Xu ly loi
-            e.printStackTrace();
-        }
-    }
+//    private void sendEmailReminder(PaymentSchedule payment) {
+//        // Gửi email nhắc nhỏ
+//        try {
+//            DataMailDTO dataMailDTO = new DataMailDTO();
+//            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
+//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
+//
+//            Map<String, Object> props = new HashMap<>();
+//            props.put("contractTitle", payment.getContract().getTitle());
+//            props.put("dueDate", payment.getPaymentDate());
+//            dataMailDTO.setProps(props);
+//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
+//        } catch (Exception e) {
+//            // Xu ly loi
+//            e.printStackTrace();
+//        }
+//    }
 
     // gửi mail đã hết hạn thanh toán
-    private void sendEmailExpired(PaymentSchedule payment) {
-        // Gửi email nhắc nhỏ
-        try {
-            DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
-            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
-
-            Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getPaymentDate());
-            dataMailDTO.setProps(props);
-            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
-        } catch (Exception e) {
-            // Xu ly loi
-            e.printStackTrace();
-        }
-    }
+//    private void sendEmailExpired(PaymentSchedule payment) {
+//        // Gửi email nhắc nhỏ
+//        try {
+//            DataMailDTO dataMailDTO = new DataMailDTO();
+//            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
+//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
+//
+//            Map<String, Object> props = new HashMap<>();
+//            props.put("contractTitle", payment.getContract().getTitle());
+//            props.put("dueDate", payment.getPaymentDate());
+//            dataMailDTO.setProps(props);
+//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
+//        } catch (Exception e) {
+//            // Xu ly loi
+//            e.printStackTrace();
+//        }
+//    }
 
 //    @Scheduled(fixedRate = 60000)
 //    public void checkPaymentDue() {
