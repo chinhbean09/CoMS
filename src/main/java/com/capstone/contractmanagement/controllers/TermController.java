@@ -203,16 +203,39 @@ public class TermController {
     }
 
     @PutMapping("/update-status/{termId}/{isDeleted}")
-    public ResponseEntity<String> updateTermStatus(@PathVariable Long termId, @PathVariable Boolean isDeleted) {
+    public ResponseEntity<ResponseObject> updateTermStatus(@PathVariable Long termId, @PathVariable Boolean isDeleted) {
         try {
-            termService.updateTermStatus(termId, isDeleted);
-            String message = isDeleted ? "Xóa mềm điều khoản thành công" : "Khôi phục điều khoản thành công";
-            return ResponseEntity.ok(message);
+            termService.updateTermStatus(termId, true);
+            return ResponseEntity.ok(
+                    ResponseObject.builder()
+                            .message("Xóa mềm điều khoản thành công")
+                            .status(HttpStatus.OK)
+                            .data(null)
+                            .build());
         } catch (DataNotFoundException e) {
-            return ResponseEntity.badRequest().body("Không tìm thấy điều khoản");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.NOT_FOUND)
+                            .data(null)
+                            .build());
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.CONFLICT)
+                            .data(null)
+                            .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
         }
+
     }
 
     @GetMapping("/legal-basis")
