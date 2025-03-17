@@ -60,21 +60,15 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'docker-hub-repo', variable: 'DOCKER_HUB_REPO')]) {
-                    def images = sh(script: "docker images --format '{{.Repository}}:{{.Tag}}' | grep \"^${env.DOCKER_HUB_REPO}:\" || true", returnStdout: true).trim()
-                
-                    if (images) {
-                        def imageList = images.split('\n').findAll { it && it != "${env.DOCKER_HUB_REPO}:${env.CI_COMMIT_SHORT_SHA}" }
-                        imageList.each { image ->
+                        def images = sh(script: "docker images --format '{{.Repository}}:{{.Tag}}' | grep '^${DOCKER_HUB_REPO}:'", returnStdout: true).trim().split('\n')
+                        def oldImages = images.findAll { it != "${DOCKER_HUB_REPO}:${CI_COMMIT_SHORT_SHA}" }
+                        oldImages.each { image ->
                             sh "docker rmi ${image} || true"
                         }
-                    } else {
-                        echo "No old images found to remove."
                     }
+                }
             }
         }
-    }
-}
-
     }
 
     post {
