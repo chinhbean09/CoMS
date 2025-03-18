@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
+import com.capstone.contractmanagement.services.app_config.IAppConfigService;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MailTemplate;
@@ -31,6 +32,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     private final SimpMessagingTemplate messagingTemplate;
     private final IMailService mailService;
     private final INotificationService notificationService;
+    private final IAppConfigService appConfigService;
 
     @Override
     public String createPaymentSchedule(Long contractId, CreatePaymentScheduleDTO createPaymentScheduleDTO) throws DataNotFoundException {
@@ -61,8 +63,9 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     public void checkPaymentDue() {
         LocalDateTime now = LocalDateTime.now();
 
+        int reminderDeadline = appConfigService.getPaymentDeadlineValue();
         // 1. Gửi thông báo nhắc nhở 5 phút trước thời hạn
-        LocalDateTime reminderWindowEnd = now.plusMinutes(5);
+        LocalDateTime reminderWindowEnd = now.plusDays(reminderDeadline);
         List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByPaymentDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
             if (!payment.isReminderEmailSent()) {
