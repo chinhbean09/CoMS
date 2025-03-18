@@ -1777,19 +1777,19 @@ public class ContractService implements IContractService{
             return savedNewContract;
         }
         // 11. Ghi log audit trail cho hành động tạo phiên bản mới
-        AuditTrail versionAuditTrail = AuditTrail.builder()
-                .contract(savedNewContract)
-                .entityName("Contract")
-                .entityId(savedNewContract.getId())
-                .action("CREATE_VERSION")
-                .fieldName("contract")
-                .oldValue(serializeContract(currentContract))
-                .newValue(serializeContract(savedNewContract))
-                .changedAt(now)
-                .changedBy(changedBy)
-                .changeSummary("Đã tạo phiên bản " + newVersion + " của hợp đồng " + currentContract.getContractNumber())
-                .build();
-        auditTrailRepository.save(versionAuditTrail);
+//        AuditTrail versionAuditTrail = AuditTrail.builder()
+//                .contract(savedNewContract)
+//                .entityName("Contract")
+//                .entityId(savedNewContract.getId())
+//                .action("CREATE_VERSION")
+//                .fieldName("contract")
+//                .oldValue(serializeContract(currentContract))
+//                .newValue(serializeContract(savedNewContract))
+//                .changedAt(now)
+//                .changedBy(changedBy)
+//                .changeSummary("Đã tạo phiên bản " + newVersion + " của hợp đồng " + currentContract.getContractNumber())
+//                .build();
+//        auditTrailRepository.save(versionAuditTrail);
 
         return savedNewContract;
     }
@@ -2102,31 +2102,55 @@ public class ContractService implements IContractService{
             );
         }
 
-        // Cập nhật trạng thái
+        // Dịch trạng thái cũ và mới sang tiếng Việt
         String oldValue = currentStatus.name();
+        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+        String newStatusVi = translateContractStatusToVietnamese(ContractStatus.DELETED.name());
+
+        // Cập nhật trạng thái
         contract.setStatus(ContractStatus.DELETED);
         contract.setUpdatedAt(LocalDateTime.now());
 
         // Lưu hợp đồng
         Contract savedContract = contractRepository.save(contract);
 
-        // Ghi log vào audit trail
+        // Ghi log vào audit trail với giá trị tiếng Việt
         AuditTrail auditTrail = AuditTrail.builder()
                 .contract(savedContract)
                 .entityName("Contract")
                 .entityId(savedContract.getId())
                 .action("UPDATE")
                 .fieldName("status")
-                .oldValue(oldValue)
-                .newValue(ContractStatus.DELETED.name())
+                .oldValue(oldStatusVi) // Sử dụng giá trị đã dịch
+                .newValue(newStatusVi)  // Sử dụng giá trị đã dịch
                 .changedAt(LocalDateTime.now())
                 .changedBy(currentUser.getLoggedInUser().getFullName())
-                .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái %s sang %s", oldValue, ContractStatus.DELETED.name()))
+                .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái '%s' sang '%s'", oldStatusVi, newStatusVi))
                 .build();
 
         auditTrailRepository.save(auditTrail);
 
         return true;
+    }
+    private String translateContractStatusToVietnamese(String status) {
+        switch (status) {
+            case "DRAFT": return "Bản nháp";
+            case "CREATED": return "Đã tạo";
+            case "UPDATED": return "Đã cập nhật";
+            case "APPROVAL_PENDING": return "Chờ phê duyệt";
+            case "APPROVED": return "Đã phê duyệt";
+            case "PENDING": return "Chưa ký";
+            case "REJECTED": return "Bị từ chối";
+            case "FIXED": return "Đã chỉnh sửa";
+            case "SIGNED": return "Đã ký";
+            case "ACTIVE": return "Đang có hiệu lực";
+            case "COMPLETED": return "Hoàn thành";
+            case "EXPIRED": return "Hết hạn";
+            case "CANCELLED": return "Đã hủy";
+            case "ENDED": return "Kết thúc";
+            case "DELETED": return "Đã xóa";
+            default: return status; // Giữ nguyên nếu không có bản dịch
+        }
     }
 
     private static final Map<ContractStatus, EnumSet<ContractStatus>> VALID_TRANSITIONS = new HashMap<>();
@@ -2156,9 +2180,9 @@ public class ContractService implements IContractService{
 
         // Các trạng thái kết thúc không cho phép chuyển tiếp
         VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED, ContractStatus.APPROVAL_PENDING));
+        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED, ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
         VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.DRAFT));
+        VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.CREATED));
 
         // Xử lý hợp đồng được cập nhật: có thể cần tái phê duyệt hoặc hủy bỏ
         VALID_TRANSITIONS.put(ContractStatus.UPDATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
@@ -2180,26 +2204,31 @@ public class ContractService implements IContractService{
             );
         }
 
-        // Cập nhật trạng thái
+        // Dịch trạng thái cũ và mới sang tiếng Việt
         String oldValue = currentStatus.name();
+        String newValue = newStatus.name();
+        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+        String newStatusVi = translateContractStatusToVietnamese(newValue);
+
+        // Cập nhật trạng thái
         contract.setStatus(newStatus);
         contract.setUpdatedAt(LocalDateTime.now());
 
         // Lưu hợp đồng
         Contract savedContract = contractRepository.save(contract);
 
-        // Ghi log vào audit trail
+        // Ghi log vào audit trail với giá trị tiếng Việt
         AuditTrail auditTrail = AuditTrail.builder()
                 .contract(savedContract)
                 .entityName("Contract")
                 .entityId(savedContract.getId())
                 .action("UPDATE")
                 .fieldName("status")
-                .oldValue(oldValue)
-                .newValue(newStatus.name())
+                .oldValue(oldStatusVi) // Sử dụng giá trị đã dịch
+                .newValue(newStatusVi) // Sử dụng giá trị đã dịch
                 .changedAt(LocalDateTime.now())
                 .changedBy(currentUser.getLoggedInUser().getFullName())
-                .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ %s sang %s", oldValue, newStatus.name()))
+                .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'", oldStatusVi, newStatusVi))
                 .build();
 
         auditTrailRepository.save(auditTrail);

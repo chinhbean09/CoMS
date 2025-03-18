@@ -231,6 +231,61 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .build();
     }
 
+    private String translateContractStatusToVietnamese(String status) {
+        switch (status) {
+            case "DRAFT":
+                return "Bản nháp";
+            case "CREATED":
+                return "Đã tạo";
+            case "UPDATED":
+                return "Đã cập nhật";
+            case "APPROVAL_PENDING":
+                return "Chờ phê duyệt";
+            case "APPROVED":
+                return "Đã phê duyệt";
+            case "PENDING":
+                return "Chưa ký";
+            case "REJECTED":
+                return "Bị từ chối";
+            case "FIXED":
+                return "Đã chỉnh sửa";
+            case "SIGNED":
+                return "Đã ký";
+            case "ACTIVE":
+                return "Đang có hiệu lực";
+            case "COMPLETED":
+                return "Hoàn thành";
+            case "EXPIRED":
+                return "Hết hạn";
+            case "CANCELLED":
+                return "Đã hủy";
+            case "ENDED":
+                return "Kết thúc";
+            case "DELETED":
+                return "Đã xóa";
+            default:
+                return status; // Trả về giá trị gốc nếu không có bản dịch
+        }
+    }
+
+    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+        String newStatusVi = translateContractStatusToVietnamese(newValue);
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract)
+                .entityName("Contract") // Tên thực thể là "Contract"
+                .entityId(contract.getId()) // ID của hợp đồng
+                .action(action) // Hành động: "Status updated"
+                .fieldName(fieldName) // Trường thay đổi: "status"
+                .oldValue(oldStatusVi) // Giá trị cũ (đã dịch sang tiếng Việt)
+                .newValue(newStatusVi) // Giá trị mới (đã dịch sang tiếng Việt)
+                .changedBy(changedBy) // Người thực hiện thay đổi
+                .changedAt(LocalDateTime.now()) // Thời điểm thay đổi
+                .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'", oldStatusVi, newStatusVi)) // Tóm tắt thay đổi
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
     @Override
     @Transactional
     public void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException {
@@ -298,22 +353,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     firstStage.setStatus(ApprovalStatus.APPROVING);
                     approvalStageRepository.save(firstStage);
                 });
-    }
-
-    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
-        AuditTrail auditTrail = AuditTrail.builder()
-                .contract(contract)
-                .entityName("Contract") // Tên thực thể là "Contract"
-                .entityId(contract.getId()) // ID của hợp đồng
-                .action(action) // Hành động: "Status updated"
-                .fieldName(fieldName) // Trường thay đổi: "status"
-                .oldValue(oldValue) // Giá trị cũ
-                .newValue(newValue) // Giá trị mới
-                .changedBy(changedBy) // Người thực hiện thay đổi
-                .changedAt(LocalDateTime.now()) // Thời điểm thay đổi
-                .changeSummary(String.format("Trường '%s' đã thay đổi từ  '%s' sang '%s'", fieldName, oldValue, newValue)) // Tóm tắt thay đổi
-                .build();
-        auditTrailRepository.save(auditTrail);
     }
 
     @Override
