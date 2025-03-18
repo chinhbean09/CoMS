@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement;
 
+import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
@@ -44,6 +45,9 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
     @Autowired
     private IApprovalStageRepository approvalStageRepository;
+
+    @Autowired
+    private IAppConfigRepository appConfigRepository;
 
     @Value("${contract.admin.email}")
     private String email;
@@ -212,6 +216,35 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         }
     }
 
+    private void initializeAppConfig() {
+        if (appConfigRepository.count() > 0) {
+            System.out.println("App config already initialized!");
+            return;
+        }
+        AppConfig appConfig1 = AppConfig.builder()
+                .key("APPROVAL_DEADLINE")
+                .value("2")
+                .description("Hạn phê duyệt cho hợp đồng trong một đợt")
+                .build();
+        appConfigRepository.save(appConfig1);
+
+
+        AppConfig appConfig2 = AppConfig.builder()
+                .key("PAYMENT_DEADLINE")
+                .value("5")
+                .description("Thông báo thanh toán cho hợp đồng trước:")
+                .build();
+        appConfigRepository.save(appConfig2);
+
+//        AppConfig appConfig3 = AppConfig.builder()
+//                .key("PAYMENT_DEADLINE")
+//                .value("5")
+//                .description("Hạn thông báo thanh toán cho hợp đồng")
+//                .build();
+//        appConfigRepository.save(appConfig3);
+//        System.out.println("App config initialized!");
+    }
+
     @Override
     public void run(ApplicationArguments args) {
         // Khởi tạo Roles trước
@@ -228,6 +261,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
+        initializeAppConfig();
 
         System.out.println("Hello, I'm System Manager!");
     }
