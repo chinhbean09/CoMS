@@ -42,4 +42,6 @@ public interface IApprovalWorkflowService {
     List<GetContractForApproverResponse> getContractsForApprover(Long approverId);
     void resubmitContractForApproval(Long contractId) throws DataNotFoundException;
 
+    List<GetContractForApproverResponse> getContractsForManager(Long managerId);
+
 }
