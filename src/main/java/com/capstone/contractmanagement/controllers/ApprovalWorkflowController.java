@@ -161,4 +161,14 @@ public class ApprovalWorkflowController {
         }
     }
 
+    @GetMapping("/get-contract-for-manager/{managerId}")
+    public ResponseEntity<ResponseObject> getContractForManager(@PathVariable Long managerId) throws DataNotFoundException {
+        List<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForManager(managerId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(contracts)
+                .build());
+    }
+
 }
