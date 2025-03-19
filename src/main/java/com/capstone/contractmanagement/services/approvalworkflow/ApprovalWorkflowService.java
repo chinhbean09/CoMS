@@ -350,8 +350,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     notificationService.saveNotification(firstApprover, notificationMessage, contract);
                     messagingTemplate.convertAndSendToUser(firstApprover.getFullName(), "/queue/notifications", payload);
                     // Đặt hạn duyệt cho bước này (2 ngày kể từ bây giờ)
-                    firstStage.setStartDate(LocalDateTime.now());
-                    firstStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
+//                    firstStage.setStartDate(LocalDateTime.now());
+//                    firstStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
                     firstStage.setStatus(ApprovalStatus.APPROVING);
                     approvalStageRepository.save(firstStage);
                 });
@@ -404,8 +404,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
             if (nextStageOptional.isPresent()) {
                 ApprovalStage nextStage = nextStageOptional.get();
-                nextStage.setStartDate(LocalDateTime.now());
-                nextStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
+//                nextStage.setStartDate(LocalDateTime.now());
+//                nextStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
                 nextStage.setStatus(ApprovalStatus.APPROVING);
                 approvalStageRepository.save(nextStage);
                 User nextApprover = nextStage.getApprover();
@@ -652,8 +652,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         if (firstStageOpt.isPresent()) {
             ApprovalStage firstStage = firstStageOpt.get();
             // Đặt hạn duyệt cho bước đầu tiên: 2 ngày kể từ thời điểm resubmit
-            firstStage.setStartDate(LocalDateTime.now());
-            firstStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
+//            firstStage.setStartDate(LocalDateTime.now());
+//            firstStage.setDueDate(LocalDateTime.now().plusDays(appConfigService.getApprovalDeadlineValue()));
             firstStage.setStatus(ApprovalStatus.APPROVING);
             approvalStageRepository.save(firstStage);
             User firstApprover = firstStage.getApprover();
@@ -788,50 +788,50 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 //    }
 
     // Phương thức chạy mỗi phút (hoặc theo tần suất phù hợp)
-    @Scheduled(fixedDelay = 60000)
-    public void autoAdvanceExpiredStages() {
-        LocalDateTime now = LocalDateTime.now();
-        // Tìm tất cả các bước duyệt có trạng thái PENDING mà đã quá hạn
-        List<ApprovalStage> expiredStages = approvalStageRepository
-                .findByStatusAndDueDateBefore(ApprovalStatus.NOT_STARTED, now);
-
-        for (ApprovalStage stage : expiredStages) {
-            // Auto "phê duyệt" bước này (hoặc bạn có thể đánh dấu là "expired" nếu muốn)
-            stage.setStatus(ApprovalStatus.SKIPPED);
-            stage.setApprovedAt(now);
-            approvalStageRepository.save(stage);
-
-            // Lấy workflow và hợp đồng liên quan
-            ApprovalWorkflow workflow = stage.getApprovalWorkflow();
-            Contract contract = workflow.getContract();
-
-            // Tìm bước duyệt tiếp theo
-            Optional<ApprovalStage> nextStageOptional = workflow.getStages().stream()
-                    .filter(s -> s.getStageOrder() > stage.getStageOrder())
-                    .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
-
-            if (nextStageOptional.isPresent()) {
-                ApprovalStage nextStage = nextStageOptional.get();
-                // Cập nhật hạn duyệt cho bước tiếp theo
-                nextStage.setStartDate(now);
-                nextStage.setDueDate(now.plusDays(appConfigService.getApprovalDeadlineValue()));
-                nextStage.setStatus(ApprovalStatus.APPROVING);
-                approvalStageRepository.save(nextStage);
-                User nextApprover = nextStage.getApprover();
-                // Gửi thông báo cho người duyệt tiếp theo
-                Map<String, Object> payload = new HashMap<>();
-                String notificationMessage = "Bạn có hợp đồng cần phê duyệt đợt " + nextStage.getStageOrder() +
-                        ": Hợp đồng " + contract.getTitle();
-                payload.put("message", notificationMessage);
-                payload.put("contractId", contract.getId());
-                mailService.sendEmailReminder(contract, nextApprover, nextStage);
-                messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
-                notificationService.saveNotification(nextApprover, notificationMessage, contract);
-            } else {
-                // Nếu không có bước tiếp theo, cập nhật hợp đồng thành APPROVED
-                contract.setStatus(ContractStatus.APPROVED);
-                contractRepository.save(contract);
-            }
-        }
-    }
+//    @Scheduled(fixedDelay = 60000)
+//    public void autoAdvanceExpiredStages() {
+//        LocalDateTime now = LocalDateTime.now();
+//        // Tìm tất cả các bước duyệt có trạng thái PENDING mà đã quá hạn
+//        List<ApprovalStage> expiredStages = approvalStageRepository
+//                .findByStatusAndDueDateBefore(ApprovalStatus.NOT_STARTED, now);
+//
+//        for (ApprovalStage stage : expiredStages) {
+//            // Auto "phê duyệt" bước này (hoặc bạn có thể đánh dấu là "expired" nếu muốn)
+//            stage.setStatus(ApprovalStatus.SKIPPED);
+//            stage.setApprovedAt(now);
+//            approvalStageRepository.save(stage);
+//
+//            // Lấy workflow và hợp đồng liên quan
+//            ApprovalWorkflow workflow = stage.getApprovalWorkflow();
+//            Contract contract = workflow.getContract();
+//
+//            // Tìm bước duyệt tiếp theo
+//            Optional<ApprovalStage> nextStageOptional = workflow.getStages().stream()
+//                    .filter(s -> s.getStageOrder() > stage.getStageOrder())
+//                    .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
+//
+//            if (nextStageOptional.isPresent()) {
+//                ApprovalStage nextStage = nextStageOptional.get();
+//                // Cập nhật hạn duyệt cho bước tiếp theo
+//                nextStage.setStartDate(now);
+//                nextStage.setDueDate(now.plusDays(appConfigService.getApprovalDeadlineValue()));
+//                nextStage.setStatus(ApprovalStatus.APPROVING);
+//                approvalStageRepository.save(nextStage);
+//                User nextApprover = nextStage.getApprover();
+//                // Gửi thông báo cho người duyệt tiếp theo
+//                Map<String, Object> payload = new HashMap<>();
+//                String notificationMessage = "Bạn có hợp đồng cần phê duyệt đợt " + nextStage.getStageOrder() +
+//                        ": Hợp đồng " + contract.getTitle();
+//                payload.put("message", notificationMessage);
+//                payload.put("contractId", contract.getId());
+//                mailService.sendEmailReminder(contract, nextApprover, nextStage);
+//                messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
+//                notificationService.saveNotification(nextApprover, notificationMessage, contract);
+//            } else {
+//                // Nếu không có bước tiếp theo, cập nhật hợp đồng thành APPROVED
+//                contract.setStatus(ContractStatus.APPROVED);
+//                contractRepository.save(contract);
+//            }
+//        }
+//    }
 }

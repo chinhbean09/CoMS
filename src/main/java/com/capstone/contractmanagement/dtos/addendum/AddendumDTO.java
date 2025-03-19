@@ -12,8 +12,8 @@ public class AddendumDTO {
     private String title;
     private String content;
     private LocalDateTime effectiveDate;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+//    private String status;
+//    private LocalDateTime createdAt;
+//    private LocalDateTime updatedAt;
     private Long contractId;
 }

@@ -15,4 +15,6 @@ public interface IAddendumService {
     String updateAddendum(Long addendumId, AddendumDTO addendumDTO) throws DataNotFoundException;
 
     void deleteAddendum(Long addendumId) throws DataNotFoundException;
+
+    AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException;
 }
