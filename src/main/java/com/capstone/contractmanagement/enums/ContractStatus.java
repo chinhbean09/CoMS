@@ -1,7 +1,6 @@
 package com.capstone.contractmanagement.enums;
 
 public enum ContractStatus {
-    DRAFT,       // Bản nháp
     CREATED,     // Đã tạo
     UPDATED,
     APPROVAL_PENDING, // Chờ phê duyệt
