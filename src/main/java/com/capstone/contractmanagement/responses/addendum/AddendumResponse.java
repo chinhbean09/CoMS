@@ -12,7 +12,7 @@ public class AddendumResponse {
     private String title;
     private String content;
     private LocalDateTime effectiveDate;
-    private String status;
+    //private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
