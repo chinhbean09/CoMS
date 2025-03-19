@@ -40,7 +40,7 @@ public class TermService implements ITermService{
     public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
         // Lấy TypeTerm theo typeTermId
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
-                .orElseThrow(() -> new IllegalArgumentException("TypeTerm not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại điều khoản"));
 
         if (termRepository.existsByLabel(request.getLabel())) {
             throw new IllegalArgumentException("Label đã tồn tại, vui lòng chọn tên khác!");
@@ -123,9 +123,9 @@ public class TermService implements ITermService{
     public CreateTermResponse updateTerm(Long termId, UpdateTermDTO termRequest) throws DataNotFoundException {
 
         Term oldTerm = termRepository.findById(termId)
-                .orElseThrow(() -> new DataNotFoundException("Term not found"));
+                .orElseThrow(() -> new DataNotFoundException("Điều khoản không tìm thấy"));
         TypeTerm typeTerm = typeTermRepository.findById(termRequest.getTypeTermId())
-                .orElseThrow(() -> new DataNotFoundException("TypeTerm not found"));
+                .orElseThrow(() -> new DataNotFoundException("Loại điều khoản không tìm thấy"));
 
         // Tạo Term mới với dữ liệu cập nhật, version tăng thêm 1 và status là NEW
         oldTerm.setTypeTerm(typeTerm);
@@ -257,7 +257,7 @@ public class TermService implements ITermService{
                 TypeTerm typeTerm = typeTermMap.get(dto.getTypeTermId());
 
                 if (typeTerm == null) {
-                    throw new DataNotFoundException("Không tìm thấy TypeTerm với ID: " + dto.getTypeTermId());
+                    throw new DataNotFoundException("Không tìm thấy loại điều khoản");
                 }
 
                 Term term = Term.builder()
