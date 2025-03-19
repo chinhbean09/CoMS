@@ -28,12 +28,13 @@ public class AddendumService implements IAddendumService{
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
-        if (contract.getStatus() == ContractStatus.ACTIVE){
+        if (contract.getStatus() == ContractStatus.ACTIVE
+                || contract.getStatus() == ContractStatus.EXPIRED) {
             Addendum addendum = Addendum.builder()
                     .title(addendumDTO.getTitle())
                     .content(addendumDTO.getContent())
                     .effectiveDate(addendumDTO.getEffectiveDate())
-                    .status(addendumDTO.getStatus())
+                    //.status(addendumDTO.getStatus())
                     .createdAt(LocalDateTime.now())
                     .updatedAt(null)
                     .contract(contract)
@@ -74,7 +75,7 @@ public class AddendumService implements IAddendumService{
                         .title(addendum.getTitle())
                         .content(addendum.getContent())
                         .effectiveDate(addendum.getEffectiveDate())
-                        .status(addendum.getStatus())
+                        //.status(addendum.getStatus())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
                         .build())
@@ -92,7 +93,7 @@ public class AddendumService implements IAddendumService{
         addendum.setTitle(addendumDTO.getTitle());
         addendum.setContent(addendumDTO.getContent());
         addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
-        addendum.setStatus(addendumDTO.getStatus());
+        //addendum.setStatus(addendumDTO.getStatus());
         addendum.setUpdatedAt(LocalDateTime.now());
 
         addendumRepository.save(addendum);
@@ -107,5 +108,18 @@ public class AddendumService implements IAddendumService{
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
         // Xóa phụ lục
         addendumRepository.delete(addendum);
+    }
+
+    @Override
+    public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+        return AddendumResponse.builder()
+                .addendumId(addendum.getId())
+                .title(addendum.getTitle())
+                .content(addendum.getContent())
+                .effectiveDate(addendum.getEffectiveDate())
+                .createdAt(addendum.getCreatedAt())
+                .build();
     }
 }
