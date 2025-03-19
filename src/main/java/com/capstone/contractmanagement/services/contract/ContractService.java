@@ -796,7 +796,7 @@ public class ContractService implements IContractService{
                 .suspend(originalContract.getSuspend())
                 .suspendContent(originalContract.getSuspendContent())
                 .contractType(originalContract.getContractType())
-                .status(ContractStatus.DRAFT) // Đặt trạng thái mới, ví dụ DRAFT
+                .status(ContractStatus.CREATED) // Đặt trạng thái mới, ví dụ DRAFT
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .version(1)
@@ -2156,8 +2156,6 @@ public class ContractService implements IContractService{
     private static final Map<ContractStatus, EnumSet<ContractStatus>> VALID_TRANSITIONS = new HashMap<>();
 
     static {
-        VALID_TRANSITIONS.put(ContractStatus.DRAFT, EnumSet.of(ContractStatus.CREATED,ContractStatus.DELETED));
-
         // Từ CREATED, cho phép gửi phê duyệt hoặc xóa hợp đồng
         VALID_TRANSITIONS.put(ContractStatus.CREATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
 
@@ -2179,13 +2177,13 @@ public class ContractService implements IContractService{
         VALID_TRANSITIONS.put(ContractStatus.EXPIRED, EnumSet.of(ContractStatus.ENDED));
 
         // Các trạng thái kết thúc không cho phép chuyển tiếp
-        VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.noneOf(ContractStatus.class));
-        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.UPDATED, ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
-        VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
+        VALID_TRANSITIONS.put(ContractStatus.CANCELLED, EnumSet.of(ContractStatus.ENDED));
+        VALID_TRANSITIONS.put(ContractStatus.REJECTED, EnumSet.of(ContractStatus.FIXED, ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.FIXED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
         VALID_TRANSITIONS.put(ContractStatus.DELETED, EnumSet.of(ContractStatus.CREATED));
-
         // Xử lý hợp đồng được cập nhật: có thể cần tái phê duyệt hoặc hủy bỏ
-        VALID_TRANSITIONS.put(ContractStatus.UPDATED, EnumSet.of(ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.UPDATED, EnumSet.of(ContractStatus.FIXED, ContractStatus.APPROVAL_PENDING, ContractStatus.DELETED));
+        VALID_TRANSITIONS.put(ContractStatus.ENDED, EnumSet.noneOf(ContractStatus.class));
 
     }
 
