@@ -16,4 +16,5 @@ public class AddendumDTO {
 //    private LocalDateTime createdAt;
 //    private LocalDateTime updatedAt;
     private Long contractId;
+    private Long addendumTypeId;
 }
