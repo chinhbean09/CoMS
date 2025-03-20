@@ -302,7 +302,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         ApprovalWorkflow workflowToAssign = originalWorkflow;
 
         // Nếu workflow đã được gán cho một hợp đồng khác, thực hiện clone
-        if (originalWorkflow.getContract() != null) {
+        if (originalWorkflow.getContract() != null || originalWorkflow.getAddendum() != null) {
             // Clone thông tin cơ bản của workflow
             ApprovalWorkflow clonedWorkflow = ApprovalWorkflow.builder()
                     .name(originalWorkflow.getName())
