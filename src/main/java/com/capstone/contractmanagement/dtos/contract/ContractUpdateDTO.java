@@ -42,7 +42,6 @@ public class ContractUpdateDTO {
     private Boolean violate;
     private Boolean suspend;
     private String suspendContent;
-    private ContractStatus status;
 
     // Danh sách TermSnapshotDTO thay vì ContractTermDTO
     private List<TermSnapshotDTO> legalBasisTerms;
