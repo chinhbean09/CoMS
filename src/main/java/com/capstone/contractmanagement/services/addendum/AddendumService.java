@@ -2,12 +2,15 @@ package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.entities.Addendum;
+import com.capstone.contractmanagement.entities.AddendumType;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IAddendumRepository;
+import com.capstone.contractmanagement.repositories.IAddendumTypeRepository;
 import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
+import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 public class AddendumService implements IAddendumService{
     private final IAddendumRepository addendumRepository;
     private final IContractRepository contractRepository;
+    private final IAddendumTypeRepository addendumTypeRepository;
 
     @Override
     @Transactional
@@ -28,14 +32,19 @@ public class AddendumService implements IAddendumService{
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
-        if (contract.getStatus() == ContractStatus.ACTIVE){
+        AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
+                .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
+        if (contract.getStatus() == ContractStatus.ACTIVE
+                || contract.getStatus() == ContractStatus.EXPIRED) {
             Addendum addendum = Addendum.builder()
                     .title(addendumDTO.getTitle())
                     .content(addendumDTO.getContent())
                     .effectiveDate(addendumDTO.getEffectiveDate())
-                    .status(addendumDTO.getStatus())
+                    .contractNumber(contract.getContractNumber())
+                    //.status(addendumDTO.getStatus())
                     .createdAt(LocalDateTime.now())
                     .updatedAt(null)
+                    .addendumType(addendumType)
                     .contract(contract)
                     .build();
             addendumRepository.save(addendum);
@@ -44,6 +53,11 @@ public class AddendumService implements IAddendumService{
                     .addendumId(addendum.getId())
                     .title(addendum.getTitle())
                     .content(addendum.getContent())
+                    .contractNumber(addendum.getContractNumber())
+                    .addendumType(AddendumTypeResponse.builder()
+                            .addendumTypeId(addendum.getAddendumType().getId())
+                            .name(addendum.getAddendumType().getName())
+                            .build())
                     .effectiveDate(addendum.getEffectiveDate())
                     .createdAt(addendum.getCreatedAt())
                     .updatedAt(addendum.getUpdatedAt())
@@ -74,7 +88,34 @@ public class AddendumService implements IAddendumService{
                         .title(addendum.getTitle())
                         .content(addendum.getContent())
                         .effectiveDate(addendum.getEffectiveDate())
-                        .status(addendum.getStatus())
+                        .contractNumber(addendum.getContractNumber())
+                        .addendumType(AddendumTypeResponse.builder()
+                                .addendumTypeId(addendum.getAddendumType().getId())
+                                .name(addendum.getAddendumType().getName())
+                                .build())
+                        //.status(addendum.getStatus())
+                        .createdAt(addendum.getCreatedAt())
+                        .updatedAt(addendum.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AddendumResponse> getAllByAddendumType(Long addendumTypeId) throws DataNotFoundException {
+        AddendumType addendumType = addendumTypeRepository.findById(addendumTypeId)
+                .orElseThrow(() -> new DataNotFoundException("Addendum type not found with id: " + addendumTypeId));
+        List<Addendum> addenda = addendumRepository.findByAddendumType(addendumType);
+        return addenda.stream()
+                .map(addendum -> AddendumResponse.builder()
+                        .addendumId(addendum.getId())
+                        .title(addendum.getTitle())
+                        .content(addendum.getContent())
+                        .effectiveDate(addendum.getEffectiveDate())
+                        .contractNumber(addendum.getContractNumber())
+                        .addendumType(AddendumTypeResponse.builder()
+                                .addendumTypeId(addendum.getAddendumType().getId())
+                                .name(addendum.getAddendumType().getName())
+                                .build())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
                         .build())
@@ -87,12 +128,18 @@ public class AddendumService implements IAddendumService{
         // Tìm phụ lục theo id
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+        if (addendumDTO.getAddendumTypeId() != null) {
+            AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
+                    .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
+            addendum.setAddendumType(addendumType);
+        }
+
 
         // Cập nhật thông tin phụ lục (không cập nhật createdAt)
         addendum.setTitle(addendumDTO.getTitle());
         addendum.setContent(addendumDTO.getContent());
         addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
-        addendum.setStatus(addendumDTO.getStatus());
+        //addendum.setStatus(addendumDTO.getStatus());
         addendum.setUpdatedAt(LocalDateTime.now());
 
         addendumRepository.save(addendum);
@@ -107,5 +154,23 @@ public class AddendumService implements IAddendumService{
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
         // Xóa phụ lục
         addendumRepository.delete(addendum);
+    }
+
+    @Override
+    public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+        return AddendumResponse.builder()
+                .addendumId(addendum.getId())
+                .title(addendum.getTitle())
+                .content(addendum.getContent())
+                .contractNumber(addendum.getContractNumber())
+                .addendumType(AddendumTypeResponse.builder()
+                        .addendumTypeId(addendum.getAddendumType().getId())
+                        .name(addendum.getAddendumType().getName())
+                        .build())
+                .effectiveDate(addendum.getEffectiveDate())
+                .createdAt(addendum.getCreatedAt())
+                .build();
     }
 }
