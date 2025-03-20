@@ -1,6 +1,9 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.enums.AddendumStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,7 +40,8 @@ public class Addendum {
     private String contractNumber;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private AddendumStatus status;
 
     // Thời gian tạo phụ lục
     @Column(name = "created_at")
@@ -55,4 +59,9 @@ public class Addendum {
     @ManyToOne
     @JoinColumn(name = "addendum_type_id")
     private AddendumType addendumType;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approval_workflow_id")
+    @JsonIgnore
+    private ApprovalWorkflow approvalWorkflow;
 }
