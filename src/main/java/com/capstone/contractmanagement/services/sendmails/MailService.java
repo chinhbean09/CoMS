@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.sendmails;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
+import com.capstone.contractmanagement.entities.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
@@ -140,6 +141,47 @@ public class MailService implements IMailService{
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
         } catch (Exception e) {
             // Xu ly loi
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendUpdateAddendumReminder(Addendum addendum, User user) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_ADDENDUM_REQUEST);
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", addendum.getContractNumber());
+            dataMailDTO.setProps(props); // Set props to dataMailDTO
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_ADDENDUM_REQUEST);
+        } catch (Exception e) {
+            // Xu ly loi
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendEmailAddendumReminder(Addendum addendum, User user, ApprovalStage approvalStage) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.ADDENDUM_APPROVAL_NOTIFICATION);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", addendum.getContractNumber());
+            props.put("stage", approvalStage.getStageOrder());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template đã định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.ADDENDUM_APPROVAL_NOTIFICATION);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + user.getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
             e.printStackTrace();
         }
     }
