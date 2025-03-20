@@ -39,6 +39,16 @@ public class AddendumController {
                 .build());
     }
 
+    @GetMapping("/get-by-type/{addendumTypeId}")
+    public ResponseEntity<ResponseObject> getAllByAddendumType(@PathVariable Long addendumTypeId) throws DataNotFoundException {
+        List<AddendumResponse> addendumResponseList = addendumService.getAllByAddendumType(addendumTypeId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message("Lấy danh sách phụ lục thành công")
+                .data(addendumResponseList)
+                .build());
+    }
+
     @PutMapping("/update/{addendumId}")
     public ResponseEntity<String> updateAddendum(@PathVariable Long addendumId,
                                                  @RequestBody AddendumDTO addendumDTO) throws DataNotFoundException {
@@ -52,6 +62,16 @@ public class AddendumController {
                 .status(HttpStatus.OK)
                 .message("Xóa phụ lục thành công")
                 .data(null)
+                .build());
+    }
+
+    @GetMapping("/get-by-id/{addendumId}")
+    public ResponseEntity<ResponseObject> getAddendumById(@PathVariable Long addendumId) throws DataNotFoundException {
+        AddendumResponse addendumResponse = addendumService.getAddendumById(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message("Lấy phụ lục theo id")
+                .data(addendumResponse)
                 .build());
     }
 }

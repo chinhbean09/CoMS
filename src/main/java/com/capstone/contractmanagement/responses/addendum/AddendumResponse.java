@@ -11,8 +11,10 @@ public class AddendumResponse {
     private Long addendumId;
     private String title;
     private String content;
+    private String contractNumber;
     private LocalDateTime effectiveDate;
-    private String status;
+    private AddendumTypeResponse addendumType;
+    //private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
