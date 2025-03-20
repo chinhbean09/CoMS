@@ -12,6 +12,7 @@ import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkfl
 import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.entities.term.Term;
+import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
@@ -1027,12 +1028,12 @@ public class ContractService implements IContractService{
                 String oldValue = null;
                 String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                         term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.LEGAL_BASIS.name());
-
-
+                String newTermValueChange = "Value: " + term.getValue();
                 if (existingTerm != null) {
                     // Xử lý term đã tồn tại trong contract term
                     oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                             existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
+                    String oldTermValueChange = "Value: " + existingTerm.getTermValue();
 
                     // Xử lý term đã tồn tại trong contract term và có thay đổi giá trị
                     if (!oldValue.equals(newValue)) {
@@ -1058,8 +1059,8 @@ public class ContractService implements IContractService{
                                 .newValue(newValue)
                                 .changedAt(now)
                                 .changedBy(changedBy)
-                                .changeSummary("Đã cập nhật điều khoản cơ sở pháp lý với Term ID: " +
-                                        term.getId() + " của hợp đồng " + currentContract.getContractNumber())
+                                .changeSummary("Đã cập nhật điều khoản cơ sở pháp lý với nhãn: " +
+                                        term.getLabel() + " của hợp đồng " + currentContract.getContractNumber())
                                 .build());
                     } else {
 
@@ -1098,7 +1099,7 @@ public class ContractService implements IContractService{
                             .newValue(newValue)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã tạo điều khoản cơ sở pháp lý với Term ID: " + term.getId()
+                            .changeSummary("Đã tạo điều khoản cơ sở pháp lý với nhãn: " + term.getLabel()
                                     + " của hợp đồng " + currentContract.getContractNumber())
                             .build());
                 }
@@ -1121,6 +1122,8 @@ public class ContractService implements IContractService{
                 String oldValue = null;
                 String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                         term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.GENERAL_TERMS.name());
+                String newValueTrue = "Value: " + term.getValue();
+
                 if (existingTerm != null) {
                     oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                             existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
@@ -1143,7 +1146,7 @@ public class ContractService implements IContractService{
                                 .newValue(newValue)
                                 .changedAt(now)
                                 .changedBy(changedBy)
-                                .changeSummary("Đã cập nhật điều khoản chung với Term ID: " + term.getId()
+                                .changeSummary("Đã cập nhật điều khoản chung với nhãn: " + term.getLabel()
                                         + " của hợp đồng " + currentContract.getContractNumber())
                                 .build());
                     } else {
@@ -1198,9 +1201,12 @@ public class ContractService implements IContractService{
                 String oldValue = null;
                 String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                         term.getId(), term.getLabel(), term.getValue(), TypeTermIdentifier.OTHER_TERMS.name());
+                String newValueTrue = "Value: " + term.getValue();
+
                 if (existingTerm != null) {
                     oldValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
                             existingTerm.getOriginalTermId(), existingTerm.getTermLabel(), existingTerm.getTermValue(), existingTerm.getTermType().name());
+
                     if (!oldValue.equals(newValue)) {
                         ContractTerm newTerm = ContractTerm.builder()
                                 .originalTermId(term.getId())
@@ -1274,7 +1280,7 @@ public class ContractService implements IContractService{
                         .newValue(null)
                         .changedAt(now)
                         .changedBy(changedBy)
-                        .changeSummary("Đã xóa điều khoản với Term ID: " + oldTerm.getOriginalTermId()
+                        .changeSummary("Đã xóa điều khoản với nhãn: " + oldTerm.getTermLabel()
                                 + " của hợp đồng " + currentContract.getContractNumber())
                         .build());
             }
@@ -1401,10 +1407,14 @@ public class ContractService implements IContractService{
 
                 // Chuẩn bị giá trị cũ cho audit trail
                 String oldValue = oldDetail != null ? serializeAdditionalTermDetail(oldDetail) : null;
+                String oldValueTrue = oldDetail != null ? serializeAdditionalTermDetailTrue(oldDetail) : null;
 
                 String newValue = serializeAdditionalTermDetail(newDetail);
+                String newValueTrue = serializeAdditionalTermDetailTrue(newDetail);
 
                 if (oldDetail == null) {
+                    TypeTerm typeTerm = typeTermRepository.findById(configTypeTermId).orElse(null);
+                    String typeTermName = typeTerm != null ? typeTerm.getName() : "Unknown";
 
                     //Term additional detail nay chua co trong hop dong
                     //=> CREATE
@@ -1418,14 +1428,18 @@ public class ContractService implements IContractService{
                             .newValue(newValue)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã tạo chi tiết điều khoản bổ sung với TypeTerm ID: " + configTypeTermId
+                            .changeSummary("Đã tạo chi tiết điều khoản bổ sung với loại: " + typeTermName
                                     + " của hợp đồng " + currentContract.getContractNumber())
                             .build());
 
                 }
                 else if (!oldValue.equals(newValue)) {
                     //hợp đồng đã có term này rồi nhưng khác giá trị
+
                     //=> UPDATE
+                    TypeTerm typeTerm = typeTermRepository.findById(configTypeTermId).orElse(null);
+                    String typeTermName = typeTerm != null ? typeTerm.getName() : "Unknown";
+
                     additionalTermAuditTrails.add(AuditTrail.builder()
                             .contract(newContract)
                             .entityName("ContractAdditionalTermDetail")
@@ -1436,7 +1450,7 @@ public class ContractService implements IContractService{
                             .newValue(newValue)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã cập nhật chi tiết điều khoản bổ sung với TypeTerm ID: " + configTypeTermId
+                            .changeSummary("Đã cập nhật chi tiết điều khoản bổ sung với loại: " + typeTermName
                                     + " của hợp đồng " + currentContract.getContractNumber())
                             .build());
                 }
@@ -1445,7 +1459,10 @@ public class ContractService implements IContractService{
             // Xử lý các chi tiết bị xóa
             for (ContractAdditionalTermDetail oldDetail : currentContract.getAdditionalTermDetails()) {
                 if (!newTypeTermIds.contains(oldDetail.getTypeTermId())) {
+                    TypeTerm oldTypeTerm = typeTermRepository.findById(oldDetail.getTypeTermId()).orElse(null);
+                    String oldTypeTermName = oldTypeTerm != null ? oldTypeTerm.getName() : "Unknown";
                     String oldValue = serializeAdditionalTermDetail(oldDetail);
+                    String oldValueTrue = serializeAdditionalTermDetailTrue(oldDetail);
                     additionalTermAuditTrails.add(AuditTrail.builder()
                             .contract(newContract)
                             .entityName("ContractAdditionalTermDetail")
@@ -1456,7 +1473,7 @@ public class ContractService implements IContractService{
                             .newValue(null)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã xóa chi tiết điều khoản bổ sung với TypeTerm ID: " + oldDetail.getTypeTermId()
+                            .changeSummary("Đã xóa chi tiết điều khoản bổ sung với loại: " + oldTypeTermName
                                     + " của hợp đồng " + currentContract.getContractNumber())
                             .build());
                 }
@@ -1541,7 +1558,7 @@ public class ContractService implements IContractService{
                                 .newValue(newValue)
                                 .changedAt(now)
                                 .changedBy(changedBy)
-                                .changeSummary("Đã cập nhật PaymentSchedule với ID gốc: " + oldPayment.getId() + " trong phiên bản mới")
+                                .changeSummary("Đã cập nhật thanh toán với thứ tự thanh toán: " + newPayment.getPaymentOrder() + " trong phiên bản mới")
                                 .build();
                         paymentAuditTrails.add(auditTrail);
                         auditTrailToPaymentMap.put(auditTrail, newPayment); // Lưu ánh xạ
@@ -1571,7 +1588,7 @@ public class ContractService implements IContractService{
                             .newValue(newValue)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã tạo PaymentSchedule mới")
+                            .changeSummary("Đã tạo thanh toán mới với thứ tự thanh toán: " + newPayment.getPaymentOrder())
                             .build();
                     paymentAuditTrails.add(auditTrail);
                     auditTrailToPaymentMap.put(auditTrail, newPayment); // Lưu ánh xạ
@@ -1592,7 +1609,7 @@ public class ContractService implements IContractService{
                             .newValue(null)
                             .changedAt(now)
                             .changedBy(changedBy)
-                            .changeSummary("Đã xóa PaymentSchedule với ID: " + oldPayment.getId() + " trong phiên bản mới")
+                            .changeSummary("Đã xóa thanh toán với thứ tự thanh toán: " + oldPayment.getPaymentOrder() + " trong phiên bản mới")
                             .build();
                     paymentAuditTrails.add(auditTrail);
                     // Không cần thêm vào map vì DELETE không cần cập nhật newValue
@@ -1722,7 +1739,8 @@ public class ContractService implements IContractService{
         for (AuditTrail auditTrail : termAuditTrails) {
             if ("CREATE".equals(auditTrail.getAction()) || "UPDATE".equals(auditTrail.getAction())) {
                 ContractTerm savedTerm = savedNewContract.getContractTerms().stream()
-                        .filter(t -> t.getOriginalTermId().equals(getTermIdFromNewValue(auditTrail.getNewValue())))
+                        .filter(t ->
+                                t.getOriginalTermId().equals(getTermIdFromNewValue(auditTrail.getNewValue())))
                         .findFirst()
                         .orElse(null);
                 if (savedTerm != null) {
@@ -1739,6 +1757,7 @@ public class ContractService implements IContractService{
                         .orElse(null);
                 if (savedDetail != null) {
                     auditTrail.setEntityId(savedDetail.getId());
+
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -1809,6 +1828,20 @@ public class ContractService implements IContractService{
                 detail.getTypeTermId(), commonTermsStr, aTermsStr, bTermsStr);
     }
 
+    private String serializeAdditionalTermDetailTrue(ContractAdditionalTermDetail detail) {
+        String commonTermsStr = detail.getCommonTerms().stream()
+                .map(t -> "Value: " + t.getTermValue())
+                .collect(Collectors.joining("; "));
+        String aTermsStr = detail.getATerms().stream()
+                .map(t -> "Value: " + t.getTermValue())
+                .collect(Collectors.joining("; "));
+        String bTermsStr = detail.getBTerms().stream()
+                .map(t -> "Value: " + t.getTermValue())
+                .collect(Collectors.joining("; "));
+        return String.format("ContractAdditionalTermDetail{typeTermId=%d, commonTerms=[%s], aTerms=[%s], bTerms=[%s]}",
+                detail.getTypeTermId(), commonTermsStr, aTermsStr, bTermsStr);
+    }
+
     private AuditTrail createAuditTrail(Contract contract, String fieldName, String oldValue, String newValue,
                                         LocalDateTime changedAt, String changedBy, String action, String changeSummary) {
         return AuditTrail.builder()
@@ -1850,7 +1883,6 @@ public class ContractService implements IContractService{
         if (dto.getSuspend() != null && !dto.getSuspend().equals(currentContract.getSuspend())) return true;
         if (dto.getSuspendContent() != null && !dto.getSuspendContent().equals(currentContract.getSuspendContent())) return true;
         if (dto.getMaxDateLate() != null && !Objects.equals(dto.getMaxDateLate(), currentContract.getMaxDateLate())) return true;
-        if (dto.getStatus() != null && !dto.getStatus().equals(currentContract.getStatus())) return true;
         if (dto.getContractTypeId() != null && !dto.getContractTypeId().equals(currentContract.getContractType().getId())) {
             return true;
         }
@@ -2075,13 +2107,18 @@ public class ContractService implements IContractService{
     }
 
     private Long getTypeTermIdFromNewValue(String newValue) {
-        String[] parts = newValue.split(",");
-        for (String part : parts) {
-            if (part.contains("typeTermId=")) {
-                return Long.parseLong(part.split("=")[1].trim());
-            }
+        // Tìm vị trí của "typeTermId="
+        int startIndex = newValue.indexOf("typeTermId=");
+        if (startIndex == -1) {
+            throw new RuntimeException("Không thể trích xuất typeTermId từ newValue: " + newValue);
         }
-        throw new RuntimeException("Không thể trích xuất typeTermId từ newValue: " + newValue);
+        startIndex += "typeTermId=".length();
+        int endIndex = newValue.indexOf(",", startIndex);
+        if (endIndex == -   1) {
+            endIndex = newValue.indexOf("}", startIndex);
+        }
+        String typeTermIdStr = newValue.substring(startIndex, endIndex).trim();
+        return Long.parseLong(typeTermIdStr);
     }
 
     @Transactional
