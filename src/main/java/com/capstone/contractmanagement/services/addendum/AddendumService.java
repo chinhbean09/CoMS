@@ -229,6 +229,7 @@ public class AddendumService implements IAddendumService{
 
         approvalWorkflowRepository.save(addendumApprovalWorkflow);
         addendum.setApprovalWorkflow(addendumApprovalWorkflow);
+        addendum.setStatus(AddendumStatus.APPROVAL_PENDING);
         addendumRepository.save(addendum);
 
         addendumApprovalWorkflow.getStages().stream()
@@ -291,6 +292,7 @@ public class AddendumService implements IAddendumService{
 
         // Gán workflow (mới hoặc gốc nếu chưa gán) cho phụ lục
         addendum.setApprovalWorkflow(workflowToAssign);
+        addendum.setStatus(AddendumStatus.APPROVAL_PENDING);
         addendumRepository.save(addendum);
 
         // Lưu lại lịch sử thay đổi (AuditTrail)
