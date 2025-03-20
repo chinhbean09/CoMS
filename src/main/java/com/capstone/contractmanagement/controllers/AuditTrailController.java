@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.entities.AuditTrail;
 import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
 import com.capstone.contractmanagement.responses.ChangeDateResponse;
 import com.capstone.contractmanagement.responses.ResponseObject;
+import com.capstone.contractmanagement.responses.audit_trail.AuditTrailResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,10 +39,12 @@ public class AuditTrailController {
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
             Page<AuditTrail> auditTrails = auditTrailRepository.findAll(pageable);
+            // Ánh xạ sang AuditTrailResponse
+            Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.GET_ALL_AUDIT_TRAILS_SUCCESSFULLY)
-                    .data(auditTrails)
+                    .data(responsePage)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -52,7 +55,6 @@ public class AuditTrailController {
                             .build());
         }
     }
-
     // API lấy audit trails theo contractId với phân trang
     @GetMapping("/contract/{contractId}")
     public ResponseEntity<ResponseObject> getAuditTrailsByContractId(
@@ -75,10 +77,11 @@ public class AuditTrailController {
                                 .data(null)
                                 .build());
             }
+            Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.GET_AUDIT_TRAILS_BY_CONTRACT_SUCCESSFULLY)
-                    .data(auditTrails)
+                    .data(responsePage)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -89,7 +92,6 @@ public class AuditTrailController {
                             .build());
         }
     }
-
     // API lấy audit trails trong khoảng thời gian với phân trang
     @GetMapping("/time-range")
     public ResponseEntity<ResponseObject> getAuditTrailsByTimeRange(
@@ -113,10 +115,11 @@ public class AuditTrailController {
                                 .data(null)
                                 .build());
             }
+            Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.GET_AUDIT_TRAILS_BY_TIME_RANGE_SUCCESSFULLY)
-                    .data(auditTrails)
+                    .data(responsePage)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -136,16 +139,11 @@ public class AuditTrailController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String order) {
         try {
-            // Xác định cách sắp xếp (tăng dần hoặc giảm dần)
             Sort sort = order.equalsIgnoreCase("desc")
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-
-            // Gọi repository để lấy dữ liệu
             Page<AuditTrail> auditTrails = auditTrailRepository.findByOriginalContractId(originalContractId, pageable);
-
-            // Kiểm tra nếu không có dữ liệu
             if (auditTrails.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ResponseObject.builder()
@@ -154,15 +152,13 @@ public class AuditTrailController {
                                 .data(null)
                                 .build());
             }
-
-            // Trả về kết quả thành công
+            Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message("Lấy audit trails theo originalContractId thành công")
-                    .data(auditTrails)
+                    .data(responsePage)
                     .build());
         } catch (Exception e) {
-            // Xử lý lỗi
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()
                             .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -180,15 +176,12 @@ public class AuditTrailController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String order) {
-
         Sort sort = order.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-
         Page<AuditTrail> auditTrails = auditTrailRepository.findByOriginalContractIdAndEntityName(
                 originalContractId, entityName, pageable);
-
         if (auditTrails.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ResponseObject.builder()
@@ -197,11 +190,11 @@ public class AuditTrailController {
                             .data(null)
                             .build());
         }
-
+        Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message("Lấy audit trails thành công")
-                .data(auditTrails)
+                .data(responsePage)
                 .build());
     }
 
@@ -211,14 +204,11 @@ public class AuditTrailController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size); // Không thêm Sort vì đã có trong truy vấn
+            Pageable pageable = PageRequest.of(page, size);
             Page<java.sql.Date> changeDatesSql = auditTrailRepository.findDistinctChangeDatesByOriginalContractId(originalContractId, pageable);
-
-            // Chuyển đổi java.sql.Date sang LocalDate và ánh xạ sang ChangeDateResponse
             Page<ChangeDateResponse> formattedDates = changeDatesSql.map(sqlDate ->
                     new ChangeDateResponse(sqlDate.toLocalDate())
             );
-
             if (formattedDates.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ResponseObject.builder()
@@ -242,7 +232,6 @@ public class AuditTrailController {
         }
     }
 
-
     @GetMapping("/original-contract/{originalContractId}/changes-by-date")
     public ResponseEntity<ResponseObject> getAuditTrailsByDate(
             @PathVariable Long originalContractId,
@@ -265,10 +254,11 @@ public class AuditTrailController {
                                 .data(null)
                                 .build());
             }
+            Page<AuditTrailResponse> responsePage = auditTrails.map(AuditTrailResponse::new);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message("Lấy danh sách thay đổi thành công")
-                    .data(auditTrails)
+                    .data(responsePage)
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
