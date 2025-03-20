@@ -33,6 +33,9 @@ public class Addendum {
     @Column(name = "effective_date")
     private LocalDateTime effectiveDate;
 
+    @Column(name = "contract_number")
+    private String contractNumber;
+
     @Column(name = "status")
     private String status;
 
@@ -48,4 +51,8 @@ public class Addendum {
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = true)
     private Contract contract;
+
+    @ManyToOne
+    @JoinColumn(name = "addendum_type_id")
+    private AddendumType addendumType;
 }
