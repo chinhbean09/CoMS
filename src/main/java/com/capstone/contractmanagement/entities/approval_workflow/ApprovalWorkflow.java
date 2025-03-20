@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities.approval_workflow;
 
 
+import com.capstone.contractmanagement.entities.Addendum;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
@@ -40,6 +41,10 @@ public class ApprovalWorkflow {
     @OneToOne(mappedBy = "approvalWorkflow")
     @JsonIgnore
     private Contract contract;
+
+    @OneToOne(mappedBy = "approvalWorkflow")
+    @JsonIgnore
+    private Addendum addendum;
 
     // Danh sách các bước duyệt
     @OneToMany(mappedBy = "approvalWorkflow", cascade = CascadeType.ALL, orphanRemoval = true)

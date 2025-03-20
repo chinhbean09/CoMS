@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.addendum;
 
+import com.capstone.contractmanagement.enums.AddendumStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,7 +15,8 @@ public class AddendumResponse {
     private String contractNumber;
     private LocalDateTime effectiveDate;
     private AddendumTypeResponse addendumType;
-    //private String status;
+    private AddendumStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long contractId;
 }
