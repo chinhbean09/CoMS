@@ -16,6 +16,8 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
 
     List<Addendum> findByContract(Contract contract);
 
+    List<Addendum> findByStatus(AddendumStatus status);
+
     List<Addendum> findByAddendumType(AddendumType addendumType);
 
     Page<Addendum> findByContractUserId(Long userId, Pageable pageable);
