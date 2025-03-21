@@ -87,7 +87,7 @@ public class AddendumController {
     public ResponseEntity<ResponseObject> assignWorkflowToContract(@PathVariable Long addendumId) throws DataNotFoundException {
         addendumService.assignApprovalWorkflowOfContractToAddendum(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
-                .message(MessageKeys.ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY)
+                .message("Chọn quy trình phe duyet cho phụ lục")
                 .status(HttpStatus.OK)
                 .build());
     }
@@ -97,7 +97,7 @@ public class AddendumController {
     public ResponseEntity<ResponseObject> assignNewWorkflow(@PathVariable Long addendumId, @PathVariable Long workflowId) throws DataNotFoundException {
         addendumService.assignWorkflowToAddendum(addendumId, workflowId);
         return ResponseEntity.ok(ResponseObject.builder()
-                .message(MessageKeys.ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY)
+                .message("Chọn quy trình phe duyet cho phụ lục")
                 .status(HttpStatus.OK)
                 .build());
     }
