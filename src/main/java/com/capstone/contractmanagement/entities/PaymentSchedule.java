@@ -54,7 +54,12 @@ public class PaymentSchedule {
 
     // Relationship với Contract
     @ManyToOne
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id", nullable = true)
     @JsonIgnore
     private Contract contract;
+
+    @ManyToOne
+    @JoinColumn(name = "contract_partner_id", nullable = true)
+    @JsonIgnore
+    private ContractPartner contractPartner;
 }
