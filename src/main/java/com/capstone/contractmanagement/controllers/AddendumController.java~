@@ -2,7 +2,6 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
-import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
@@ -13,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -132,23 +130,18 @@ public class AddendumController {
         }
     }
 
-    @GetMapping("/get-all")
-    public ResponseEntity<ResponseObject> getFilteredAddenda(
+    @GetMapping("/get-all/{userId}")
+    public ResponseEntity<Page<AddendumResponse>> getAddendaByUserWithFilters(
+            @PathVariable Long userId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<AddendumStatus> statuses,
             @RequestParam(required = false) List<Long> addendumTypeIds,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal User currentUser
+            @RequestParam(defaultValue = "10") int size
     ) {
-        Page<AddendumResponse> responsePage = addendumService.getAddendaByUserWithFilters(
-                currentUser.getId(), keyword, statuses, addendumTypeIds, page, size, currentUser
+        Page<AddendumResponse> response = addendumService.getAddendaByUserWithFilters(
+                userId, keyword, statuses, addendumTypeIds, page, size
         );
-
-        return ResponseEntity.ok(ResponseObject.builder()
-                .status(HttpStatus.OK)
-                .message("Lấy danh sách phụ lục theo bộ lọc thành công")
-                .data(responsePage)
-                .build());
+        return ResponseEntity.ok(response);
     }
 }
