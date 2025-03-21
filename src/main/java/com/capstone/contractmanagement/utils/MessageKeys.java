@@ -102,4 +102,6 @@ public class MessageKeys {
     public static final String AUDIT_TRAILS_NOT_FOUND_IN_TIME_RANGE = "Không tìm thấy audit trails trong khoảng thời gian đã chọn";
 
     public static final String GET_DASHBOARD_STATISTICS_SUCCESSFULLY = "Lấy thống kê hợp đồng thành công";
+    public static final String CREATE_CONTRACT_PARTNER_SUCCESSFULLY = "Tạo hợp đồng đối tác thành công";
+    public static final String GET_ALL_CONTRACT_PARTNERS_SUCCESSFULLY = "Lấy danh sách hợp đồng đối tác";
 }
