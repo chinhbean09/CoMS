@@ -37,4 +37,7 @@ public interface IAddendumService {
             int page,
             int size,
             User currentUser);
+    List<AddendumResponse> getAddendaForManager(Long managerId);
+
+    List<AddendumResponse> getAddendaForApprover(Long approverId);
 }

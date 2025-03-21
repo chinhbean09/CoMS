@@ -601,6 +601,78 @@ public class AddendumService implements IAddendumService{
         return addenda.map(this::mapToAddendumResponse);
     }
 
+    @Override
+    @Transactional
+    public List<AddendumResponse> getAddendaForManager(Long managerId) {
+        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
+        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+
+        List<Addendum> filteredAddenda = pendingAddenda.stream()
+                .filter(addendum -> {
+                    ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
+                    if (workflow == null || workflow.getStages().isEmpty()) {
+                        return false;
+                    }
+
+                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
+                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
+                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
+                                    || stage.getStatus() == ApprovalStatus.REJECTED
+                                    || stage.getStatus() == ApprovalStatus.APPROVING)
+                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
+
+                    return currentStageOpt.isPresent() &&
+                            currentStageOpt.get().getApprover().getId().equals(managerId);
+                })
+                .collect(Collectors.toList());
+
+        // Chuyển đổi các Addendum được lọc sang dạng AddendumResponse
+        return filteredAddenda.stream()
+                .map(this::mapToAddendumResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<AddendumResponse> getAddendaForApprover(Long approverId) {
+        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
+        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+
+        List<Addendum> filteredAddenda = pendingAddenda.stream()
+                .filter(addendum -> {
+                    ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
+                    if (workflow == null || workflow.getStages().isEmpty()) {
+                        return false;
+                    }
+
+                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
+                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
+                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
+                                    || stage.getStatus() == ApprovalStatus.REJECTED
+                                    || stage.getStatus() == ApprovalStatus.APPROVING)
+                            .mapToInt(ApprovalStage::getStageOrder)
+                            .min();
+
+                    if (!currentStageOrderOpt.isPresent()) {
+                        return false;
+                    }
+
+                    int currentStageOrder = currentStageOrderOpt.getAsInt();
+
+                    // Điều kiện mới:
+                    // Nếu trong các bước có stageOrder nhỏ hơn hoặc bằng bước hiện tại
+                    // tồn tại bước có người duyệt trùng với approverId, thì hiển thị phụ lục.
+                    return workflow.getStages().stream()
+                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
+                                    && stage.getApprover().getId().equals(approverId));
+                })
+                .collect(Collectors.toList());
+
+        // Chuyển đổi các Addendum được lọc sang dạng AddendumResponse
+        return filteredAddenda.stream()
+                .map(this::mapToAddendumResponse)
+                .collect(Collectors.toList());
+    }
 
 
     private AddendumResponse mapToAddendumResponse(Addendum addendum) {
