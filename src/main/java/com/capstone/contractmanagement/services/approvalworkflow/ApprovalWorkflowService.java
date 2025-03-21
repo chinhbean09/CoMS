@@ -497,26 +497,40 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     public ApprovalWorkflowResponse getWorkflowByContractId(Long contractId) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+
         ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        if (workflow == null) {
+            // Trả về một workflow rỗng
+            return ApprovalWorkflowResponse.builder()
+                    .id(null)
+                    .name("")
+                    .customStagesCount(0)
+                    .createdAt(null)
+                    .stages(List.of()) // danh sách rỗng
+                    .build();
+        }
+
         return ApprovalWorkflowResponse.builder()
                 .id(workflow.getId())
                 .name(workflow.getName())
                 .customStagesCount(workflow.getCustomStagesCount())
                 .createdAt(workflow.getCreatedAt())
-                .stages(workflow.getStages().stream()
-                        .map(stage -> ApprovalStageResponse.builder()
-                                .stageId(stage.getId())
-                                .stageOrder(stage.getStageOrder())
-                                .approver(stage.getApprover().getId())
-                                .approverName(stage.getApprover().getFullName())
-                                .department(stage.getApprover().getDepartment())
-                                .startDate(stage.getStartDate())
-                                .endDate(stage.getDueDate())
-                                .approvedAt(stage.getApprovedAt())
-                                .status(stage.getStatus())
-                                .comment(stage.getComment())
-                                .build())
-                        .toList())
+                .stages(
+                        workflow.getStages() != null ? workflow.getStages().stream()
+                                .map(stage -> ApprovalStageResponse.builder()
+                                        .stageId(stage.getId())
+                                        .stageOrder(stage.getStageOrder())
+                                        .approver(stage.getApprover().getId())
+                                        .approverName(stage.getApprover().getFullName())
+                                        .department(stage.getApprover().getDepartment())
+                                        .startDate(stage.getStartDate())
+                                        .endDate(stage.getDueDate())
+                                        .approvedAt(stage.getApprovedAt())
+                                        .status(stage.getStatus())
+                                        .comment(stage.getComment())
+                                        .build())
+                                .toList() : List.of()
+                )
                 .build();
     }
 
