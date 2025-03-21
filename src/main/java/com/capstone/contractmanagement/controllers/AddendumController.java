@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
+import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.addendum.IAddendumService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -149,6 +150,26 @@ public class AddendumController {
                 .status(HttpStatus.OK)
                 .message("Lấy danh sách phụ lục theo bộ lọc thành công")
                 .data(responsePage)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-for-approver/{approverId}")
+    public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId) throws DataNotFoundException {
+        List<AddendumResponse> addendumResponses = addendumService.getAddendaForManager(approverId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(addendumResponses)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-for-manager/{managerId}")
+    public ResponseEntity<ResponseObject> getAddendaForManager(@PathVariable Long managerId) throws DataNotFoundException {
+        List<AddendumResponse> addendumResponses = addendumService.getAddendaForApprover(managerId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(addendumResponses)
                 .build());
     }
 }
