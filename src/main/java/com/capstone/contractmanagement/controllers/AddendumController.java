@@ -1,15 +1,24 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
+import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
+import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.addendum.IAddendumService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -82,7 +91,7 @@ public class AddendumController {
     public ResponseEntity<ResponseObject> assignWorkflowToContract(@PathVariable Long addendumId) throws DataNotFoundException {
         addendumService.assignApprovalWorkflowOfContractToAddendum(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
-                .message(MessageKeys.ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY)
+                .message("Chọn quy trình phe duyet cho phụ lục")
                 .status(HttpStatus.OK)
                 .build());
     }
@@ -92,7 +101,7 @@ public class AddendumController {
     public ResponseEntity<ResponseObject> assignNewWorkflow(@PathVariable Long addendumId, @PathVariable Long workflowId) throws DataNotFoundException {
         addendumService.assignWorkflowToAddendum(addendumId, workflowId);
         return ResponseEntity.ok(ResponseObject.builder()
-                .message(MessageKeys.ASSIGN_APPROVAL_WORKFLOW_TO_CONTRACT_SUCCESSFULLY)
+                .message("Chọn quy trình phe duyet cho phụ lục")
                 .status(HttpStatus.OK)
                 .build());
     }
@@ -126,5 +135,94 @@ public class AddendumController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An error occurred while resubmitting the Addendum.");
         }
+    }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<ResponseObject> getFilteredAddenda(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<AddendumStatus> statuses,
+            @RequestParam(required = false) List<Long> addendumTypeIds,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        Page<AddendumResponse> responsePage = addendumService.getAddendaByUserWithFilters(
+                currentUser.getId(), keyword, statuses, addendumTypeIds, page, size, currentUser
+        );
+
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message("Lấy danh sách phụ lục theo bộ lọc thành công")
+                .data(responsePage)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-for-approver/{approverId}")
+    public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId,
+                                                                 @RequestParam(value = "keyword", required = false) String keyword,
+                                                                 @RequestParam(value = "addendumTypeId", required = false) Long addendumTypeId,
+                                                                 @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                 @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
+        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForManager(approverId, keyword, addendumTypeId, page, size);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(addendumResponses)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-for-manager/{managerId}")
+    public ResponseEntity<ResponseObject> getAddendaForManager(@PathVariable Long managerId,
+                                                               @RequestParam(value = "keyword", required = false) String keyword,
+                                                               @RequestParam(value = "addendumTypeId", required = false) Long addendumTypeId,
+                                                               @RequestParam(value = "page", defaultValue = "0") int page,
+                                                               @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
+        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForApprover(managerId, keyword, addendumTypeId, page, size);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(addendumResponses)
+                .build());
+    }
+
+    @GetMapping("/get-workflow-by-addendum/{addendumId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByContractId(@PathVariable Long addendumId) throws DataNotFoundException {
+        ApprovalWorkflowResponse approvalWorkflowResponse = addendumService.getWorkflowByAddendumId(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    @PostMapping("/create-workflow")
+    public ResponseEntity<ResponseObject> createApprovalWorkflow(@RequestBody AddendumApprovalWorkflowDTO approvalWorkflowDTO) {
+        ApprovalWorkflowResponse response = addendumService.createWorkflowForAddendum(approvalWorkflowDTO);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.CREATE_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.CREATED)
+                .data(response)
+                .build());
+    }
+
+    // api get approval workflow by contract type id
+    @GetMapping("/get-workflow-by-addendum-type/{addendumTypeId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByAddendumTypeId(@PathVariable Long addendumTypeId) {
+        List<ApprovalWorkflowResponse> approvalWorkflowResponse = addendumService.getWorkflowByAddendumTypeId(addendumTypeId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-comments/{addendumId}")
+    public ResponseEntity<ResponseObject> getApprovalComments(@PathVariable Long addendumId) throws DataNotFoundException {
+        List<CommentResponse> comments = addendumService.getApprovalStageCommentDetailsByAddendumId(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Lấy comment phụ lục")
+                .status(HttpStatus.OK)
+                .data(comments)
+                .build());
     }
 }
