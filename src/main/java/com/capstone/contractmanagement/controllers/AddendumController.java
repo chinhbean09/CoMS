@@ -1,12 +1,15 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.addendum.IAddendumService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -170,6 +173,37 @@ public class AddendumController {
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
                 .data(addendumResponses)
+                .build());
+    }
+
+    @GetMapping("/get-workflow-by-addendum/{addendumId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByContractId(@PathVariable Long addendumId) throws DataNotFoundException {
+        ApprovalWorkflowResponse approvalWorkflowResponse = addendumService.getWorkflowByAddendumId(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    @PostMapping("/create-workflow")
+    public ResponseEntity<ResponseObject> createApprovalWorkflow(@RequestBody AddendumApprovalWorkflowDTO approvalWorkflowDTO) {
+        ApprovalWorkflowResponse response = addendumService.createWorkflowForAddendum(approvalWorkflowDTO);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.CREATE_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.CREATED)
+                .data(response)
+                .build());
+    }
+
+    // api get approval workflow by contract type id
+    @GetMapping("/get-workflow-by-addendum-type/{addendumTypeId}")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByAddendumTypeId(@PathVariable Long addendumTypeId) {
+        List<ApprovalWorkflowResponse> approvalWorkflowResponse = addendumService.getWorkflowByAddendumTypeId(addendumTypeId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowResponse)
                 .build());
     }
 }
