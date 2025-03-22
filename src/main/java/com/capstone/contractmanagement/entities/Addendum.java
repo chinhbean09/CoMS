@@ -43,6 +43,9 @@ public class Addendum {
     @Enumerated(EnumType.STRING)
     private AddendumStatus status;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
     // Thời gian tạo phụ lục
     @Column(name = "created_at")
     private LocalDateTime createdAt;
