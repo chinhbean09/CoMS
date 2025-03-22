@@ -11,11 +11,13 @@ import com.capstone.contractmanagement.responses.contract.GetContractForApprover
 import com.capstone.contractmanagement.services.approvalworkflow.IApprovalWorkflowService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -139,8 +141,12 @@ public class ApprovalWorkflowController {
                 .build());
     }
     @GetMapping("/get-contract-for-approver/{approverId}")
-    public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId) throws DataNotFoundException {
-        List<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId);
+    public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId,
+                                                                 @RequestParam(value = "keyword", required = false) String keyword,
+                                                                 @RequestParam(value = "contractTypeId", required = false) Long contractTypeId,
+                                                                 @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                 @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
+        Page<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId, keyword, contractTypeId, page, size);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
@@ -162,12 +168,27 @@ public class ApprovalWorkflowController {
     }
 
     @GetMapping("/get-contract-for-manager/{managerId}")
-    public ResponseEntity<ResponseObject> getContractForManager(@PathVariable Long managerId) throws DataNotFoundException {
-        List<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForManager(managerId);
+    public ResponseEntity<ResponseObject> getContractForManager(@PathVariable Long managerId,
+                                                                @RequestParam(value = "keyword", required = false) String keyword,
+                                                                @RequestParam(value = "contractTypeId", required = false) Long contractTypeId,
+                                                                @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
+        Page<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForManager(managerId, keyword, contractTypeId, page, size);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
                 .data(contracts)
+                .build());
+    }
+
+    // Endpoint để lấy số lượng hợp đồng và phụ lục cần phê duyệt và bị từ chối
+    @GetMapping("/get-approval-stats")
+    public ResponseEntity<ResponseObject> getApprovalStats() {
+        // Gọi service để lấy thống kê và trả về cho client
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Lấy thống kê phê duyệt")
+                .status(HttpStatus.OK)
+                .data(approvalWorkflowService.getApprovalStats())
                 .build());
     }
 
