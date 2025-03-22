@@ -43,8 +43,8 @@ public class Addendum {
     @Enumerated(EnumType.STRING)
     private AddendumStatus status;
 
-    @Column(name = "created_by")
-    private String createdBy;
+//    @Column(name = "created_by")
+//    private String createdBy;
 
     // Thời gian tạo phụ lục
     @Column(name = "created_at")
@@ -62,6 +62,11 @@ public class Addendum {
     @ManyToOne
     @JoinColumn(name = "addendum_type_id")
     private AddendumType addendumType;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approval_workflow_id")
