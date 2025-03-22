@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.entities.Addendum;
 import com.capstone.contractmanagement.entities.AddendumType;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.AddendumStatus;
+import com.capstone.contractmanagement.enums.ApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -111,5 +112,14 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
                OR LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
     """)
     Page<Addendum> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    // Đếm số phụ lục bị từ chối mà người duyệt đã từ chối
+    long countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+            AddendumStatus status, Long approverId, ApprovalStatus approvalStatus);
+
+    long countByContract_User_IdAndStatus(Long userId, AddendumStatus status);
+
+    // Truy vấn phụ lục theo trạng thái và loại phụ lục
+    List<Addendum> findByStatusAndAddendumTypeId(AddendumStatus status, Long addendumTypeId);
 
 }
