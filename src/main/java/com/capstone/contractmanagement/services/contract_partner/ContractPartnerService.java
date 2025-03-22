@@ -86,11 +86,18 @@ public class ContractPartnerService implements IContractPartnerService {
                 "folder", "contract_partner"  // Đặt thư mục lưu trữ là contract_partner
         ));
 
-        // Lấy URL trả về từ Cloudinary (file URL cho phép tải về)
-        String fileUrl = (String) uploadResult.get("url");
+        // Lấy public ID và URL trả về từ Cloudinary
+        String publicId = (String) uploadResult.get("public_id");
 
-        // Trả về URL của file đã upload
-        return fileUrl;
+        // Tạo URL bảo mật cho file PDF
+        String secureUrl = cloudinary.url()
+                .resourceType("raw") // Xác định là file raw (không phải hình ảnh)
+                .publicId(publicId)
+                .secure(true) // Tạo URL bảo mật
+                .generate(); // Tạo URL
+
+        // Trả về URL bảo mật của file đã upload
+        return secureUrl;
     }
 
     @Override
