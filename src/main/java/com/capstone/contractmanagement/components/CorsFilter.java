@@ -18,7 +18,7 @@ import java.util.List;
 public class CorsFilter extends OncePerRequestFilter {
 
     // Danh sách các origin hợp lệ (cập nhật theo nhu cầu)
-    private static final List<String> ALLOWED_ORIGINS = Arrays.asList("http://localhost:9999");
+    private static final List<String> ALLOWED_ORIGINS = Arrays.asList("http://localhost:9999", "http://blueedu.info.vn");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
