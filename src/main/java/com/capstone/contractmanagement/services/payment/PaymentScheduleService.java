@@ -64,11 +64,12 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         LocalDateTime now = LocalDateTime.now();
 
         int reminderDeadline = appConfigService.getPaymentDeadlineValue();
+
         // 1. Gửi thông báo nhắc nhở 5 phút trước thời hạn
         LocalDateTime reminderWindowEnd = now.plusDays(reminderDeadline);
         List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByPaymentDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
-            if (!payment.isReminderEmailSent()) {
+            if (payment.getContract() != null && !payment.isReminderEmailSent()) {
                 // Tạo payload dạng JSON
                 Map<String, Object> payload = new HashMap<>();
                 String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
@@ -77,16 +78,16 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 Long contractId = payment.getContract().getId();
                 payload.put("message", reminderMessage);
                 payload.put("contractId", contractId);
-                // Bạn có thể thêm các trường khác nếu cần, ví dụ "url"
-                //payload.put("url", ""); // Hoặc bỏ qua nếu không cần
 
                 // Lấy username của người dùng
                 String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
+
                 // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 notificationService.saveNotification(user, reminderMessage, payment.getContract());
                 mailService.sendEmailReminder(payment);
+
                 // Đánh dấu đã gửi email nhắc nhở
                 payment.setReminderEmailSent(true);
                 paymentScheduleRepository.save(payment);
@@ -96,9 +97,10 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         // 2. Gửi thông báo quá hạn nếu đã vượt qua dueDate
         List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByPaymentDateBeforeAndStatus(now, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : overduePayments) {
-            if (now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
+            if (payment.getContract() != null && now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
                 payment.setStatus(PaymentStatus.OVERDUE);
                 paymentScheduleRepository.save(payment);
+
                 // Tạo payload dạng JSON cho thông báo quá hạn
                 Map<String, Object> payload = new HashMap<>();
                 String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
@@ -106,13 +108,16 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 Long contractId = payment.getContract().getId();
                 payload.put("message", overdueMessage);
                 payload.put("contractId", contractId);
-                //payload.put("url", ""); // Nếu có URL cụ thể thì thêm vào
 
                 String username = payment.getContract().getUser().getFullName();
                 User user = payment.getContract().getUser();
+
+                // Gửi thông báo dưới dạng JSON
                 messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
                 notificationService.saveNotification(user, overdueMessage, payment.getContract());
                 mailService.sendEmailExpired(payment);
+
+                // Đánh dấu đã gửi email quá hạn
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
             }
