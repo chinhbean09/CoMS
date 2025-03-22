@@ -16,6 +16,7 @@ public class AddendumResponse {
     private LocalDateTime effectiveDate;
     private AddendumTypeResponse addendumType;
     private AddendumStatus status;
+    private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long contractId;
