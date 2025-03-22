@@ -19,6 +19,7 @@ import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -873,6 +874,31 @@ public class AddendumService implements IAddendumService{
                                 .toList())
                         .build())
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException {
+        // Tìm hợp đồng theo contractId
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
+
+        // Lấy quy trình phê duyệt của hợp đồng
+        ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
+        if (workflow == null) {
+            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho phụ lục với id : " + addendumId);
+        }
+
+        // Lấy danh sách thông tin comment từ các bước duyệt
+        return workflow.getStages().stream()
+                // Lọc chỉ những stage có comment (nếu cần)
+                .filter(stage -> stage.getComment() != null && !stage.getComment().trim().isEmpty())
+                .map(stage -> CommentResponse.builder()
+                        .comment(stage.getComment())
+                        .commenter(stage.getApprover().getFullName()) // Giả sử method getFullName() trả về tên đầy đủ của người dùng
+                        .commentedAt(stage.getApprovedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 
