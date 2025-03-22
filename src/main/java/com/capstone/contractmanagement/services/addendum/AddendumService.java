@@ -17,6 +17,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
+import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
@@ -51,6 +52,9 @@ public class AddendumService implements IAddendumService{
     @Override
     @Transactional
     public AddendumResponse createAddendum(AddendumDTO addendumDTO) throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
@@ -64,7 +68,7 @@ public class AddendumService implements IAddendumService{
                     .effectiveDate(addendumDTO.getEffectiveDate())
                     .contractNumber(contract.getContractNumber())
                     .status(AddendumStatus.CREATED)
-                    .createdBy(contract.getUser().getFullName())
+                    .user(currentUser)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(null)
                     .addendumType(addendumType)
@@ -78,7 +82,10 @@ public class AddendumService implements IAddendumService{
                     .content(addendum.getContent())
                     .contractNumber(addendum.getContractNumber())
                     .status(addendum.getStatus())
-                    .createdBy(addendum.getCreatedBy())
+                    .createdBy(UserAddendumResponse.builder()
+                            .userId(currentUser.getId())
+                            .userName(currentUser.getUsername())
+                            .build())
                     .contractId(addendum.getContract().getId())
                     .addendumType(AddendumTypeResponse.builder()
                             .addendumTypeId(addendum.getAddendumType().getId())
@@ -120,7 +127,10 @@ public class AddendumService implements IAddendumService{
                                 .name(addendum.getAddendumType().getName())
                                 .build())
                         .status(addendum.getStatus())
-                        .createdBy(addendum.getCreatedBy())
+                        .createdBy(UserAddendumResponse.builder()
+                                .userId(addendum.getUser().getId())
+                                .userName(addendum.getUser().getFullName())
+                                .build())
                         .contractId(addendum.getContract().getId())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
@@ -141,7 +151,10 @@ public class AddendumService implements IAddendumService{
                         .effectiveDate(addendum.getEffectiveDate())
                         .contractNumber(addendum.getContractNumber())
                         .status(addendum.getStatus())
-                        .createdBy(addendum.getCreatedBy())
+                        .createdBy(UserAddendumResponse.builder()
+                                .userId(addendum.getUser().getId())
+                                .userName(addendum.getUser().getFullName())
+                                .build())
                         .contractId(addendum.getContract().getId())
                         .addendumType(AddendumTypeResponse.builder()
                                 .addendumTypeId(addendum.getAddendumType().getId())
@@ -159,17 +172,24 @@ public class AddendumService implements IAddendumService{
         // Tìm phụ lục theo id
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+        if (addendum.getStatus().equals(AddendumStatus.APPROVAL_PENDING)) {
+            throw new RuntimeException("Phụ lục đang trong quy trình duyệt, không được phép cập nhật.");
+        }
         if (addendumDTO.getAddendumTypeId() != null) {
             AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
                     .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
             addendum.setAddendumType(addendumType);
         }
 
-
-        // Cập nhật thông tin phụ lục (không cập nhật createdAt)
-        addendum.setTitle(addendumDTO.getTitle());
-        addendum.setContent(addendumDTO.getContent());
-        addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
+        if (addendumDTO.getTitle() != null) {
+            addendum.setTitle(addendumDTO.getTitle());
+        }
+        if (addendumDTO.getContent() != null) {
+            addendum.setContent(addendumDTO.getContent());
+        }
+        if (addendumDTO.getEffectiveDate() != null) {
+            addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
+        }
         addendum.setStatus(AddendumStatus.UPDATED);
         addendum.setUpdatedAt(LocalDateTime.now());
 
@@ -197,7 +217,10 @@ public class AddendumService implements IAddendumService{
                 .content(addendum.getContent())
                 .contractNumber(addendum.getContractNumber())
                 .status(addendum.getStatus())
-                .createdBy(addendum.getCreatedBy())
+                .createdBy(UserAddendumResponse.builder()
+                        .userId(addendum.getUser().getId())
+                        .userName(addendum.getUser().getFullName())
+                        .build())
                 .contractId(addendum.getContract().getId())
                 .addendumType(AddendumTypeResponse.builder()
                         .addendumTypeId(addendum.getAddendumType().getId())
@@ -449,7 +472,7 @@ public class AddendumService implements IAddendumService{
 
         // Gửi thông báo cho người tạo phụ lục để yêu cầu chỉnh sửa
         Map<String, Object> payload = new HashMap<>();
-        String notificationMessage = "Bạn có phụ lục " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " cần được chỉnh sửa";
+        String notificationMessage = "Bạn có phụ lục " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " đã bị từ chối phê duyệt. Vui lòng kiểm tra lại.";
         payload.put("message", notificationMessage);
         payload.put("addendumId", addendumId);
         mailService.sendUpdateAddendumReminder(addendum, addendum.getContract().getUser());
@@ -910,7 +933,10 @@ public class AddendumService implements IAddendumService{
                 .contractNumber(addendum.getContractNumber())
                 .effectiveDate(addendum.getEffectiveDate())
                 .status(addendum.getStatus())
-                .createdBy(addendum.getCreatedBy())
+                .createdBy(UserAddendumResponse.builder()
+                        .userId(addendum.getUser().getId())
+                        .userName(addendum.getUser().getFullName())
+                        .build())
                 .createdAt(addendum.getCreatedAt())
                 .updatedAt(addendum.getUpdatedAt())
                 .contractId(addendum.getContract() != null ? addendum.getContract().getId() : null)

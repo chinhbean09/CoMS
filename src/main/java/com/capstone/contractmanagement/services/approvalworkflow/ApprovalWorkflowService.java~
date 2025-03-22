@@ -487,7 +487,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         // Gửi thông báo cho người tạo hợp đồng để yêu cầu chỉnh sửa
         Map<String, Object> payload = new HashMap<>();
-        String notificationMessage = "Bạn có hợp đồng bị từ chối phê duyệt: Hợp đồng " + contract.getTitle();
+        String notificationMessage = "Bạn có hợp đồng cần chỉnh sửa: Hợp đồng " + contract.getTitle();
         payload.put("message", notificationMessage);
         payload.put("contractId", contractId);
         mailService.sendUpdateContractReminder(contract, contract.getUser());
