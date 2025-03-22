@@ -23,10 +23,7 @@ import com.capstone.contractmanagement.services.notification.INotificationServic
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -608,41 +605,14 @@ public class AddendumService implements IAddendumService{
 
     @Override
     @Transactional
-    public List<AddendumResponse> getAddendaForManager(Long managerId) {
+    public Page<AddendumResponse> getAddendaForManager(Long approverId, String keyword, Long addendumTypeId, int page, int size) {
+        // Cấu hình phân trang
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
         // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
         List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
 
-        List<Addendum> filteredAddenda = pendingAddenda.stream()
-                .filter(addendum -> {
-                    ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
-                    if (workflow == null || workflow.getStages().isEmpty()) {
-                        return false;
-                    }
-
-                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
-                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
-                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
-                                    || stage.getStatus() == ApprovalStatus.REJECTED
-                                    || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
-
-                    return currentStageOpt.isPresent() &&
-                            currentStageOpt.get().getApprover().getId().equals(managerId);
-                })
-                .collect(Collectors.toList());
-
-        // Chuyển đổi các Addendum được lọc sang dạng AddendumResponse
-        return filteredAddenda.stream()
-                .map(this::mapToAddendumResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public List<AddendumResponse> getAddendaForApprover(Long approverId) {
-        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
-        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
-
+        // Lọc các phụ lục theo approverId, keyword và addendumTypeId
         List<Addendum> filteredAddenda = pendingAddenda.stream()
                 .filter(addendum -> {
                     ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
@@ -664,19 +634,107 @@ public class AddendumService implements IAddendumService{
 
                     int currentStageOrder = currentStageOrderOpt.getAsInt();
 
-                    // Điều kiện mới:
-                    // Nếu trong các bước có stageOrder nhỏ hơn hoặc bằng bước hiện tại
-                    // tồn tại bước có người duyệt trùng với approverId, thì hiển thị phụ lục.
+                    // Điều kiện mới: Kiểm tra nếu approver có quyền duyệt bước này
                     return workflow.getStages().stream()
                             .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
                                     && stage.getApprover().getId().equals(approverId));
                 })
+                .filter(addendum -> {
+                    // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        return addendum.getTitle().toLowerCase().contains(keyword.toLowerCase())
+                                || addendum.getContractNumber().toLowerCase().contains(keyword.toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(addendum -> {
+                    // Lọc theo loại phụ lục (nếu có)
+                    if (addendumTypeId != null) {
+                        return addendum.getAddendumType() != null
+                                && addendum.getAddendumType().getId().equals(addendumTypeId);
+                    }
+                    return true;
+                })
                 .collect(Collectors.toList());
 
-        // Chuyển đổi các Addendum được lọc sang dạng AddendumResponse
-        return filteredAddenda.stream()
-                .map(this::mapToAddendumResponse)
+        // Lấy phân trang từ danh sách đã lọc
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredAddenda.size());
+        Page<AddendumResponse> pageResponse = new PageImpl<>(
+                filteredAddenda.subList(start, end).stream()
+                        .map(this::mapToAddendumResponse)
+                        .collect(Collectors.toList()),
+                pageable, filteredAddenda.size()
+        );
+
+        return pageResponse;
+    }
+
+    @Override
+    @Transactional
+    public Page<AddendumResponse> getAddendaForApprover(Long approverId, String keyword, Long addendumTypeId, int page, int size) {
+        // Cấu hình phân trang
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
+        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+
+        // Lọc các phụ lục theo approverId, keyword và addendumTypeId
+        List<Addendum> filteredAddenda = pendingAddenda.stream()
+                .filter(addendum -> {
+                    ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
+                    if (workflow == null || workflow.getStages().isEmpty()) {
+                        return false;
+                    }
+
+                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
+                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
+                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
+                                    || stage.getStatus() == ApprovalStatus.REJECTED
+                                    || stage.getStatus() == ApprovalStatus.APPROVING)
+                            .mapToInt(ApprovalStage::getStageOrder)
+                            .min();
+
+                    if (!currentStageOrderOpt.isPresent()) {
+                        return false;
+                    }
+
+                    int currentStageOrder = currentStageOrderOpt.getAsInt();
+
+                    // Điều kiện mới: Kiểm tra nếu approver có quyền duyệt bước này
+                    return workflow.getStages().stream()
+                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
+                                    && stage.getApprover().getId().equals(approverId));
+                })
+                .filter(addendum -> {
+                    // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        return addendum.getTitle().toLowerCase().contains(keyword.toLowerCase())
+                                || addendum.getContent().toLowerCase().contains(keyword.toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(addendum -> {
+                    // Lọc theo loại phụ lục (nếu có)
+                    if (addendumTypeId != null) {
+                        return addendum.getAddendumType() != null
+                                && addendum.getAddendumType().getId().equals(addendumTypeId);
+                    }
+                    return true;
+                })
                 .collect(Collectors.toList());
+
+        // Lấy phân trang từ danh sách đã lọc
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredAddenda.size());
+        Page<AddendumResponse> pageResponse = new PageImpl<>(
+                filteredAddenda.subList(start, end).stream()
+                        .map(this::mapToAddendumResponse)
+                        .collect(Collectors.toList()),
+                pageable, filteredAddenda.size()
+        );
+
+        return pageResponse;
     }
 
     @Override
