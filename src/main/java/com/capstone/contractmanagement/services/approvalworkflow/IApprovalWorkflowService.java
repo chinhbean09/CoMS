@@ -10,8 +10,10 @@ import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkfl
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IApprovalWorkflowService {
     ApprovalWorkflowResponse createWorkflow(ApprovalWorkflowDTO approvalWorkflowDTO);
@@ -39,9 +41,11 @@ public interface IApprovalWorkflowService {
 
     List<CommentResponse> getApprovalStageCommentDetailsByContractId(Long contractId) throws DataNotFoundException;
 
-    List<GetContractForApproverResponse> getContractsForApprover(Long approverId);
+    Page<GetContractForApproverResponse> getContractsForApprover(Long approverId, String keyword, Long contractTypeId, int page, int size);
     void resubmitContractForApproval(Long contractId) throws DataNotFoundException;
 
-    List<GetContractForApproverResponse> getContractsForManager(Long managerId);
+    Page<GetContractForApproverResponse> getContractsForManager(Long managerId, String keyword, Long contractTypeId, int page, int size);
+
+    Map<String, Integer> getApprovalStats();
 
 }
