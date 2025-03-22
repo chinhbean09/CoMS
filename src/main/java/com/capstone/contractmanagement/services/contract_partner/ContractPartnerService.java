@@ -5,10 +5,12 @@ import com.capstone.contractmanagement.entities.ContractPartner;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.PaymentStatus;
+import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
+import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
@@ -134,6 +136,28 @@ public class ContractPartnerService implements IContractPartnerService {
         }
 
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void deleteContractPartner(Long contractPartnerId) throws DataNotFoundException {
+        ContractPartner contractPartner = contractPartnerRepository.findById(contractPartnerId)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
+        contractPartnerRepository.delete(contractPartner);
+    }
+
+    @Override
+    public void updateContractPartner(Long contractPartnerId, ContractPartnerDTO contractDTO) throws DataNotFoundException {
+        ContractPartner contractPartner = contractPartnerRepository.findById(contractPartnerId)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
+        contractPartner.setContractNumber(contractDTO.getContractNumber());
+        contractPartner.setAmount(contractDTO.getAmount());
+        contractPartner.setPartnerName(contractDTO.getPartnerName());
+        contractPartner.setTitle(contractDTO.getTitle());
+        contractPartner.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
+        contractPartner.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
+        contractPartner.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
+        contractPartnerRepository.save(contractPartner);
     }
 
     private LocalDateTime convertToLocalDateTime(List<Integer> dateTimeList) {
