@@ -39,9 +39,9 @@ public interface IAddendumService {
             int page,
             int size,
             User currentUser);
-    List<AddendumResponse> getAddendaForManager(Long managerId);
+    Page<AddendumResponse> getAddendaForManager(Long approverId, String keyword, Long addendumTypeId, int page, int size);
 
-    List<AddendumResponse> getAddendaForApprover(Long approverId);
+    Page<AddendumResponse> getAddendaForApprover(Long approverId, String keyword, Long addendumTypeId, int page, int size);
 
     ApprovalWorkflowResponse getWorkflowByAddendumId(Long addendumId) throws DataNotFoundException;
 
