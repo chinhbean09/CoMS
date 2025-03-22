@@ -8,6 +8,7 @@ import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -48,4 +49,6 @@ public interface IAddendumService {
     ApprovalWorkflowResponse createWorkflowForAddendum(AddendumApprovalWorkflowDTO approvalWorkflowDTO);
 
     List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId);
+
+    List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException;
 }
