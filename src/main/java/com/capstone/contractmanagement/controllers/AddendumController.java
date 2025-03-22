@@ -10,6 +10,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.addendum.IAddendumService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -212,6 +213,16 @@ public class AddendumController {
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
                 .data(approvalWorkflowResponse)
+                .build());
+    }
+
+    @GetMapping("/get-addendum-comments/{addendumId}")
+    public ResponseEntity<ResponseObject> getApprovalComments(@PathVariable Long addendumId) throws DataNotFoundException {
+        List<CommentResponse> comments = addendumService.getApprovalStageCommentDetailsByAddendumId(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Lấy comment phụ lục")
+                .status(HttpStatus.OK)
+                .data(comments)
                 .build());
     }
 }
