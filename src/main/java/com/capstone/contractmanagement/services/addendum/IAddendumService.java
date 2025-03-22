@@ -1,11 +1,13 @@
 package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -40,4 +42,10 @@ public interface IAddendumService {
     List<AddendumResponse> getAddendaForManager(Long managerId);
 
     List<AddendumResponse> getAddendaForApprover(Long approverId);
+
+    ApprovalWorkflowResponse getWorkflowByAddendumId(Long addendumId) throws DataNotFoundException;
+
+    ApprovalWorkflowResponse createWorkflowForAddendum(AddendumApprovalWorkflowDTO approvalWorkflowDTO);
+
+    List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId);
 }

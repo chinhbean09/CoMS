@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.Addendum;
 import com.capstone.contractmanagement.entities.AddendumType;
@@ -8,6 +9,7 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
@@ -15,6 +17,8 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
+import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -44,6 +48,7 @@ public class AddendumService implements IAddendumService{
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
     private final IApprovalStageRepository approvalStageRepository;
+    private final IUserRepository userRepository;
 
     @Override
     @Transactional
@@ -672,6 +677,139 @@ public class AddendumService implements IAddendumService{
         return filteredAddenda.stream()
                 .map(this::mapToAddendumResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowResponse getWorkflowByAddendumId(Long addendumId) throws DataNotFoundException {
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Phụ lục không tìm thấy"));
+
+        ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
+        if (workflow == null) {
+            // Trả về một workflow rỗng
+            return ApprovalWorkflowResponse.builder()
+                    .id(null)
+                    .name("")
+                    .customStagesCount(0)
+                    .createdAt(null)
+                    .stages(List.of()) // danh sách rỗng
+                    .build();
+        }
+
+        return ApprovalWorkflowResponse.builder()
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .customStagesCount(workflow.getCustomStagesCount())
+                .createdAt(workflow.getCreatedAt())
+                .stages(
+                        workflow.getStages() != null ? workflow.getStages().stream()
+                                .map(stage -> ApprovalStageResponse.builder()
+                                        .stageId(stage.getId())
+                                        .stageOrder(stage.getStageOrder())
+                                        .approver(stage.getApprover().getId())
+                                        .approverName(stage.getApprover().getFullName())
+                                        .department(stage.getApprover().getDepartment())
+                                        .startDate(stage.getStartDate())
+                                        .endDate(stage.getDueDate())
+                                        .approvedAt(stage.getApprovedAt())
+                                        .status(stage.getStatus())
+                                        .comment(stage.getComment())
+                                        .build())
+                                .toList() : List.of()
+                )
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowResponse createWorkflowForAddendum(AddendumApprovalWorkflowDTO approvalWorkflowDTO) {
+
+        ApprovalWorkflow workflow = ApprovalWorkflow.builder()
+                .name(approvalWorkflowDTO.getName())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // Nếu có stages, kiểm tra xem approver của mỗi stage có bị trùng không
+        if (approvalWorkflowDTO.getStages() != null) {
+            Set<Long> approverIds = new HashSet<>();
+            for (var stageDTO : approvalWorkflowDTO.getStages()) {
+                if (!approverIds.add(stageDTO.getApproverId())) {
+                    throw new RuntimeException("Trùng người duyệt tại stage: " + stageDTO.getApproverId());
+                }
+            }
+
+            // Tạo và thêm các stage sau khi xác nhận không có duplicate
+            approvalWorkflowDTO.getStages().forEach(stageDTO -> {
+                User approver = userRepository.findById(stageDTO.getApproverId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt  " + stageDTO.getApproverId()));
+                ApprovalStage stage = ApprovalStage.builder()
+                        .stageOrder(stageDTO.getStageOrder())
+                        .approver(approver)
+                        .status(ApprovalStatus.NOT_STARTED)
+                        .approvalWorkflow(workflow)
+                        .build();
+                workflow.getStages().add(stage);
+            });
+        }
+
+        // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
+        workflow.setCustomStagesCount(workflow.getStages().size());
+        // Lưu workflow
+        approvalWorkflowRepository.save(workflow);
+
+
+        if (approvalWorkflowDTO.getAddendumTypeId() != null) {
+            AddendumType addendumType = addendumTypeRepository.findById(approvalWorkflowDTO.getAddendumTypeId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phụ lục với id " + approvalWorkflowDTO.getAddendumTypeId()));
+            workflow.setAddendumType(addendumType);
+            approvalWorkflowRepository.save(workflow);
+        }
+
+        // Trả về response với các thông tin cần thiết
+        return ApprovalWorkflowResponse.builder()
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .customStagesCount(workflow.getCustomStagesCount())
+                .createdAt(workflow.getCreatedAt())
+                .stages(workflow.getStages().stream()
+                        .map(stage -> ApprovalStageResponse.builder()
+                                .stageId(stage.getId())
+                                .stageOrder(stage.getStageOrder())
+                                .approver(stage.getApprover().getId())
+                                .approverName(stage.getApprover().getFullName())
+                                .department(stage.getApprover().getDepartment())
+                                .status(stage.getStatus())
+                                .startDate(stage.getStartDate())
+                                .endDate(stage.getDueDate())
+                                .build())
+                        .toList())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId) {
+        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByAddendumType_IdOrderByCreatedAtDesc(addendumTypeId);
+
+        // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
+        return workflow.stream()
+                .map(workflows -> ApprovalWorkflowResponse.builder()
+                        .id(workflows.getId())
+                        .name(workflows.getName())
+                        .customStagesCount(workflows.getCustomStagesCount())
+                        .createdAt(workflows.getCreatedAt())
+                        .stages(workflows.getStages().stream()
+                                .map(stage -> ApprovalStageResponse.builder()
+                                        .stageId(stage.getId())
+                                        .stageOrder(stage.getStageOrder())
+                                        .approver(stage.getApprover().getId())
+                                        .approverName(stage.getApprover().getFullName())
+                                        .department(stage.getApprover().getDepartment())
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
     }
 
 
