@@ -420,6 +420,16 @@ public class AddendumService implements IAddendumService{
                 // Nếu không còn bước tiếp theo, cập nhật trạng thái phụ lục thành APPROVED
                 addendum.setStatus(AddendumStatus.APPROVED);
                 addendumRepository.save(addendum);
+
+                Map<String, Object> payload = new HashMap<>();
+                String notificationMessage = "Phụ lục: " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " đã duyệt xong.";
+                payload.put("message", notificationMessage);
+                payload.put("addendumId", addendumId);
+
+                // Gửi thông báo cho người duyệt tiếp theo
+                mailService.sendEmailApprovalSuccessForAddendum(addendum, addendum.getUser());
+                notificationService.saveNotification(addendum.getUser(), notificationMessage, addendum.getContract());
+                messagingTemplate.convertAndSendToUser(addendum.getUser().getFullName(), "/queue/notifications", payload);
             }
         }
     }
