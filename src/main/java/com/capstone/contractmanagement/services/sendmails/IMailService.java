@@ -20,4 +20,8 @@ public interface IMailService {
 
     // addendum
     void sendEmailAddendumReminder(Addendum addendum, User user, ApprovalStage approvalStage);
+
+    void sendEmailApprovalSuccessForContract(Contract contract, User user);
+
+    void sendEmailApprovalSuccessForAddendum(Addendum addendum, User user);
 }

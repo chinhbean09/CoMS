@@ -430,6 +430,17 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 contract.setStatus(ContractStatus.APPROVED);
                 contractRepository.save(contract);
 
+                // Tạo payload thông báo
+                Map<String, Object> payload = new HashMap<>();
+                String notificationMessage = "Hợp đồng " + contract.getTitle() + " đã được phê duyệt xong, hãy bắt đầu gửi ký";
+                payload.put("message", notificationMessage);
+                payload.put("contractId", contractId);
+
+                // Gửi thông báo cho người duyệt tiếp theo
+                mailService.sendEmailApprovalSuccessForContract(contract, contract.getUser());
+                notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
+                messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
+
                 // Ghi audit trail
                 String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
                 logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.APPROVED.name(), changedBy);
