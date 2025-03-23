@@ -185,4 +185,54 @@ public class MailService implements IMailService{
             e.printStackTrace();
         }
     }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendEmailApprovalSuccessForContract(Contract contract, User user) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.APPROVAL_CONTRACT_SUCCESS);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template đã định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.APPROVAL_CONTRACT_SUCCESS);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + user.getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendEmailApprovalSuccessForAddendum(Addendum addendum, User user) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.ADDENDUM_APPROVAL_SUCCESS);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", addendum.getContractNumber());
+            props.put("addendumTitle", addendum.getTitle());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template đã định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.ADDENDUM_APPROVAL_SUCCESS);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + user.getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
 }
