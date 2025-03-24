@@ -660,23 +660,14 @@ public class AddendumService implements IAddendumService{
                     }
 
                     // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
-                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
+                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
                             .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
                                     || stage.getStatus() == ApprovalStatus.REJECTED
                                     || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .mapToInt(ApprovalStage::getStageOrder)
-                            .min();
+                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
 
-                    if (!currentStageOrderOpt.isPresent()) {
-                        return false;
-                    }
-
-                    int currentStageOrder = currentStageOrderOpt.getAsInt();
-
-                    // Điều kiện mới: Kiểm tra nếu approver có quyền duyệt bước này
-                    return workflow.getStages().stream()
-                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
-                                    && stage.getApprover().getId().equals(approverId));
+                    return currentStageOpt.isPresent() &&
+                            currentStageOpt.get().getApprover().getId().equals(approverId);
                 })
                 .filter(addendum -> {
                     // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
