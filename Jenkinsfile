@@ -60,12 +60,13 @@ pipeline {
                         if (params.CLEAN_VOLUMES) {
                             downCommand += " -v --remove-orphans"
                         }
-                        sh """
-                            export BACKEND_IMAGE=${IMAGE_VERSION}
-                            export DB_PASSWORD=${DB_PASSWORD}
-                            ${downCommand}
-                            docker compose up -d --build
-                        """
+                       sh """
+                           echo "Checking if DB_PASSWORD is set: \${DB_PASSWORD:+'set'}"
+                           export BACKEND_IMAGE=${IMAGE_VERSION}
+                           export DB_PASSWORD=${DB_PASSWORD}
+                           ${downCommand}
+                           docker compose up -d --build
+                       """
                     }
                 }
             }
