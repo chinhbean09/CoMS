@@ -35,11 +35,13 @@ public class ContractPartnerController {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<ResponseObject> getAllContractPartners() {
+    public ResponseEntity<ResponseObject> getAllContractPartners(@RequestParam(value = "search", required = false) String search,
+                                                                 @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                 @RequestParam(value = "size", defaultValue = "10") int size) {
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message(MessageKeys.GET_ALL_CONTRACT_PARTNERS_SUCCESSFULLY)
-                .data(contractPartnerService.getAllContractPartners())
+                .data(contractPartnerService.getAllContractPartners(search, page, size))
                 .build());
     }
 
