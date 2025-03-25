@@ -420,6 +420,16 @@ public class AddendumService implements IAddendumService{
                 // Nếu không còn bước tiếp theo, cập nhật trạng thái phụ lục thành APPROVED
                 addendum.setStatus(AddendumStatus.APPROVED);
                 addendumRepository.save(addendum);
+
+                Map<String, Object> payload = new HashMap<>();
+                String notificationMessage = "Phụ lục: " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " đã duyệt xong.";
+                payload.put("message", notificationMessage);
+                payload.put("addendumId", addendumId);
+
+                // Gửi thông báo cho người duyệt tiếp theo
+                mailService.sendEmailApprovalSuccessForAddendum(addendum, addendum.getUser());
+                notificationService.saveNotification(addendum.getUser(), notificationMessage, addendum.getContract());
+                messagingTemplate.convertAndSendToUser(addendum.getUser().getFullName(), "/queue/notifications", payload);
             }
         }
     }
@@ -650,23 +660,14 @@ public class AddendumService implements IAddendumService{
                     }
 
                     // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
-                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
+                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
                             .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
                                     || stage.getStatus() == ApprovalStatus.REJECTED
                                     || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .mapToInt(ApprovalStage::getStageOrder)
-                            .min();
+                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
 
-                    if (!currentStageOrderOpt.isPresent()) {
-                        return false;
-                    }
-
-                    int currentStageOrder = currentStageOrderOpt.getAsInt();
-
-                    // Điều kiện mới: Kiểm tra nếu approver có quyền duyệt bước này
-                    return workflow.getStages().stream()
-                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
-                                    && stage.getApprover().getId().equals(approverId));
+                    return currentStageOpt.isPresent() &&
+                            currentStageOpt.get().getApprover().getId().equals(approverId);
                 })
                 .filter(addendum -> {
                     // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
