@@ -10,21 +10,36 @@
         SPRING_DATASOURCE_PASSWORD: 12345
       depends_on:
         - db
+      networks:
+        - backend_network
       volumes:
         - /etc/localtime:/etc/localtime:ro
 
     db:
-      image: postgres:14
-      restart: always
+      image: postgres:14-alpine # Sử dụng bản Alpine nhẹ hơn
+      restart: unless-stopped
       environment:
         POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: 12345
+        POSTGRES_PASSWORD: ${DB_PASSWORD} # Sử dụng biến môi trường
         POSTGRES_DB: coms
-      ports:
-        - "5432:5432"
+      # ports:
+      #  - "5432:5432" <-- COMMENT HOẶC XÓA DÒNG NÀY
       volumes:
         - postgres_data:/var/lib/postgresql/data
         - /etc/localtime:/etc/localtime:ro
+      networks:
+        - backend_network
+      deploy:
+        resources:
+          limits:
+            cpus: '2.0'
+            memory: 2G
+
 
   volumes:
     postgres_data:
+
+  networks:
+    backend_network:
+      internal: true # Chỉ cho phép giao tiếp nội bộ
+
