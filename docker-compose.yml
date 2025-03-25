@@ -12,6 +12,7 @@
         - db
       networks:
         - backend_network
+        - external_network
       volumes:
         - /etc/localtime:/etc/localtime:ro
 
@@ -27,6 +28,8 @@
         - /etc/localtime:/etc/localtime:ro
       networks:
         - backend_network
+      ports:
+        - "5432:5432"
       deploy:
         resources:
           limits:
@@ -38,5 +41,7 @@
 
   networks:
     backend_network:
-      internal: true # Chỉ cho phép giao tiếp nội bộ
+      internal: true
+    external_network:
+      internal: false
 
