@@ -113,6 +113,7 @@ public class UserService implements IUserService {
                 .build();
         newUser.setRole(role);
 
+        newUser.setStaffCode(generateStaffCode(department));
         // Always generate a random password to ensure a non-null value
         String generatedPassword = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(generatedPassword);
@@ -124,6 +125,20 @@ public class UserService implements IUserService {
         // Save the new user
         User user = UserRepository.save(newUser);
         return user;
+    }
+
+    /**
+     * Generates a unique staff code based on the department and a random 6-digit number.
+     */
+    private String generateStaffCode(Department department) {
+        // Extract the first two letters of the department name
+        String departmentCode = department != null ? department.getDepartmentName().substring(0, 2).toUpperCase() : "XX";
+
+        // Generate a 6-digit random number
+        String randomDigits = String.format("%06d", new Random().nextInt(999999));
+
+        // Combine the department code and the random 6-digit number
+        return departmentCode + randomDigits;
     }
 
 //    private void sendAccountPassword(String email, String password) {
