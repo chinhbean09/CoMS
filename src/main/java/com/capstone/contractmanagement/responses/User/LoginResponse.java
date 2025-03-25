@@ -33,6 +33,8 @@ public class LoginResponse {
 
     private String avatar;
 
+    private String staffCode;
+
     private String phoneNumber;
 
     private String email;
