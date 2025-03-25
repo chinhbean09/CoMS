@@ -50,6 +50,9 @@ public class UserResponse {
     @JsonProperty("avatar")
     private String avatar;
 
+    @JsonProperty("staff_code")
+    private String staffCode;
+
     @JsonProperty("gender")
     private String gender;
 
@@ -68,6 +71,7 @@ public class UserResponse {
                 .active(user.isActive())
                 .dateOfBirth(user.getDateOfBirth())
                 .department(user.getDepartment())
+                .staffCode(user.getStaffCode())
                 .facebookAccountId(user.getFacebookAccountId())
                 .googleAccountId(user.getGoogleAccountId())
                 .role(user.getRole())
