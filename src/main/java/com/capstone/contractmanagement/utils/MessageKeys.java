@@ -104,4 +104,9 @@ public class MessageKeys {
     public static final String GET_DASHBOARD_STATISTICS_SUCCESSFULLY = "Lấy thống kê hợp đồng thành công";
     public static final String CREATE_CONTRACT_PARTNER_SUCCESSFULLY = "Tạo hợp đồng đối tác thành công";
     public static final String GET_ALL_CONTRACT_PARTNERS_SUCCESSFULLY = "Lấy danh sách hợp đồng đối tác";
+    public static final String UPDATE_CONTRACT_PARTNER_SUCCESSFULLY = "Cập nhật hợp đồng đối tác";
+    public static final String DELETE_CONTRACT_PARTNER_SUCCESSFULLY = "Xóa hợp đồng đối tác";
+    public static final String CONTRACT_PARTNER_NOT_FOUND = "Không tìm thấy hợp đồng đối tác";
+    public static final String GET_CONTRACT_PARTNER_SUCCESSFULLY = "Lấy hợp đồng đối tác";
+    public static final String GET_CONTRACT_PARTNER_BY_CONTRACT_SUCCESSFULLY = "Lấy danh sách hợp đồng đối tác theo hợp đồng";
 }
