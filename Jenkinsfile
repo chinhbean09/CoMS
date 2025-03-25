@@ -51,14 +51,21 @@ pipeline {
         stage('deploy') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'docker-hub-repo', variable: 'DOCKER_HUB_REPO')]) {
+                    withCredentials([
+                        string(credentialsId: 'docker-hub-repo', variable: 'DOCKER_HUB_REPO'),
+                        string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+                    ]) {
                         IMAGE_VERSION = "${DOCKER_HUB_REPO}:${CI_COMMIT_SHORT_SHA}"
                         def downCommand = "docker compose down"
-                            if (params.CLEAN_VOLUMES) {
-                                downCommand += " -v"
-                            }
-                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && ${downCommand}"
-                        sh "export BACKEND_IMAGE=${IMAGE_VERSION} && docker compose up -d"
+                        if (params.CLEAN_VOLUMES) {
+                            downCommand += " -v --remove-orphans"
+                        }
+                        sh """
+                            export BACKEND_IMAGE=${IMAGE_VERSION}
+                            export DB_PASSWORD=${DB_PASSWORD}
+                            ${downCommand}
+                            docker compose up -d --build
+                        """
                     }
                 }
             }
