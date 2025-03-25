@@ -14,6 +14,9 @@ import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -105,39 +108,44 @@ public class ContractPartnerService implements IContractPartnerService {
 
     @Override
     @Transactional
-    public List<ContractPartnerResponse> getAllContractPartners() {
+    public Page<ContractPartnerResponse> getAllContractPartners(String search, int page, int size) {
+        // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
-        List<ContractPartner> contractPartners = contractPartnerRepository.findByUser(currentUser);
 
-        if (!contractPartners.isEmpty()) {
-            return contractPartners.stream()
-                    .map(contractPartner -> ContractPartnerResponse.builder()
-                            .contractPartnerId(contractPartner.getId())
-                            .contractNumber(contractPartner.getContractNumber())
-                            .amount(contractPartner.getAmount())
-                            .partnerName(contractPartner.getPartnerName())
-                            .title(contractPartner.getTitle())
-                            .fileUrl(contractPartner.getFileUrl())
-                            .signingDate(contractPartner.getSigningDate())
-                            .effectiveDate(contractPartner.getEffectiveDate())
-                            .paymentSchedules(contractPartner.getPaymentSchedules().stream()
-                                    .map(paymentSchedule -> PaymentScheduleResponse.builder()
-                                            .id(paymentSchedule.getId())
-                                            .amount(paymentSchedule.getAmount())
-                                            .paymentMethod(paymentSchedule.getPaymentMethod())
-                                            .paymentDate(paymentSchedule.getPaymentDate())
-                                            .status(paymentSchedule.getStatus())
-                                            .overdueEmailSent(paymentSchedule.isOverdueEmailSent())
-                                            .reminderEmailSent(paymentSchedule.isReminderEmailSent())
-                                            .build())
-                                    .collect(Collectors.toList()))
-                            .expiryDate(contractPartner.getExpiryDate())
-                            .build())
-                    .collect(Collectors.toList());
-        }
+        // Thiết lập phân trang
+        Pageable pageable = PageRequest.of(page, size);
 
-        return null;
+        // Nếu tham số search là null thì chuyển về chuỗi rỗng
+        String searchKeyword = search != null ? search : "";
+
+        // Gọi repository để lấy dữ liệu theo tiêu chí tìm kiếm và phân trang
+        Page<ContractPartner> contractPartnersPage = contractPartnerRepository
+                .searchByUserAndKeyword(currentUser, searchKeyword, pageable);
+
+        // Chuyển đổi entity sang DTO response
+        return contractPartnersPage.map(contractPartner -> ContractPartnerResponse.builder()
+                .contractPartnerId(contractPartner.getId())
+                .contractNumber(contractPartner.getContractNumber())
+                .amount(contractPartner.getAmount())
+                .partnerName(contractPartner.getPartnerName())
+                .title(contractPartner.getTitle())
+                .fileUrl(contractPartner.getFileUrl())
+                .signingDate(contractPartner.getSigningDate())
+                .effectiveDate(contractPartner.getEffectiveDate())
+                .expiryDate(contractPartner.getExpiryDate())
+                .paymentSchedules(contractPartner.getPaymentSchedules().stream()
+                        .map(paymentSchedule -> PaymentScheduleResponse.builder()
+                                .id(paymentSchedule.getId())
+                                .amount(paymentSchedule.getAmount())
+                                .paymentMethod(paymentSchedule.getPaymentMethod())
+                                .paymentDate(paymentSchedule.getPaymentDate())
+                                .status(paymentSchedule.getStatus())
+                                .overdueEmailSent(paymentSchedule.isOverdueEmailSent())
+                                .reminderEmailSent(paymentSchedule.isReminderEmailSent())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build());
     }
 
     @Override
