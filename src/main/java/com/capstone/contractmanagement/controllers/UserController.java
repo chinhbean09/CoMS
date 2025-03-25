@@ -155,6 +155,7 @@ public class UserController {
                     .email(userDetail.getEmail())
                     .phoneNumber(userDetail.getPhoneNumber())
                     .avatar(userDetail.getAvatar())
+                    .staffCode(userDetail.getStaffCode())
                     .configs(managerConfigs)
                     .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                     .id(userDetail.getId());

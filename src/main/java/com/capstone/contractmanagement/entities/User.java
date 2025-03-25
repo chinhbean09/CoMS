@@ -84,6 +84,9 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts = 0;
 
+    @Column(name = "staff_code")
+    private String staffCode;
+
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ContractTemplate> contractTemplates = new ArrayList<>();
