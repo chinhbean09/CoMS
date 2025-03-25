@@ -17,6 +17,8 @@ public class MailTemplate {
         public final static String UPDATE_CONTRACT_REQUEST = "NHẮC NHỞ CẠP NHẤT HỢP ĐỔNG";
         public final static String UPDATE_ADDENDUM_REQUEST = "NHẮC NHỞ CẬP NHẬT PHỤ LỤC";
         public final static String ADDENDUM_APPROVAL_NOTIFICATION = "NHẮC NHỞ PHÊ DUYỆT PHỤ LỤC";
+        public final static String APPROVAL_CONTRACT_SUCCESS = "HỢP ĐỒNG ĐÃ HOÀN TẤT PHÊ DUYỆT";
+        public final static String ADDENDUM_APPROVAL_SUCCESS = "PHỤ LỤC ĐÃ HOÀN TẤT PHÊ DUYỆT";
 //
 //        public final static String BOOKING_PAYMENT_SUCCESS = "BOOKING PAYMENT SUCCESSFUL!";
 //
@@ -39,6 +41,9 @@ public class MailTemplate {
         public final static String UPDATE_CONTRACT_REQUEST = "update-contract-request";
         public final static String UPDATE_ADDENDUM_REQUEST = "update-addendum-request";
         public final static String ADDENDUM_APPROVAL_NOTIFICATION = "addendum-approval-notification";
+
+        public final static String APPROVAL_CONTRACT_SUCCESS = "approval-contract-success";
+        public final static String ADDENDUM_APPROVAL_SUCCESS = "addendum-approval-success";
 
 //        public final static String NEW_PASSWORD = "new-password";
 //        public final static String BOOKING_PAYMENT_SUCCESS_TEMPLATE = "booking";
