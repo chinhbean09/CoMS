@@ -179,5 +179,11 @@
         @Column(name = "duplicate_number")
         private Integer duplicateNumber = 0; // Giá trị mặc định là 0 cho hợp đồng gốc
 
+        @Column(name = "is_effective_notified")
+        private Boolean isEffectiveNotified = false; // Mặc định là chưa gửi thông báo hiệu lực
+
+        @Column(name = "is_expiry_notified")
+        private Boolean isExpiryNotified = false; // Mặc định là chưa gửi thông báo hết hạn
+
 
     }
