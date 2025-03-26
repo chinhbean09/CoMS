@@ -34,6 +34,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         // Tìm hợp đồng sắp có hiệu lực: Ngày hiệu lực trừ EFFECTIVE_NOTIFY_DAYS <= hiện tại < ngày hiệu lực
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getEffectiveDate() != null)
+                .filter(contract -> !contract.getIsEffectiveNotified())  // Chưa gửi thông báo hiệu lực
                 .filter(contract -> {
                     LocalDateTime notifyDate = contract.getEffectiveDate().minusDays(EFFECTIVE_NOTIFY_DAYS);
                     return now.isAfter(notifyDate) && now.isBefore(contract.getEffectiveDate());
@@ -43,12 +44,13 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         for (Contract contract : contractsToEffectiveNotify) {
             String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày "
                     + contract.getEffectiveDate();
-            sendNotification(contract, message);
+            sendNotification(contract, message, true);
         }
 
         // Tìm hợp đồng sắp hết hạn: Ngày hết hạn trừ EXPIRY_NOTIFY_DAYS <= hiện tại < ngày hết hạn
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)
+                .filter(contract -> !contract.getIsExpiryNotified())  // Chưa gửi thông báo hết hạn
                 .filter(contract -> {
                     LocalDateTime notifyDate = contract.getExpiryDate().minusDays(EXPIRY_NOTIFY_DAYS);
                     return now.isAfter(notifyDate) && now.isBefore(contract.getExpiryDate());
@@ -58,23 +60,27 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         for (Contract contract : contractsToExpiryNotify) {
             String message = "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày "
                     + contract.getExpiryDate();
-            sendNotification(contract, message);
+            sendNotification(contract, message, false);
         }
     }
 
-    private void sendNotification(Contract contract, String message) {
-        // Giả sử người nhận thông báo là người tạo hợp đồng (contract.getUser())
+    private void sendNotification(Contract contract, String message, boolean isEffective) {
         User user = contract.getUser();
 
-        // Tạo payload thông báo
         Map<String, Object> payload = new HashMap<>();
         payload.put("message", message);
         payload.put("contractId", contract.getId());
 
-        // Gửi thông báo qua WebSocket, sử dụng username (hoặc fullName) của user làm định danh
         messagingTemplate.convertAndSendToUser(user.getFullName(), "/queue/notifications", payload);
-
-        // Lưu thông báo vào hệ thống (Notification entity)
         notificationService.saveNotification(user, message, contract);
+
+        // Cập nhật trạng thái thông báo
+        if (isEffective) {
+            contract.setIsEffectiveNotified(true);
+        } else {
+            contract.setIsExpiryNotified(true);
+        }
+        // Lưu lại hợp đồng sau khi cập nhật thông báo đã gửi
+        contractRepository.save(contract);
     }
 }
