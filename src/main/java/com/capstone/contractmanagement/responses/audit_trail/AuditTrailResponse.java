@@ -44,8 +44,8 @@ public class AuditTrailResponse {
             this.oldValue = formatPaymentSchedule(auditTrail.getOldValue());
             this.newValue = formatPaymentSchedule(auditTrail.getNewValue());
         } else if ("ContractItem".equals(auditTrail.getEntityName())){
-            this.oldValue = extractValue(auditTrail.getOldValue());
-            this.newValue = extractValue(auditTrail.getNewValue());
+            this.oldValue = formatContractItem(auditTrail.getOldValue());
+            this.newValue = formatContractItem(auditTrail.getNewValue());
         } else {
             this.oldValue = auditTrail.getOldValue();
             this.newValue = auditTrail.getNewValue();
@@ -162,6 +162,33 @@ public class AuditTrailResponse {
 
         return !result.isEmpty() ? result.toString() : null;
     }
+
+    private String formatContractItem(String fullValue) {
+        if (fullValue == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] parts = fullValue.split(", ");
+
+        // Trích xuất các trường cần thiết
+        for (String part : parts) {
+            if (part.startsWith("itemOrder: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Thứ tự: ").append(part.substring("itemOrder: ".length()));
+            } else if (part.startsWith("amount: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Số tiền: ").append(part.substring("amount: ".length()));
+
+            } else if (part.startsWith("description: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Nội dung: ").append(part.substring("description: ".length()));
+            }
+        }
+
+        return !result.isEmpty() ? result.toString() : null;
+    }
+
 
     // Hàm dịch trạng thái từ tiếng Anh sang tiếng Việt
     private String translateStatus(String status) {
