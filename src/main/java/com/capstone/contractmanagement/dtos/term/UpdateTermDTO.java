@@ -14,5 +14,4 @@ public class UpdateTermDTO {
 
     private String label;
     private String value;
-    private Long typeTermId;
 }
