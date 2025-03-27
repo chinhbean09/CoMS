@@ -54,4 +54,6 @@ public class ContractUpdateDTO {
     private List<PaymentScheduleDTO> payments; // Danh sách PaymentSchedule để cập nhật
 
     private Long contractTypeId; // ID của loại hợp đồng
+
+    private List<ContractItemDTO> contractItems;
 }

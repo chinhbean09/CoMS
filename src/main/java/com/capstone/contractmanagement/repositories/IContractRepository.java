@@ -261,4 +261,11 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     // Đếm số hợp đồng của nhân viên đang ở trạng thái APPROVAL_PENDING
     long countByUser_IdAndStatus( Long userId, ContractStatus status);
+
+    Integer findMaxDuplicateNumberByOriginalContractId(Long id);
+
+    @Query("SELECT MAX(c.duplicateNumber) FROM Contract c WHERE c.sourceContractId = :sourceContractId")
+    Integer findMaxDuplicateNumberBySourceContractId(Long sourceContractId);
+
+
 }
