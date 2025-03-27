@@ -185,5 +185,12 @@
         @Column(name = "is_expiry_notified")
         private Boolean isExpiryNotified = false; // Mặc định là chưa gửi thông báo hết hạn
 
+        // Trong class Contract, thêm vào sau các mối quan hệ khác (ví dụ: sau List<Addendum> addenda)
+        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+        @JsonIgnore
+        private List<ContractItem> contractItems = new ArrayList<>();
+
+        @Column(name = "source_contract_id")
+        private Long sourceContractId; //quản lý duplicate
 
     }
