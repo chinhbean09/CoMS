@@ -403,7 +403,7 @@ public class ContractService implements IContractService{
                     .newValue(newValue)
                     .changedAt(now)
                     .changedBy(changedBy)
-                    .changeSummary("Tạo điều khoản hợp đồng: " + term.getTermLabel() + "cho hợp đồng" + savedContract.getTitle())
+                    .changeSummary("Tạo điều khoản hợp đồng: " + term.getTermLabel() + "cho hợp đồng " + savedContract.getTitle())
                     .build());
         }
 
@@ -443,7 +443,7 @@ public class ContractService implements IContractService{
                         .newValue(newValue)
                         .changedAt(now)
                         .changedBy(changedBy)
-                        .changeSummary("Tạo hạng mục thanh toán: " + item.getDescription() + " cho hợp đồng" + savedContract.getTitle())
+                        .changeSummary("Tạo hạng mục thanh toán: " + item.getDescription() + " cho hợp đồng " + savedContract.getTitle())
                         .build());
             }
         }
@@ -1905,6 +1905,9 @@ public class ContractService implements IContractService{
                     currentContract.getContractType().getId().toString(),
                     dto.getContractTypeId().toString(),
                     now, changedBy, "UPDATE", "Cập nhật loại hợp đồng"));
+
+
+
         }
 
         // 9. Cập nhật entityId cho audit trails
@@ -2011,7 +2014,7 @@ public class ContractService implements IContractService{
     }
 
     private String serializeContractItem(ContractItem item) {
-        return String.format("ContractItem{id=%d, description='%s', amount=%.2f, itemOrder=%d}",
+        return String.format("ContractItem{id:%d, description:'%s', amount:%.2f, itemOrder:%d}",
                 item.getId(), item.getDescription(), item.getAmount(), item.getItemOrder());
     }
 
