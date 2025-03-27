@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.dtos.contract_template;
 import com.capstone.contractmanagement.dtos.IdDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 @Data
+@Builder
 public class ContractTemplateDTO {
 
     @NotBlank(message = "Contract title is required")
-    @Size(max = 200, message = "Contract title must be less than 200 characters")
     private String contractTitle;
 
     // Mỗi phần tử chứa id của type term (ví dụ: 1, 2)
