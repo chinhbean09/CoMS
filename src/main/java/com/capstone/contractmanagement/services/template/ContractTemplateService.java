@@ -3,6 +3,7 @@
     import com.capstone.contractmanagement.components.SecurityUtils;
     import com.capstone.contractmanagement.dtos.IdDTO;
     import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
+    import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateIdDTO;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplateAdditionalTermDetail;
@@ -896,6 +897,21 @@
             templateRepository.save(contractTemplate);
 
             return contractTemplate.getStatus(); // Trả về trạng thái mới
+        }
+
+        @Override
+        public List<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId) {
+            List<ContractTemplate> templates = templateRepository.findByContractTypeId(contractTypeId);
+            return templates.stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        private ContractTemplateIdDTO mapToDTO(ContractTemplate template) {
+            return ContractTemplateIdDTO.builder()
+                    .id(template.getId())
+                    .contractTitle(template.getContractTitle())
+                    .build();
         }
 
     }
