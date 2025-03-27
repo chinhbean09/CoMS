@@ -1744,6 +1744,7 @@ public class ContractService implements IContractService{
                                 .changedBy(changedBy)
                                 .changeSummary("Đã cập nhật hạng mục hợp đồng với thứ tự: " + newItem.getItemOrder() + " trong phiên bản mới")
                                 .build();
+                        auditTrailToItemMap.put(auditTrail, newItem);
                         itemAuditTrails.add(auditTrail);
                     }
                 } else {
@@ -1766,6 +1767,7 @@ public class ContractService implements IContractService{
                             .changedBy(changedBy)
                             .changeSummary("Đã tạo hạng mục hợp đồng mới với thứ tự: " + newItem.getItemOrder())
                             .build();
+                    auditTrailToItemMap.put(auditTrail, newItem);
                     itemAuditTrails.add(auditTrail);
                 }
             }
