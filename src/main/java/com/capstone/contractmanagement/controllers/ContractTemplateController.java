@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
+import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateIdDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.ContractTemplateStatus;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -279,5 +281,11 @@ public class ContractTemplateController {
                             .data(null)
                             .build());
         }
+    }
+
+    @GetMapping("/by-contract-type/{contractTypeId}")
+    public ResponseEntity<List<ContractTemplateIdDTO>> getTemplatesByContractType(@PathVariable Long contractTypeId) {
+        List<ContractTemplateIdDTO> templates = templateService.getTemplatesByContractType(contractTypeId);
+        return ResponseEntity.ok(templates);
     }
 }
