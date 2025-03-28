@@ -20,6 +20,8 @@ public class PaymentScheduleResponse {
     private LocalDateTime paymentDate;
     private PaymentStatus status;
     private String paymentMethod;
+    private Integer paymentPercentage;
+    private String billUrl;
     private String notifyPaymentContent;
     private boolean reminderEmailSent;
     private boolean overdueEmailSent;
