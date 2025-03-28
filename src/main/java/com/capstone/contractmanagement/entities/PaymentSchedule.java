@@ -26,9 +26,8 @@ public class PaymentSchedule {
     @Column(name = "payment_order", nullable = true)
     private Integer paymentOrder;
 
-    @Column(name = "payment_content")
-    private String paymentContent;
-
+//    @Column(name = "payment_content")
+//    private String paymentContent;
     @Column(name = "amount", nullable = false)
     private Double amount; // Số tiền thanh toán trong đợt
 
