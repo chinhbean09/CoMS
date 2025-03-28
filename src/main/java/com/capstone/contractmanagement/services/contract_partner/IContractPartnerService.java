@@ -19,4 +19,6 @@ public interface IContractPartnerService {
     void deleteContractPartner(Long contractPartnerId) throws DataNotFoundException;
 
     void updateContractPartner(Long contractPartnerId, ContractPartnerDTO contractDTO) throws DataNotFoundException;
+
+    void uploadPaymentBillUrl(Long contractPartnerId, MultipartFile file) throws DataNotFoundException;
 }

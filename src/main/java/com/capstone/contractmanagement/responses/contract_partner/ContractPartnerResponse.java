@@ -19,7 +19,7 @@ public class ContractPartnerResponse {
 
     private Long contractPartnerId;
     private String contractNumber;
-    private Double amount;
+    private Double totalValue;
     private String partnerName;
     private LocalDateTime signingDate;
     private LocalDateTime effectiveDate;
