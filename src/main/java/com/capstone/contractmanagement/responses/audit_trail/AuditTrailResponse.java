@@ -43,6 +43,9 @@ public class AuditTrailResponse {
         } else if ("PaymentSchedule".equals(auditTrail.getEntityName())) {
             this.oldValue = formatPaymentSchedule(auditTrail.getOldValue());
             this.newValue = formatPaymentSchedule(auditTrail.getNewValue());
+        } else if ("ContractItem".equals(auditTrail.getEntityName())){
+            this.oldValue = formatContractItem(auditTrail.getOldValue());
+            this.newValue = formatContractItem(auditTrail.getNewValue());
         } else {
             this.oldValue = auditTrail.getOldValue();
             this.newValue = auditTrail.getNewValue();
@@ -79,11 +82,11 @@ public class AuditTrailResponse {
             for (String item : items) {
                 String label = extractLabel(item);
                 if (label != null) {
-                    if (commonValues.length() > 0) commonValues.append(", ");
+                    if (!commonValues.isEmpty()) commonValues.append(", ");
                     commonValues.append(label);
                 }
             }
-            if (commonValues.length() > 0) {
+            if (!commonValues.isEmpty()) {
                 result.append("Chung: ").append(commonValues);
             }
         }
@@ -96,12 +99,12 @@ public class AuditTrailResponse {
             for (String item : items) {
                 String label = extractLabel(item);
                 if (label != null) {
-                    if (aValues.length() > 0) aValues.append(", ");
+                    if (!aValues.isEmpty()) aValues.append(", ");
                     aValues.append(label);
                 }
             }
-            if (aValues.length() > 0) {
-                if (result.length() > 0) result.append(", ");
+            if (!aValues.isEmpty()) {
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Bên A: ").append(aValues);
             }
         }
@@ -114,17 +117,17 @@ public class AuditTrailResponse {
             for (String item : items) {
                 String label = extractLabel(item);
                 if (label != null) {
-                    if (bValues.length() > 0) bValues.append(", ");
+                    if (!bValues.isEmpty()) bValues.append(", ");
                     bValues.append(label);
                 }
             }
-            if (bValues.length() > 0) {
-                if (result.length() > 0) result.append(", ");
+            if (!bValues.isEmpty()) {
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Bên B: ").append(bValues);
             }
         }
 
-        return result.length() > 0 ? result.toString() : null;
+        return !result.isEmpty() ? result.toString() : null;
     }
 
     // Hàm format cho PaymentSchedule
@@ -139,26 +142,53 @@ public class AuditTrailResponse {
         // Trích xuất các trường cần thiết
         for (String part : parts) {
             if (part.startsWith("Order: ")) {
-                if (result.length() > 0) result.append(", ");
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Thứ tự: ").append(part.substring("Order: ".length()));
             } else if (part.startsWith("Amount: ")) {
-                if (result.length() > 0) result.append(", ");
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Số tiền: ").append(part.substring("Amount: ".length()));
             } else if (part.startsWith("PaymentDate: ")) {
-                if (result.length() > 0) result.append(", ");
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Ngày thanh toán: ").append(part.substring("PaymentDate: ".length()));
             } else if (part.startsWith("Status: ")) {
-                if (result.length() > 0) result.append(", ");
+                if (!result.isEmpty()) result.append(", ");
                 String status = part.substring("Status: ".length());
                 result.append("Trạng thái: ").append(translateStatus(status));
             } else if (part.startsWith("NotifyPaymentContent: ")) {
-                if (result.length() > 0) result.append(", ");
+                if (!result.isEmpty()) result.append(", ");
                 result.append("Nội dung: ").append(part.substring("NotifyPaymentContent: ".length()));
             }
         }
 
-        return result.length() > 0 ? result.toString() : null;
+        return !result.isEmpty() ? result.toString() : null;
     }
+
+    private String formatContractItem(String fullValue) {
+        if (fullValue == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] parts = fullValue.split(", ");
+
+        // Trích xuất các trường cần thiết
+        for (String part : parts) {
+            if (part.startsWith("itemOrder: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Thứ tự: ").append(part.substring("itemOrder: ".length()));
+            } else if (part.startsWith("amount: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Số tiền: ").append(part.substring("amount: ".length()));
+
+            } else if (part.startsWith("description: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Nội dung: ").append(part.substring("description: ".length()));
+            }
+        }
+
+        return !result.isEmpty() ? result.toString() : null;
+    }
+
 
     // Hàm dịch trạng thái từ tiếng Anh sang tiếng Việt
     private String translateStatus(String status) {
