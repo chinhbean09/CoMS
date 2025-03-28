@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.checkerframework.checker.units.qual.C;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,10 @@ public class PaymentSchedule {
     private Long id;
 
     @Column(name = "payment_order", nullable = true)
-    private Integer paymentOrder; // Thứ tự đợt thanh toán
+    private Integer paymentOrder;
+
+    @Column(name = "payment_content")
+    private String paymentContent;
 
     @Column(name = "amount", nullable = false)
     private Double amount; // Số tiền thanh toán trong đợt

@@ -1,6 +1,8 @@
 package com.capstone.contractmanagement.responses.contract;
 
+import com.capstone.contractmanagement.dtos.contract.ContractItemDTO;
 import com.capstone.contractmanagement.entities.Partner;
+import com.capstone.contractmanagement.entities.contract.ContractItem;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
@@ -53,6 +55,7 @@ public class ContractResponse {
     private String suspendContent;
     private Integer version;
     private Long originalContractId;
+    private Long sourceContractId;
     private List<TermResponse> legalBasisTerms;
     private List<TermResponse> generalTerms;
     private List<TermResponse> otherTerms;
@@ -61,5 +64,8 @@ public class ContractResponse {
 
     // Thông tin thanh toán
     private List<PaymentScheduleResponse> paymentSchedules;
+    private List<ContractItem> contractItems;
+
+
 
 }
