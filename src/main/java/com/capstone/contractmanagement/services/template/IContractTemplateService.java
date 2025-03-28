@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.template;
 
 import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateDTO;
+import com.capstone.contractmanagement.dtos.contract_template.ContractTemplateIdDTO;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.ContractTemplateStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -11,6 +12,7 @@ import com.capstone.contractmanagement.responses.template.ContractTemplateTitleR
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IContractTemplateService {
@@ -34,5 +36,7 @@ public interface IContractTemplateService {
 
     ContractTemplateStatus updateContractStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException;
 
-}
+    List<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId);
+
+    }
 
