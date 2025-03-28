@@ -36,4 +36,6 @@ public class ContractDTO {
 
     private ContractStatus status;
 
+    private List<ContractItemDTO> contractItems;
+
 }
