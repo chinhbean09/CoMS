@@ -185,6 +185,9 @@
         @Column(name = "is_expiry_notified")
         private Boolean isExpiryNotified = false; // Mặc định là chưa gửi thông báo hết hạn
 
+        @Column(name = "is_effective_overdue_notified")
+        private Boolean isEffectiveOverdueNotified = false;
+
         // Trong class Contract, thêm vào sau các mối quan hệ khác (ví dụ: sau List<Addendum> addenda)
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
