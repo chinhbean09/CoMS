@@ -12,6 +12,7 @@ import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.IContractItemRepository;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
+import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerItemResponse;
 import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.services.user.UserService;
@@ -92,7 +93,7 @@ public class ContractPartnerService implements IContractPartnerService {
             List<PaymentSchedule> paymentSchedules = contractDTO.getPaymentSchedules().stream()
                     .map(dto -> {
                         PaymentSchedule paymentSchedule = new PaymentSchedule();
-                        paymentSchedule.setAmount(dto.getAmount());
+                        paymentSchedule.setAmount(dto.getAmountItem());
                         paymentSchedule.setPaymentMethod(dto.getPaymentMethod());
                         paymentSchedule.setPaymentDate(convertToLocalDateTime(dto.getPaymentDate()));
                         paymentSchedule.setPaymentOrder(dto.getPaymentOrder());
@@ -154,31 +155,44 @@ public class ContractPartnerService implements IContractPartnerService {
                 .searchByUserAndKeyword(currentUser, searchKeyword, pageable);
 
         // Chuyển đổi entity sang DTO response
-        return contractPartnersPage.map(contractPartner -> ContractPartnerResponse.builder()
-                .contractPartnerId(contractPartner.getId())
-                .contractNumber(contractPartner.getContractNumber())
-                .totalValue(contractPartner.getAmount())
-                .partnerName(contractPartner.getPartnerName())
-                .title(contractPartner.getTitle())
-                .fileUrl(contractPartner.getFileUrl())
-                .signingDate(contractPartner.getSigningDate())
-                .effectiveDate(contractPartner.getEffectiveDate())
-                .expiryDate(contractPartner.getExpiryDate())
-                .paymentSchedules(contractPartner.getPaymentSchedules().stream()
-                        .map(paymentSchedule -> PaymentScheduleResponse.builder()
-                                .id(paymentSchedule.getId())
-                                .amount(paymentSchedule.getAmount())
-                                .paymentMethod(paymentSchedule.getPaymentMethod())
-                                .paymentDate(paymentSchedule.getPaymentDate())
-                                .paymentOrder(paymentSchedule.getPaymentOrder())
-                                .paymentPercentage(paymentSchedule.getPaymentPercentage())
-                                .billUrl(paymentSchedule.getBillUrl())
-                                .status(paymentSchedule.getStatus())
-                                .overdueEmailSent(paymentSchedule.isOverdueEmailSent())
-                                .reminderEmailSent(paymentSchedule.isReminderEmailSent())
-                                .build())
-                        .collect(Collectors.toList()))
-                .build());
+        return contractPartnersPage.map(contractPartner -> {
+            // Lấy danh sách ContractItem của contractPartner hiện tại
+            List<ContractPartnerItemResponse> items = contractItemRepository.findByContractPartner(contractPartner)
+                    .stream()
+                    .map(item -> ContractPartnerItemResponse.builder()
+                            .id(item.getId())
+                            .amount(item.getAmount())
+                            .description(item.getDescription())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ContractPartnerResponse.builder()
+                    .contractPartnerId(contractPartner.getId())
+                    .contractNumber(contractPartner.getContractNumber())
+                    .totalValue(contractPartner.getAmount())
+                    .partnerName(contractPartner.getPartnerName())
+                    .title(contractPartner.getTitle())
+                    .fileUrl(contractPartner.getFileUrl())
+                    .signingDate(contractPartner.getSigningDate())
+                    .effectiveDate(contractPartner.getEffectiveDate())
+                    .expiryDate(contractPartner.getExpiryDate())
+                    .items(items)
+                    .paymentSchedules(contractPartner.getPaymentSchedules().stream()
+                            .map(paymentSchedule -> PaymentScheduleResponse.builder()
+                                    .id(paymentSchedule.getId())
+                                    .amount(paymentSchedule.getAmount())
+                                    .paymentMethod(paymentSchedule.getPaymentMethod())
+                                    .paymentDate(paymentSchedule.getPaymentDate())
+                                    .paymentOrder(paymentSchedule.getPaymentOrder())
+                                    .paymentPercentage(paymentSchedule.getPaymentPercentage())
+                                    .billUrl(paymentSchedule.getBillUrl())
+                                    .status(paymentSchedule.getStatus())
+                                    .overdueEmailSent(paymentSchedule.isOverdueEmailSent())
+                                    .reminderEmailSent(paymentSchedule.isReminderEmailSent())
+                                    .build())
+                            .collect(Collectors.toList()))
+                    .build();
+        });
     }
 
     @Override
