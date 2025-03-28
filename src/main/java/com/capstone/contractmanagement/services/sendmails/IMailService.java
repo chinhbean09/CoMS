@@ -24,4 +24,7 @@ public interface IMailService {
     void sendEmailApprovalSuccessForContract(Contract contract, User user);
 
     void sendEmailApprovalSuccessForAddendum(Addendum addendum, User user);
+    void sendEmailContractOverdue(Contract contract);
+    void sendEmailContractEffectiveDate(Contract contract);
+    void sendEmailContractExpiryDate(Contract contract);
 }
