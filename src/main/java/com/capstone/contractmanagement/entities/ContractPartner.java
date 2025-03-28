@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.contract.ContractItem;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,6 +47,10 @@ public class ContractPartner {
 
     @OneToMany(mappedBy = "contractPartner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentSchedule> paymentSchedules;
+
+    // Quan hệ với ContractItem
+    @OneToMany(mappedBy = "contractPartner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ContractItem> contractItems;
 
     @Column(name = "is_effective_notified")
     private Boolean isEffectiveNotified = false; // Mặc định là chưa gửi thông báo hiệu lực
