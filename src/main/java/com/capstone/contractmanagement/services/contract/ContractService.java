@@ -2538,7 +2538,14 @@ public class ContractService implements IContractService{
         Contract currentContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, currentMaxVersion)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên bản hiện tại"));
 
-        // 3. Tính toán phiên bản mới
+        //  Đánh dấu các phiên bản cũ không phải là mới nhất
+        List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(originalContractId);
+        for (Contract oldContract : oldContracts) {
+            oldContract.setIsLatestVersion(false);
+            contractRepository.save(oldContract);
+        }
+
+        // 4. Tính toán phiên bản mới
         int newVersion = currentMaxVersion + 1;
 
         LocalDateTime now = LocalDateTime.now();
@@ -2581,6 +2588,9 @@ public class ContractService implements IContractService{
                 .approvalWorkflow(targetContract.getApprovalWorkflow())
                 .maxDateLate(targetContract.getMaxDateLate())
                 .contractType(targetContract.getContractType())
+                .isLatestVersion(true) // phiên bản mới nhất
+                .sourceContractId(targetContract.getSourceContractId())
+                .duplicateNumber(targetContract.getDuplicateNumber())
                 .build();
 
         // 5. Sao chép ContractTerms
@@ -2629,6 +2639,19 @@ public class ContractService implements IContractService{
         }
         rollbackContract.setPaymentSchedules(rollbackPayments);
 
+        // 9. Sao chép ContractItems
+        List<ContractItem> rollbackItems = new ArrayList<>();
+        for (ContractItem oldItem : targetContract.getContractItems()) {
+            ContractItem newItem = ContractItem.builder()
+                    .contract(rollbackContract)
+                    .description(oldItem.getDescription())
+                    .amount(oldItem.getAmount())
+                    .itemOrder(oldItem.getItemOrder())
+                    .build();
+            rollbackItems.add(newItem);
+        }
+        rollbackContract.setContractItems(rollbackItems);
+
         // 8. Lưu hợp đồng rollback
         Contract savedRollbackContract = contractRepository.save(rollbackContract);
 
@@ -2646,6 +2669,7 @@ public class ContractService implements IContractService{
                 .changeSummary("Đã rollback hợp đồng từ phiên bản " + currentMaxVersion + " về phiên bản " + targetVersion +
                         " (tạo phiên bản mới " + newVersion + ")")
                 .build();
+
         auditTrailRepository.save(rollbackAuditTrail);
 
         return savedRollbackContract;
