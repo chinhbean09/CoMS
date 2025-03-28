@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.services.contract_partner.IContractPartne
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,6 +61,17 @@ public class ContractPartnerController {
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message(MessageKeys.UPDATE_CONTRACT_PARTNER_SUCCESSFULLY)
+                .build());
+    }
+
+    @PutMapping(value = "/upload-bill/{paymentScheduleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> uploadPaymentBillUrl(@PathVariable long paymentScheduleId,
+                                                               @RequestParam("file") MultipartFile file) throws DataNotFoundException {
+        contractPartnerService.uploadPaymentBillUrl(paymentScheduleId, file);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(null)
+                .message("Cập nhật đơn thanh toán thành công")
                 .build());
     }
 }
