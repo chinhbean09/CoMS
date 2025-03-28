@@ -26,6 +26,7 @@ public class ContractPartnerResponse {
     private LocalDateTime expiryDate;
     private String title;
     private String fileUrl;
+    private List<ContractPartnerItemResponse> items;
     private List<PaymentScheduleResponse> paymentSchedules;
 
 }
