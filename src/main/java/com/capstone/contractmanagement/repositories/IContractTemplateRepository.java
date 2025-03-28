@@ -49,4 +49,6 @@ public interface IContractTemplateRepository extends JpaRepository<ContractTempl
     Page<ContractTemplate> findByStatusNotAndContractTypeId(ContractTemplateStatus status, Long contractTypeId, Pageable pageable);
 
     List<ContractTemplate> findByContractTypeId(Long contractTypeId);
+
+    Page<ContractTemplate> findByContractTypeId(Long contractTypeId, Pageable pageable);
 }
