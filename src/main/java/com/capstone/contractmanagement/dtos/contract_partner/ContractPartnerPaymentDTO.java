@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ContractPartnerPaymentDTO {
-    private Double amount;
+    private Double amountItem;
     private List<Integer> paymentDate;    // [2025, 3, 27, 0, 0, 0]
     private String paymentMethod;
     private Integer paymentOrder;
