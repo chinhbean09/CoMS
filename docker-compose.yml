@@ -17,11 +17,11 @@
         - /etc/localtime:/etc/localtime:ro
 
     db:
-      image: postgres:14-alpine # Sử dụng bản Alpine nhẹ hơn
+      image: postgres:14-alpine
       restart: unless-stopped
       environment:
         POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: ${DB_PASSWORD} # Sử dụng biến môi trường
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
         POSTGRES_DB: coms
       volumes:
         - postgres_data:/var/lib/postgresql/data

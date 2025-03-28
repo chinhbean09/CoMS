@@ -284,8 +284,20 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/by-contract-type/{contractTypeId}")
-    public ResponseEntity<List<ContractTemplateIdDTO>> getTemplatesByContractType(@PathVariable Long contractTypeId) {
-        List<ContractTemplateIdDTO> templates = templateService.getTemplatesByContractType(contractTypeId);
+    public ResponseEntity<Page<ContractTemplateIdDTO>> getTemplatesByContractType(
+            @PathVariable Long contractTypeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String order) {
+
+        Sort sort = order.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ContractTemplateIdDTO> templates = templateService.getTemplatesByContractType(contractTypeId, pageable);
         return ResponseEntity.ok(templates);
     }
+
 }
