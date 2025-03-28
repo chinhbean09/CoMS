@@ -778,6 +778,7 @@ public class ContractService implements IContractService{
                         .notifyPaymentDate(schedule.getNotifyPaymentDate())
                         .paymentDate(schedule.getPaymentDate())
                         .status(schedule.getStatus())
+                        .billUrl(schedule.getBillUrl())
                         .paymentMethod(schedule.getPaymentMethod())
                         .notifyPaymentContent(schedule.getNotifyPaymentContent())
                         .reminderEmailSent(schedule.isReminderEmailSent())

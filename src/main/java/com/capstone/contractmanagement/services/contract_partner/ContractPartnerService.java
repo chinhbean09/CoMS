@@ -1,22 +1,30 @@
 package com.capstone.contractmanagement.services.contract_partner;
 
+import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.contract_partner.ContractPartnerDTO;
 import com.capstone.contractmanagement.entities.ContractPartner;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.contract.ContractItem;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.InvalidParamException;
+import com.capstone.contractmanagement.repositories.IContractItemRepository;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
+import com.capstone.contractmanagement.services.user.UserService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +35,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +45,9 @@ public class ContractPartnerService implements IContractPartnerService {
     private final IContractPartnerRepository contractPartnerRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final Cloudinary cloudinary;
+    private final IContractItemRepository contractItemRepository;
+    private final LocalizationUtils localizationUtils;
+    private static final Logger logger = LoggerFactory.getLogger(ContractPartnerService.class);
 
     @Override
     @Transactional
@@ -44,7 +57,7 @@ public class ContractPartnerService implements IContractPartnerService {
         // Convert DTO to entity
         ContractPartner contractPartner = new ContractPartner();
         contractPartner.setContractNumber(contractDTO.getContractNumber());
-        contractPartner.setAmount(contractDTO.getAmount());
+        contractPartner.setAmount(contractDTO.getTotalValue());
         contractPartner.setPartnerName(contractDTO.getPartnerName());
         contractPartner.setTitle(contractDTO.getTitle());
 
@@ -58,6 +71,21 @@ public class ContractPartnerService implements IContractPartnerService {
         // Save contract
         contractPartner = contractPartnerRepository.save(contractPartner);
 
+        if (contractDTO.getItems() != null) {
+            ContractPartner finalContractPartner = contractPartner;
+            AtomicInteger itemOrder = new AtomicInteger();
+            List<ContractItem> contractItems = contractDTO.getItems().stream()
+                    .map(dto -> {
+                        ContractItem contractItem = new ContractItem();
+                        contractItem.setContractPartner(finalContractPartner);
+                        contractItem.setDescription(dto.getDescription());
+                        contractItem.setItemOrder(itemOrder.getAndIncrement());
+                        contractItem.setAmount(dto.getAmount());
+                        return contractItem;
+            }).collect(Collectors.toList());
+
+            contractItemRepository.saveAll(contractItems);
+        }
         // Handle payment schedules
         if (contractDTO.getPaymentSchedules() != null) {
             ContractPartner finalContractPartner = contractPartner;
@@ -67,7 +95,9 @@ public class ContractPartnerService implements IContractPartnerService {
                         paymentSchedule.setAmount(dto.getAmount());
                         paymentSchedule.setPaymentMethod(dto.getPaymentMethod());
                         paymentSchedule.setPaymentDate(convertToLocalDateTime(dto.getPaymentDate()));
+                        paymentSchedule.setPaymentOrder(dto.getPaymentOrder());
                         paymentSchedule.setContractPartner(finalContractPartner);
+                        paymentSchedule.setPaymentPercentage(dto.getPaymentPercentage());
                         paymentSchedule.setStatus(PaymentStatus.UNPAID);
                         paymentSchedule.setOverdueEmailSent(false);
                         paymentSchedule.setReminderEmailSent(false);
@@ -127,7 +157,7 @@ public class ContractPartnerService implements IContractPartnerService {
         return contractPartnersPage.map(contractPartner -> ContractPartnerResponse.builder()
                 .contractPartnerId(contractPartner.getId())
                 .contractNumber(contractPartner.getContractNumber())
-                .amount(contractPartner.getAmount())
+                .totalValue(contractPartner.getAmount())
                 .partnerName(contractPartner.getPartnerName())
                 .title(contractPartner.getTitle())
                 .fileUrl(contractPartner.getFileUrl())
@@ -140,6 +170,9 @@ public class ContractPartnerService implements IContractPartnerService {
                                 .amount(paymentSchedule.getAmount())
                                 .paymentMethod(paymentSchedule.getPaymentMethod())
                                 .paymentDate(paymentSchedule.getPaymentDate())
+                                .paymentOrder(paymentSchedule.getPaymentOrder())
+                                .paymentPercentage(paymentSchedule.getPaymentPercentage())
+                                .billUrl(paymentSchedule.getBillUrl())
                                 .status(paymentSchedule.getStatus())
                                 .overdueEmailSent(paymentSchedule.isOverdueEmailSent())
                                 .reminderEmailSent(paymentSchedule.isReminderEmailSent())
@@ -161,7 +194,7 @@ public class ContractPartnerService implements IContractPartnerService {
         ContractPartner contractPartner = contractPartnerRepository.findById(contractPartnerId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
         contractPartner.setContractNumber(contractDTO.getContractNumber());
-        contractPartner.setAmount(contractDTO.getAmount());
+        contractPartner.setAmount(contractDTO.getTotalValue());
         contractPartner.setPartnerName(contractDTO.getPartnerName());
         contractPartner.setTitle(contractDTO.getTitle());
         contractPartner.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
@@ -169,6 +202,33 @@ public class ContractPartnerService implements IContractPartnerService {
         contractPartner.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
         contractPartner.setFileUrl(contractDTO.getFileUrl());
         contractPartnerRepository.save(contractPartner);
+    }
+
+    @Override
+    public void uploadPaymentBillUrl(Long paymentScheduleId, MultipartFile file) throws DataNotFoundException {
+        PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
+                .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+        try {
+            // Check if the uploaded file is an image
+            MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+            if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
+                    !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
+                throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+            }
+
+            // Upload the avatar to Cloudinary
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap("folder", "payment_bill/" + paymentScheduleId, "public_id", file.getOriginalFilename()));
+
+            // Get the URL of the uploaded avatar
+            String billUrl = uploadResult.get("secure_url").toString();
+            paymentSchedule.setBillUrl(billUrl);
+
+            // Save the updated user entity
+            paymentScheduleRepository.save(paymentSchedule);
+        } catch (IOException e) {
+            logger.error("Failed to upload bill url for payment schedule with ID {}", paymentScheduleId, e);
+        }
     }
 
     private LocalDateTime convertToLocalDateTime(List<Integer> dateTimeList) {
