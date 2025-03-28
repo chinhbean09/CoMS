@@ -19,7 +19,9 @@ public class MailTemplate {
         public final static String ADDENDUM_APPROVAL_NOTIFICATION = "NHẮC NHỞ PHÊ DUYỆT PHỤ LỤC";
         public final static String APPROVAL_CONTRACT_SUCCESS = "HỢP ĐỒNG ĐÃ HOÀN TẤT PHÊ DUYỆT";
         public final static String ADDENDUM_APPROVAL_SUCCESS = "PHỤ LỤC ĐÃ HOÀN TẤT PHÊ DUYỆT";
-//
+        public final static String CONTRACT_EFFECTIVE_DATE_REMINDER = "HỢP ĐỒNG CÓ HIỆU LỰC";
+        public final static String CONTRACT_EXPIRY_DATE_REMINDER = "HỢP ĐỒNG SẮP HẾT HẠN";
+        public final static String CONTRACT_OVERDUE_NOTIFICATION = "HỢP ĐỒNG ĐÃ HẾT HẠN";
 //        public final static String BOOKING_PAYMENT_SUCCESS = "BOOKING PAYMENT SUCCESSFUL!";
 //
 //        public final static String PACKAGE_PAYMENT_SUCCESS = "PACKAGE PAYMENT SUCCESSFUL!";
@@ -44,6 +46,10 @@ public class MailTemplate {
 
         public final static String APPROVAL_CONTRACT_SUCCESS = "approval-contract-success";
         public final static String ADDENDUM_APPROVAL_SUCCESS = "addendum-approval-success";
+        public final static String CONTRACT_EFFECTIVE_DATE_REMINDER = "contract-effective-date-reminder";
+        public final static String CONTRACT_EXPIRY_DATE_REMINDER = "contract-expiry-date-reminder";
+        public final static String CONTRACT_OVERDUE_NOTIFICATION = "contract-overdue-notification";
+
 
 //        public final static String NEW_PASSWORD = "new-password";
 //        public final static String BOOKING_PAYMENT_SUCCESS_TEMPLATE = "booking";
