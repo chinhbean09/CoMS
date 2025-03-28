@@ -235,4 +235,79 @@ public class MailService implements IMailService{
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void sendEmailContractOverdue(Contract contract) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_OVERDUE_NOTIFICATION);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("contractExpiryDate", contract.getExpiryDate());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template đã định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_OVERDUE_NOTIFICATION);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + contract.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailContractEffectiveDate(Contract contract) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EFFECTIVE_DATE_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("contractEffectiveDate", contract.getEffectiveDate());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template đã định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_EFFECTIVE_DATE_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + contract.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailContractExpiryDate(Contract contract) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXPIRY_DATE_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("contractExpiryDate", contract.getExpiryDate());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_EXPIRY_DATE_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + contract.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
 }
