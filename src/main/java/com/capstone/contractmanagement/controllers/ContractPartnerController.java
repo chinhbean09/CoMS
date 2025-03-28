@@ -1,10 +1,8 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.contract_partner.ContractPartnerDTO;
-import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
-import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.services.contract_partner.IContractPartnerService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -67,8 +65,8 @@ public class ContractPartnerController {
     }
 
     @PutMapping(value = "/upload-bill/{paymentScheduleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResponseObject> updateUserAvatar(@PathVariable long paymentScheduleId,
-                                                           @RequestParam("file") MultipartFile file) throws DataNotFoundException {
+    public ResponseEntity<ResponseObject> uploadPaymentBillUrl(@PathVariable long paymentScheduleId,
+                                                               @RequestParam("file") MultipartFile file) throws DataNotFoundException {
         contractPartnerService.uploadPaymentBillUrl(paymentScheduleId, file);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)

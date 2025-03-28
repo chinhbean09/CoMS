@@ -223,6 +223,7 @@ public class ContractPartnerService implements IContractPartnerService {
             // Get the URL of the uploaded avatar
             String billUrl = uploadResult.get("secure_url").toString();
             paymentSchedule.setBillUrl(billUrl);
+            paymentSchedule.setStatus(PaymentStatus.PAID);
 
             // Save the updated user entity
             paymentScheduleRepository.save(paymentSchedule);
