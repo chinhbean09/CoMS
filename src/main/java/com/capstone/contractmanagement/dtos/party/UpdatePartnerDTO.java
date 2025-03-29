@@ -19,5 +19,6 @@ public class UpdatePartnerDTO {
     private String email;
     private String note;
     private String position;
+    private String abbreviation;
     private List<UpdateBankDTO> banking;
 }

@@ -47,7 +47,7 @@ public class ContractService implements IContractService{
     private final IContractRepository contractRepository;
     private final IContractTemplateRepository contractTemplateRepository;
     private final IUserRepository userRepository;
-    private final IPartnerRepository partyRepository;
+    private final IPartnerRepository partnerRepository;
     private final ITermRepository termRepository;
     private final IContractTypeRepository contractTypeRepository;
     private final SecurityUtils currentUser;
@@ -66,7 +66,7 @@ public class ContractService implements IContractService{
         // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
-        Partner partner = partyRepository.findById(dto.getPartnerId())
+        Partner partner = partnerRepository.findById(dto.getPartnerId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
         User user = currentUser.getLoggedInUser();
         if (user == null) {
@@ -74,7 +74,7 @@ public class ContractService implements IContractService{
         }
 
         LocalDateTime createdAt = LocalDateTime.now();
-        String contractNumber = generateContractNumber(createdAt, dto.getContractTitle());
+        String contractNumber = generateContractNumber(dto, createdAt);
 
         // 2. Tạo hợp đồng mới
         Contract contract = Contract.builder()
@@ -477,20 +477,121 @@ public class ContractService implements IContractService{
         return auditTrail;
     }
 
-    // Phương thức generateContractNumber
-    private String generateContractNumber(LocalDateTime createdAt, String contractTitle) {
-        String datePart = createdAt.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String titleAbbreviation = generateTitleAbbreviation(contractTitle);
-        String prefix = datePart + "-";
+    private String generateContractNumber(ContractDTO dto, LocalDateTime createdAt) {
+        // 1. Lấy thông tin cần thiết
+        String enterpriseAbbr = "FPT";
+        Partner partner = partnerRepository.findById(dto.getPartnerId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+        String partnerAbbr = partner.getAbbreviation();
+
+        ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
+        ContractType contractType = template.getContractType();
+        String contractTypeAbbr = generateContractTypeAbbreviation(contractType.getName());
+        String contractAbbr = generateContractAbbreviation(dto.getContractTitle(), partnerAbbr);
+
+        String ddmmyy = createdAt.format(DateTimeFormatter.ofPattern("ddMMyy"));
+        String dd_mm_yy = createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yy"));
+        String dd_mm_yyyy = createdAt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        String prefix = "";
+        int format = dto.getContractNumberFormat() != null ? dto.getContractNumberFormat() : 1; // Mặc định định dạng 1
+        switch (format) {
+            case 1:
+                prefix = enterpriseAbbr + "/" + partnerAbbr + "/" + contractTypeAbbr + "/" + ddmmyy + "_";
+                break;
+            case 2:
+                prefix = contractAbbr + "-" + contractTypeAbbr + "/" + dd_mm_yyyy + "_";
+                break;
+            case 3:
+                prefix = contractAbbr + "/" + partnerAbbr + "/" + dd_mm_yyyy + "_";
+                break;
+            case 4:
+                prefix = contractTypeAbbr + "/" + enterpriseAbbr + "/" + dd_mm_yyyy + "_";
+                break;
+            case 5:
+                prefix = contractTypeAbbr + "-" + enterpriseAbbr + "/" + partnerAbbr + "/" + dd_mm_yy + "_";
+                break;
+            case 6:
+                prefix = contractAbbr + "/" + partnerAbbr + "/" + contractTypeAbbr + "/" + ddmmyy + "_";
+                break;
+            default:
+                throw new IllegalArgumentException("Định dạng mã hợp đồng không hợp lệ: " + format);
+        }
 
         LocalDateTime startOfDay = createdAt.truncatedTo(ChronoUnit.DAYS);
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-
-        int count = contractRepository.countByContractNumberStartingWithAndDate(prefix + "%-" + titleAbbreviation, startOfDay, endOfDay) + 1;
+        int count = contractRepository.countByContractNumberStartingWithAndDate(prefix, startOfDay, endOfDay) + 1;
         String sequencePart = String.format("%03d", count);
 
-        return datePart + "-" + sequencePart + "-" + titleAbbreviation;
+        return prefix + sequencePart;
     }
+
+    public String generateContractAbbreviation(String title, String partnerAbbr) {
+        if (title == null || title.isEmpty()) {
+            return "";
+        }
+
+        String[] words = title.split("\\s+");
+        StringBuilder abbr = new StringBuilder("HĐ");
+
+        // Tìm vị trí của "Cho" để xác định "Cho Công Ty"
+        int choIndex = -1;
+        for (int i = 0; i < words.length - 1; i++) {
+            if (words[i].equalsIgnoreCase("Cho") && i + 1 < words.length && words[i + 1].equalsIgnoreCase("Công")) {
+                choIndex = i;
+                break;
+            }
+        }
+
+        // Xác định phần chính của tiêu đề
+        int startIndex = 2; // Bỏ "Hợp Đồng"
+        int endIndex = (choIndex != -1) ? choIndex : words.length;
+
+        // Lấy ký tự đầu của các từ trong phần chính
+        for (int i = startIndex; i < endIndex; i++) {
+            if (!words[i].isEmpty()) {
+                abbr.append(words[i].charAt(0));
+            }
+        }
+
+        // Nếu có "Cho Công Ty", thêm "CTY" và tên viết tắt công ty
+        if (choIndex != -1 && partnerAbbr != null && !partnerAbbr.isEmpty()) {
+            abbr.append("CTY");
+            abbr.append(partnerAbbr.toUpperCase());
+        }
+
+        return abbr.toString().toUpperCase();
+    }
+
+    private String generateContractTypeAbbreviation(String contractTypeName) {
+        if (contractTypeName == null || contractTypeName.isEmpty()) {
+            return "";
+        }
+
+        String[] words = contractTypeName.split("\\s+");
+        StringBuilder abbreviation = new StringBuilder();
+
+        // Lấy ký tự đầu của mỗi từ và ghép lại
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                abbreviation.append(word.charAt(0));
+            }
+        }
+
+        // Gán lại kết quả sau khi loại bỏ tiền tố "HĐ"
+        String result = removeHdPrefix(abbreviation.toString());
+        return result.toUpperCase();
+    }
+
+    private String removeHdPrefix(String contractTypeAbbr) {
+        if (contractTypeAbbr != null && contractTypeAbbr.startsWith("HĐ")) {
+            return contractTypeAbbr.substring(2);
+        }
+        return contractTypeAbbr;
+    }
+
+
 
     // Phương thức generateTitleAbbreviation
     private String generateTitleAbbreviation(String title) {
