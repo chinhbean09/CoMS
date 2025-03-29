@@ -49,6 +49,7 @@ public class PartnerService implements IPartnerService {
                 .note(createPartnerDTO.getNote())
                 .position(createPartnerDTO.getPosition())
                 .isDeleted(false)
+                .abbreviation(createPartnerDTO.getAbbreviation())
                 .build();
 
         // Lưu Partner để lấy được ID
@@ -96,6 +97,7 @@ public class PartnerService implements IPartnerService {
                 .note(partner.getNote())
                 .position(partner.getPosition())
                 .isDeleted(partner.getIsDeleted())
+                .abbreviation(partner.getAbbreviation())
                 .banking(bankResponses)
                 .build();
     }
@@ -116,6 +118,7 @@ public class PartnerService implements IPartnerService {
         partner.setPhone(updatePartnerDTO.getPhone());
         partner.setEmail(updatePartnerDTO.getEmail());
         partner.setPosition(updatePartnerDTO.getPosition());
+        partner.setAbbreviation(updatePartnerDTO.getAbbreviation());
         partyRepository.save(partner);
 
         // Lấy danh sách ngân hàng hiện có của Partner
@@ -158,6 +161,7 @@ public class PartnerService implements IPartnerService {
                 .note(partner.getNote())
                 .position(partner.getPosition())
                 .isDeleted(partner.getIsDeleted())
+                .abbreviation(partner.getAbbreviation())
                 .build();
     }
     @Override
@@ -203,6 +207,7 @@ public class PartnerService implements IPartnerService {
                                         .backAccountNumber(bank.getBackAccountNumber())
                                         .build())
                                 .collect(Collectors.toList()))
+                        .abbreviation(party.getAbbreviation())
                         .build());
     }
 
@@ -231,6 +236,7 @@ public class PartnerService implements IPartnerService {
                                 .backAccountNumber(bank.getBackAccountNumber())
                                 .build()) // Thiếu .build()
                         .collect(Collectors.toList())) // Đổi từ .toList() thành Collectors.toList()
+                .abbreviation(partner.getAbbreviation())
                 .build();
     }
 
