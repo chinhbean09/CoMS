@@ -98,6 +98,7 @@ public class MailService implements IMailService{
 
             Map<String, Object> props = new HashMap<>();
             props.put("password", password);
+            props.put("email", email);
             dataMailDTO.setProps(props); // Set props to dataMailDTO
 
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
