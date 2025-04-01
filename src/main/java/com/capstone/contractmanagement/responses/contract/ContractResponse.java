@@ -64,7 +64,7 @@ public class ContractResponse {
 
     // Thông tin thanh toán
     private List<PaymentScheduleResponse> paymentSchedules;
-    private List<ContractItem> contractItems;
+    private List<ContractItemDTO> contractItems;
 
 
 
