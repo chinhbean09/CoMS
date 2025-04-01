@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities.contract;
 
+import com.capstone.contractmanagement.entities.ContractPartner;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,9 +22,13 @@ public class ContractItem {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id")
     @JsonIgnore
     private Contract contract;
+
+    @ManyToOne
+    @JoinColumn(name = "contract_partner_id")
+    private ContractPartner contractPartner;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

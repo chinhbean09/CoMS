@@ -19,13 +19,14 @@ public class ContractPartnerResponse {
 
     private Long contractPartnerId;
     private String contractNumber;
-    private Double amount;
+    private Double totalValue;
     private String partnerName;
     private LocalDateTime signingDate;
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private String title;
     private String fileUrl;
+    private List<ContractPartnerItemResponse> items;
     private List<PaymentScheduleResponse> paymentSchedules;
 
 }
