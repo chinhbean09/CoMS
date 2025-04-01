@@ -33,7 +33,7 @@ public class Notification {
 //    @Column(name = "contract_id", nullable = false)
 //    private Long contractId;
     @ManyToOne
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id")
     private Contract contract;
 
     @ManyToOne

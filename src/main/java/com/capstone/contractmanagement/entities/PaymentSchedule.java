@@ -55,6 +55,12 @@ public class PaymentSchedule {
     @Column(name = "overdue_email_sent")
     private boolean overdueEmailSent;
 
+    @Column(name = "payment_percentage")
+    private Integer paymentPercentage;
+
+    @Column(name = "bill_url")
+    private String billUrl;
+
     // Relationship với Contract
     @ManyToOne
     @JoinColumn(name = "contract_id", nullable = true)
