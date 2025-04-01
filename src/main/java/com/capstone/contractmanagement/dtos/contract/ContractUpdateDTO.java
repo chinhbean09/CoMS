@@ -21,7 +21,7 @@ public class ContractUpdateDTO {
     private String title;
     private LocalDateTime signingDate;
     private String contractLocation;
-    private Double amount;
+    private Double totalValue;
 
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
