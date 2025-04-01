@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.forgotpasswordtest;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
+import com.capstone.contractmanagement.dtos.forgotpassword.ChangePasswordDTO;
 import com.capstone.contractmanagement.entities.ForgotPassword;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -8,6 +9,7 @@ import com.capstone.contractmanagement.repositories.IForgotPasswordRepository;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.services.forgotpassword.ForgotPasswordService;
 import com.capstone.contractmanagement.services.sendmails.MailService;
+import com.capstone.contractmanagement.services.user.IUserService;
 import com.capstone.contractmanagement.utils.MailTemplate;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.mail.MessagingException;
@@ -26,94 +28,175 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 public class ForgotPasswordServiceUnitTest {
 
-    @Mock
-    private IForgotPasswordRepository forgotPasswordRepository;
-
-    @Mock
-    private IUserRepository userRepository;
-
-    @Mock
-    private MailService mailService;
-
-    @Mock
-    private ScheduledExecutorService executorService;
+    @Mock private IForgotPasswordRepository forgotPasswordRepository;
+    @Mock private MailService mailService;
+    @Mock private IUserRepository userRepository;
+    @Mock private IUserService userService;
 
     @InjectMocks
     private ForgotPasswordService forgotPasswordService;
 
-    private User testUser;
-    private ForgotPassword forgotPassword;
+    private final String email = "test@example.com";
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .build();
-
-        forgotPassword = ForgotPassword.builder()
-                .otp(123456)
-                .expirationTime(new Date(System.currentTimeMillis() + 60 * 1000))
-                .verified(false)
-                .user(testUser)
-                .build();
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void verifyEmailAndSendOtp_ShouldSendOtp_WhenUserExists() throws DataNotFoundException, MessagingException {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
-        when(forgotPasswordRepository.save(any(ForgotPassword.class))).thenReturn(forgotPassword);
+    void verifyEmailAndSendOtp_ShouldSendOtp_WhenNoExistingOtp() throws Exception {
+        User user = new User();
+        user.setEmail(email);
 
-        forgotPasswordService.verifyEmailAndSendOtp("test@example.com");
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.empty());
 
-        verify(userRepository, times(1)).findByEmail("test@example.com");
+        forgotPasswordService.verifyEmailAndSendOtp(email);
+
         verify(forgotPasswordRepository, times(1)).save(any(ForgotPassword.class));
-        verify(mailService, times(1)).sendHtmlMail(any(DataMailDTO.class), eq(MailTemplate.SEND_MAIL_TEMPLATE.OTP_SEND_TEMPLATE));
+        verify(mailService, times(1)).sendHtmlMail(any(DataMailDTO.class), anyString());
     }
 
     @Test
-    void verifyEmailAndSendOtp_ShouldThrowException_WhenUserDoesNotExist() {
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+    void verifyEmailAndSendOtp_ShouldThrowException_WhenUserNotFound() {
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
-                () -> forgotPasswordService.verifyEmailAndSendOtp("nonexistent@example.com"));
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.verifyEmailAndSendOtp(email));
 
-        assertEquals(MessageKeys.USER_NOT_FOUND, exception.getMessage());
-        verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
-        verifyNoInteractions(mailService);
+        assertEquals("User not found", ex.getMessage());
     }
 
     @Test
-    void verifyOTP_ShouldVerify_WhenOtpIsCorrectAndNotExpired() throws DataNotFoundException {
-        when(forgotPasswordRepository.findLatestOtpSent("test@example.com")).thenReturn(Optional.of(forgotPassword));
+    void verifyEmailAndSendOtp_ShouldThrowException_WhenOtpNotExpired() {
+        User user = new User();
+        user.setEmail(email);
 
-        forgotPasswordService.verifyOTP("test@example.com", 123456);
+        ForgotPassword existing = ForgotPassword.builder()
+                .expirationTime(new Date(System.currentTimeMillis() + 60000)) // not expired
+                .build();
 
-        //assertTrue(forgotPassword.isVerified());
-        verify(forgotPasswordRepository, times(1)).save(forgotPassword);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.of(existing));
+
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.verifyEmailAndSendOtp(email));
+
+        assertTrue(ex.getMessage().contains("OTP đã được gửi"));
     }
 
     @Test
-    void verifyOTP_ShouldThrowException_WhenOtpIsIncorrect() {
-        when(forgotPasswordRepository.findLatestOtpSent("test@example.com")).thenReturn(Optional.of(forgotPassword));
+    void verifyOTP_ShouldReturnToken_WhenOtpIsCorrect() throws Exception {
+        ForgotPassword fp = ForgotPassword.builder()
+                .otp(123456)
+                .otpAttempts(0)
+                .expirationTime(new Date(System.currentTimeMillis() + 60000))
+                .verified(false)
+                .build();
 
-        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
-                () -> forgotPasswordService.verifyOTP("test@example.com", 654321));
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.of(fp));
 
-        assertEquals(MessageKeys.OTP_INCORRECT, exception.getMessage());
+        String token = forgotPasswordService.verifyOTP(email, 123456);
+
+        assertNotNull(token);
+        assertTrue(fp.getVerified());
+        verify(forgotPasswordRepository).save(fp);
     }
 
     @Test
-    void verifyOTP_ShouldThrowException_WhenOtpIsExpired() {
-        forgotPassword.setExpirationTime(new Date(System.currentTimeMillis() - 1000));
-        when(forgotPasswordRepository.findLatestOtpSent("test@example.com")).thenReturn(Optional.of(forgotPassword));
+    void verifyOTP_ShouldThrow_WhenMaxAttemptsExceeded() {
+        ForgotPassword fp = ForgotPassword.builder()
+                .otpAttempts(5)
+                .build();
 
-        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
-                () -> forgotPasswordService.verifyOTP("test@example.com", 123456));
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.of(fp));
 
-        assertEquals(MessageKeys.OTP_IS_EXPIRED, exception.getMessage());
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.verifyOTP(email, 123456));
+
+        assertTrue(ex.getMessage().contains("Số lần thử OTP đã vượt quá"));
+    }
+
+    @Test
+    void verifyOTP_ShouldThrow_WhenOtpIsIncorrect() {
+        ForgotPassword fp = ForgotPassword.builder()
+                .otp(999999)
+                .otpAttempts(0)
+                .expirationTime(new Date(System.currentTimeMillis() + 60000))
+                .build();
+
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.of(fp));
+
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.verifyOTP(email, 123456));
+
+        assertTrue(ex.getMessage().contains("OTP không chính xác"));
+        verify(forgotPasswordRepository).save(fp);
+        assertEquals(1, fp.getOtpAttempts());
+    }
+
+    @Test
+    void verifyOTP_ShouldThrow_WhenOtpIsExpired() {
+        ForgotPassword fp = ForgotPassword.builder()
+                .otp(123456)
+                .otpAttempts(0)
+                .expirationTime(new Date(System.currentTimeMillis() - 1000))
+                .build();
+
+        when(forgotPasswordRepository.findLatestOtpSent(email)).thenReturn(Optional.of(fp));
+
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.verifyOTP(email, 123456));
+
+        assertEquals("OTP đã hết hạn", ex.getMessage());
+    }
+
+    @Test
+    void changePassword_ShouldChangePassword_WhenValidToken() throws Exception {
+        ChangePasswordDTO dto = new ChangePasswordDTO();
+        dto.setNewPassword("newpass123");
+        dto.setConfirmPassword("newpass123");
+
+        ForgotPassword fp = new ForgotPassword();
+        when(forgotPasswordRepository.findLatestVerifiedOtp(email, "token123"))
+                .thenReturn(Optional.of(fp));
+
+        forgotPasswordService.changePassword(email, "token123", dto);
+
+        verify(userService).updatePassword(email, "newpass123");
+        verify(forgotPasswordRepository).delete(fp);
+    }
+
+    @Test
+    void changePassword_ShouldThrow_WhenTokenInvalid() {
+        ChangePasswordDTO dto = new ChangePasswordDTO();
+        dto.setNewPassword("abc");
+        dto.setConfirmPassword("abc");
+
+        when(forgotPasswordRepository.findLatestVerifiedOtp(email, "wrongtoken"))
+                .thenReturn(Optional.empty());
+
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.changePassword(email, "wrongtoken", dto));
+
+        assertEquals("OTP not found", ex.getMessage());
+    }
+
+    @Test
+    void changePassword_ShouldThrow_WhenPasswordsDoNotMatch() {
+        ChangePasswordDTO dto = new ChangePasswordDTO();
+        dto.setNewPassword("abc123");
+        dto.setConfirmPassword("xyz123");
+
+        ForgotPassword fp = new ForgotPassword();
+        when(forgotPasswordRepository.findLatestVerifiedOtp(email, "token123"))
+                .thenReturn(Optional.of(fp));
+
+        Exception ex = assertThrows(DataNotFoundException.class, () ->
+                forgotPasswordService.changePassword(email, "token123", dto));
+
+        assertEquals("Mật khẩu xác nhận không khớp", ex.getMessage());
     }
 }

@@ -92,6 +92,25 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 payment.setReminderEmailSent(true);
                 paymentScheduleRepository.save(payment);
             }
+
+//            if (payment.getContractPartner() != null && !payment.isReminderEmailSent()) {
+//                Map<String, Object> payload = new HashMap<>();
+//                String reminderMessage = "Nhắc nhở: Hợp đồng đối tác '" + payment.getContractPartner().getTitle() +
+//                        "' sẽ đến hạn thanh toán lúc " + payment.getPaymentDate() +
+//                        ". Vui lòng chuẩn bị thanh toán.";
+//                Long contractId = payment.getContractPartner().getId();
+//                payload.put("message", reminderMessage);
+//                payload.put("contractId", contractId);
+//
+//                // Lấy username của người dùng
+//                String username = payment.getContractPartner().getUser().getFullName();
+//                User user = payment.getContractPartner().getUser();
+//
+//                // Gửi thông báo dưới dạng JSON
+//                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+//                notificationService.saveNotification(user, reminderMessage, payment.getContractPartner());
+//                mailService.sendEmailReminder(payment);
+//            }
         }
 
         // 2. Gửi thông báo quá hạn nếu đã vượt qua dueDate
@@ -121,6 +140,31 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 payment.setOverdueEmailSent(true);
                 paymentScheduleRepository.save(payment);
             }
+
+//            if (payment.getContractPartner() != null && now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
+//                payment.setStatus(PaymentStatus.OVERDUE);
+//                paymentScheduleRepository.save(payment);
+//
+//                // Tạo payload dạng JSON cho thông báo quá hạn
+//                Map<String, Object> payload = new HashMap<>();
+//                String overdueMessage = "Quá hạn: Hợp đồng đối tác '" + payment.getContractPartner().getTitle() +
+//                        "' đã quá hạn thanh toán lúc " + payment.getPaymentDate() + ".";
+//                Long contractId = payment.getContractPartner().getId();
+//                payload.put("message", overdueMessage);
+//                payload.put("contractId", contractId);
+//
+//                String username = payment.getContractPartner().getUser().getFullName();
+//                User user = payment.getContractPartner().getUser();
+//
+//                // Gửi thông báo dưới dạng JSON
+//                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+//                notificationService.saveNotification(user, overdueMessage, payment.getContractPartner());
+//                mailService.sendEmailExpired(payment);
+//
+//                // Đánh dấu đã gửi email quá hạn
+//                payment.setOverdueEmailSent(true);
+//                paymentScheduleRepository.save(payment);
+//        }
         }
     }
 
