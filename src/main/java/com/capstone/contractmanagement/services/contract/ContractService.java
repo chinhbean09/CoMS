@@ -15,7 +15,6 @@ import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.enums.TypeTermIdentifier;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
-import com.capstone.contractmanagement.exceptions.ResourceNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
@@ -31,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -860,7 +858,7 @@ public class ContractService implements IContractService{
                 .additionalTerms(additionalTerms)
                 .version(contract.getVersion())
                 .additionalConfig(additionalConfig)
-                .contractItems(contract.getContractItems())
+                .contractItems(convertContractItems(contract.getContractItems()))
                 .originalContractId(contract.getOriginalContractId())
                 .sourceContractId(contract.getSourceContractId())
                 .build();
@@ -888,6 +886,20 @@ public class ContractService implements IContractService{
                 .collect(Collectors.toList());
     }
 
+    // Helper chuyển đổi danh sách PaymentSchedule thành danh sách PaymentScheduleResponse
+    private List<ContractItemDTO> convertContractItems(List<ContractItem> contractItems) {
+        if (contractItems == null || contractItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return contractItems.stream()
+                .map(item -> ContractItemDTO.builder()
+                        .id(item.getId())
+                        .description(item.getDescription())
+                        .itemOrder(item.getItemOrder())
+                        .amount(item.getAmount())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
 
     // Helper method: chuyển List<AdditionalTermSnapshot> sang List<TermResponse>
