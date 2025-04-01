@@ -1113,7 +1113,7 @@ public class ContractService implements IContractService{
                 .notifyEffectiveContent(dto.getNotifyEffectiveContent() != null ? dto.getNotifyEffectiveContent() : currentContract.getNotifyEffectiveContent())
                 .notifyExpiryContent(dto.getNotifyExpiryContent() != null ? dto.getNotifyExpiryContent() : currentContract.getNotifyExpiryContent())
                 .title(dto.getTitle() != null ? dto.getTitle() : currentContract.getTitle())
-                .amount(dto.getAmount() != null ? dto.getAmount() : currentContract.getAmount())
+                .amount(dto.getTotalValue() != null ? dto.getTotalValue() : currentContract.getAmount())
                 .user(currentContract.getUser())
                 .isDateLateChecked(dto.getIsDateLateChecked() != null ? dto.getIsDateLateChecked() : currentContract.getIsDateLateChecked())
                 .template(currentContract.getTemplate())
@@ -1950,8 +1950,8 @@ public class ContractService implements IContractService{
         if (dto.getContractLocation() != null && !dto.getContractLocation().equals(currentContract.getContractLocation())) {
             auditTrails.add(createAuditTrail(savedNewContract, "contractLocation", currentContract.getContractLocation(), dto.getContractLocation(), now, changedBy, "UPDATE", "Cập nhật địa điểm hợp đồng"));
         }
-        if (dto.getAmount() != null && !Objects.equals(dto.getAmount(), currentContract.getAmount())) {
-            auditTrails.add(createAuditTrail(savedNewContract, "amount", currentContract.getAmount() != null ? currentContract.getAmount().toString() : null, dto.getAmount() != null ? dto.getAmount().toString() : null, now, changedBy, "UPDATE", "Cập nhật số tiền hợp đồng"));
+        if (dto.getTotalValue() != null && !Objects.equals(dto.getTotalValue(), currentContract.getAmount())) {
+            auditTrails.add(createAuditTrail(savedNewContract, "amount", currentContract.getAmount() != null ? currentContract.getAmount().toString() : null, dto.getTotalValue() != null ? dto.getTotalValue().toString() : null, now, changedBy, "UPDATE", "Cập nhật số tiền hợp đồng"));
         }
         if (dto.getEffectiveDate() != null && !Objects.equals(dto.getEffectiveDate(), currentContract.getEffectiveDate())) {
             auditTrails.add(createAuditTrail(savedNewContract, "effectiveDate", currentContract.getEffectiveDate() != null ? currentContract.getEffectiveDate().toString() : null, dto.getEffectiveDate() != null ? dto.getEffectiveDate().toString() : null, now, changedBy, "UPDATE", "Cập nhật ngày hiệu lực hợp đồng"));
@@ -2181,7 +2181,7 @@ public class ContractService implements IContractService{
         if (dto.getTitle() != null && !dto.getTitle().equals(currentContract.getTitle())) return true;
         if (dto.getSigningDate() != null && !Objects.equals(dto.getSigningDate(), currentContract.getSigningDate())) return true;
         if (dto.getContractLocation() != null && !dto.getContractLocation().equals(currentContract.getContractLocation())) return true;
-        if (dto.getAmount() != null && !Objects.equals(dto.getAmount(), currentContract.getAmount())) return true;
+        if (dto.getTotalValue() != null && !Objects.equals(dto.getTotalValue(), currentContract.getAmount())) return true;
         if (dto.getEffectiveDate() != null && !Objects.equals(dto.getEffectiveDate(), currentContract.getEffectiveDate())) return true;
         if (dto.getExpiryDate() != null && !Objects.equals(dto.getExpiryDate(), currentContract.getExpiryDate())) return true;
         if (dto.getNotifyEffectiveDate() != null && !Objects.equals(dto.getNotifyEffectiveDate(), currentContract.getNotifyEffectiveDate())) return true;

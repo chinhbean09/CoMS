@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.dtos.party.CreatePartnerDTO;
 import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
 import com.capstone.contractmanagement.entities.Bank;
 import com.capstone.contractmanagement.entities.Partner;
+import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
 import com.capstone.contractmanagement.repositories.IBankRepository;
 import com.capstone.contractmanagement.repositories.IPartnerRepository;
 import com.capstone.contractmanagement.responses.bank.BankResponse;
@@ -97,7 +98,7 @@ public class PartnerServiceUnitTest {
     }
 
     @Test
-    void updatePartner_ShouldUpdateSuccessfully_WhenValidInput() throws DataNotFoundException {
+    void updatePartner_ShouldUpdateSuccessfully_WhenValidInput() throws DataNotFoundException, OperationNotPermittedException {
         // Given
         Partner existingPartner = new Partner();
         existingPartner.setId(1L);
@@ -215,7 +216,7 @@ public class PartnerServiceUnitTest {
     }
 
     @Test
-    void updatePartnerStatus_ShouldUpdateStatus_WhenValidId() throws DataNotFoundException {
+    void updatePartnerStatus_ShouldUpdateStatus_WhenValidId() throws DataNotFoundException, OperationNotPermittedException {
         // Given
         Partner partner = new Partner();
         partner.setId(1L);
