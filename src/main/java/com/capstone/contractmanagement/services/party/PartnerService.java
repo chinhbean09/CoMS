@@ -115,7 +115,7 @@
 
             if (isPartnerInActiveContract(id)) {
                 throw new OperationNotPermittedException(
-                        "Không thể cập nhật partner vì đang trong hợp đồng Active. Vui lòng tạo phụ lục thay thế."
+                        "Không thể xóa đối tác vì đang trong hợp đồng đang hoạt động. Vui lòng tạo phụ lục thay thế."
                 );
             }
 
@@ -266,7 +266,7 @@
             // Nếu đặt isDeleted = true và partner đang trong hợp đồng Active, ngăn chặn thao tác
             if (isDeleted && isPartnerInActiveContract(partyId)) {
                 throw new OperationNotPermittedException(
-                        "Không thể xóa partner vì đang trong hợp đồng Active. Vui lòng tạo phụ lục thay thế."
+                        "Không thể xóa đối tác vì đang trong hợp đồng đang hoạt động. Vui lòng tạo phụ lục thay thế."
                 );
             }
 
