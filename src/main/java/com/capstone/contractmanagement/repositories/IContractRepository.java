@@ -267,5 +267,6 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT MAX(c.duplicateNumber) FROM Contract c WHERE c.sourceContractId = :sourceContractId")
     Integer findMaxDuplicateNumberBySourceContractId(Long sourceContractId);
 
+    boolean existsByPartnerIdAndStatus(Long partnerId, ContractStatus status);
 
 }
