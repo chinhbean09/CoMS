@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWor
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.Addendum;
 import com.capstone.contractmanagement.entities.AddendumType;
+import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
@@ -58,6 +59,8 @@ public class AddendumService implements IAddendumService{
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
+        Partner partner = contract.getPartner();
+
         AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
                 .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
         if (contract.getStatus() == ContractStatus.ACTIVE
@@ -91,6 +94,7 @@ public class AddendumService implements IAddendumService{
                             .addendumTypeId(addendum.getAddendumType().getId())
                             .name(addendum.getAddendumType().getName())
                             .build())
+                    .partner(partner)
                     .effectiveDate(addendum.getEffectiveDate())
                     .createdAt(addendum.getCreatedAt())
                     .updatedAt(addendum.getUpdatedAt())
@@ -106,6 +110,7 @@ public class AddendumService implements IAddendumService{
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
 
+        Partner partner = contract.getPartner();
         // Lấy danh sách phụ lục theo contract id (giả sử repository có method: findByContract_Id)
         List<Addendum> addenda = addendumRepository.findByContract(contract);
 
@@ -131,6 +136,7 @@ public class AddendumService implements IAddendumService{
                                 .userId(addendum.getUser().getId())
                                 .userName(addendum.getUser().getFullName())
                                 .build())
+                        .partner(partner)
                         .contractId(addendum.getContract().getId())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
@@ -155,6 +161,7 @@ public class AddendumService implements IAddendumService{
                                 .userId(addendum.getUser().getId())
                                 .userName(addendum.getUser().getFullName())
                                 .build())
+                        .partner(addendum.getContract().getPartner())
                         .contractId(addendum.getContract().getId())
                         .addendumType(AddendumTypeResponse.builder()
                                 .addendumTypeId(addendum.getAddendumType().getId())
@@ -221,6 +228,7 @@ public class AddendumService implements IAddendumService{
                         .userId(addendum.getUser().getId())
                         .userName(addendum.getUser().getFullName())
                         .build())
+                .partner(addendum.getContract().getPartner())
                 .contractId(addendum.getContract().getId())
                 .addendumType(AddendumTypeResponse.builder()
                         .addendumTypeId(addendum.getAddendumType().getId())

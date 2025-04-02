@@ -156,6 +156,7 @@ public class UserController {
                     .phoneNumber(userDetail.getPhoneNumber())
                     .avatar(userDetail.getAvatar())
                     .staffCode(userDetail.getStaffCode())
+                    .gender(userDetail.getGender())
                     .configs(managerConfigs)
                     .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                     .id(userDetail.getId());
@@ -296,6 +297,7 @@ public class UserController {
                     .refreshToken(jwtToken.getRefreshToken())
                     .fullName(userDetail.getFullName())
                     .email(userDetail.getEmail())
+                    .gender(userDetail.getGender())
                     .phoneNumber(userDetail.getPhoneNumber())
                     .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                     .id(userDetail.getId())
