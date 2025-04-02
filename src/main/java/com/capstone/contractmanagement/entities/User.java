@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.entities;
 
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.DepartmentList;
+import com.capstone.contractmanagement.enums.GenderList;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -77,6 +78,10 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
 
     @Column(name = "avatar")
     private String avatar;
+
+    @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
+    private GenderList gender;
 
     @Column(name = "is_ceo", nullable = true)
     private Boolean isCeo  = Boolean.FALSE;
