@@ -1,12 +1,14 @@
 package com.capstone.contractmanagement.exceptions;
 
 import com.capstone.contractmanagement.responses.ErrorResponse;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,5 +64,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OAuth2AuthenticationException.class)
     public ResponseEntity<String> handleOAuth2AuthenticationException(OAuth2AuthenticationException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("OAuth2 authentication failed: " + e.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ResponseObject> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        ResponseObject response = ResponseObject.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .message("Tệp tải lên quá lớn")
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }
