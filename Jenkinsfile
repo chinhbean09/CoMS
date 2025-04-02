@@ -62,6 +62,7 @@ pipeline {
                         }
                        sh """
                            echo "Checking if DB_PASSWORD is set: \${DB_PASSWORD:+'set'}"
+                           echo "DB_PASSWORD hash (SHA256): \$(echo -n \$DB_PASSWORD | sha256sum)"
                            export BACKEND_IMAGE=${IMAGE_VERSION}
                            export DB_PASSWORD=${DB_PASSWORD}
                            ${downCommand}
