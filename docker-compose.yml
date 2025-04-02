@@ -28,7 +28,6 @@
           - /etc/localtime:/etc/localtime:ro
         networks:
           - backend_network
-          - external_network
         ports:
           - "15432:5432"
         deploy:
