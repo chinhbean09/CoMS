@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.contract;
 
 import com.capstone.contractmanagement.entities.Partner;
+import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
@@ -31,7 +32,7 @@ public class GetContractForApproverResponse {
     private LocalDateTime signingDate;
     private String contractLocation;
     private Double amount;
-    private String contractTypeName;
+    private ContractType contractType;
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
     private LocalDateTime notifyEffectiveDate;
