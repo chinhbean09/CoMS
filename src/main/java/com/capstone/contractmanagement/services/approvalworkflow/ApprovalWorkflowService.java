@@ -840,7 +840,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .signingDate(contract.getSigningDate())
                 .contractLocation(contract.getContractLocation())
                 .amount(contract.getAmount())
-                .contractTypeName(contract.getContractType().getName())
+                .contractType(contract.getContractType())
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
                 .notifyEffectiveDate(contract.getNotifyEffectiveDate())

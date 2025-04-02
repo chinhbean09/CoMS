@@ -334,6 +334,7 @@ public class UserService implements IUserService {
         TokenRepository.deleteAll(tokens);
         optionalUser.ifPresent(UserRepository::delete);
     }
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = {DataNotFoundException.class, DataIntegrityViolationException.class})
     @Override
     public void updateUser(Long userId, UpdateUserDTO userDTO) throws DataNotFoundException {
         // Kiểm tra xem user có tồn tại không
@@ -365,6 +366,7 @@ public class UserService implements IUserService {
         user.setFullName(userDTO.getFullName());
         user.setPhoneNumber(userDTO.getPhoneNumber());
         user.setEmail(userDTO.getEmail());
+        user.setGender(userDTO.getGender());
         user.setAddress(userDTO.getAddress());
         user.setIsCeo(userDTO.getIsCeo());
         user.setDateOfBirth(userDTO.getDateOfBirth());
