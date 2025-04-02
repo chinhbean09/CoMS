@@ -249,8 +249,8 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             Pageable pageable);
 
     // Đếm số hợp đồng cần phê duyệt mà người duyệt được giao
-    long countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-            ContractStatus status, Long approverId, ApprovalStatus approvalStatus);
+    long countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+            ContractStatus status, Boolean isLatestVersion, Long approverId, ApprovalStatus approvalStatus);
 
     long countByUser_IdAndStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
             Long userId,
@@ -260,7 +260,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     );
 
     // Đếm số hợp đồng của nhân viên đang ở trạng thái APPROVAL_PENDING
-    long countByUser_IdAndStatus( Long userId, ContractStatus status);
+    long countByUser_IdAndStatusAndIsLatestVersion(Long userId, ContractStatus status, Boolean isLatestVersion);
 
     Integer findMaxDuplicateNumberByOriginalContractId(Long id);
 
