@@ -900,11 +900,9 @@
         }
 
         @Override
-        public List<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId) {
-            List<ContractTemplate> templates = templateRepository.findByContractTypeId(contractTypeId);
-            return templates.stream()
-                    .map(this::mapToDTO)
-                    .collect(Collectors.toList());
+        public Page<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId, Pageable pageable) {
+            Page<ContractTemplate> templates = templateRepository.findByContractTypeId(contractTypeId, pageable);
+            return templates.map(this::mapToDTO);
         }
 
         private ContractTemplateIdDTO mapToDTO(ContractTemplate template) {
@@ -913,5 +911,4 @@
                     .contractTitle(template.getContractTitle())
                     .build();
         }
-
     }

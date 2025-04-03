@@ -23,5 +23,6 @@ public class CreatePartnerDTO {
     private String email;
     private String note;
     private String position;
+    private String abbreviation;
     private List<CreateBankDTO> banking;
 }

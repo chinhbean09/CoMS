@@ -21,7 +21,7 @@ public class ContractUpdateDTO {
     private String title;
     private LocalDateTime signingDate;
     private String contractLocation;
-    private Double amount;
+    private Double totalValue;
 
     private LocalDateTime effectiveDate;
     private LocalDateTime expiryDate;
@@ -56,4 +56,8 @@ public class ContractUpdateDTO {
     private Long contractTypeId; // ID của loại hợp đồng
 
     private List<ContractItemDTO> contractItems;
+
+    private ContractPartnerDTO partnerA; // Thông tin bên A
+    private ContractPartnerDTO partnerB; // Thông tin bên B
+
 }

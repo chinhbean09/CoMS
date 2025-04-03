@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContractPartnerItemDTO {
+public class PartnerContractItemDTO {
     private String description;
     private Double amount;
 }

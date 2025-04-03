@@ -114,12 +114,15 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
     Page<Addendum> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     // Đếm số phụ lục bị từ chối mà người duyệt đã từ chối
-    long countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-            AddendumStatus status, Long approverId, ApprovalStatus approvalStatus);
+    long countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+            AddendumStatus status, Boolean isLatestVersion, Long approverId, ApprovalStatus approvalStatus);
 
-    long countByContract_User_IdAndStatus(Long userId, AddendumStatus status);
+    long countByContract_User_IdAndStatusAndContract_IsLatestVersion(
+            Long userId, AddendumStatus status, Boolean isLatestVersion);
 
     // Truy vấn phụ lục theo trạng thái và loại phụ lục
     List<Addendum> findByStatusAndAddendumTypeId(AddendumStatus status, Long addendumTypeId);
+
+    boolean existsByContractIdAndTitle(Long contractId, String title);
 
 }

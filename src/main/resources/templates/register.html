@@ -32,8 +32,9 @@
 </head>
 <body>
 <div class="container">
-    <h2>Account's password</h2>
-    <p class="otp" th:text="'Here is the password for your account: ' + ${password}"></p>
+    <h2>Tài khoản đăng nhập của bạn</h2>
+    <p class="otp" th:text="'Tài khoản: ' + ${email}"></p>
+    <p class="otp" th:text="'Mật khẩu: ' + ${password}"></p>
     <p class="note">This is an automated email, please do not reply.</p>
 </div>
 </body>

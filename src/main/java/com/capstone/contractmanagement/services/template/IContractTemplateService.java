@@ -36,7 +36,7 @@ public interface IContractTemplateService {
 
     ContractTemplateStatus updateContractStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException;
 
-    List<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId);
+     Page<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId, Pageable pageable);
 
     }
 

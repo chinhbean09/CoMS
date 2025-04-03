@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.entities.Department;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.DepartmentList;
+import com.capstone.contractmanagement.enums.GenderList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -54,7 +55,7 @@ public class UserResponse {
     private String staffCode;
 
     @JsonProperty("gender")
-    private String gender;
+    private GenderList gender;
 
     @JsonProperty("role")
     private Role role;
@@ -74,6 +75,7 @@ public class UserResponse {
                 .staffCode(user.getStaffCode())
                 .facebookAccountId(user.getFacebookAccountId())
                 .googleAccountId(user.getGoogleAccountId())
+                .gender(user.getGender())
                 .role(user.getRole())
                 .isCeo(user.getIsCeo())
                 .avatar(user.getAvatar())

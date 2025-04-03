@@ -80,7 +80,6 @@
         @Column(name = "amount")
         private Double amount; // Số tiền
 
-        // Relationship: Many-to-One với User
         @ManyToOne
         @JoinColumn(name = "user_id", nullable = false)
         @JsonIgnore
@@ -195,5 +194,9 @@
 
         @Column(name = "source_contract_id")
         private Long sourceContractId; //quản lý duplicate
+
+        @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+        @JsonIgnore
+        private List<ContractPartner> contractPartners = new ArrayList<>();
 
     }
