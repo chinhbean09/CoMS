@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.contract;
 
 import com.capstone.contractmanagement.dtos.contract.ContractItemDTO;
+import com.capstone.contractmanagement.dtos.contract.ContractPartnerDTO;
 import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.contract.ContractItem;
 import com.capstone.contractmanagement.enums.ContractStatus;
@@ -25,7 +26,7 @@ public class ContractResponse {
     private Long id;
     private String title;
     private UserContractResponse user;
-    private Partner partner;
+//    private Partner partner;
     private String contractNumber;
     private ContractStatus status;
     private LocalDateTime createdAt;
@@ -65,6 +66,9 @@ public class ContractResponse {
     // Thông tin thanh toán
     private List<PaymentScheduleResponse> paymentSchedules;
     private List<ContractItemDTO> contractItems;
+
+    private ContractPartnerDTO partnerA;
+    private ContractPartnerDTO partnerB;
 
 
 
