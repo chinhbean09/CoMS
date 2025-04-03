@@ -10,11 +10,12 @@
     @AllArgsConstructor
     @Builder
     public class ContractPartnerDTO {
-        private Long partnerId; // ID của partner trong database (nếu có)
-        private String partnerName; // Tên partner
-        private String partnerAddress; // Địa chỉ
-        private String partnerTaxCode; // Mã số thuế
-        private String partnerPhone; // Số điện thoại
-        private String partnerEmail; // Email
-
+        private Long partnerId;
+        private String partnerName;
+        private String partnerAddress;
+        private String partnerTaxCode;
+        private String partnerPhone;
+        private String partnerEmail;
+        private String spokesmanName;
+        private String position;
     }
