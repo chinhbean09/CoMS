@@ -5,7 +5,6 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.checkerframework.checker.units.qual.C;
 
 import java.time.LocalDateTime;
 
@@ -68,7 +67,7 @@ public class PaymentSchedule {
     private Contract contract;
 
     @ManyToOne
-    @JoinColumn(name = "contract_partner_id", nullable = true)
+    @JoinColumn(name = "partner_contract_id", nullable = true)
     @JsonIgnore
-    private ContractPartner contractPartner;
+    private PartnerContract partnerContract;
 }
