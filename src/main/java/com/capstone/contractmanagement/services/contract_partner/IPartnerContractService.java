@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface IPartnerContractService {
     void createContractPartner(PartnerContractDTO contractDTO);
@@ -19,5 +20,5 @@ public interface IPartnerContractService {
 
     void updateContractPartner(Long contractPartnerId, PartnerContractDTO contractDTO) throws DataNotFoundException;
 
-    void uploadPaymentBillUrl(Long contractPartnerId, MultipartFile file) throws DataNotFoundException;
+    void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException;
 }
