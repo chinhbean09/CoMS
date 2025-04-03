@@ -8,14 +8,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "contract_partners")
+@Table(name = "partner_contracts")
 @Data
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ContractPartner {
+public class PartnerContract {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,11 +45,11 @@ public class ContractPartner {
     @Column(name = "file_url", length = 255)
     private String fileUrl;
 
-    @OneToMany(mappedBy = "contractPartner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "partnerContract", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentSchedule> paymentSchedules;
 
     // Quan hệ với ContractItem
-    @OneToMany(mappedBy = "contractPartner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "partnerContract", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ContractItem> contractItems;
 
     @Column(name = "is_effective_notified")
