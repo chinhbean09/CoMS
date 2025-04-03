@@ -47,12 +47,22 @@
         @PostMapping
         @Transactional
         public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-            Contract contract = contractService.createContractFromTemplate(contractDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
-                    .status(HttpStatus.CREATED)
-                    .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
-                    .data(contract)
-                    .build());
+            try {
+                Contract contract = contractService.createContractFromTemplate(contractDTO);
+                return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
+                        .status(HttpStatus.CREATED)
+                        .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
+                        .data(contract)
+                        .build());
+
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Error retrieving contracts: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .data(null)
+                                .build());
+            }
         }
 
         @GetMapping

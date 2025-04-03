@@ -10,10 +10,7 @@ import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
-import com.capstone.contractmanagement.enums.ApprovalStatus;
-import com.capstone.contractmanagement.enums.ContractStatus;
-import com.capstone.contractmanagement.enums.PaymentStatus;
-import com.capstone.contractmanagement.enums.TypeTermIdentifier;
+import com.capstone.contractmanagement.enums.*;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
@@ -64,9 +61,18 @@ public class ContractService implements IContractService{
         // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
-        Partner partner = partnerRepository.findById(dto.getPartnerId())
+
+        //        Partner partner = partnerRepository.findById(dto.getPartnerId())
+        //                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+
+        Partner partnerB = partnerRepository.findById(dto.getPartnerId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+
         User user = currentUser.getLoggedInUser();
+
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+
         if (user == null) {
             throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
         }
@@ -78,7 +84,7 @@ public class ContractService implements IContractService{
         Contract contract = Contract.builder()
                 .title(dto.getTemplateData().getContractTitle())
                 .contractNumber(contractNumber)
-                .partner(partner)
+                .partner(partnerB)
                 .user(user)
                 .template(template)
                 .signingDate(dto.getSigningDate())
@@ -112,8 +118,32 @@ public class ContractService implements IContractService{
                 .isLatestVersion(true)
                 .duplicateNumber(0)
                 .build();
-        // 3. Map các điều khoản đơn giản sang ContractTerm
 
+        List<ContractPartner> contractPartners = new ArrayList<>();
+        contractPartners.add(ContractPartner.builder()
+                .contract(contract)
+                .partnerType(PartnerType.PARTNER_A)
+                .partnerName(partnerA.getPartnerName())
+                .partnerAddress(partnerA.getAddress())
+                .partnerTaxCode(partnerA.getTaxCode())
+                .partnerPhone(partnerA.getPhone())
+                .partnerEmail(partnerA.getEmail())
+                .partner(partnerA)
+                .build());
+
+        contractPartners.add(ContractPartner.builder()
+                .contract(contract)
+                .partnerType(PartnerType.PARTNER_B)
+                .partnerName(partnerB.getPartnerName())
+                .partnerAddress(partnerB.getAddress())
+                .partnerTaxCode(partnerB.getTaxCode())
+                .partnerPhone(partnerB.getPhone())
+                .partnerEmail(partnerB.getEmail())
+                .partner(partnerB)
+                .build());
+        contract.setContractPartners(contractPartners); // Gán danh sách vào hợp đồng
+
+        // 3. Map các điều khoản đơn giản sang ContractTerm
         List<ContractTerm> contractTerms = new ArrayList<>();
 
         if (dto.getContractItems() != null && !dto.getContractItems().isEmpty()) {
@@ -446,6 +476,26 @@ public class ContractService implements IContractService{
             }
         }
 
+        for (ContractPartner contractPartner : savedContract.getContractPartners()) {
+            String newValue = String.format("Party Type: %s, Name: %s, Partner Address: %s, Partner Tax Code: %s, " +
+                            "Partner Phone: %s, Partner Email: %s",
+                    contractPartner.getPartnerType(), contractPartner.getPartnerName(),
+                    contractPartner.getPartnerAddress(), contractPartner.getPartnerTaxCode(),
+                    contractPartner.getPartnerPhone(), contractPartner.getPartnerEmail());
+            auditTrails.add(AuditTrail.builder()
+                    .contract(savedContract)
+                    .entityName("ContractPartner")
+                    .entityId(contractPartner.getId()) // ID sẽ có sau khi save
+                    .action("CREATE")
+                    .fieldName("contractPartners")
+                    .oldValue(null)
+                    .newValue(newValue)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Thêm thông tin " + contractPartner.getPartnerType() + " cho hợp đồng: " + savedContract.getTitle())
+                    .build());
+        }
+
         // Lưu tất cả bản ghi audit trail
         auditTrailRepository.saveAll(auditTrails);
 
@@ -477,7 +527,11 @@ public class ContractService implements IContractService{
 
     private String generateContractNumber(ContractDTO dto, LocalDateTime createdAt) {
         // 1. Lấy thông tin cần thiết
-        String enterpriseAbbr = "FPT";
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+
+        String enterpriseAbbr = partnerA.getAbbreviation();
+
         Partner partner = partnerRepository.findById(dto.getPartnerId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
         String partnerAbbr = partner.getAbbreviation();
@@ -706,10 +760,44 @@ public class ContractService implements IContractService{
             contracts = new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
-        return contracts.map(this::convertToGetAllContractResponse);
+        return contracts.map(contract -> {
+            contract.getContractPartners().size(); // Load contractPartners
+            return convertToGetAllContractResponse(contract);
+        });
+
     }
 
     private GetAllContractReponse convertToGetAllContractResponse(Contract contract) {
+        // Lấy partnerA và partnerB từ contractPartners
+        ContractPartnerDTO partnerA = null;
+        ContractPartnerDTO partnerB = null;
+        for (ContractPartner contractPartner : contract.getContractPartners()) {
+            if (contractPartner.getPartnerType() == PartnerType.PARTNER_A) {
+                partnerA = ContractPartnerDTO.builder()
+                        .partnerId(contractPartner.getPartner() != null ? contractPartner.getPartner().getId() : null)
+                        .partnerName(contractPartner.getPartnerName())
+                        .partnerAddress(contractPartner.getPartnerAddress())
+                        .partnerTaxCode(contractPartner.getPartnerTaxCode())
+                        .partnerPhone(contractPartner.getPartnerPhone())
+                        .partnerEmail(contractPartner.getPartnerEmail())
+                        .build();
+            } else if (contractPartner.getPartnerType() == PartnerType.PARTNER_B) {
+                partnerB = ContractPartnerDTO.builder()
+                        .partnerId(contractPartner.getPartner() != null ? contractPartner.getPartner().getId() : null)
+                        .partnerName(contractPartner.getPartnerName())
+                        .partnerAddress(contractPartner.getPartnerAddress())
+                        .partnerTaxCode(contractPartner.getPartnerTaxCode())
+                        .partnerPhone(contractPartner.getPartnerPhone())
+                        .partnerEmail(contractPartner.getPartnerEmail())
+                        .build();
+            }
+        }
+
+        // Kiểm tra hợp lệ (bắt buộc có cả A và B)
+        if (partnerA == null || partnerB == null) {
+            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+        }
+
         return GetAllContractReponse.builder()
                 .id(contract.getId())
                 .title(contract.getTitle())
@@ -719,17 +807,14 @@ public class ContractService implements IContractService{
                 .updatedAt(contract.getUpdatedAt())
                 .amount(contract.getAmount())
                 .contractType(contract.getContractType())
-                .partner(Partner.builder()
-                        .id(contract.getPartner().getId())
-                        .partnerName(contract.getPartner().getPartnerName())
-                        .build())
                 .version(contract.getVersion())
                 .originalContractId(contract.getOriginalContractId())
                 .approvalWorkflowId(contract.getApprovalWorkflow() != null ? contract.getApprovalWorkflow().getId() : null)
                 .user(convertUserToUserContractResponse(contract.getUser()))
+                .partnerA(partnerA) // Thêm partnerA
+                .partnerB(partnerB) // Thêm partnerB
                 .build();
     }
-
     private UserContractResponse convertUserToUserContractResponse(User user) {
         return UserContractResponse.builder()
                 .fullName(user.getFullName())
@@ -752,6 +837,7 @@ public class ContractService implements IContractService{
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
+                    contract.getContractPartners().size();
                     contract.getAdditionalTermDetails().forEach(detail -> {
                         detail.getCommonTerms().size();
                         detail.getATerms().size();
@@ -818,11 +904,40 @@ public class ContractService implements IContractService{
                         }
                 ));
 
+        // partnerA và partnerB từ contractPartners
+        ContractPartnerDTO partnerA = null;
+        ContractPartnerDTO partnerB = null;
+        for (ContractPartner contractPartner : contract.getContractPartners()) {
+            if (contractPartner.getPartnerType() == PartnerType.PARTNER_A) {
+                partnerA = ContractPartnerDTO.builder()
+                        .partnerId(contractPartner.getPartner() != null ? contractPartner.getPartner().getId() : null)
+                        .partnerName(contractPartner.getPartnerName())
+                        .partnerAddress(contractPartner.getPartnerAddress())
+                        .partnerTaxCode(contractPartner.getPartnerTaxCode())
+                        .partnerPhone(contractPartner.getPartnerPhone())
+                        .partnerEmail(contractPartner.getPartnerEmail())
+                        .build();
+            } else if (contractPartner.getPartnerType() == PartnerType.PARTNER_B) {
+                partnerB = ContractPartnerDTO.builder()
+                        .partnerId(contractPartner.getPartner() != null ? contractPartner.getPartner().getId() : null)
+                        .partnerName(contractPartner.getPartnerName())
+                        .partnerAddress(contractPartner.getPartnerAddress())
+                        .partnerTaxCode(contractPartner.getPartnerTaxCode())
+                        .partnerPhone(contractPartner.getPartnerPhone())
+                        .partnerEmail(contractPartner.getPartnerEmail())
+                        .build();
+            }
+        }
+
+        if (partnerA == null || partnerB == null) {
+            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+        }
+
         return ContractResponse.builder()
                 .id(contract.getId())
                 .title(contract.getTitle())
                 .user(convertUserToUserContractResponse(contract.getUser()))
-                .partner(contract.getPartner())
+//                .partner(contract.getPartner())
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
@@ -861,6 +976,8 @@ public class ContractService implements IContractService{
                 .contractItems(convertContractItems(contract.getContractItems()))
                 .originalContractId(contract.getOriginalContractId())
                 .sourceContractId(contract.getSourceContractId())
+                .partnerA(partnerA) // Thêm partnerA
+                .partnerB(partnerB) // Thêm partnerB
                 .build();
     }
 
@@ -877,7 +994,7 @@ public class ContractService implements IContractService{
                         .notifyPaymentDate(schedule.getNotifyPaymentDate())
                         .paymentDate(schedule.getPaymentDate())
                         .status(schedule.getStatus())
-                        .billUrl(schedule.getBillUrl())
+                        .billUrls(schedule.getBillUrls())
                         .paymentMethod(schedule.getPaymentMethod())
                         .notifyPaymentContent(schedule.getNotifyPaymentContent())
                         .reminderEmailSent(schedule.isReminderEmailSent())
@@ -1136,6 +1253,99 @@ public class ContractService implements IContractService{
                 .sourceContractId(currentContract.getSourceContractId())
                 .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
+
+// 6. Xử lý ContractPartner (cố định bên A và bên B, chỉ UPDATE)
+        List<ContractPartner> updatedPartners = new ArrayList<>();
+        List<AuditTrail> partnerAuditTrails = new ArrayList<>();
+        Map<PartnerType, ContractPartner> existingPartnerMap = currentContract.getContractPartners().stream()
+                .collect(Collectors.toMap(ContractPartner::getPartnerType, p -> p));
+
+        // Kiểm tra hợp đồng cũ phải có đúng 2 bên A và B
+        if (existingPartnerMap.size() != 2 || !existingPartnerMap.containsKey(PartnerType.PARTNER_A) || !existingPartnerMap.containsKey(PartnerType.PARTNER_B)) {
+            throw new RuntimeException("Hợp đồng hiện tại phải có đúng 2 bên (A và B) để cập nhật.");
+        }
+
+        // Xử lý bên A
+        ContractPartner existingPartnerA = existingPartnerMap.get(PartnerType.PARTNER_A);
+        ContractPartner newPartnerA = ContractPartner.builder()
+                .contract(newContract)
+                .partnerType(PartnerType.PARTNER_A)
+                .partnerName(dto.getPartnerA() != null && dto.getPartnerA().getPartnerName() != null
+                        ? dto.getPartnerA().getPartnerName() : existingPartnerA.getPartnerName())
+                .partnerAddress(dto.getPartnerA() != null && dto.getPartnerA().getPartnerAddress() != null
+                        ? dto.getPartnerA().getPartnerAddress() : existingPartnerA.getPartnerAddress())
+                .partnerTaxCode(dto.getPartnerA() != null && dto.getPartnerA().getPartnerTaxCode() != null
+                        ? dto.getPartnerA().getPartnerTaxCode() : existingPartnerA.getPartnerTaxCode())
+                .partnerPhone(dto.getPartnerA() != null && dto.getPartnerA().getPartnerPhone() != null
+                        ? dto.getPartnerA().getPartnerPhone() : existingPartnerA.getPartnerPhone())
+                .partnerEmail(dto.getPartnerA() != null && dto.getPartnerA().getPartnerEmail() != null
+                        ? dto.getPartnerA().getPartnerEmail() : existingPartnerA.getPartnerEmail())
+                .partner(dto.getPartnerA() != null && dto.getPartnerA().getPartnerId() != null
+                        ? partnerRepository.findById(dto.getPartnerA().getPartnerId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy partner A với ID: " + dto.getPartnerA().getPartnerId()))
+                        : existingPartnerA.getPartner())
+                .build();
+
+        updatedPartners.add(newPartnerA);
+
+        String oldValueA = serializeContractPartner(existingPartnerA);
+        String newValueA = serializeContractPartner(newPartnerA);
+        if (!oldValueA.equals(newValueA)) {
+            partnerAuditTrails.add(AuditTrail.builder()
+                    .contract(newContract)
+                    .entityName("ContractPartner")
+                    .entityId(existingPartnerA.getId())
+                    .action("UPDATE")
+                    .fieldName("partnerA")
+                    .oldValue(oldValueA)
+                    .newValue(newValueA)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Đã cập nhật thông tin bên A cho hợp đồng " + newContractNumber)
+                    .build());
+        }
+
+        // Xử lý bên B
+        ContractPartner existingPartnerB = existingPartnerMap.get(PartnerType.PARTNER_B);
+        ContractPartner newPartnerB = ContractPartner.builder()
+                .contract(newContract)
+                .partnerType(PartnerType.PARTNER_B)
+                .partnerName(dto.getPartnerB() != null && dto.getPartnerB().getPartnerName() != null
+                        ? dto.getPartnerB().getPartnerName() : existingPartnerB.getPartnerName())
+                .partnerAddress(dto.getPartnerB() != null && dto.getPartnerB().getPartnerAddress() != null
+                        ? dto.getPartnerB().getPartnerAddress() : existingPartnerB.getPartnerAddress())
+                .partnerTaxCode(dto.getPartnerB() != null && dto.getPartnerB().getPartnerTaxCode() != null
+                        ? dto.getPartnerB().getPartnerTaxCode() : existingPartnerB.getPartnerTaxCode())
+                .partnerPhone(dto.getPartnerB() != null && dto.getPartnerB().getPartnerPhone() != null
+                        ? dto.getPartnerB().getPartnerPhone() : existingPartnerB.getPartnerPhone())
+                .partnerEmail(dto.getPartnerB() != null && dto.getPartnerB().getPartnerEmail() != null
+                        ? dto.getPartnerB().getPartnerEmail() : existingPartnerB.getPartnerEmail())
+                .partner(dto.getPartnerB() != null && dto.getPartnerB().getPartnerId() != null
+                        ? partnerRepository.findById(dto.getPartnerB().getPartnerId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy partner B với ID: " + dto.getPartnerB().getPartnerId()))
+                        : existingPartnerB.getPartner())
+                .build();
+
+        updatedPartners.add(newPartnerB);
+
+        String oldValueB = serializeContractPartner(existingPartnerB);
+        String newValueB = serializeContractPartner(newPartnerB);
+        if (!oldValueB.equals(newValueB)) {
+            partnerAuditTrails.add(AuditTrail.builder()
+                    .contract(newContract)
+                    .entityName("ContractPartner")
+                    .entityId(existingPartnerB.getId())
+                    .action("UPDATE")
+                    .fieldName("partnerB")
+                    .oldValue(oldValueB)
+                    .newValue(newValueB)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Đã cập nhật thông tin bên B cho hợp đồng " + newContractNumber)
+                    .build());
+        }
+
+        newContract.setContractPartners(updatedPartners);
 
 // Contract savedNewContract = contractRepository.save(newContract); // Xóa dòng này
         // 3. ContractTerm
@@ -2075,6 +2285,17 @@ public class ContractService implements IContractService{
             auditTrail.setContract(savedNewContract);
         }
 
+        for (AuditTrail auditTrail : partnerAuditTrails) {
+            ContractPartner savedPartner = savedNewContract.getContractPartners().stream()
+                    .filter(p -> p.getPartnerType().toString().equals(getPartnerTypeFromNewValue(auditTrail.getNewValue())))
+                    .findFirst()
+                    .orElse(null);
+            if (savedPartner != null) {
+                auditTrail.setEntityId(savedPartner.getId());
+            }
+            auditTrail.setContract(savedNewContract);
+        }
+
         for (AuditTrail auditTrail : itemAuditTrails) {
             if ("CREATE".equals(auditTrail.getAction()) || "UPDATE".equals(auditTrail.getAction())) {
                 ContractItem newItem = auditTrailToItemMap.get(auditTrail);
@@ -2125,6 +2346,16 @@ public class ContractService implements IContractService{
 //        auditTrailRepository.save(versionAuditTrail);
 
         return savedNewContract;
+    }
+
+    private String getPartnerTypeFromNewValue(String newValue) {
+        return newValue.split("type:")[1].split(",")[0];
+    }
+
+    private String serializeContractPartner(ContractPartner partner) {
+        return String.format("ContractPartner{type:%s, name:'%s', address:'%s', taxCode:'%s', phone:'%s', email:'%s'}",
+                partner.getPartnerType(), partner.getPartnerName(), partner.getPartnerAddress(),
+                partner.getPartnerTaxCode(), partner.getPartnerPhone(), partner.getPartnerEmail());
     }
 
     private String serializeContractItem(ContractItem item) {
@@ -2215,6 +2446,39 @@ public class ContractService implements IContractService{
         // Kiểm tra thay đổi trong payment schedules
         if (dto.getPayments() != null && hasPaymentChanges(currentContract.getPaymentSchedules(), dto.getPayments())) return true;
         if (dto.getContractItems() != null && hasContractItemChanges(currentContract.getContractItems(), dto.getContractItems())) return true;
+
+        // Kiểm tra ContractPartner (chỉ kiểm tra UPDATE)
+        Map<PartnerType, ContractPartner> existingPartnerMap = currentContract.getContractPartners().stream()
+                .collect(Collectors.toMap(ContractPartner::getPartnerType, p -> p));
+
+        if (existingPartnerMap.size() != 2 || !existingPartnerMap.containsKey(PartnerType.PARTNER_A) || !existingPartnerMap.containsKey(PartnerType.PARTNER_B)) {
+            throw new RuntimeException("Hợp đồng hiện tại phải có đúng 2 bên (A và B) để cập nhật.");
+        }
+
+        ContractPartner oldPartnerA = existingPartnerMap.get(PartnerType.PARTNER_A);
+        if (dto.getPartnerA() != null) {
+            String newValueA = String.format("ContractPartner{type:%s, name:'%s', address:'%s', taxCode:'%s', phone:'%s', email:'%s'}",
+                    PartnerType.PARTNER_A,
+                    dto.getPartnerA().getPartnerName() != null ? dto.getPartnerA().getPartnerName() : oldPartnerA.getPartnerName(),
+                    dto.getPartnerA().getPartnerAddress() != null ? dto.getPartnerA().getPartnerAddress() : oldPartnerA.getPartnerAddress(),
+                    dto.getPartnerA().getPartnerTaxCode() != null ? dto.getPartnerA().getPartnerTaxCode() : oldPartnerA.getPartnerTaxCode(),
+                    dto.getPartnerA().getPartnerPhone() != null ? dto.getPartnerA().getPartnerPhone() : oldPartnerA.getPartnerPhone(),
+                    dto.getPartnerA().getPartnerEmail() != null ? dto.getPartnerA().getPartnerEmail() : oldPartnerA.getPartnerEmail());
+            if (!serializeContractPartner(oldPartnerA).equals(newValueA)) return true;
+        }
+
+        ContractPartner oldPartnerB = existingPartnerMap.get(PartnerType.PARTNER_B);
+        if (dto.getPartnerB() != null) {
+            String newValueB = String.format("ContractPartner{type:%s, name:'%s', address:'%s', taxCode:'%s', phone:'%s', email:'%s'}",
+                    PartnerType.PARTNER_B,
+                    dto.getPartnerB().getPartnerName() != null ? dto.getPartnerB().getPartnerName() : oldPartnerB.getPartnerName(),
+                    dto.getPartnerB().getPartnerAddress() != null ? dto.getPartnerB().getPartnerAddress() : oldPartnerB.getPartnerAddress(),
+                    dto.getPartnerB().getPartnerTaxCode() != null ? dto.getPartnerB().getPartnerTaxCode() : oldPartnerB.getPartnerTaxCode(),
+                    dto.getPartnerB().getPartnerPhone() != null ? dto.getPartnerB().getPartnerPhone() : oldPartnerB.getPartnerPhone(),
+                    dto.getPartnerB().getPartnerEmail() != null ? dto.getPartnerB().getPartnerEmail() : oldPartnerB.getPartnerEmail());
+            if (!serializeContractPartner(oldPartnerB).equals(newValueB)) return true;
+        }
+
 
         return false; // Không có thay đổi
     }
