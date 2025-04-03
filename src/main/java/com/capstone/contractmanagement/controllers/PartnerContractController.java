@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/partner-contracts")
@@ -64,14 +65,15 @@ public class PartnerContractController {
                 .build());
     }
 
-    @PutMapping(value = "/upload-bill/{paymentScheduleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResponseObject> uploadPaymentBillUrl(@PathVariable long paymentScheduleId,
-                                                               @RequestParam("file") MultipartFile file) throws DataNotFoundException {
-        contractPartnerService.uploadPaymentBillUrl(paymentScheduleId, file);
+    @PutMapping(value = "/upload-bills/{paymentScheduleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long paymentScheduleId,
+                                                                @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
+        contractPartnerService.uploadPaymentBillUrls(paymentScheduleId, files);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(null)
-                .message("Cập nhật đơn thanh toán thành công")
+                .message("Cập nhật các hóa đơn thanh toán thành công")
                 .build());
     }
+
 }
