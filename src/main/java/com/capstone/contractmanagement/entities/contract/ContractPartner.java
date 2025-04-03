@@ -42,6 +42,12 @@ public class ContractPartner {
     @Column(name = "partner_email", length = 100)
     private String partnerEmail;
 
+    @Column(name = "spokesman_name", length = 100)
+    private String spokesmanName;
+
+    @Column(name = "position", length = 100)
+    private String position;
+
     @ManyToOne
     @JoinColumn(name = "partner_id")
     @JsonIgnore
