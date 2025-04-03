@@ -116,8 +116,9 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .note(null)
                 .partnerCode("P40076")
                 .partnerName("FPT software HCM")
-                .partnerType(PartnerType.COMPANY)
+                .partnerType(PartnerType.PARTNER_A)
                 .phone("0922343454")
+                .abbreviation("FPT")
                 .spokesmanName("Đặng Nam Tiến")
                 .taxCode("93245244534467")
                 .build();

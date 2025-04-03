@@ -1,47 +1,47 @@
-  services:
-    app:
-      image: ${BACKEND_IMAGE}
-      ports:
-        - "8088:8088"
-      environment:
-        SPRING_PROFILES_ACTIVE: pro
-        SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/coms
-        SPRING_DATASOURCE_USERNAME: postgres
-        SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      depends_on:
-        - db
-      networks:
-        - backend_network
-        - external_network
-      volumes:
-        - /etc/localtime:/etc/localtime:ro
+    services:
+      app:
+        image: ${BACKEND_IMAGE}
+        ports:
+          - "8088:8088"
+        environment:
+          SPRING_PROFILES_ACTIVE: pro
+          SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/coms
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+        depends_on:
+          - db
+        networks:
+          - backend_network
+          - external_network
+        volumes:
+          - /etc/localtime:/etc/localtime:ro
 
-    db:
-      image: postgres:14-alpine # Sử dụng bản Alpine nhẹ hơn
-      restart: unless-stopped
-      environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: ${DB_PASSWORD} # Sử dụng biến môi trường
-        POSTGRES_DB: coms
-      volumes:
-        - postgres_data:/var/lib/postgresql/data
-        - /etc/localtime:/etc/localtime:ro
-      networks:
-        - backend_network
-      ports:
-        - "5432:5432"
-      deploy:
-        resources:
-          limits:
-            cpus: '1.0'
-            memory: 1G
+      db:
+        image: postgres:14-alpine
+        restart: unless-stopped
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
+          POSTGRES_DB: coms
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+          - /etc/localtime:/etc/localtime:ro
+        networks:
+          - backend_network
+        ports:
+          - "15432:5432"
+        deploy:
+          resources:
+            limits:
+              cpus: '1.0'
+              memory: 1G
 
-  volumes:
-    postgres_data:
+    volumes:
+      postgres_data:
 
-  networks:
-    backend_network:
-      internal: true
-    external_network:
-      internal: false
+    networks:
+      backend_network:
+        internal: true
+      external_network:
+        internal: false
 
