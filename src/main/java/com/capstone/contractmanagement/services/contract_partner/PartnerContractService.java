@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.services.contract_partner;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
-import com.capstone.contractmanagement.dtos.contract_partner.ContractPartnerDTO;
+import com.capstone.contractmanagement.dtos.contract_partner.PartnerContractDTO;
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
@@ -12,8 +12,8 @@ import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.IContractItemRepository;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
-import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerItemResponse;
-import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerResponse;
+import com.capstone.contractmanagement.responses.contract_partner.PartnerContractItemResponse;
+import com.capstone.contractmanagement.responses.contract_partner.PartnerContractResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
@@ -41,17 +41,17 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ContractPartnerService implements IContractPartnerService {
+public class PartnerContractService implements IPartnerContractService {
     private final IContractPartnerRepository contractPartnerRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final Cloudinary cloudinary;
     private final IContractItemRepository contractItemRepository;
     private final LocalizationUtils localizationUtils;
-    private static final Logger logger = LoggerFactory.getLogger(ContractPartnerService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PartnerContractService.class);
 
     @Override
     @Transactional
-    public void createContractPartner(ContractPartnerDTO contractDTO) {
+    public void createContractPartner(PartnerContractDTO contractDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         // Convert DTO to entity
@@ -138,7 +138,7 @@ public class ContractPartnerService implements IContractPartnerService {
 
     @Override
     @Transactional
-    public Page<ContractPartnerResponse> getAllContractPartners(String search, int page, int size) {
+    public Page<PartnerContractResponse> getAllContractPartners(String search, int page, int size) {
         // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
@@ -156,17 +156,17 @@ public class ContractPartnerService implements IContractPartnerService {
         // Chuyển đổi entity sang DTO response
         return contractPartnersPage.map(contractPartner -> {
             // Lấy danh sách ContractItem của contractPartner hiện tại
-            List<ContractPartnerItemResponse> items = contractItemRepository.findByPartnerContract(contractPartner)
+            List<PartnerContractItemResponse> items = contractItemRepository.findByPartnerContract(contractPartner)
                     .stream()
-                    .map(item -> ContractPartnerItemResponse.builder()
+                    .map(item -> PartnerContractItemResponse.builder()
                             .id(item.getId())
                             .amount(item.getAmount())
                             .description(item.getDescription())
                             .build())
                     .collect(Collectors.toList());
 
-            return ContractPartnerResponse.builder()
-                    .contractPartnerId(contractPartner.getId())
+            return PartnerContractResponse.builder()
+                    .partnerContractId(contractPartner.getId())
                     .contractNumber(contractPartner.getContractNumber())
                     .totalValue(contractPartner.getAmount())
                     .partnerName(contractPartner.getPartnerName())
@@ -203,7 +203,7 @@ public class ContractPartnerService implements IContractPartnerService {
     }
 
     @Override
-    public void updateContractPartner(Long contractPartnerId, ContractPartnerDTO contractDTO) throws DataNotFoundException {
+    public void updateContractPartner(Long contractPartnerId, PartnerContractDTO contractDTO) throws DataNotFoundException {
         PartnerContract partnerContract = contractPartnerRepository.findById(contractPartnerId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
         partnerContract.setContractNumber(contractDTO.getContractNumber());
