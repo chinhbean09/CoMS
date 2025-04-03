@@ -15,7 +15,7 @@ public class PaymentScheduleDTO {
     private Double amount; // Số tiền thanh toán
     private LocalDateTime notifyPaymentDate; // Ngày thông báo thanh toán
     private LocalDateTime paymentDate; // Ngày đến hạn thanh toán
-    private PaymentStatus status; // Trạng thái thanh toán
+//    private PaymentStatus status; // Trạng thái thanh toán
     private String paymentMethod; // Phương thức thanh toán
     private String notifyPaymentContent; // Nội dung thông báo thanh toán
     private boolean reminderEmailSent; // Cờ gửi email nhắc nhở

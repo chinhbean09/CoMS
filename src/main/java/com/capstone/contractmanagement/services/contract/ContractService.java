@@ -994,7 +994,6 @@ public class ContractService implements IContractService{
                         .notifyPaymentDate(schedule.getNotifyPaymentDate())
                         .paymentDate(schedule.getPaymentDate())
                         .status(schedule.getStatus())
-                        .billUrls(schedule.getBillUrls())
                         .paymentMethod(schedule.getPaymentMethod())
                         .notifyPaymentContent(schedule.getNotifyPaymentContent())
                         .reminderEmailSent(schedule.isReminderEmailSent())
@@ -1915,7 +1914,6 @@ public class ContractService implements IContractService{
                     newPayment.setAmount(paymentDTO.getAmount() != null ? paymentDTO.getAmount() : oldPayment.getAmount());
                     newPayment.setNotifyPaymentDate(paymentDTO.getNotifyPaymentDate() != null ? paymentDTO.getNotifyPaymentDate() : oldPayment.getNotifyPaymentDate());
                     newPayment.setPaymentDate(paymentDTO.getPaymentDate() != null ? paymentDTO.getPaymentDate() : oldPayment.getPaymentDate());
-                    newPayment.setStatus(paymentDTO.getStatus() != null ? paymentDTO.getStatus() : oldPayment.getStatus());
                     newPayment.setPaymentMethod(paymentDTO.getPaymentMethod() != null ? paymentDTO.getPaymentMethod() : oldPayment.getPaymentMethod());
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent() != null ? paymentDTO.getNotifyPaymentContent() : oldPayment.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
@@ -1959,7 +1957,6 @@ public class ContractService implements IContractService{
                     newPayment.setAmount(paymentDTO.getAmount());
                     newPayment.setNotifyPaymentDate(paymentDTO.getNotifyPaymentDate());
                     newPayment.setPaymentDate(paymentDTO.getPaymentDate());
-                    newPayment.setStatus(paymentDTO.getStatus());
                     newPayment.setPaymentMethod(paymentDTO.getPaymentMethod());
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
@@ -2330,20 +2327,20 @@ public class ContractService implements IContractService{
         if(auditTrails.isEmpty() && termAuditTrails.isEmpty() && additionalTermAuditTrails.isEmpty() && paymentAuditTrails.isEmpty() && itemAuditTrails.isEmpty()) {
             return savedNewContract;
         }
-        // 11. Ghi log audit trail cho hành động tạo phiên bản mới
-//        AuditTrail versionAuditTrail = AuditTrail.builder()
-//                .contract(savedNewContract)
-//                .entityName("Contract")
-//                .entityId(savedNewContract.getId())
-//                .action("CREATE_VERSION")
-//                .fieldName("contract")
-//                .oldValue(serializeContract(currentContract))
-//                .newValue(serializeContract(savedNewContract))
-//                .changedAt(now)
-//                .changedBy(changedBy)
-//                .changeSummary("Đã tạo phiên bản " + newVersion + " của hợp đồng " + currentContract.getContractNumber())
-//                .build();
-//        auditTrailRepository.save(versionAuditTrail);
+            // 11. Ghi log audit trail cho hành động tạo phiên bản mới
+    //        AuditTrail versionAuditTrail = AuditTrail.builder()
+    //                .contract(savedNewContract)
+    //                .entityName("Contract")
+    //                .entityId(savedNewContract.getId())
+    //                .action("CREATE_VERSION")
+    //                .fieldName("contract")
+    //                .oldValue(serializeContract(currentContract))
+    //                .newValue(serializeContract(savedNewContract))
+    //                .changedAt(now)
+    //                .changedBy(changedBy)
+    //                .changeSummary("Đã tạo phiên bản " + newVersion + " của hợp đồng " + currentContract.getContractNumber())
+    //                .build();
+    //        auditTrailRepository.save(versionAuditTrail);
 
         return savedNewContract;
     }
@@ -2639,7 +2636,6 @@ public class ContractService implements IContractService{
                     !Objects.equals(existingPayment.getAmount(), dtoPayment.getAmount()) ||
                     !Objects.equals(existingPayment.getNotifyPaymentDate(), dtoPayment.getNotifyPaymentDate()) ||
                     !Objects.equals(existingPayment.getPaymentDate(), dtoPayment.getPaymentDate()) ||
-                    !Objects.equals(existingPayment.getStatus(), dtoPayment.getStatus()) ||
                     !Objects.equals(existingPayment.getPaymentMethod(), dtoPayment.getPaymentMethod()) ||
                     !Objects.equals(existingPayment.getNotifyPaymentContent(), dtoPayment.getNotifyPaymentContent()) ||
                     existingPayment.isReminderEmailSent() != dtoPayment.isReminderEmailSent() ||
