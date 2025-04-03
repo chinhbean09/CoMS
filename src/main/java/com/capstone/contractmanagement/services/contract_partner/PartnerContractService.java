@@ -19,6 +19,7 @@ import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -140,7 +141,6 @@ public class PartnerContractService implements IPartnerContractService {
     @Override
     @Transactional
     public Page<PartnerContractResponse> getAllContractPartners(String search, int page, int size) {
-        // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
 
@@ -219,10 +219,15 @@ public class PartnerContractService implements IPartnerContractService {
     }
 
     @Override
+    @Transactional
     public void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException {
         PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
                 .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+
         try {
+            // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
+            paymentSchedule.getBillUrls().clear();  // Nếu bạn muốn thay thế các hình ảnh cũ
+
             List<String> uploadedUrls = new ArrayList<>();
 
             for (MultipartFile file : files) {
@@ -242,8 +247,10 @@ public class PartnerContractService implements IPartnerContractService {
                 uploadedUrls.add(billUrl);
             }
 
-            // Lưu các URL vào PaymentSchedule
+            // Thêm các URL đã upload vào danh sách billUrls
             paymentSchedule.getBillUrls().addAll(uploadedUrls);
+
+            // Cập nhật trạng thái thanh toán nếu cần
             paymentSchedule.setStatus(PaymentStatus.PAID); // Bạn có thể thay đổi trạng thái tùy theo logic của mình
 
             // Lưu PaymentSchedule đã cập nhật
