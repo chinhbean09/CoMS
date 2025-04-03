@@ -168,6 +168,18 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         }
     }
 
+    @Override
+    public List<String> getBillUrlsByPaymentId(Long paymentId) throws DataNotFoundException {
+        // Lấy danh sách billUrls từ repository
+        List<String> billUrls = paymentScheduleRepository.findBillUrlsByPaymentId(paymentId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("No bill URLs found for payment with ID: " + paymentId);
+        }
+
+        return billUrls;
+    }
+
 //    private void sendEmailReminder(PaymentSchedule payment) {
 //        // Gửi email nhắc nhỏ
 //        try {

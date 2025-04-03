@@ -59,7 +59,7 @@ public class PaymentSchedule {
     private Integer paymentPercentage;
 
     // Thay đổi field này thành List<String> để lưu nhiều URL
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "payment_schedule_evidences", joinColumns = @JoinColumn(name = "payment_id"))
     @Column(name = "bill_url")
     private List<String> billUrls; // Lưu nhiều URL trong một trường
