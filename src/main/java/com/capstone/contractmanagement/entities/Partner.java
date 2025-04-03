@@ -5,6 +5,7 @@ import com.capstone.contractmanagement.enums.PartnerType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,9 @@ public class Partner {
     @Column(name = "partner_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private PartnerType partnerType; // Loại bên (Bên A, Bên B)
+
+    @Column(name = "abbreviation", length = 200)
+    private String abbreviation;
 
     @Column(name = "name", nullable = false, length = 200)
     private String partnerName; // Tên công ty hoặc cá nhân

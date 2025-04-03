@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.controllers;
 import com.capstone.contractmanagement.dtos.party.CreatePartnerDTO;
 import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
 import com.capstone.contractmanagement.repositories.IPartnerRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.party.CreatePartnerResponse;
@@ -33,13 +34,30 @@ public class PartyController {
     }
 
     @PutMapping("/update/{partyId}")
-    public ResponseEntity<ResponseObject> updateParty(@PathVariable Long partyId, @RequestBody UpdatePartnerDTO createPartyDTO) throws DataNotFoundException {
-        CreatePartnerResponse response = partyService.updatePartner(partyId, createPartyDTO);
-        return ResponseEntity.ok(ResponseObject.builder()
-                .status(HttpStatus.OK)
-                .message(MessageKeys.UPDATE_PARTY_SUCCESSFULLY)
-                .data(response)
-                .build());
+    public ResponseEntity<ResponseObject> updateParty(@PathVariable Long partyId, @RequestBody UpdatePartnerDTO updatePartnerDTO) {
+        try {
+            CreatePartnerResponse response = partyService.updatePartner(partyId, updatePartnerDTO);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message(MessageKeys.UPDATE_PARTY_SUCCESSFULLY)
+                    .data(response)
+                    .build());
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Không tìm thấy đối tác")
+                    .build());
+        } catch (OperationNotPermittedException e) {
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message(e.getMessage()) // Trả về thông báo cụ thể từ ngoại lệ
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Đã xảy ra lỗi: " + e.getMessage())
+                    .build());
+        }
     }
 
     @GetMapping("/get-all")
@@ -82,12 +100,14 @@ public class PartyController {
     public ResponseEntity<String> updatePartyStatus(@PathVariable Long partyId, @PathVariable Boolean isDeleted) {
         try {
             partyService.updatePartnerStatus(partyId, isDeleted);
-            String message = isDeleted ? "Xóa mềm quan hệ" : "Khôi phục quan hệ";
+            String message = isDeleted ? "Xóa mềm đối tác" : "Khôi phục đối tác";
             return ResponseEntity.ok(message);
         } catch (DataNotFoundException e) {
-            return ResponseEntity.badRequest().body("Không tìm thấy quan hệ");
+            return ResponseEntity.badRequest().body("Không tìm thấy đối tác");
+        } catch (OperationNotPermittedException e) {
+            return ResponseEntity.badRequest().body(e.getMessage()); // Trả về thông báo cụ thể từ ngoại lệ
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body("Đã xảy ra lỗi: " + e.getMessage());
         }
     }
 }
