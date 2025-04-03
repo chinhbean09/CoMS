@@ -56,26 +56,15 @@ public class AddendumService implements IAddendumService{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
 
-        // Lấy hợp đồng từ DTO
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
                 .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
-        // Kiểm tra xem có phụ lục nào với cùng title cho hợp đồng này chưa
-        boolean isTitleExist = addendumRepository.existsByContractIdAndTitle(contract.getId(), addendumDTO.getTitle());
-        if (isTitleExist) {
-            throw new DataNotFoundException("Tên phụ lục bị trùng: " + addendumDTO.getTitle());
-        }
-
-        // Lấy thông tin đối tác (Partner) liên kết với hợp đồng
         Partner partner = contract.getPartner();
 
-        // Lấy loại phụ lục
         AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
                 .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
-
         if (contract.getStatus() == ContractStatus.ACTIVE
                 || contract.getStatus() == ContractStatus.EXPIRED) {
-            // Tạo phụ lục mới
             Addendum addendum = Addendum.builder()
                     .title(addendumDTO.getTitle())
                     .content(addendumDTO.getContent())
@@ -88,11 +77,8 @@ public class AddendumService implements IAddendumService{
                     .addendumType(addendumType)
                     .contract(contract)
                     .build();
-
-            // Lưu phụ lục
             addendumRepository.save(addendum);
 
-            // Trả về thông tin phụ lục đã tạo
             return AddendumResponse.builder()
                     .addendumId(addendum.getId())
                     .title(addendum.getTitle())
@@ -114,7 +100,6 @@ public class AddendumService implements IAddendumService{
                     .updatedAt(addendum.getUpdatedAt())
                     .build();
         }
-
         throw new DataNotFoundException("Cannot create addendum: Contract is not ACTIVE");
     }
 
