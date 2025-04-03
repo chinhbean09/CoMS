@@ -1,8 +1,8 @@
 package com.capstone.contractmanagement.services.contract_partner;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
-import com.capstone.contractmanagement.dtos.contract_partner.ContractPartnerDTO;
-import com.capstone.contractmanagement.entities.ContractPartner;
+import com.capstone.contractmanagement.dtos.contract_partner.PartnerContractDTO;
+import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.ContractItem;
@@ -12,10 +12,9 @@ import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.IContractItemRepository;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
-import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerItemResponse;
-import com.capstone.contractmanagement.responses.contract_partner.ContractPartnerResponse;
+import com.capstone.contractmanagement.responses.contract_partner.PartnerContractItemResponse;
+import com.capstone.contractmanagement.responses.contract_partner.PartnerContractResponse;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
-import com.capstone.contractmanagement.services.user.UserService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -42,43 +41,43 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ContractPartnerService implements IContractPartnerService {
+public class PartnerContractService implements IPartnerContractService {
     private final IContractPartnerRepository contractPartnerRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final Cloudinary cloudinary;
     private final IContractItemRepository contractItemRepository;
     private final LocalizationUtils localizationUtils;
-    private static final Logger logger = LoggerFactory.getLogger(ContractPartnerService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PartnerContractService.class);
 
     @Override
     @Transactional
-    public void createContractPartner(ContractPartnerDTO contractDTO) {
+    public void createContractPartner(PartnerContractDTO contractDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         // Convert DTO to entity
-        ContractPartner contractPartner = new ContractPartner();
-        contractPartner.setContractNumber(contractDTO.getContractNumber());
-        contractPartner.setAmount(contractDTO.getTotalValue());
-        contractPartner.setPartnerName(contractDTO.getPartnerName());
-        contractPartner.setTitle(contractDTO.getTitle());
+        PartnerContract partnerContract = new PartnerContract();
+        partnerContract.setContractNumber(contractDTO.getContractNumber());
+        partnerContract.setAmount(contractDTO.getTotalValue());
+        partnerContract.setPartnerName(contractDTO.getPartnerName());
+        partnerContract.setTitle(contractDTO.getTitle());
 
         // Convert date list [year, month, day, hour, minute, second] to LocalDateTime
-        contractPartner.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
-        contractPartner.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
-        contractPartner.setFileUrl(contractDTO.getFileUrl());
-        contractPartner.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
-        contractPartner.setUser(currentUser);
+        partnerContract.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
+        partnerContract.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
+        partnerContract.setFileUrl(contractDTO.getFileUrl());
+        partnerContract.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
+        partnerContract.setUser(currentUser);
 
         // Save contract
-        contractPartner = contractPartnerRepository.save(contractPartner);
+        partnerContract = contractPartnerRepository.save(partnerContract);
 
         if (contractDTO.getItems() != null) {
-            ContractPartner finalContractPartner = contractPartner;
+            PartnerContract finalPartnerContract = partnerContract;
             AtomicInteger itemOrder = new AtomicInteger();
             List<ContractItem> contractItems = contractDTO.getItems().stream()
                     .map(dto -> {
                         ContractItem contractItem = new ContractItem();
-                        contractItem.setContractPartner(finalContractPartner);
+                        contractItem.setPartnerContract(finalPartnerContract);
                         contractItem.setDescription(dto.getDescription());
                         contractItem.setItemOrder(itemOrder.getAndIncrement());
                         contractItem.setAmount(dto.getAmount());
@@ -89,7 +88,7 @@ public class ContractPartnerService implements IContractPartnerService {
         }
         // Handle payment schedules
         if (contractDTO.getPaymentSchedules() != null) {
-            ContractPartner finalContractPartner = contractPartner;
+            PartnerContract finalPartnerContract = partnerContract;
             List<PaymentSchedule> paymentSchedules = contractDTO.getPaymentSchedules().stream()
                     .map(dto -> {
                         PaymentSchedule paymentSchedule = new PaymentSchedule();
@@ -97,7 +96,7 @@ public class ContractPartnerService implements IContractPartnerService {
                         paymentSchedule.setPaymentMethod(dto.getPaymentMethod());
                         paymentSchedule.setPaymentDate(convertToLocalDateTime(dto.getPaymentDate()));
                         paymentSchedule.setPaymentOrder(dto.getPaymentOrder());
-                        paymentSchedule.setContractPartner(finalContractPartner);
+                        paymentSchedule.setPartnerContract(finalPartnerContract);
                         paymentSchedule.setPaymentPercentage(dto.getPaymentPercentage());
                         paymentSchedule.setStatus(PaymentStatus.UNPAID);
                         paymentSchedule.setOverdueEmailSent(false);
@@ -139,7 +138,7 @@ public class ContractPartnerService implements IContractPartnerService {
 
     @Override
     @Transactional
-    public Page<ContractPartnerResponse> getAllContractPartners(String search, int page, int size) {
+    public Page<PartnerContractResponse> getAllContractPartners(String search, int page, int size) {
         // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
@@ -151,23 +150,23 @@ public class ContractPartnerService implements IContractPartnerService {
         String searchKeyword = search != null ? search : "";
 
         // Gọi repository để lấy dữ liệu theo tiêu chí tìm kiếm và phân trang
-        Page<ContractPartner> contractPartnersPage = contractPartnerRepository
+        Page<PartnerContract> contractPartnersPage = contractPartnerRepository
                 .searchByUserAndKeyword(currentUser, searchKeyword, pageable);
 
         // Chuyển đổi entity sang DTO response
         return contractPartnersPage.map(contractPartner -> {
             // Lấy danh sách ContractItem của contractPartner hiện tại
-            List<ContractPartnerItemResponse> items = contractItemRepository.findByContractPartner(contractPartner)
+            List<PartnerContractItemResponse> items = contractItemRepository.findByPartnerContract(contractPartner)
                     .stream()
-                    .map(item -> ContractPartnerItemResponse.builder()
+                    .map(item -> PartnerContractItemResponse.builder()
                             .id(item.getId())
                             .amount(item.getAmount())
                             .description(item.getDescription())
                             .build())
                     .collect(Collectors.toList());
 
-            return ContractPartnerResponse.builder()
-                    .contractPartnerId(contractPartner.getId())
+            return PartnerContractResponse.builder()
+                    .partnerContractId(contractPartner.getId())
                     .contractNumber(contractPartner.getContractNumber())
                     .totalValue(contractPartner.getAmount())
                     .partnerName(contractPartner.getPartnerName())
@@ -198,24 +197,24 @@ public class ContractPartnerService implements IContractPartnerService {
     @Override
     @Transactional
     public void deleteContractPartner(Long contractPartnerId) throws DataNotFoundException {
-        ContractPartner contractPartner = contractPartnerRepository.findById(contractPartnerId)
+        PartnerContract partnerContract = contractPartnerRepository.findById(contractPartnerId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
-        contractPartnerRepository.delete(contractPartner);
+        contractPartnerRepository.delete(partnerContract);
     }
 
     @Override
-    public void updateContractPartner(Long contractPartnerId, ContractPartnerDTO contractDTO) throws DataNotFoundException {
-        ContractPartner contractPartner = contractPartnerRepository.findById(contractPartnerId)
+    public void updateContractPartner(Long contractPartnerId, PartnerContractDTO contractDTO) throws DataNotFoundException {
+        PartnerContract partnerContract = contractPartnerRepository.findById(contractPartnerId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
-        contractPartner.setContractNumber(contractDTO.getContractNumber());
-        contractPartner.setAmount(contractDTO.getTotalValue());
-        contractPartner.setPartnerName(contractDTO.getPartnerName());
-        contractPartner.setTitle(contractDTO.getTitle());
-        contractPartner.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
-        contractPartner.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
-        contractPartner.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
-        contractPartner.setFileUrl(contractDTO.getFileUrl());
-        contractPartnerRepository.save(contractPartner);
+        partnerContract.setContractNumber(contractDTO.getContractNumber());
+        partnerContract.setAmount(contractDTO.getTotalValue());
+        partnerContract.setPartnerName(contractDTO.getPartnerName());
+        partnerContract.setTitle(contractDTO.getTitle());
+        partnerContract.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
+        partnerContract.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
+        partnerContract.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
+        partnerContract.setFileUrl(contractDTO.getFileUrl());
+        contractPartnerRepository.save(partnerContract);
     }
 
     @Override
