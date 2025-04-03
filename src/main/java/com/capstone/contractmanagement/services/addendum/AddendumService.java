@@ -933,6 +933,56 @@ public class AddendumService implements IAddendumService{
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public AddendumResponse duplicateAddendum(Long addendumId, Long contractId) throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+
+        Addendum originAddendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
+
+        if (contract.getStatus() == ContractStatus.ACTIVE || contract.getStatus() == ContractStatus.EXPIRED) {
+            Addendum newAddendum = new Addendum();
+            newAddendum.setAddendumType(originAddendum.getAddendumType());
+            newAddendum.setTitle(originAddendum.getTitle());
+            newAddendum.setStatus(AddendumStatus.CREATED);
+            newAddendum.setUser(currentUser);
+            newAddendum.setContent(originAddendum.getContent());
+            newAddendum.setCreatedAt(LocalDateTime.now());
+            newAddendum.setEffectiveDate(originAddendum.getEffectiveDate());
+            newAddendum.setUpdatedAt(null);
+            newAddendum.setContract(contract);
+            newAddendum.setContractNumber(originAddendum.getContractNumber());
+            addendumRepository.save(newAddendum);
+
+            return AddendumResponse.builder()
+                    .addendumId(newAddendum.getId())
+                    .title(newAddendum.getTitle())
+                    .content(newAddendum.getContent())
+                    .contractNumber(newAddendum.getContractNumber())
+                    .status(newAddendum.getStatus())
+                    .createdBy(UserAddendumResponse.builder()
+                            .userId(currentUser.getId())
+                            .userName(currentUser.getUsername())
+                            .build())
+                    .contractId(newAddendum.getContract().getId())
+                    .addendumType(AddendumTypeResponse.builder()
+                            .addendumTypeId(newAddendum.getAddendumType().getId())
+                            .name(newAddendum.getAddendumType().getName())
+                            .build())
+                    .effectiveDate(newAddendum.getEffectiveDate())
+                    .createdAt(newAddendum.getCreatedAt())
+                    .updatedAt(newAddendum.getUpdatedAt())
+                    .build();
+        } else {
+            throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng đang không ở trạng thái hoạt động");
+        }
+    }
+
 
     private AddendumResponse mapToAddendumResponse(Addendum addendum) {
         return AddendumResponse.builder()

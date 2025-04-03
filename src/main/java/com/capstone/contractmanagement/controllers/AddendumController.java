@@ -225,4 +225,14 @@ public class AddendumController {
                 .data(comments)
                 .build());
     }
+
+    @PostMapping("/duplicate/{addendumId}/{contractId}")
+    public ResponseEntity<ResponseObject> duplicateAddendum(@PathVariable Long addendumId, @PathVariable Long contractId) throws DataNotFoundException {
+        AddendumResponse addendumResponse = addendumService.duplicateAddendum(addendumId, contractId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.CREATED)
+                .message("Nhân bản phụ lục thành công")
+                .data(addendumResponse)
+                .build());
+    }
 }
