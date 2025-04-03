@@ -1,6 +1,6 @@
 package com.capstone.contractmanagement.services.contract_partner;
 
-import com.capstone.contractmanagement.entities.ContractPartner;
+import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
@@ -34,7 +34,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         LocalDateTime now = LocalDateTime.now();
 
         // Tìm đối tác hợp đồng sắp có hiệu lực
-        List<ContractPartner> partnersToEffectiveNotify = contractPartnerRepository.findAll().stream()
+        List<PartnerContract> partnersToEffectiveNotify = contractPartnerRepository.findAll().stream()
                 .filter(cp -> cp.getEffectiveDate() != null)
                 .filter(cp -> Boolean.FALSE.equals(cp.getIsEffectiveNotified())) // Chưa gửi thông báo hiệu lực
                 .filter(cp -> {
@@ -43,13 +43,13 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 })
                 .collect(Collectors.toList());
 
-        for (ContractPartner cp : partnersToEffectiveNotify) {
+        for (PartnerContract cp : partnersToEffectiveNotify) {
             String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate();
             sendNotification(cp, message, true);
         }
 
         // Tìm đối tác hợp đồng sắp hết hạn
-        List<ContractPartner> partnersToExpiryNotify = contractPartnerRepository.findAll().stream()
+        List<PartnerContract> partnersToExpiryNotify = contractPartnerRepository.findAll().stream()
                 .filter(cp -> cp.getExpiryDate() != null)
                 .filter(cp -> Boolean.FALSE.equals(cp.getIsExpiryNotified())) // Chưa gửi thông báo hết hạn
                 .filter(cp -> {
@@ -58,7 +58,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 })
                 .collect(Collectors.toList());
 
-        for (ContractPartner cp : partnersToExpiryNotify) {
+        for (PartnerContract cp : partnersToExpiryNotify) {
             String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate();
             sendNotification(cp, message, false);
         }
@@ -71,7 +71,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
      * @param message    nội dung thông báo
      * @param isEffective nếu true: thông báo hiệu lực, nếu false: thông báo hết hạn
      */
-    private void sendNotification(ContractPartner cp, String message, boolean isEffective) {
+    private void sendNotification(PartnerContract cp, String message, boolean isEffective) {
         // Lấy thông tin người dùng từ ContractPartner
         User user = cp.getUser();
 
