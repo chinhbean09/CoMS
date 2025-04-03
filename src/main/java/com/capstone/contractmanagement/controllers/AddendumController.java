@@ -125,17 +125,14 @@ public class AddendumController {
     }
 
     @PostMapping("/resubmit/{addendumId}")
-    public ResponseEntity<String> resubmitContract(@PathVariable Long addendumId) {
-        try {
-            addendumService.resubmitAddendumForApproval(addendumId);
-            return ResponseEntity.ok("Addendum resubmitted for approval successfully.");
-        } catch (DataNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred while resubmitting the Addendum.");
-        }
+    public ResponseEntity<ResponseObject> resubmitContract(@PathVariable Long addendumId) throws DataNotFoundException {
+        addendumService.resubmitAddendumForApproval(addendumId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Nộp lại cho quy trình duyệt thành công")
+                .status(HttpStatus.OK)
+                .build());
     }
+
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject> getFilteredAddenda(
