@@ -123,4 +123,6 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
     // Truy vấn phụ lục theo trạng thái và loại phụ lục
     List<Addendum> findByStatusAndAddendumTypeId(AddendumStatus status, Long addendumTypeId);
 
+    boolean existsByContractIdAndTitle(Long contractId, String title);
+
 }
