@@ -5,9 +5,9 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.checkerframework.checker.units.qual.C;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "payment_schedules")
@@ -26,7 +26,7 @@ public class PaymentSchedule {
     @Column(name = "payment_order", nullable = true)
     private Integer paymentOrder;
 
-//    @Column(name = "payment_content")
+    //    @Column(name = "payment_content")
 //    private String paymentContent;
     @Column(name = "amount", nullable = false)
     private Double amount; // Số tiền thanh toán trong đợt
@@ -58,8 +58,11 @@ public class PaymentSchedule {
     @Column(name = "payment_percentage")
     private Integer paymentPercentage;
 
+    // Thay đổi field này thành List<String> để lưu nhiều URL
+    @ElementCollection
+    @CollectionTable(name = "payment_schedule_evidences", joinColumns = @JoinColumn(name = "payment_id"))
     @Column(name = "bill_url")
-    private String billUrl;
+    private List<String> billUrls; // Lưu nhiều URL trong một trường
 
     // Relationship với Contract
     @ManyToOne
@@ -68,7 +71,7 @@ public class PaymentSchedule {
     private Contract contract;
 
     @ManyToOne
-    @JoinColumn(name = "contract_partner_id", nullable = true)
+    @JoinColumn(name = "partner_contract_id", nullable = true)
     @JsonIgnore
-    private ContractPartner contractPartner;
+    private PartnerContract partnerContract;
 }
