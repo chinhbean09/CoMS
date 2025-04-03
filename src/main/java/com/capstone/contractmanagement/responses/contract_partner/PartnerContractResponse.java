@@ -14,10 +14,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContractPartnerResponse {
+public class PartnerContractResponse {
 
 
-    private Long contractPartnerId;
+    private Long partnerContractId;
     private String contractNumber;
     private Double totalValue;
     private String partnerName;
@@ -26,7 +26,7 @@ public class ContractPartnerResponse {
     private LocalDateTime expiryDate;
     private String title;
     private String fileUrl;
-    private List<ContractPartnerItemResponse> items;
+    private List<PartnerContractItemResponse> items;
     private List<PaymentScheduleResponse> paymentSchedules;
 
 }
