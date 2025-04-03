@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +21,7 @@ public class PaymentScheduleResponse {
     private PaymentStatus status;
     private String paymentMethod;
     private Integer paymentPercentage;
-    private List<String> billUrls;
+    private String billUrl;
     private String notifyPaymentContent;
     private boolean reminderEmailSent;
     private boolean overdueEmailSent;
