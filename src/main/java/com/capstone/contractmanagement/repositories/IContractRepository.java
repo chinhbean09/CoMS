@@ -43,7 +43,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT MAX(c.version) FROM Contract c WHERE c.originalContractId = :originalContractId")
     Integer findMaxVersionByOriginalContractId(@Param("originalContractId") Long originalContractId);
 
-    List<Contract> findByStatus(ContractStatus status);
+    List<Contract> findByStatusAndIsLatestVersion(ContractStatus status, boolean isLatestVersion);
 
     @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatus(@Param("status") ContractStatus status, Pageable pageable);
@@ -249,8 +249,8 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             Pageable pageable);
 
     // Đếm số hợp đồng cần phê duyệt mà người duyệt được giao
-    long countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-            ContractStatus status, Long approverId, ApprovalStatus approvalStatus);
+    long countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+            ContractStatus status, Boolean isLatestVersion, Long approverId, ApprovalStatus approvalStatus);
 
     long countByUser_IdAndStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
             Long userId,
@@ -260,12 +260,13 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     );
 
     // Đếm số hợp đồng của nhân viên đang ở trạng thái APPROVAL_PENDING
-    long countByUser_IdAndStatus( Long userId, ContractStatus status);
+    long countByUser_IdAndStatusAndIsLatestVersion(Long userId, ContractStatus status, Boolean isLatestVersion);
 
     Integer findMaxDuplicateNumberByOriginalContractId(Long id);
 
     @Query("SELECT MAX(c.duplicateNumber) FROM Contract c WHERE c.sourceContractId = :sourceContractId")
     Integer findMaxDuplicateNumberBySourceContractId(Long sourceContractId);
 
+    boolean existsByPartnerIdAndStatus(Long partnerId, ContractStatus status);
 
 }

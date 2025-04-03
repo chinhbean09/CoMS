@@ -1,20 +1,16 @@
 package com.capstone.contractmanagement.dtos.party;
 
-import com.capstone.contractmanagement.dtos.bank.CreateBankDTO;
-import com.capstone.contractmanagement.enums.PartyType;
-import lombok.AllArgsConstructor;
+import com.capstone.contractmanagement.dtos.bank.UpdateBankDTO;
+import com.capstone.contractmanagement.enums.PartnerType;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class CreatePartnerDTO {
-    private PartyType partnerType; // Loại bên (Bên A, Bên B)
+public class UpdatePartnerDTO {
+    private PartnerType partnerType; // Loại bên (Bên A, Bên B)
     private String partnerName; // Tên công ty hoặc cá nhân
     private String spokesmanName;
     private String address;
@@ -23,5 +19,5 @@ public class CreatePartnerDTO {
     private String email;
     private String note;
     private String position;
-    private List<CreateBankDTO> banking;
+    private List<UpdateBankDTO> banking;
 }

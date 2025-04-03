@@ -606,8 +606,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
-        List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
+        // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING và là phiên bản mới nhất
+        List<Contract> pendingContracts = contractRepository.findByStatusAndIsLatestVersion(ContractStatus.APPROVAL_PENDING, true);
 
         // Lọc các hợp đồng theo approverId, keyword và contractTypeId
         List<Contract> filteredContracts = pendingContracts.stream()
@@ -617,24 +617,22 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         return false;
                     }
 
-                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
-                    OptionalInt currentStageOrderOpt = workflow.getStages().stream()
-                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
-                                    || stage.getStatus() == ApprovalStatus.REJECTED
-                                    || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .mapToInt(ApprovalStage::getStageOrder)
-                            .min();
-
-                    if (!currentStageOrderOpt.isPresent()) {
-                        return false;
-                    }
-
-                    int currentStageOrder = currentStageOrderOpt.getAsInt();
-
-                    // Điều kiện: Kiểm tra nếu approver có quyền duyệt bước này
-                    return workflow.getStages().stream()
-                            .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
-                                    && stage.getApprover().getId().equals(approverId));
+                    // Lọc các hợp đồng có trạng thái phù hợp
+                    // Bao gồm hợp đồng có trạng thái chưa kết thúc (trạng thái khác ENDED)
+                    // và hợp đồng có quy trình duyệt mà người duyệt có nhiệm vụ ở bước tiếp theo
+                    return contract.getStatus() != ContractStatus.ENDED
+                            && workflow.getStages().stream()
+                            .anyMatch(stage -> {
+                                // Kiểm tra xem người duyệt có nhiệm vụ ở bước này hay không
+                                // và trạng thái của bước duyệt phải là NOT_STARTED, REJECTED, hoặc APPROVING
+                                if (stage.getApprover().getId().equals(approverId)) {
+                                    // Kiểm tra xem người duyệt có thể duyệt ở bước này
+                                    return stage.getStatus() == ApprovalStatus.APPROVING
+                                            || stage.getStatus() == ApprovalStatus.REJECTED
+                                            || stage.getStatus() == ApprovalStatus.APPROVED;
+                                }
+                                return false;
+                            });
                 })
                 .filter(contract -> {
                     // Tìm kiếm theo từ khóa trong tiêu đề hợp đồng hoặc số hợp đồng
@@ -733,7 +731,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING
-        List<Contract> pendingContracts = contractRepository.findByStatus(ContractStatus.APPROVAL_PENDING);
+        List<Contract> pendingContracts = contractRepository.findByStatusAndIsLatestVersion(ContractStatus.APPROVAL_PENDING, true);
 
         // Lọc các hợp đồng theo managerId, keyword và contractTypeId
         List<Contract> filteredContracts = pendingContracts.stream()
@@ -793,11 +791,11 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         if (currentUser.isManager()) {
             // Quản lý: lấy số lượng hợp đồng và phụ lục đang chờ phê duyệt mà người đó được giao
-            long contractsPendingApprovalForManager = contractRepository.countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-                    ContractStatus.APPROVAL_PENDING, currentUser.getId(), ApprovalStatus.APPROVING);
+            long contractsPendingApprovalForManager = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    ContractStatus.APPROVAL_PENDING,true, currentUser.getId(), ApprovalStatus.APPROVING);
 
-            long addendaPendingApprovalForManager = addendumRepository.countByStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-                    AddendumStatus.APPROVAL_PENDING, currentUser.getId(), ApprovalStatus.APPROVING);
+            long addendaPendingApprovalForManager = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
 
             stats.put("contractsPendingApprovalForManager", (int) contractsPendingApprovalForManager);
             stats.put("addendaPendingApprovalForManager", (int) addendaPendingApprovalForManager);
@@ -806,16 +804,16 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             // Nhân viên: lấy số lượng hợp đồng/phụ lục mà nhân viên đã tạo đang chờ phê duyệt và bị từ chối
 
             // Số lượng hợp đồng mà nhân viên đã tạo, đang chờ phê duyệt
-            long contractsPendingApproval = contractRepository.countByUser_IdAndStatus(currentUser.getId(), ContractStatus.APPROVAL_PENDING);
+            long contractsPendingApproval = contractRepository.countByUser_IdAndStatusAndIsLatestVersion(currentUser.getId(), ContractStatus.APPROVAL_PENDING, true);
 
             // Số lượng hợp đồng mà nhân viên đã tạo, bị từ chối
-            long contractsRejected = contractRepository.countByUser_IdAndStatus(currentUser.getId(), ContractStatus.REJECTED);
+            long contractsRejected = contractRepository.countByUser_IdAndStatusAndIsLatestVersion(currentUser.getId(), ContractStatus.REJECTED, true);
 
             // Số lượng phụ lục mà nhân viên đã tạo, đang chờ phê duyệt
-            long addendaPendingApproval = addendumRepository.countByContract_User_IdAndStatus(currentUser.getId(), AddendumStatus.APPROVAL_PENDING);
+            long addendaPendingApproval = addendumRepository.countByContract_User_IdAndStatusAndContract_IsLatestVersion(currentUser.getId(), AddendumStatus.APPROVAL_PENDING, true);
 
             // Số lượng phụ lục mà nhân viên đã tạo, bị từ chối
-            long addendaRejected = addendumRepository.countByContract_User_IdAndStatus(currentUser.getId(), AddendumStatus.APPROVAL_PENDING);
+            long addendaRejected = addendumRepository.countByContract_User_IdAndStatusAndContract_IsLatestVersion(currentUser.getId(), AddendumStatus.APPROVAL_PENDING, true);
 
             stats.put("contractsPendingApproval", (int) contractsPendingApproval);
             stats.put("contractsRejected", (int) contractsRejected);
@@ -840,7 +838,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .signingDate(contract.getSigningDate())
                 .contractLocation(contract.getContractLocation())
                 .amount(contract.getAmount())
-                .contractTypeName(contract.getContractType().getName())
+                .contractType(contract.getContractType())
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
                 .notifyEffectiveDate(contract.getNotifyEffectiveDate())

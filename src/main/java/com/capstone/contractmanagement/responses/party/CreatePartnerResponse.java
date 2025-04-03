@@ -22,5 +22,6 @@ public class CreatePartnerResponse {
     private String note;
     private String position;
     private Boolean isDeleted;
+    private String abbreviation;
     private List<BankResponse> banking;
 }
