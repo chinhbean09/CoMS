@@ -51,4 +51,6 @@ public interface IAddendumService {
     List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId);
 
     List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException;
+
+    AddendumResponse duplicateAddendum(Long addendumId, Long contractId) throws DataNotFoundException;
 }
