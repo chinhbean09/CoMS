@@ -43,7 +43,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT MAX(c.version) FROM Contract c WHERE c.originalContractId = :originalContractId")
     Integer findMaxVersionByOriginalContractId(@Param("originalContractId") Long originalContractId);
 
-    List<Contract> findByStatus(ContractStatus status);
+    List<Contract> findByStatusAndIsLatestVersion(ContractStatus status, boolean isLatestVersion);
 
     @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatus(@Param("status") ContractStatus status, Pageable pageable);
