@@ -54,7 +54,6 @@ public class ContractService implements IContractService{
     private final SecurityUtils securityUtils;
     private final IApprovalWorkflowRepository workflowRepository;
 
-        @Transactional
         @Override
         public Contract createContractFromTemplate(ContractDTO dto) {
             // 1. Load các entity cần thiết
