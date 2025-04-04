@@ -122,7 +122,7 @@ public class ContractService implements IContractService{
             List<ContractPartner> contractPartners = new ArrayList<>();
             contractPartners.add(ContractPartner.builder()
                     .contract(contract)
-                    .partnerType(PartnerType.PARTNER_A)
+                    .partnerType(partnerA.getPartnerType())
                     .partnerName(partnerA.getPartnerName())
                     .partnerAddress(partnerA.getAddress())
                     .partnerTaxCode(partnerA.getTaxCode())
@@ -135,7 +135,7 @@ public class ContractService implements IContractService{
 
             contractPartners.add(ContractPartner.builder()
                     .contract(contract)
-                    .partnerType(PartnerType.PARTNER_B)
+                    .partnerType(partnerB.getPartnerType())
                     .partnerName(partnerB.getPartnerName())
                     .partnerAddress(partnerB.getAddress())
                     .partnerTaxCode(partnerB.getTaxCode())
@@ -1042,23 +1042,169 @@ public class ContractService implements IContractService{
                 .collect(Collectors.toList());
     }
 
+        @Override
+        @Transactional
+        public Contract duplicateContract(Long contractId) {
+            // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
+            Contract originalContract = contractRepository.findById(contractId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+
+            // 2. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
+            Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
+            Integer duplicateNumber = (maxDuplicateNumber != null ? maxDuplicateNumber : 0) + 1;
+
+            // 3. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
+            Contract duplicateContract = Contract.builder()
+                    .title(originalContract.getTitle() + " (Copy " + duplicateNumber + ")")
+                    .contractNumber(originalContract.getContractNumber() + "__" + duplicateNumber)
+                    .sourceContractId(originalContract.getId()) // Liên kết với hợp đồng nguồn
+                    .partner(originalContract.getPartner())
+                    .user(originalContract.getUser())
+                    .template(originalContract.getTemplate())
+                    .signingDate(null)
+                    .contractLocation(originalContract.getContractLocation())
+                    .amount(originalContract.getAmount())
+                    .effectiveDate(null)
+                    .expiryDate(null)
+                    .notifyEffectiveDate(null)
+                    .notifyExpiryDate(null)
+                    .notifyEffectiveContent(originalContract.getNotifyEffectiveContent())
+                    .notifyExpiryContent(originalContract.getNotifyExpiryContent())
+                    .specialTermsA(originalContract.getSpecialTermsA())
+                    .specialTermsB(originalContract.getSpecialTermsB())
+                    .contractContent(originalContract.getContractContent())
+                    .appendixEnabled(originalContract.getAppendixEnabled())
+                    .transferEnabled(originalContract.getTransferEnabled())
+                    .autoAddVAT(originalContract.getAutoAddVAT())
+                    .vatPercentage(originalContract.getVatPercentage())
+                    .isDateLateChecked(originalContract.getIsDateLateChecked())
+                    .autoRenew(originalContract.getAutoRenew())
+                    .violate(originalContract.getViolate())
+                    .maxDateLate(originalContract.getMaxDateLate())
+                    .suspend(originalContract.getSuspend())
+                    .suspendContent(originalContract.getSuspendContent())
+                    .contractType(originalContract.getContractType())
+                    .status(ContractStatus.CREATED)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .version(1)
+                    .isLatestVersion(true)
+                    .duplicateNumber(duplicateNumber)
+                    .build();
+
+            // 4. Sao chép các điều khoản (ContractTerm)
+            List<ContractTerm> duplicateTerms = new ArrayList<>();
+            for (ContractTerm originalTerm : originalContract.getContractTerms()) {
+                ContractTerm newTerm = ContractTerm.builder()
+                        .originalTermId(originalTerm.getOriginalTermId())
+                        .termLabel(originalTerm.getTermLabel())
+                        .termValue(originalTerm.getTermValue())
+                        .termType(originalTerm.getTermType())
+                        .contract(duplicateContract)
+                        .build();
+                duplicateTerms.add(newTerm);
+            }
+            duplicateContract.setContractTerms(duplicateTerms);
+
+            // 5. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
+            List<ContractAdditionalTermDetail> duplicateAdditionalDetails = new ArrayList<>();
+            for (ContractAdditionalTermDetail originalDetail : originalContract.getAdditionalTermDetails()) {
+                ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
+                        .typeTermId(originalDetail.getTypeTermId())
+                        .commonTerms(new ArrayList<>(originalDetail.getCommonTerms()))
+                        .aTerms(new ArrayList<>(originalDetail.getATerms()))
+                        .bTerms(new ArrayList<>(originalDetail.getBTerms()))
+                        .contract(duplicateContract)
+                        .build();
+                duplicateAdditionalDetails.add(newDetail);
+            }
+            duplicateContract.setAdditionalTermDetails(duplicateAdditionalDetails);
+
+            // 6. Sao chép các lịch thanh toán (PaymentSchedule)
+            List<PaymentSchedule> duplicatePaymentSchedules = new ArrayList<>();
+            for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
+                PaymentSchedule newPayment = PaymentSchedule.builder()
+                        .amount(originalPayment.getAmount())
+                        .paymentDate(null)
+                        .notifyPaymentDate(null)
+                        .paymentOrder(originalPayment.getPaymentOrder())
+                        .status(PaymentStatus.UNPAID)
+                        .paymentMethod(originalPayment.getPaymentMethod())
+                        .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
+                        .contract(duplicateContract)
+                        .build();
+                duplicatePaymentSchedules.add(newPayment);
+            }
+            duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
+
+            // 7. Sao chép các hạng mục thanh toán (ContractItem)
+            List<ContractItem> duplicateContractItems = new ArrayList<>();
+            for (ContractItem originalItem : originalContract.getContractItems()) {
+                ContractItem newItem = ContractItem.builder()
+                        .contract(duplicateContract)
+                        .description(originalItem.getDescription())
+                        .amount(originalItem.getAmount())
+                        .itemOrder(originalItem.getItemOrder())
+                        .build();
+                duplicateContractItems.add(newItem);
+            }
+            duplicateContract.setContractItems(duplicateContractItems);
+
+            List<ContractPartner> duplicatePartners = new ArrayList<>();
+            for (ContractPartner originalPartner : originalContract.getContractPartners()) {
+                ContractPartner newPartner = ContractPartner.builder()
+                        .contract(duplicateContract)
+                        .partnerType(originalPartner.getPartnerType())
+                        .partnerName(originalPartner.getPartnerName())
+                        .partnerAddress(originalPartner.getPartnerAddress())
+                        .partnerTaxCode(originalPartner.getPartnerTaxCode())
+                        .partnerPhone(originalPartner.getPartnerPhone())
+                        .partnerEmail(originalPartner.getPartnerEmail())
+                        .spokesmanName(originalPartner.getSpokesmanName())
+                        .position(originalPartner.getPosition())
+                        .partner(originalPartner.getPartner())
+                        .build();
+                duplicatePartners.add(newPartner);
+            }
+            duplicateContract.setContractPartners(duplicatePartners);
+
+
+            // 8. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
+            Contract savedDuplicateContract = contractRepository.save(duplicateContract);
+            savedDuplicateContract.setOriginalContractId(savedDuplicateContract.getId());
+            contractRepository.save(savedDuplicateContract);
+
+            return savedDuplicateContract;
+        }
+
+
     @Override
     @Transactional
-    public Contract duplicateContract(Long contractId) {
+    public Contract duplicateContractWithPartner(Long contractId, Long partnerId) {
         // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
         Contract originalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
 
-        // 2. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
+        // 2. Lấy Partner từ partnerId để lấy thông tin
+        Partner partnerFromId = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Partner với id: " + partnerId));
+
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+
+        // 3. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
         Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
         Integer duplicateNumber = (maxDuplicateNumber != null ? maxDuplicateNumber : 0) + 1;
 
-        // 3. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = currentUser.getLoggedInUser().getFullName();
+
+        // 4. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
         Contract duplicateContract = Contract.builder()
                 .title(originalContract.getTitle() + " (Copy " + duplicateNumber + ")")
                 .contractNumber(originalContract.getContractNumber() + "__" + duplicateNumber)
                 .sourceContractId(originalContract.getId()) // Liên kết với hợp đồng nguồn
-                .partner(originalContract.getPartner())
+                .partner(partnerFromId) // Gán Partner từ partnerId
                 .user(originalContract.getUser())
                 .template(originalContract.getTemplate())
                 .signingDate(null)
@@ -1085,14 +1231,14 @@ public class ContractService implements IContractService{
                 .suspendContent(originalContract.getSuspendContent())
                 .contractType(originalContract.getContractType())
                 .status(ContractStatus.CREATED)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .version(1)
                 .isLatestVersion(true)
                 .duplicateNumber(duplicateNumber)
                 .build();
 
-        // 4. Sao chép các điều khoản (ContractTerm)
+        // 5. Sao chép các điều khoản (ContractTerm)
         List<ContractTerm> duplicateTerms = new ArrayList<>();
         for (ContractTerm originalTerm : originalContract.getContractTerms()) {
             ContractTerm newTerm = ContractTerm.builder()
@@ -1106,7 +1252,7 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setContractTerms(duplicateTerms);
 
-        // 5. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
+        // 6. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
         List<ContractAdditionalTermDetail> duplicateAdditionalDetails = new ArrayList<>();
         for (ContractAdditionalTermDetail originalDetail : originalContract.getAdditionalTermDetails()) {
             ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
@@ -1120,7 +1266,7 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setAdditionalTermDetails(duplicateAdditionalDetails);
 
-        // 6. Sao chép các lịch thanh toán (PaymentSchedule)
+        // 7. Sao chép các lịch thanh toán (PaymentSchedule)
         List<PaymentSchedule> duplicatePaymentSchedules = new ArrayList<>();
         for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
             PaymentSchedule newPayment = PaymentSchedule.builder()
@@ -1137,7 +1283,7 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
 
-        // 7. Sao chép các hạng mục thanh toán (ContractItem)
+        // 8. Sao chép các hạng mục thanh toán (ContractItem)
         List<ContractItem> duplicateContractItems = new ArrayList<>();
         for (ContractItem originalItem : originalContract.getContractItems()) {
             ContractItem newItem = ContractItem.builder()
@@ -1150,7 +1296,42 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setContractItems(duplicateContractItems);
 
-        // 8. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
+        // 9. Tạo ContractPartners từ thông tin của Partner theo partnerId
+        List<ContractPartner> duplicatePartners = new ArrayList<>();
+
+        // Tạo PARTNER_A (giả định giữ nguyên thông tin từ Partner cũ hoặc để trống nếu không cần)
+        ContractPartner contractPartnerA = ContractPartner.builder()
+                .contract(duplicateContract)
+                .partnerType(partnerA.getPartnerType())
+                .partnerName(partnerA.getPartnerName())
+                .partnerAddress(partnerA.getAddress())
+                .partnerTaxCode(partnerA.getTaxCode())
+                .partnerPhone(partnerA.getPhone())
+                .partnerEmail(partnerA.getEmail())
+                .spokesmanName(partnerA.getSpokesmanName())
+                .position(partnerA.getPosition())
+                .partner(partnerA)
+                .build();
+        duplicatePartners.add(contractPartnerA);
+
+        // Tạo PARTNER_B từ thông tin của Partner theo partnerId
+        ContractPartner partnerB = ContractPartner.builder()
+                .contract(duplicateContract)
+                .partnerType(PartnerType.PARTNER_B)
+                .partnerName(partnerFromId.getPartnerName())
+                .partnerAddress(partnerFromId.getAddress())
+                .partnerTaxCode(partnerFromId.getTaxCode())
+                .partnerPhone(partnerFromId.getPhone())
+                .partnerEmail(partnerFromId.getEmail())
+                .spokesmanName(partnerFromId.getSpokesmanName())
+                .position(partnerFromId.getPosition())
+                .partner(partnerFromId)
+                .build();
+        duplicatePartners.add(partnerB);
+
+        duplicateContract.setContractPartners(duplicatePartners);
+
+        // 10. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
         Contract savedDuplicateContract = contractRepository.save(duplicateContract);
         savedDuplicateContract.setOriginalContractId(savedDuplicateContract.getId());
         contractRepository.save(savedDuplicateContract);
@@ -1174,7 +1355,11 @@ public class ContractService implements IContractService{
     public Contract updateContract(Long contractId, ContractUpdateDTO dto) {
         // 1. Tìm hợp đồng hiện tại
         Contract currentContract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng."));
+
+        if (currentContract.getStatus() == ContractStatus.ACTIVE) {
+            throw new RuntimeException("Hợp đồng đang ở trạng thái hoạt động. Vui lòng tạo Phụ lục thay vì cập nhật trực tiếp.");
+        }
 
         // 1.1 Kiểm tra xem hợp đồng có đang trong quy trình duyệt hay không
         ApprovalWorkflow workflow = currentContract.getApprovalWorkflow();
@@ -2793,10 +2978,10 @@ public class ContractService implements IContractService{
                 .contract(savedContract)
                 .entityName("Contract")
                 .entityId(savedContract.getId())
-                .action("UPDATE")
+                .action("SOFT_DELETE")
                 .fieldName("status")
-                .oldValue(oldStatusVi) // Sử dụng giá trị đã dịch
-                .newValue(newStatusVi)  // Sử dụng giá trị đã dịch
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
                 .changedAt(LocalDateTime.now())
                 .changedBy(currentUser.getLoggedInUser().getFullName())
                 .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái '%s' sang '%s'", oldStatusVi, newStatusVi))
@@ -3045,6 +3230,40 @@ public class ContractService implements IContractService{
             rollbackItems.add(newItem);
         }
         rollbackContract.setContractItems(rollbackItems);
+
+        List<ContractPartner> rollbackPartners = new ArrayList<>();
+        List<AuditTrail> partnerAuditTrails = new ArrayList<>();
+        for (ContractPartner oldPartner : targetContract.getContractPartners()) {
+            ContractPartner newPartner = ContractPartner.builder()
+                    .contract(rollbackContract)
+                    .partnerType(oldPartner.getPartnerType())
+                    .partnerName(oldPartner.getPartnerName())
+                    .partnerAddress(oldPartner.getPartnerAddress())
+                    .partnerTaxCode(oldPartner.getPartnerTaxCode())
+                    .partnerPhone(oldPartner.getPartnerPhone())
+                    .partnerEmail(oldPartner.getPartnerEmail())
+                    .spokesmanName(oldPartner.getSpokesmanName())
+                    .position(oldPartner.getPosition())
+                    .partner(oldPartner.getPartner())
+                    .build();
+            rollbackPartners.add(newPartner);
+
+            // Ghi audit trail cho ContractPartner
+//            String newValue = serializeContractPartner(newPartner);
+//            partnerAuditTrails.add(AuditTrail.builder()
+//                    .contract(rollbackContract)
+//                    .entityName("ContractPartner")
+//                    .entityId(null) // ID sẽ được gán sau khi lưu
+//                    .action("CREATE")
+//                    .fieldName("contractPartners")
+//                    .oldValue(null)
+//                    .newValue(newValue)
+//                    .changedAt(now)
+//                    .changedBy(changedBy)
+//                    .changeSummary("Đã sao chép thông tin " + oldPartner.getPartnerType() + " từ phiên bản " + targetVersion + " trong rollback")
+//                    .build());
+        }
+        rollbackContract.setContractPartners(rollbackPartners);
 
         // 8. Lưu hợp đồng rollback
         Contract savedRollbackContract = contractRepository.save(rollbackContract);
