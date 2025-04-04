@@ -38,7 +38,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getEffectiveDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> !contract.getIsEffectiveNotified())  // Chưa gửi thông báo hiệu lực
+                .filter(contract -> !contract.getIsEffectiveNotified())
+                .filter(Contract::getIsLatestVersion)// Chưa gửi thông báo hiệu lực
                 .filter(contract -> {
                     LocalDateTime notifyDate = contract.getEffectiveDate().minusDays(EFFECTIVE_NOTIFY_DAYS);
                     return now.isAfter(notifyDate) && now.isBefore(contract.getEffectiveDate());
@@ -55,7 +56,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> !contract.getIsExpiryNotified())  // Chưa gửi thông báo hết hạn
+                .filter(contract -> !contract.getIsExpiryNotified())
+                .filter(contract -> contract.getIsLatestVersion())// Chưa gửi thông báo hết hạn
                 .filter(contract -> {
                     LocalDateTime notifyDate = contract.getExpiryDate().minusDays(EXPIRY_NOTIFY_DAYS);
                     return now.isAfter(notifyDate) && now.isBefore(contract.getExpiryDate());
@@ -74,6 +76,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
                 .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveOverdueNotified()))  // Chưa gửi thông báo quá hạn hiệu lực
                 .filter(contract -> now.isAfter(contract.getEffectiveDate()))
+                .filter(Contract::getIsLatestVersion)
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsEffectiveOverdue) {
