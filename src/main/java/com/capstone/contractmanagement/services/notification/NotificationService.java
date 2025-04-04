@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -75,5 +76,14 @@ public class NotificationService implements INotificationService {
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.NOTIFICATION_NOT_FOUND));
         notification.setIsRead(true);
         notificationRepository.save(notification);
+    }
+
+    @Override
+    public void markAllNotificationAsRead() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        List<Notification> notifications = notificationRepository.findByUser(currentUser);
+        notifications.forEach(notification -> notification.setIsRead(true));
+        notificationRepository.saveAll(notifications);
     }
 }
