@@ -121,6 +121,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .abbreviation("FPT")
                 .spokesmanName("Đặng Nam Tiến")
                 .taxCode("93245244534467")
+                .position("Giám đốc")
                 .build();
         partyRepository.save(partner);
         System.out.println("Partner initialized!");
