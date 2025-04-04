@@ -15,11 +15,19 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessFie
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -281,6 +289,71 @@ public class TermService implements ITermService{
                             .build())
                     .collect(Collectors.toList());
         }
+
+    @Override
+    @Transactional
+    public List<CreateTermResponse> importTermsFromExcel(MultipartFile file, Long typeTermId) throws IOException {
+        // Kiểm tra sự tồn tại của TypeTerm
+        TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại điều khoản"));
+
+        // Kiểm tra xem file có phải là file Excel không
+        if (!file.getContentType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") &&
+                !file.getOriginalFilename().endsWith(".xlsx")) {
+            throw new IllegalArgumentException("File bạn gửi lên không phải là file Excel (XLSX).");
+        }
+
+        // Đọc dữ liệu từ file Excel
+        List<CreateTermResponse> termResponses = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream()) {
+            Workbook workbook = new XSSFWorkbook(inputStream); // Tạo workbook từ file Excel
+            Sheet sheet = workbook.getSheetAt(0); // Lấy sheet đầu tiên
+
+            // Duyệt qua các dòng trong sheet
+            for (int i = 1; i <= sheet.getPhysicalNumberOfRows(); i++) {
+                Row row = sheet.getRow(i);
+
+                if (row == null || row.getCell(0) == null || row.getCell(1) == null) {
+                    continue; // Bỏ qua các dòng không hợp lệ
+                }
+
+                String label = row.getCell(0).getStringCellValue();
+                String value = row.getCell(1).getStringCellValue();
+
+                // Kiểm tra nếu label đã tồn tại
+                if (termRepository.existsByLabel(label)) {
+                    continue; // Bỏ qua nếu label đã tồn tại
+                }
+
+                // Tạo mới Term
+                Term term = Term.builder()
+                        .label(label)
+                        .value(value)
+                        .typeTerm(typeTerm)
+                        .clauseCode(generateClauseCode(typeTerm)) // Gọi phương thức tạo clauseCode
+                        .createdAt(LocalDateTime.now())
+                        .status(TermStatus.NEW)
+                        .version(1)
+                        .build();
+
+                term = termRepository.save(term);
+
+                // Thêm vào danh sách phản hồi
+                termResponses.add(CreateTermResponse.builder()
+                        .id(term.getId())
+                        .label(term.getLabel())
+                        .value(term.getValue())
+                        .createdAt(term.getCreatedAt())
+                        .identifier(String.valueOf(typeTerm.getIdentifier()))
+                        .type(typeTerm.getName())
+                        .clauseCode(term.getClauseCode())
+                        .status(term.getStatus())
+                        .build());
+            }
+        }
+
+        return termResponses;
+    }
 
     @Override
     public CreateTermResponse getTermById(Long id) throws DataNotFoundException {
