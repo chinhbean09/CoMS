@@ -44,8 +44,17 @@ public class NotificationController {
 
     // api mark all notification as read
     @PutMapping("/mark-as-read/{notificationId}")
-    public ResponseEntity<ResponseObject> markAllNotificationAsRead(@PathVariable Long notificationId) throws DataNotFoundException {
+    public ResponseEntity<ResponseObject> markNotificationAsRead(@PathVariable Long notificationId) throws DataNotFoundException {
         notificationService.markNotificationAsRead(notificationId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.MARK_NOTIFICATION_AS_READ_SUCCESSFULLY)
+                .build());
+    }
+
+    @PutMapping("/mark-all-as-read")
+    public ResponseEntity<ResponseObject> markAllNotificationAsRead() {
+        notificationService.markAllNotificationAsRead();
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message(MessageKeys.MARK_NOTIFICATION_AS_READ_SUCCESSFULLY)
