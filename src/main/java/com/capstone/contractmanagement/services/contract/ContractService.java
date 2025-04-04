@@ -3245,19 +3245,19 @@ public class ContractService implements IContractService{
             rollbackPartners.add(newPartner);
 
             // Ghi audit trail cho ContractPartner
-            String newValue = serializeContractPartner(newPartner);
-            partnerAuditTrails.add(AuditTrail.builder()
-                    .contract(rollbackContract)
-                    .entityName("ContractPartner")
-                    .entityId(null) // ID sẽ được gán sau khi lưu
-                    .action("CREATE")
-                    .fieldName("contractPartners")
-                    .oldValue(null)
-                    .newValue(newValue)
-                    .changedAt(now)
-                    .changedBy(changedBy)
-                    .changeSummary("Đã sao chép thông tin " + oldPartner.getPartnerType() + " từ phiên bản " + targetVersion + " trong rollback")
-                    .build());
+//            String newValue = serializeContractPartner(newPartner);
+//            partnerAuditTrails.add(AuditTrail.builder()
+//                    .contract(rollbackContract)
+//                    .entityName("ContractPartner")
+//                    .entityId(null) // ID sẽ được gán sau khi lưu
+//                    .action("CREATE")
+//                    .fieldName("contractPartners")
+//                    .oldValue(null)
+//                    .newValue(newValue)
+//                    .changedAt(now)
+//                    .changedBy(changedBy)
+//                    .changeSummary("Đã sao chép thông tin " + oldPartner.getPartnerType() + " từ phiên bản " + targetVersion + " trong rollback")
+//                    .build());
         }
         rollbackContract.setContractPartners(rollbackPartners);
 
