@@ -154,6 +154,36 @@
             }
         }
 
+        @PostMapping("/{id}/duplicate-with-partner")
+        public ResponseEntity<ResponseObject> duplicateContractWithPartner(
+                @PathVariable Long id,
+                @RequestParam("partnerId") Long partnerId) {
+            try {
+                Contract duplicateContract = contractService.duplicateContractWithPartner(id, partnerId);
+                if (duplicateContract != null) {
+                    return ResponseEntity.ok(ResponseObject.builder()
+                            .message(MessageKeys.DUPLICATE_CONTRACT_SUCCESSFULLY)
+                            .status(HttpStatus.OK)
+                            .data(duplicateContract)
+                            .build());
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(ResponseObject.builder()
+                                    .message("Contract not found with id: " + id)
+                                    .status(HttpStatus.NOT_FOUND)
+                                    .data(null)
+                                    .build());
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Internal server error: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .data(null)
+                                .build());
+            }
+        }
+
         @DeleteMapping("/soft-delete/{id}")
         public ResponseEntity<ResponseObject> softDeleteContract(@PathVariable Long id) {
             try {
