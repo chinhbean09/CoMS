@@ -2974,10 +2974,10 @@ public class ContractService implements IContractService{
                 .contract(savedContract)
                 .entityName("Contract")
                 .entityId(savedContract.getId())
-                .action("UPDATE")
+                .action("SOFT_DELETE")
                 .fieldName("status")
-                .oldValue(oldStatusVi) // Sử dụng giá trị đã dịch
-                .newValue(newStatusVi)  // Sử dụng giá trị đã dịch
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
                 .changedAt(LocalDateTime.now())
                 .changedBy(currentUser.getLoggedInUser().getFullName())
                 .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái '%s' sang '%s'", oldStatusVi, newStatusVi))
