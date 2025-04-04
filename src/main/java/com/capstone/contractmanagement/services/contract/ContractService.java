@@ -1349,9 +1349,8 @@ public class ContractService implements IContractService{
         return baseContractNumber + "-v" + newVersion;
     }
 
-
-    @Transactional
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public Contract updateContract(Long contractId, ContractUpdateDTO dto) {
         // 1. Tìm hợp đồng hiện tại
         Contract currentContract = contractRepository.findById(contractId)
@@ -1384,11 +1383,12 @@ public class ContractService implements IContractService{
 
         // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
         List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getOriginalContractId());
-        for (Contract oldContract : oldContracts) {
+
+        oldContracts.forEach(oldContract -> {
             oldContract.setIsLatestVersion(false);
             oldContract.setApprovalWorkflow(null);
-            contractRepository.save(oldContract);
-        }
+        });
+        contractRepository.saveAll(oldContracts);
 
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
@@ -2549,9 +2549,11 @@ public class ContractService implements IContractService{
         return savedNewContract;
     }
 
+
     private String getPartnerTypeFromNewValue(String newValue) {
         return newValue.split("type:")[1].split(",")[0];
     }
+
 
     private String serializeContractPartner(ContractPartner partner) {
         return String.format("ContractPartner{type:%s, name:'%s', address:'%s', taxCode:'%s', phone:'%s', email:'%s', spokesmanName:'%s', position:'%s'}",
