@@ -61,6 +61,7 @@ pipeline {
                             downCommand += " -v --remove-orphans"
                         }
                        sh """
+                           export COMPOSE_PROJECT_NAME=coms
                            echo "Checking if DB_PASSWORD is set: \${DB_PASSWORD:+'set'}"
                            echo "DB_PASSWORD hash (SHA256): \$(echo -n \$DB_PASSWORD | sha256sum)"
                            export BACKEND_IMAGE=${IMAGE_VERSION}
