@@ -113,11 +113,11 @@
             Partner existingPartner = partyRepository.findById(id)
                     .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
 
-            if (isPartnerInActiveContract(id)) {
-                throw new OperationNotPermittedException(
-                        "Không thể xóa đối tác vì đang trong hợp đồng đang hoạt động. Vui lòng tạo phụ lục thay thế."
-                );
-            }
+//            if (isPartnerInActiveContract(id)) {
+//                throw new OperationNotPermittedException(
+//                        "Không thể xóa đối tác vì đang trong hợp đồng đang hoạt động. Vui lòng tạo phụ lục thay thế."
+//                );
+//            }
 
             // Cập nhật thông tin Partner
             existingPartner.setPartnerType(updatePartnerDTO.getPartnerType());
