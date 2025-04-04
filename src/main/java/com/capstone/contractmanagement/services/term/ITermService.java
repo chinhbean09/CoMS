@@ -9,7 +9,9 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessFie
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ITermService {
@@ -40,4 +42,6 @@ public interface ITermService {
     Page<GetAllTermsResponseLessField> getAllTermsLessField(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
 
     List<CreateTermResponse> batchCreateTerms(List<BatchCreateTermDTO> dtos) throws DataNotFoundException;
+
+    List<CreateTermResponse> importTermsFromExcel(MultipartFile file, Long typeTermId) throws IOException;
 }

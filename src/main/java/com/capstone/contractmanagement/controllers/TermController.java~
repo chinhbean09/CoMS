@@ -309,8 +309,8 @@ public class TermController {
         }
     }
 
-    @PostMapping("/import-file-excel")
-    public ResponseEntity<ResponseObject> importTermsFromExcel(
+    @PostMapping("/import")
+    public ResponseEntity<List<CreateTermResponse>> importTermsFromExcel(
             @RequestParam("file") MultipartFile file,
             @RequestParam("typeTermId") Long typeTermId) throws IOException {
 
@@ -318,10 +318,6 @@ public class TermController {
         List<CreateTermResponse> termResponses = termService.importTermsFromExcel(file, typeTermId);
 
         // Trả về danh sách các điều khoản đã nhập khẩu thành công
-        return ResponseEntity.ok(ResponseObject.builder()
-                .message("Import file excel để tạo điều khoản")
-                .status(HttpStatus.CREATED)
-                .data(termResponses)
-                .build());
+        return ResponseEntity.ok(termResponses);
     }
 }
