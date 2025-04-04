@@ -71,7 +71,7 @@ public class ContractService implements IContractService{
             User user = currentUser.getLoggedInUser();
 
             Partner partnerA = partnerRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác bên  A mặc định"));
 
             if (user == null) {
                 throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
@@ -119,34 +119,8 @@ public class ContractService implements IContractService{
                     .duplicateNumber(0)
                     .build();
 
-            List<ContractPartner> contractPartners = new ArrayList<>();
-            contractPartners.add(ContractPartner.builder()
-                    .contract(contract)
-                    .partnerType(partnerA.getPartnerType())
-                    .partnerName(partnerA.getPartnerName())
-                    .partnerAddress(partnerA.getAddress())
-                    .partnerTaxCode(partnerA.getTaxCode())
-                    .partnerPhone(partnerA.getPhone())
-                    .partnerEmail(partnerA.getEmail())
-                    .spokesmanName(partnerA.getSpokesmanName())
-                    .position(partnerA.getPosition())
-                    .partner(partnerA)
-                    .build());
-
-            contractPartners.add(ContractPartner.builder()
-                    .contract(contract)
-                    .partnerType(partnerB.getPartnerType())
-                    .partnerName(partnerB.getPartnerName())
-                    .partnerAddress(partnerB.getAddress())
-                    .partnerTaxCode(partnerB.getTaxCode())
-                    .partnerPhone(partnerB.getPhone())
-                    .partnerEmail(partnerB.getEmail())
-                    .spokesmanName(partnerB.getSpokesmanName())
-                    .position(partnerB.getPosition())
-                    .partner(partnerB)
-                    .build());
-            contract.setContractPartners(contractPartners); // Gán danh sách vào hợp đồng
-
+            List<ContractPartner> contractPartners = buildContractPartners(contract, partnerA, partnerB);
+            contract.setContractPartners(contractPartners);
             // 3. Map các điều khoản đơn giản sang ContractTerm
             List<ContractTerm> contractTerms = new ArrayList<>();
 
@@ -508,6 +482,61 @@ public class ContractService implements IContractService{
             return savedContract;
         }
 
+    private List<ContractPartner> buildContractPartners(Contract contract, Partner partnerA, Partner partnerB) {
+        List<ContractPartner> contractPartners = new ArrayList<>();
+
+        // Tạo ContractPartner cho Partner A
+        ContractPartner contractPartnerA = ContractPartner.builder()
+                .contract(contract)
+                .partnerType(partnerA.getPartnerType()) // Lấy PartnerType từ Partner A
+                .partnerName(partnerA.getPartnerName())
+                .partnerAddress(partnerA.getAddress())
+                .partnerTaxCode(partnerA.getTaxCode())
+                .partnerPhone(partnerA.getPhone())
+                .partnerEmail(partnerA.getEmail())
+                .spokesmanName(partnerA.getSpokesmanName())
+                .position(partnerA.getPosition())
+                .partner(partnerA)
+                .build();
+        contractPartners.add(contractPartnerA);
+
+        // Tạo ContractPartner cho Partner B
+        ContractPartner contractPartnerB = ContractPartner.builder()
+                .contract(contract)
+                .partnerType(partnerB.getPartnerType())
+                .partnerName(partnerB.getPartnerName())
+                .partnerAddress(partnerB.getAddress())
+                .partnerTaxCode(partnerB.getTaxCode())
+                .partnerPhone(partnerB.getPhone())
+                .partnerEmail(partnerB.getEmail())
+                .spokesmanName(partnerB.getSpokesmanName())
+                .position(partnerB.getPosition())
+                .partner(partnerB)
+                .build();
+        contractPartners.add(contractPartnerB);
+
+        // Kiểm tra trùng PartnerType
+        long partnerACount = contractPartners.stream()
+                .filter(p -> p.getPartnerType() == PartnerType.PARTNER_A)
+                .count();
+        if (partnerACount > 1) {
+            throw new IllegalStateException("Không được phép có nhiều hơn một đối tác bên A trong hợp đồng.");
+        }
+
+        long partnerBCount = contractPartners.stream()
+                .filter(p -> p.getPartnerType() == PartnerType.PARTNER_B)
+                .count();
+        if (partnerBCount > 1) {
+            throw new IllegalStateException("Không được phép có nhiều hơn một đối tác bên B trong hợp đồng.");
+        }
+
+        // Đảm bảo có ít nhất một Partner A và một Partner B
+        if (partnerACount == 0 || partnerBCount == 0) {
+            throw new IllegalStateException("Hợp đồng phải có một đối tác bên A và một đối tác bên B.");
+        }
+
+        return contractPartners;
+    }
     // Phương thức createAuditTrail
     private AuditTrail createAuditTrail(Contract contract, String fieldName, String oldValue, String newValue,
                                         LocalDateTime changedAt, String changedBy, String changeSummary) {
