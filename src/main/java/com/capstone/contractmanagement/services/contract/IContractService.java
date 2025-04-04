@@ -58,4 +58,5 @@ public interface IContractService {
             ContractStatus status,
             LocalDateTime signingDate);
 
+    Contract duplicateContractWithPartner(Long contractId, Long partnerId);
     }
