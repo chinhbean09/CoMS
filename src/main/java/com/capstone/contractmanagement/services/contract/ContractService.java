@@ -1355,7 +1355,11 @@ public class ContractService implements IContractService{
     public Contract updateContract(Long contractId, ContractUpdateDTO dto) {
         // 1. Tìm hợp đồng hiện tại
         Contract currentContract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng."));
+
+        if (currentContract.getStatus() == ContractStatus.ACTIVE) {
+            throw new RuntimeException("Hợp đồng đang ở trạng thái hoạt động. Vui lòng tạo Phụ lục thay vì cập nhật trực tiếp.");
+        }
 
         // 1.1 Kiểm tra xem hợp đồng có đang trong quy trình duyệt hay không
         ApprovalWorkflow workflow = currentContract.getApprovalWorkflow();
