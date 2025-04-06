@@ -30,7 +30,13 @@
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
 
+    import java.io.File;
+    import java.io.IOException;
+    import java.nio.file.Files;
+    import java.nio.file.Paths;
     import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.time.format.DateTimeParseException;
     import java.util.*;
     import java.util.stream.Collectors;
 
@@ -391,4 +397,67 @@
             }
         }
 
+        @PostMapping("/sign")
+        public ResponseEntity<?> signContract(@RequestBody @Valid SignContractRequest request) {
+            try {
+                // Fetch contract by ID from the repository
+                Optional<Contract> optionalContract = contractRepository.findById(request.getContractId());
+
+                if (optionalContract.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Contract not found");
+                }
+
+                Contract contract = optionalContract.get();
+
+                // Save signed file (can throw IOException)
+                String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+
+                // Update contract details
+                contract.setSignedFilePath(filePath);
+                contract.setSignedBy(request.getSignedBy());
+
+                // Parse signedAt with error handling
+                try {
+                    LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                    contract.setSignedAt(signedAt);
+                } catch (DateTimeParseException e) {
+                    return ResponseEntity.badRequest().body("Invalid signedAt format. Use ISO-8601 format.");
+                }
+
+                // Update contract status
+                contract.setStatus(ContractStatus.SIGNED);
+
+                // Save the contract changes
+                contractRepository.save(contract);
+
+                return ResponseEntity.ok().body("Contract signed and saved successfully");
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error saving signed file: " + e.getMessage());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Internal server error: " + e.getMessage());
+            }
+        }
+
+        private String saveSignedFile(String fileName, String fileBase64) throws IOException {
+            // Decode Base64 content
+            byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+
+            // Use a configurable file storage directory (update this value appropriately)
+            String storagePath = "C:\\OnlineSign\\Signed";
+            File directory = new File(storagePath);
+            if (!directory.exists()) {
+                directory.mkdirs(); // Create the directory if it doesn't exist
+            }
+
+            String filePath = storagePath + File.separator + "signed-" + fileName;
+
+            // Write file bytes to the file system
+            Files.write(Paths.get(filePath), fileBytes);
+
+            return filePath;
+        }
     }
+
+
