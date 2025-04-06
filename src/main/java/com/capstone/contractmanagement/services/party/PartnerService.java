@@ -6,6 +6,7 @@
     import com.capstone.contractmanagement.entities.Bank;
     import com.capstone.contractmanagement.entities.Partner;
     import com.capstone.contractmanagement.enums.ContractStatus;
+    import com.capstone.contractmanagement.enums.PartnerType;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
     import com.capstone.contractmanagement.repositories.IBankRepository;
@@ -198,20 +199,28 @@
 
         @Override
         @Transactional
-        public Page<ListPartnerResponse> getAllPartners(String search, int page, int size) {
+        public Page<ListPartnerResponse> getAllPartners(String search, int page, int size, PartnerType partnerType) {
             Pageable pageable = PageRequest.of(page, size);
             Page<Partner> partyPage;
 
-            if (search != null && !search.trim().isEmpty()) {
-                search = search.trim(); // Loại bỏ khoảng trắng dư thừa
-                // Tìm kiếm với điều kiện isDeleted = false và loại trừ id = 1
-                partyPage = partyRepository.searchByFields(search, pageable);
+            boolean hasSearch = search != null && !search.trim().isEmpty();
+            boolean hasPartnerType = partnerType != null;
+
+            if (hasSearch && hasPartnerType) {
+                // Có cả search và lọc theo partnerType
+                partyPage = partyRepository.searchByFieldsAndPartnerType(search.trim(), partnerType, pageable);
+            } else if (hasSearch) {
+                // Chỉ search
+                partyPage = partyRepository.searchByFields(search.trim(), pageable);
+            } else if (hasPartnerType) {
+                // Chỉ lọc theo partnerType
+                partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndIdNot(partnerType, 1L, pageable);
             } else {
-                // Lấy tất cả với điều kiện isDeleted = false và loại trừ id = 1
+                // Không lọc gì, chỉ lấy toàn bộ (trừ id = 1 và isDeleted = false)
                 partyPage = partyRepository.findByIsDeletedFalseAndIdNot(pageable, 1L);
             }
 
-            // Chuyển đổi đối tượng Partner sang ListPartnerResponse
+            // Convert sang response
             return partyPage.map(party ->
                     ListPartnerResponse.builder()
                             .partyId(party.getId())
