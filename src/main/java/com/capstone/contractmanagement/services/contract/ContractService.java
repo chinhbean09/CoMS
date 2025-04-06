@@ -21,19 +21,24 @@ import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
+import org.apache.http.HttpEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.http.HttpHeaders;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class ContractService implements IContractService{
@@ -3551,5 +3556,6 @@ public class ContractService implements IContractService{
 
         return filteredPage.map(this::convertToGetAllContractResponse);
     }
+
 
 }
