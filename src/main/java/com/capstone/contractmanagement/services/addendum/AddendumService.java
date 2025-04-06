@@ -49,6 +49,7 @@ public class AddendumService implements IAddendumService{
     private final INotificationService notificationService;
     private final IApprovalStageRepository approvalStageRepository;
     private final IUserRepository userRepository;
+    private final IPartnerRepository partnerRepository;
 
     @Override
     @Transactional
@@ -66,8 +67,8 @@ public class AddendumService implements IAddendumService{
             throw new DataNotFoundException("Tên phụ lục bị trùng: " + addendumDTO.getTitle());
         }
 
-        // Lấy thông tin đối tác (Partner) liên kết với hợp đồng
-        Partner partner = contract.getPartner();
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
 
         // Lấy loại phụ lục
         AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
@@ -108,7 +109,8 @@ public class AddendumService implements IAddendumService{
                             .addendumTypeId(addendum.getAddendumType().getId())
                             .name(addendum.getAddendumType().getName())
                             .build())
-                    .partner(partner)
+                    .partnerA(partnerA)
+
                     .effectiveDate(addendum.getEffectiveDate())
                     .createdAt(addendum.getCreatedAt())
                     .updatedAt(addendum.getUpdatedAt())
@@ -125,7 +127,8 @@ public class AddendumService implements IAddendumService{
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
 
-        Partner partner = contract.getPartner();
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
         // Lấy danh sách phụ lục theo contract id (giả sử repository có method: findByContract_Id)
         List<Addendum> addenda = addendumRepository.findByContract(contract);
 
@@ -151,7 +154,7 @@ public class AddendumService implements IAddendumService{
                                 .userId(addendum.getUser().getId())
                                 .userName(addendum.getUser().getFullName())
                                 .build())
-                        .partner(partner)
+                        .partnerA(partnerA)
                         .contractId(addendum.getContract().getId())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
@@ -164,6 +167,8 @@ public class AddendumService implements IAddendumService{
         AddendumType addendumType = addendumTypeRepository.findById(addendumTypeId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum type not found with id: " + addendumTypeId));
         List<Addendum> addenda = addendumRepository.findByAddendumType(addendumType);
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
         return addenda.stream()
                 .map(addendum -> AddendumResponse.builder()
                         .addendumId(addendum.getId())
@@ -176,7 +181,7 @@ public class AddendumService implements IAddendumService{
                                 .userId(addendum.getUser().getId())
                                 .userName(addendum.getUser().getFullName())
                                 .build())
-                        .partner(addendum.getContract().getPartner())
+                        .partnerA(partnerA)
                         .contractId(addendum.getContract().getId())
                         .addendumType(AddendumTypeResponse.builder()
                                 .addendumTypeId(addendum.getAddendumType().getId())
@@ -233,6 +238,8 @@ public class AddendumService implements IAddendumService{
     public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
         return AddendumResponse.builder()
                 .addendumId(addendum.getId())
                 .title(addendum.getTitle())
@@ -243,7 +250,7 @@ public class AddendumService implements IAddendumService{
                         .userId(addendum.getUser().getId())
                         .userName(addendum.getUser().getFullName())
                         .build())
-                .partner(addendum.getContract().getPartner())
+                .partnerA(partnerA)
                 .contractId(addendum.getContract().getId())
                 .addendumType(AddendumTypeResponse.builder()
                         .addendumTypeId(addendum.getAddendumType().getId())
