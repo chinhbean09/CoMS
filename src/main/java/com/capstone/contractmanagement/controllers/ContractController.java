@@ -46,13 +46,52 @@
 
         @PostMapping
         @Transactional
-        public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) throws DataNotFoundException {
-            Contract contract = contractService.createContractFromTemplate(contractDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
-                    .status(HttpStatus.CREATED)
-                    .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
-                    .data(contract)
-                    .build());
+        public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) {
+            try {
+                Contract contract = contractService.createContractFromTemplate(contractDTO);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.CREATED)
+                                .message(MessageKeys.CREATE_CONTRACT_SUCCESSFULLY)
+                                .data(contract)
+                                .build());
+
+            } catch (IllegalArgumentException e) {
+                // Lỗi dữ liệu đầu vào không hợp lệ (400)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Dữ liệu không hợp lệ: " + e.getMessage())
+                                .data(null)
+                                .build());
+
+            } catch (DataNotFoundException e) {
+                // Lỗi không tìm thấy dữ liệu (404)
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.NOT_FOUND)
+                                .message("Không tìm thấy dữ liệu: " + e.getMessage())
+                                .data(null)
+                                .build());
+
+            } catch (IllegalStateException e) {
+                // Lỗi trạng thái không hợp lệ (409)
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.CONFLICT)
+                                .message("Trạng thái không hợp lệ: " + e.getMessage())
+                                .data(null)
+                                .build());
+
+            } catch (Exception e) {
+                // Lỗi server không xác định (500)
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .message("Lỗi hệ thống: " + e.getMessage())
+                                .data(null)
+                                .build());
+            }
         }
 
         @GetMapping
@@ -130,6 +169,36 @@
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ResponseObject.builder()
                                     .message("Template not found with id: " + id)
+                                    .status(HttpStatus.NOT_FOUND)
+                                    .data(null)
+                                    .build());
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder()
+                                .message("Internal server error: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .data(null)
+                                .build());
+            }
+        }
+
+        @PostMapping("/{id}/duplicate-with-partner")
+        public ResponseEntity<ResponseObject> duplicateContractWithPartner(
+                @PathVariable Long id,
+                @RequestParam("partnerId") Long partnerId) {
+            try {
+                Contract duplicateContract = contractService.duplicateContractWithPartner(id, partnerId);
+                if (duplicateContract != null) {
+                    return ResponseEntity.ok(ResponseObject.builder()
+                            .message(MessageKeys.DUPLICATE_CONTRACT_SUCCESSFULLY)
+                            .status(HttpStatus.OK)
+                            .data(duplicateContract)
+                            .build());
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(ResponseObject.builder()
+                                    .message("Contract not found with id: " + id)
                                     .status(HttpStatus.NOT_FOUND)
                                     .data(null)
                                     .build());

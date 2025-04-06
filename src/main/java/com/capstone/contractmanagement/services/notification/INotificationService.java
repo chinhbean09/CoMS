@@ -11,4 +11,5 @@ public interface INotificationService {
     Page<NotificationResponse> getAllNotifications(int page, int size);
     NotificationResponse getNotification(Long notificationId) throws DataNotFoundException;
     void markNotificationAsRead(Long notificationId) throws DataNotFoundException;
+    void markAllNotificationAsRead();
 }
