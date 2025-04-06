@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -358,12 +359,12 @@ public class TermService implements ITermService{
 
     @Override
     @Transactional
-    public List<CreateTermResponse> searchTerm(String keyword) {
+    public Page<CreateTermResponse> searchTerm(String keyword, int page, int size) {
         List<Term> allTerms = termRepository.findAll();
         JaroWinklerSimilarity similarity = new JaroWinklerSimilarity();
-        double threshold = 0.5; // Ngưỡng đạo văn, có thể điều chỉnh
+        double threshold = 0.5;
 
-        return allTerms.stream()
+        List<CreateTermResponse> matchedTerms = allTerms.stream()
                 .filter(term -> {
                     double labelSim = similarity.apply(keyword.toLowerCase(), term.getLabel().toLowerCase());
                     double valueSim = similarity.apply(keyword.toLowerCase(), term.getValue().toLowerCase());
@@ -380,6 +381,12 @@ public class TermService implements ITermService{
                         .type(term.getTypeTerm().getName())
                         .build())
                 .collect(Collectors.toList());
+
+        int start = Math.min(page * size, matchedTerms.size());
+        int end = Math.min(start + size, matchedTerms.size());
+
+        List<CreateTermResponse> pageContent = matchedTerms.subList(start, end);
+        return new PageImpl<>(pageContent, PageRequest.of(page, size), matchedTerms.size());
     }
 
     @Override

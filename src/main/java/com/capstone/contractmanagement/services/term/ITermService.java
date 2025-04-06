@@ -46,6 +46,6 @@ public interface ITermService {
     List<CreateTermResponse> importTermsFromExcel(MultipartFile file, Long typeTermId) throws IOException;
 
     // search
-    List<CreateTermResponse> searchTerm(String keyword);
+    Page<CreateTermResponse> searchTerm(String keyword, int page, int size);
 
 }
