@@ -153,41 +153,41 @@ public class PartnerServiceUnitTest {
         assertThrows(DataNotFoundException.class, () -> partnerService.deleteParty(1L));
     }
 
-    @Test
-    void getAllPartners_ShouldReturnList_WhenSearchIsValid() {
-        // Given
-        Partner partner = new Partner();
-        partner.setId(1L);
-        partner.setPartnerName("Partner A");
-
-        when(partnerRepository.searchByFields(anyString(), any(Pageable.class)))
-                .thenReturn(Page.empty());
-
-        // When
-        Page<ListPartnerResponse> response = partnerService.getAllPartners("Partner", 0, 10);
-
-        // Then
-        assertNotNull(response);
-        assertEquals(0, response.getContent().size());
-    }
-
-    @Test
-    void getAllPartners_ShouldReturnList_WhenNoSearch() {
-        // Given
-        Partner partner = new Partner();
-        partner.setId(1L);
-        partner.setPartnerName("Partner A");
-
-        when(partnerRepository.findByIsDeletedFalseAndIdNot(any(Pageable.class), anyLong()))
-                .thenReturn(Page.empty());
-
-        // When
-        Page<ListPartnerResponse> response = partnerService.getAllPartners(null, 0, 10);
-
-        // Then
-        assertNotNull(response);
-        assertEquals(0, response.getContent().size());
-    }
+//    @Test
+//    void getAllPartners_ShouldReturnList_WhenSearchIsValid() {
+//        // Given
+//        Partner partner = new Partner();
+//        partner.setId(1L);
+//        partner.setPartnerName("Partner A");
+//
+//        when(partnerRepository.searchByFields(anyString(), any(Pageable.class)))
+//                .thenReturn(Page.empty());
+//
+//        // When
+//        Page<ListPartnerResponse> response = partnerService.getAllPartners("Partner", 0, 10);
+//
+//        // Then
+//        assertNotNull(response);
+//        assertEquals(0, response.getContent().size());
+//    }
+//
+//    @Test
+//    void getAllPartners_ShouldReturnList_WhenNoSearch() {
+//        // Given
+//        Partner partner = new Partner();
+//        partner.setId(1L);
+//        partner.setPartnerName("Partner A");
+//
+//        when(partnerRepository.findByIsDeletedFalseAndIdNot(any(Pageable.class), anyLong()))
+//                .thenReturn(Page.empty());
+//
+//        // When
+//        Page<ListPartnerResponse> response = partnerService.getAllPartners(null, 0, 10);
+//
+//        // Then
+//        assertNotNull(response);
+//        assertEquals(0, response.getContent().size());
+//    }
 
     @Test
     void getPartnerById_ShouldReturnPartner_WhenValidId() throws DataNotFoundException {

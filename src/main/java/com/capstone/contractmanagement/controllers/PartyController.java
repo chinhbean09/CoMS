@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.party.CreatePartnerDTO;
 import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
+import com.capstone.contractmanagement.enums.PartnerType;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
 import com.capstone.contractmanagement.repositories.IPartnerRepository;
@@ -64,9 +65,10 @@ public class PartyController {
     public ResponseEntity<ResponseObject> getAllParties(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0", required = false) int page,
-            @RequestParam(defaultValue = "10", required = false) int size) {
+            @RequestParam(defaultValue = "10", required = false) int size,
+            @RequestParam(required = false) PartnerType partnerType) {
 
-        Page<ListPartnerResponse> response = partyService.getAllPartners(keyword, page, size);
+        Page<ListPartnerResponse> response = partyService.getAllPartners(keyword, page, size, partnerType);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(HttpStatus.OK)

@@ -2,7 +2,7 @@ package com.capstone.contractmanagement.services.contract_partner;
 
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
+import com.capstone.contractmanagement.repositories.IPartnerContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ContractPartnerNotificationScheduleService implements IContractPartnerNotificationScheduleService {
     private final IPaymentScheduleRepository paymentScheduleRepository;
-    private final IContractPartnerRepository contractPartnerRepository;
+    private final IPartnerContractRepository contractPartnerRepository;
 
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
