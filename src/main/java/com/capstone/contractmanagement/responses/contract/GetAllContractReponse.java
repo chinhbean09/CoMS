@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.responses.contract;
 
+import com.capstone.contractmanagement.dtos.contract.ContractPartnerDTO;
 import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.contract.ContractType;
 import com.capstone.contractmanagement.enums.ContractStatus;
@@ -23,10 +24,13 @@ public class GetAllContractReponse {
     private String contractNumber;
     private LocalDateTime createdAt;
     private ContractType contractType;
-    private Partner partner;
+//    private Partner partner;
     private Double amount;
     private ContractStatus status;
     private Integer version;
     private Long originalContractId;
     private Long approvalWorkflowId;
+
+    private ContractPartnerDTO partnerA;
+    private ContractPartnerDTO partnerB;
 }

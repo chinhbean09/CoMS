@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.responses.User;
 
 import com.capstone.contractmanagement.entities.AppConfig;
+import com.capstone.contractmanagement.enums.GenderList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,6 +37,8 @@ public class LoginResponse {
     private String staffCode;
 
     private String phoneNumber;
+
+    private GenderList gender;
 
     private String email;
 
