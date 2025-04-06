@@ -199,4 +199,13 @@
         @JsonIgnore
         private List<ContractPartner> contractPartners = new ArrayList<>();
 
+        @Column(name = "signed_file_path")
+        private String signedFilePath;
+
+        @Column(name = "signed_by")
+        private String signedBy;
+
+        @Column(name = "signed_at")
+        private LocalDateTime signedAt;
+
     }
