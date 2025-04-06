@@ -69,59 +69,77 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         LocalDateTime reminderWindowEnd = now.plusDays(reminderDeadline);
         List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByPaymentDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
-            if (payment.getContract() != null && !payment.isReminderEmailSent()) {
-                // Tạo payload dạng JSON
-                Map<String, Object> payload = new HashMap<>();
-                String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
-                        "' sẽ đến hạn thanh toán lúc " + payment.getPaymentDate() +
-                        ". Vui lòng chuẩn bị thanh toán.";
-                Long contractId = payment.getContract().getId();
-                payload.put("message", reminderMessage);
-                payload.put("contractId", contractId);
+            // Kiểm tra nếu hợp đồng là phiên bản mới nhất
+            if (payment.getContract() != null && payment.getContract().getIsLatestVersion() != null && payment.getContract().getIsLatestVersion()) {
+                if (!payment.isReminderEmailSent()) {
+                    // Tạo payload dạng JSON
+                    Map<String, Object> payload = new HashMap<>();
+                    String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
+                            "' sẽ đến hạn thanh toán lúc " + payment.getPaymentDate() +
+                            ". Vui lòng chuẩn bị thanh toán.";
+                    Long contractId = payment.getContract().getId();
+                    payload.put("message", reminderMessage);
+                    payload.put("contractId", contractId);
 
-                // Lấy username của người dùng
-                String username = payment.getContract().getUser().getFullName();
-                User user = payment.getContract().getUser();
+                    // Lấy username của người dùng
+                    String username = payment.getContract().getUser().getFullName();
+                    User user = payment.getContract().getUser();
 
-                // Gửi thông báo dưới dạng JSON
-                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, reminderMessage, payment.getContract());
-                mailService.sendEmailReminder(payment);
+                    // Gửi thông báo dưới dạng JSON
+                    messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+                    notificationService.saveNotification(user, reminderMessage, payment.getContract());
+                    mailService.sendEmailReminder(payment);
 
-                // Đánh dấu đã gửi email nhắc nhở
-                payment.setReminderEmailSent(true);
-                paymentScheduleRepository.save(payment);
+                    // Đánh dấu đã gửi email nhắc nhở
+                    payment.setReminderEmailSent(true);
+                    paymentScheduleRepository.save(payment);
+                }
             }
         }
 
         // 2. Gửi thông báo quá hạn nếu đã vượt qua dueDate
         List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByPaymentDateBeforeAndStatus(now, PaymentStatus.UNPAID);
         for (PaymentSchedule payment : overduePayments) {
-            if (payment.getContract() != null && now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
-                payment.setStatus(PaymentStatus.OVERDUE);
-                paymentScheduleRepository.save(payment);
+            // Kiểm tra nếu hợp đồng là phiên bản mới nhất
+            if (payment.getContract() != null && payment.getContract().getIsLatestVersion() != null && payment.getContract().getIsLatestVersion()) {
+                if (now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
+                    payment.setStatus(PaymentStatus.OVERDUE);
+                    paymentScheduleRepository.save(payment);
 
-                // Tạo payload dạng JSON cho thông báo quá hạn
-                Map<String, Object> payload = new HashMap<>();
-                String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
-                        "' đã quá hạn thanh toán lúc " + payment.getPaymentDate() + ".";
-                Long contractId = payment.getContract().getId();
-                payload.put("message", overdueMessage);
-                payload.put("contractId", contractId);
+                    // Tạo payload dạng JSON cho thông báo quá hạn
+                    Map<String, Object> payload = new HashMap<>();
+                    String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
+                            "' đã quá hạn thanh toán lúc " + payment.getPaymentDate() + ".";
+                    Long contractId = payment.getContract().getId();
+                    payload.put("message", overdueMessage);
+                    payload.put("contractId", contractId);
 
-                String username = payment.getContract().getUser().getFullName();
-                User user = payment.getContract().getUser();
+                    String username = payment.getContract().getUser().getFullName();
+                    User user = payment.getContract().getUser();
 
-                // Gửi thông báo dưới dạng JSON
-                messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                notificationService.saveNotification(user, overdueMessage, payment.getContract());
-                mailService.sendEmailExpired(payment);
+                    // Gửi thông báo dưới dạng JSON
+                    messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+                    notificationService.saveNotification(user, overdueMessage, payment.getContract());
+                    mailService.sendEmailExpired(payment);
 
-                // Đánh dấu đã gửi email quá hạn
-                payment.setOverdueEmailSent(true);
-                paymentScheduleRepository.save(payment);
+                    // Đánh dấu đã gửi email quá hạn
+                    payment.setOverdueEmailSent(true);
+                    paymentScheduleRepository.save(payment);
+                }
             }
         }
+    }
+
+    @Override
+    public List<String> getBillUrlsByPaymentId(Long paymentId) throws DataNotFoundException {
+        // Lấy danh sách billUrls từ repository
+        List<String> billUrls = paymentScheduleRepository.findBillUrlsByPaymentId(paymentId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("No bill URLs found for payment with ID: " + paymentId);
+        }
+
+        return billUrls;
     }
 
 //    private void sendEmailReminder(PaymentSchedule payment) {

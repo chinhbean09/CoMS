@@ -1,4 +1,4 @@
-package com.capstone.contractmanagement.dtos.contract_partner;
+package com.capstone.contractmanagement.responses.contract_partner;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContractPartnerItemDTO {
-    private String description;
+public class PartnerContractItemResponse {
+    private Long id;
     private Double amount;
+    private String description;
 }
