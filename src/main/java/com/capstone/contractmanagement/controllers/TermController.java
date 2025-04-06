@@ -326,11 +326,15 @@ public class TermController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseObject> searchTerms(@RequestParam String keyword) {
-        List<CreateTermResponse> terms = termService.searchTerm(keyword);
+    public ResponseEntity<ResponseObject> searchTerms(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<CreateTermResponse> termsPage = termService.searchTerm(keyword, page, size);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
                 .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
-                .data(terms)
+                .data(termsPage)
                 .status(HttpStatus.OK).build());
     }
 }
