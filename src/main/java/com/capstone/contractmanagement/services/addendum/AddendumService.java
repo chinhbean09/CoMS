@@ -10,10 +10,11 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
-import com.capstone.contractmanagement.entities.contract.ContractType;
+import com.capstone.contractmanagement.entities.contract.ContractPartner;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
+import com.capstone.contractmanagement.enums.PartnerType;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
@@ -50,6 +51,7 @@ public class AddendumService implements IAddendumService{
     private final IApprovalStageRepository approvalStageRepository;
     private final IUserRepository userRepository;
     private final IPartnerRepository partnerRepository;
+    private final IContractPartnerRepository contractPartnerRepository;
 
     @Override
     @Transactional
@@ -69,6 +71,8 @@ public class AddendumService implements IAddendumService{
 
         Partner partnerA = partnerRepository.findById(1L)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+
+        Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(contract.getId(), PartnerType.PARTNER_B);
 
         // Lấy loại phụ lục
         AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
@@ -110,7 +114,7 @@ public class AddendumService implements IAddendumService{
                             .name(addendum.getAddendumType().getName())
                             .build())
                     .partnerA(partnerA)
-
+                    .partnerB(contractPartners)
                     .effectiveDate(addendum.getEffectiveDate())
                     .createdAt(addendum.getCreatedAt())
                     .updatedAt(addendum.getUpdatedAt())
@@ -129,6 +133,8 @@ public class AddendumService implements IAddendumService{
 
         Partner partnerA = partnerRepository.findById(1L)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+
+        Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(contract.getId(), PartnerType.PARTNER_B);
         // Lấy danh sách phụ lục theo contract id (giả sử repository có method: findByContract_Id)
         List<Addendum> addenda = addendumRepository.findByContract(contract);
 
@@ -155,6 +161,7 @@ public class AddendumService implements IAddendumService{
                                 .userName(addendum.getUser().getFullName())
                                 .build())
                         .partnerA(partnerA)
+                        .partnerB(contractPartners)
                         .contractId(addendum.getContract().getId())
                         .createdAt(addendum.getCreatedAt())
                         .updatedAt(addendum.getUpdatedAt())
@@ -170,26 +177,33 @@ public class AddendumService implements IAddendumService{
         Partner partnerA = partnerRepository.findById(1L)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
         return addenda.stream()
-                .map(addendum -> AddendumResponse.builder()
-                        .addendumId(addendum.getId())
-                        .title(addendum.getTitle())
-                        .content(addendum.getContent())
-                        .effectiveDate(addendum.getEffectiveDate())
-                        .contractNumber(addendum.getContractNumber())
-                        .status(addendum.getStatus())
-                        .createdBy(UserAddendumResponse.builder()
-                                .userId(addendum.getUser().getId())
-                                .userName(addendum.getUser().getFullName())
-                                .build())
-                        .partnerA(partnerA)
-                        .contractId(addendum.getContract().getId())
-                        .addendumType(AddendumTypeResponse.builder()
-                                .addendumTypeId(addendum.getAddendumType().getId())
-                                .name(addendum.getAddendumType().getName())
-                                .build())
-                        .createdAt(addendum.getCreatedAt())
-                        .updatedAt(addendum.getUpdatedAt())
-                        .build())
+                .map(addendum -> {
+                    // Lấy partner B theo contract
+                    Optional<ContractPartner> partnerB = contractPartnerRepository
+                            .findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
+
+                    return AddendumResponse.builder()
+                            .addendumId(addendum.getId())
+                            .title(addendum.getTitle())
+                            .content(addendum.getContent())
+                            .effectiveDate(addendum.getEffectiveDate())
+                            .contractNumber(addendum.getContractNumber())
+                            .status(addendum.getStatus())
+                            .createdBy(UserAddendumResponse.builder()
+                                    .userId(addendum.getUser().getId())
+                                    .userName(addendum.getUser().getFullName())
+                                    .build())
+                            .partnerA(partnerA)
+                            .partnerB(partnerB)
+                            .contractId(addendum.getContract().getId())
+                            .addendumType(AddendumTypeResponse.builder()
+                                    .addendumTypeId(addendum.getAddendumType().getId())
+                                    .name(addendum.getAddendumType().getName())
+                                    .build())
+                            .createdAt(addendum.getCreatedAt())
+                            .updatedAt(addendum.getUpdatedAt())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -240,6 +254,7 @@ public class AddendumService implements IAddendumService{
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
         Partner partnerA = partnerRepository.findById(1L)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+        Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
         return AddendumResponse.builder()
                 .addendumId(addendum.getId())
                 .title(addendum.getTitle())
@@ -251,6 +266,7 @@ public class AddendumService implements IAddendumService{
                         .userName(addendum.getUser().getFullName())
                         .build())
                 .partnerA(partnerA)
+                .partnerB(contractPartners)
                 .contractId(addendum.getContract().getId())
                 .addendumType(AddendumTypeResponse.builder()
                         .addendumTypeId(addendum.getAddendumType().getId())
@@ -679,36 +695,49 @@ public class AddendumService implements IAddendumService{
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
-        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+        //List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+        List<Addendum> pendingAddenda = addendumRepository.findAll();
 
         // Lọc các phụ lục theo approverId, keyword và addendumTypeId
+        // Lọc phụ lục dựa trên quyền duyệt của approver
         List<Addendum> filteredAddenda = pendingAddenda.stream()
                 .filter(addendum -> {
                     ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
-                    if (workflow == null || workflow.getStages().isEmpty()) {
-                        return false;
+                    if (workflow == null || workflow.getStages().isEmpty()) return false;
+
+                    if (addendum.getStatus() == AddendumStatus.APPROVAL_PENDING) {
+                        // Tìm bước duyệt hiện tại (sớm nhất có trạng thái NOT_STARTED / REJECTED / APPROVING)
+                        OptionalInt currentStageOrderOpt = workflow.getStages().stream()
+                                .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
+                                        || stage.getStatus() == ApprovalStatus.REJECTED
+                                        || stage.getStatus() == ApprovalStatus.APPROVING)
+                                .mapToInt(ApprovalStage::getStageOrder)
+                                .min();
+
+                        if (currentStageOrderOpt.isEmpty()) return false;
+
+                        int currentStageOrder = currentStageOrderOpt.getAsInt();
+
+                        // Kiểm tra nếu approver có quyền duyệt bước này
+                        return workflow.getStages().stream()
+                                .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
+                                        && stage.getApprover().getId().equals(approverId));
+                    } else {
+                        // Đã duyệt xong: kiểm tra xem approver có từng duyệt qua không
+                        return workflow.getStages().stream()
+                                .anyMatch(stage -> stage.getApprover().getId().equals(approverId)
+                                        && stage.getStatus() == ApprovalStatus.APPROVED);
                     }
-
-                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
-                    Optional<ApprovalStage> currentStageOpt = workflow.getStages().stream()
-                            .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
-                                    || stage.getStatus() == ApprovalStatus.REJECTED
-                                    || stage.getStatus() == ApprovalStatus.APPROVING)
-                            .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
-
-                    return currentStageOpt.isPresent() &&
-                            currentStageOpt.get().getApprover().getId().equals(approverId);
                 })
                 .filter(addendum -> {
-                    // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
                     if (keyword != null && !keyword.trim().isEmpty()) {
-                        return addendum.getTitle().toLowerCase().contains(keyword.toLowerCase())
-                                || addendum.getContractNumber().toLowerCase().contains(keyword.toLowerCase());
+                        String lowerKeyword = keyword.toLowerCase();
+                        return addendum.getTitle().toLowerCase().contains(lowerKeyword)
+                                || addendum.getContent().toLowerCase().contains(lowerKeyword);
                     }
                     return true;
                 })
                 .filter(addendum -> {
-                    // Lọc theo loại phụ lục (nếu có)
                     if (addendumTypeId != null) {
                         return addendum.getAddendumType() != null
                                 && addendum.getAddendumType().getId().equals(addendumTypeId);
@@ -717,17 +746,14 @@ public class AddendumService implements IAddendumService{
                 })
                 .collect(Collectors.toList());
 
-        // Lấy phân trang từ danh sách đã lọc
+        // Áp dụng phân trang
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredAddenda.size());
-        Page<AddendumResponse> pageResponse = new PageImpl<>(
-                filteredAddenda.subList(start, end).stream()
-                        .map(this::mapToAddendumResponse)
-                        .collect(Collectors.toList()),
-                pageable, filteredAddenda.size()
-        );
+        int end = Math.min(start + pageable.getPageSize(), filteredAddenda.size());
+        List<AddendumResponse> content = filteredAddenda.subList(start, end).stream()
+                .map(this::mapToAddendumResponse)
+                .collect(Collectors.toList());
 
-        return pageResponse;
+        return new PageImpl<>(content, pageable, filteredAddenda.size());
     }
 
     @Override
@@ -736,18 +762,22 @@ public class AddendumService implements IAddendumService{
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
-        List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+        // Lấy toàn bộ phụ lục (không giới hạn status)
+        List<Addendum> allAddenda = addendumRepository.findAll();
 
-        // Lọc các phụ lục theo approverId, keyword và addendumTypeId
-        List<Addendum> filteredAddenda = pendingAddenda.stream()
+        List<Addendum> filteredAddenda = allAddenda.stream()
                 .filter(addendum -> {
                     ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
-                    if (workflow == null || workflow.getStages().isEmpty()) {
-                        return false;
-                    }
+                    if (workflow == null || workflow.getStages().isEmpty()) return false;
 
-                    // Xác định "bước duyệt hiện tại" dựa trên stage có trạng thái NOT_STARTED, REJECTED hoặc APPROVING và có stageOrder nhỏ nhất
+                    // 1. Nếu người này đã từng duyệt qua bất kỳ bước nào → luôn thấy
+                    boolean hasApprovedBefore = workflow.getStages().stream()
+                            .anyMatch(stage -> stage.getApprover().getId().equals(approverId)
+                                    && stage.getStatus() == ApprovalStatus.APPROVED);
+
+                    if (hasApprovedBefore) return true;
+
+                    // 2. Nếu chưa duyệt, kiểm tra xem có đang ở bước hiện tại không
                     OptionalInt currentStageOrderOpt = workflow.getStages().stream()
                             .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
                                     || stage.getStatus() == ApprovalStatus.REJECTED
@@ -755,27 +785,23 @@ public class AddendumService implements IAddendumService{
                             .mapToInt(ApprovalStage::getStageOrder)
                             .min();
 
-                    if (!currentStageOrderOpt.isPresent()) {
-                        return false;
-                    }
+                    if (currentStageOrderOpt.isEmpty()) return false;
 
                     int currentStageOrder = currentStageOrderOpt.getAsInt();
 
-                    // Điều kiện mới: Kiểm tra nếu approver có quyền duyệt bước này
                     return workflow.getStages().stream()
                             .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
                                     && stage.getApprover().getId().equals(approverId));
                 })
                 .filter(addendum -> {
-                    // Tìm kiếm theo từ khóa trong tiêu đề hoặc nội dung phụ lục
                     if (keyword != null && !keyword.trim().isEmpty()) {
-                        return addendum.getTitle().toLowerCase().contains(keyword.toLowerCase())
-                                || addendum.getContent().toLowerCase().contains(keyword.toLowerCase());
+                        String lowerKeyword = keyword.toLowerCase();
+                        return addendum.getTitle().toLowerCase().contains(lowerKeyword)
+                                || addendum.getContent().toLowerCase().contains(lowerKeyword);
                     }
                     return true;
                 })
                 .filter(addendum -> {
-                    // Lọc theo loại phụ lục (nếu có)
                     if (addendumTypeId != null) {
                         return addendum.getAddendumType() != null
                                 && addendum.getAddendumType().getId().equals(addendumTypeId);
@@ -784,17 +810,14 @@ public class AddendumService implements IAddendumService{
                 })
                 .collect(Collectors.toList());
 
-        // Lấy phân trang từ danh sách đã lọc
+        // Phân trang
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredAddenda.size());
-        Page<AddendumResponse> pageResponse = new PageImpl<>(
-                filteredAddenda.subList(start, end).stream()
-                        .map(this::mapToAddendumResponse)
-                        .collect(Collectors.toList()),
-                pageable, filteredAddenda.size()
-        );
+        int end = Math.min(start + pageable.getPageSize(), filteredAddenda.size());
+        List<AddendumResponse> content = filteredAddenda.subList(start, end).stream()
+                .map(this::mapToAddendumResponse)
+                .collect(Collectors.toList());
 
-        return pageResponse;
+        return new PageImpl<>(content, pageable, filteredAddenda.size());
     }
 
     @Override

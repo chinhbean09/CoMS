@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Data
 @Builder
@@ -23,5 +24,5 @@ public class AddendumResponse {
     private LocalDateTime updatedAt;
     private Long contractId;
     private Partner partnerA;
-    private ContractPartner partnerB;
+    private Optional<ContractPartner> partnerB;
 }
