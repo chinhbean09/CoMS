@@ -17,6 +17,7 @@ import com.capstone.contractmanagement.responses.contract_partner.PartnerContrac
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -113,29 +114,40 @@ public class PartnerContractService implements IPartnerContractService {
 
     @Override
     public String uploadPdfToCloudinary(MultipartFile file) throws IOException {
-        // Kiểm tra xem file có phải là PDF hay không
-        if (!file.getContentType().equals("application/pdf")) {
-            throw new IllegalArgumentException("Only PDF files are allowed.");
+        String contentType = file.getContentType();
+
+        // Kiểm tra định dạng file hợp lệ: PDF hoặc Word
+        if (!isSupportedFileType(contentType)) {
+            throw new IllegalArgumentException("Only PDF or Word files are allowed.");
         }
 
         // Upload file lên Cloudinary vào thư mục contract_partner
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "resource_type", "raw",  // Cho phép Cloudinary tự động nhận dạng loại file
-                "folder", "contract_partner"  // Đặt thư mục lưu trữ là contract_partner
+                "resource_type", "raw",  // Định dạng file bất kỳ
+                "folder", "contract_partner"
         ));
 
-        // Lấy public ID và URL trả về từ Cloudinary
+        // Lấy public ID
         String publicId = (String) uploadResult.get("public_id");
 
-        // Tạo URL bảo mật cho file PDF
+        // Tạo URL bảo mật
         String secureUrl = cloudinary.url()
-                .resourceType("raw") // Xác định là file raw (không phải hình ảnh)
+                .resourceType("raw")
                 .publicId(publicId)
-                .secure(true) // Tạo URL bảo mật
-                .generate(); // Tạo URL
+                .secure(true)
+                .transformation(new Transformation().flags("attachment"))
+                .generate();
 
-        // Trả về URL bảo mật của file đã upload
         return secureUrl;
+    }
+
+    // Hàm phụ trợ kiểm tra định dạng file
+    private boolean isSupportedFileType(String contentType) {
+        return contentType != null && (
+                contentType.equals("application/pdf") ||
+                        contentType.equals("application/msword") ||
+                        contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        );
     }
 
     @Override

@@ -15,6 +15,7 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessFie
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -353,6 +354,32 @@ public class TermService implements ITermService{
         }
 
         return termResponses;
+    }
+
+    @Override
+    @Transactional
+    public List<CreateTermResponse> searchTerm(String keyword) {
+        List<Term> allTerms = termRepository.findAll();
+        JaroWinklerSimilarity similarity = new JaroWinklerSimilarity();
+        double threshold = 0.5; // Ngưỡng đạo văn, có thể điều chỉnh
+
+        return allTerms.stream()
+                .filter(term -> {
+                    double labelSim = similarity.apply(keyword.toLowerCase(), term.getLabel().toLowerCase());
+                    double valueSim = similarity.apply(keyword.toLowerCase(), term.getValue().toLowerCase());
+                    return labelSim >= threshold || valueSim >= threshold;
+                })
+                .map(term -> CreateTermResponse.builder()
+                        .id(term.getId())
+                        .label(term.getLabel())
+                        .value(term.getValue())
+                        .clauseCode(term.getClauseCode())
+                        .createdAt(term.getCreatedAt())
+                        .status(term.getStatus())
+                        .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
+                        .type(term.getTypeTerm().getName())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override

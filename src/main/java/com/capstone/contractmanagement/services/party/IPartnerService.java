@@ -19,4 +19,5 @@ public interface IPartnerService {
 
     void updatePartnerStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException, OperationNotPermittedException;
 
+
 }
