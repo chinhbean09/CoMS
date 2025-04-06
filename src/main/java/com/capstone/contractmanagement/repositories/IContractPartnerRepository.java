@@ -1,24 +1,12 @@
 package com.capstone.contractmanagement.repositories;
 
-import com.capstone.contractmanagement.entities.PartnerContract;
-import com.capstone.contractmanagement.entities.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.capstone.contractmanagement.entities.contract.ContractPartner;
+import com.capstone.contractmanagement.enums.PartnerType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface IContractPartnerRepository extends JpaRepository<PartnerContract, Long> {
-    List<PartnerContract> findByUser(User user);
-
-    @Query("SELECT cp FROM PartnerContract cp " +
-            "WHERE cp.user = :user AND " +
-            "(LOWER(cp.contractNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "OR LOWER(cp.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "OR LOWER(cp.partnerName) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<PartnerContract> searchByUserAndKeyword(@Param("user") User user,
-                                                 @Param("search") String search,
-                                                 Pageable pageable);
+public interface IContractPartnerRepository extends JpaRepository<ContractPartner, Long> {
+    //List<ContractPartner> findByContractIdAndPartnerType(Long contractId, PartnerType partnerType);
+    Optional<ContractPartner> findByContractIdAndPartnerType(Long contractId, PartnerType partnerType);
 }

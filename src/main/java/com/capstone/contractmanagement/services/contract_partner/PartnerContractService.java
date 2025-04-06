@@ -10,7 +10,7 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.IContractItemRepository;
-import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
+import com.capstone.contractmanagement.repositories.IPartnerContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.responses.contract_partner.PartnerContractItemResponse;
 import com.capstone.contractmanagement.responses.contract_partner.PartnerContractResponse;
@@ -20,7 +20,6 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PartnerContractService implements IPartnerContractService {
-    private final IContractPartnerRepository contractPartnerRepository;
+    private final IPartnerContractRepository contractPartnerRepository;
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final Cloudinary cloudinary;
     private final IContractItemRepository contractItemRepository;
