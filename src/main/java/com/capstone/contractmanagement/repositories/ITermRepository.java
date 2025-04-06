@@ -80,4 +80,8 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     @Query("SELECT COUNT(t) FROM ContractTemplate t WHERE :term MEMBER OF t.legalBasisTerms OR :term MEMBER OF t.generalTerms OR :term MEMBER OF t.otherTerms")
     long countTemplatesUsingTerm(@Param("term") Term term);
 
+    @Query("SELECT t FROM Term t WHERE LOWER(t.label) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(t.value) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Term> searchByLabelOrValue(String keyword);
+
 }
