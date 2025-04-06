@@ -362,7 +362,7 @@ public class TermService implements ITermService{
     public Page<CreateTermResponse> searchTerm(String keyword, int page, int size) {
         List<Term> allTerms = termRepository.findAll();
         JaroWinklerSimilarity similarity = new JaroWinklerSimilarity();
-        double threshold = 0.9;
+        double threshold = 0.7;
 
         List<CreateTermResponse> matchedTerms = allTerms.stream()
                 .filter(term -> {
