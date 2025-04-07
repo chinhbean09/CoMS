@@ -5,6 +5,6 @@ import java.io.InputStream;
 public interface IPdfSignatureLocatorService {
     PdfSignatureLocatorService.SignatureCoordinates findCoordinates(InputStream inputStream) throws Exception;
 
-    PdfSignatureLocatorService.SignatureCoordinates findCoordinate(InputStream inputStream) throws Exception;
+    //PdfSignatureLocatorService.SignatureCoordinates findCoordinate(InputStream inputStream) throws Exception;
 
 }
