@@ -17,6 +17,8 @@
     import com.capstone.contractmanagement.responses.contract.ContractResponse;
     import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
     import com.capstone.contractmanagement.services.contract.IContractService;
+    import com.capstone.contractmanagement.services.file_process.IPdfSignatureLocatorService;
+    import com.capstone.contractmanagement.services.file_process.PdfSignatureLocatorService;
     import com.capstone.contractmanagement.utils.MessageKeys;
     import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.multipart.MultipartFile;
 
     import java.io.File;
     import java.io.IOException;
@@ -51,6 +54,7 @@
         private final SecurityUtils securityUtils;
         private final IContractRepository contractRepository;
         private final IAuditTrailRepository auditTrailRepository;
+        private final IPdfSignatureLocatorService signatureLocatorService;
 
         @PostMapping
         @Transactional
@@ -460,6 +464,30 @@
             Files.write(Paths.get(filePath), fileBytes);
 
             return filePath;
+        }
+
+        @PostMapping("/find-location/pdf")
+        public ResponseEntity<ResponseObject> locateSignature(@RequestParam("file") MultipartFile file) {
+            try {
+                PdfSignatureLocatorService.SignatureCoordinates coords = signatureLocatorService.findCoordinates(file.getInputStream());
+
+                if (coords == null) {
+                    return ResponseEntity.badRequest().body(ResponseObject.builder()
+                            .message("Không tìm thấy 'ĐẠI DIỆN BÊN A' trong file PDF để lấy tọa độ.")
+                            .status(HttpStatus.BAD_REQUEST)
+                            .build());
+                }
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .message("Lấy tọa độ thành công.")
+                        .data(coords)
+                        .status(HttpStatus.OK)
+                        .build());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ResponseObject.builder().message("Internal server error: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+            }
         }
 
     }
