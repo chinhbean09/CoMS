@@ -29,4 +29,6 @@ public interface IPartnerRepository extends JpaRepository<Partner, Long> {
     Page<Partner> findByIsDeletedFalseAndPartnerTypeAndIdNot(PartnerType partnerType, Long excludedId, Pageable pageable);
 
     boolean existsByTaxCode(String taxCode);
+
+    boolean existsByTaxCodeAndPartnerType(String taxCode, PartnerType partnerType);
 }
