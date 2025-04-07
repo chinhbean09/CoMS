@@ -466,7 +466,7 @@
             return filePath;
         }
 
-        @GetMapping("/find-location/pdf")
+        @PostMapping("/find-location/pdf")
         public ResponseEntity<ResponseObject> locateSignature(@RequestParam("file") MultipartFile file) {
             try {
                 PdfSignatureLocatorService.SignatureCoordinates coords = signatureLocatorService.findCoordinates(file.getInputStream());
