@@ -370,6 +370,7 @@ public class TermService implements ITermService{
                     double valueSim = similarity.apply(keyword.toLowerCase(), term.getValue().toLowerCase());
                     return labelSim >= threshold || valueSim >= threshold;
                 })
+                .filter(term -> term.getStatus() == TermStatus.NEW)
                 .map(term -> CreateTermResponse.builder()
                         .id(term.getId())
                         .label(term.getLabel())

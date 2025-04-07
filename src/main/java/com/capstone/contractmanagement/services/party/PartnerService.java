@@ -295,4 +295,9 @@
             existingPartner.setIsDeleted(isDeleted);
             partyRepository.save(existingPartner);
         }
+
+        @Override
+        public boolean existsByTaxCodeAndPartnerType(String taxCode) {
+            return partyRepository.existsByTaxCodeAndPartnerType(taxCode, PartnerType.PARTNER_A);
+        }
     }

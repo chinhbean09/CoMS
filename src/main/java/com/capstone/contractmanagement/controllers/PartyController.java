@@ -112,5 +112,27 @@ public class PartyController {
             return ResponseEntity.badRequest().body("Đã xảy ra lỗi: " + e.getMessage());
         }
     }
+
+    @GetMapping("/check-exists")
+    public ResponseEntity<ResponseObject> checkPartnerExists(
+            @RequestParam(required = true) String taxCode
+    ) {
+        boolean exists = false;
+
+        if (taxCode != null && !taxCode.trim().isEmpty()) {
+            exists = partyService.existsByTaxCodeAndPartnerType(taxCode);
+        } else {
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Bạn phải cung cấp taxCode")
+                    .build());
+        }
+
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message("Kiểm tra tồn tại đối tác thành công")
+                .data(exists)
+                .build());
+    }
 }
 
