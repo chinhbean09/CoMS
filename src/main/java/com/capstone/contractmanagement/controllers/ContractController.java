@@ -35,6 +35,8 @@
     import java.nio.file.Files;
     import java.nio.file.Paths;
     import java.time.LocalDateTime;
+    import java.time.ZoneId;
+    import java.time.ZonedDateTime;
     import java.time.format.DateTimeFormatter;
     import java.time.format.DateTimeParseException;
     import java.util.*;
@@ -102,17 +104,17 @@
 
         @GetMapping
         public ResponseEntity<ResponseObject> getAllContracts(
-                @RequestParam(defaultValue = "0") int page,
-                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(defaultValue = "0" ) int page,
+                @RequestParam(defaultValue = "10" ) int size,
                 @RequestParam(required = false) String keyword,
                 @RequestParam(required = false) List<ContractStatus> statuses,  // Thay đổi thành danh sách
                 @RequestParam(required = false) Long contractTypeId,
-                @RequestParam(defaultValue = "id") String sortBy,
-                @RequestParam(defaultValue = "asc") String order) {  // Thêm thông tin user hiện tại
+                @RequestParam(defaultValue = "id" ) String sortBy,
+                @RequestParam(defaultValue = "asc" ) String order) {  // Thêm thông tin user hiện tại
             try {
 
                 User currentUser = securityUtils.getLoggedInUser();
-                Sort sort = order.equalsIgnoreCase("desc")
+                Sort sort = order.equalsIgnoreCase("desc" )
                         ? Sort.by(sortBy).descending()
                         : Sort.by(sortBy).ascending();
                 Pageable pageable = PageRequest.of(page, size, sort);
@@ -135,10 +137,11 @@
                                 .build());
             }
         }
-        @GetMapping("/{id}")
+
+        @GetMapping("/{id}" )
         public ResponseEntity<ResponseObject> getContractById(@PathVariable Long id) throws DataNotFoundException {
             Optional<ContractResponse> contract = contractService.getContractById(id);
-            if(contract.isEmpty()) {
+            if (contract.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseObject.builder()
                         .status(HttpStatus.NOT_FOUND)
                         .message(MessageKeys.CONTRACT_NOT_FOUND)
@@ -152,7 +155,7 @@
                     .build());
         }
 
-        @DeleteMapping("/{id}")
+        @DeleteMapping("/{id}" )
         public ResponseEntity<ResponseObject> deleteContract(@PathVariable Long id) {
             contractService.deleteContract(id);
             return ResponseEntity.ok(ResponseObject.builder()
@@ -161,11 +164,11 @@
                     .build());
         }
 
-        @PostMapping("/{id}/duplicate")
+        @PostMapping("/{id}/duplicate" )
         public ResponseEntity<ResponseObject> duplicateContract(@PathVariable Long id) {
             try {
-             Contract duplicateContract = contractService.duplicateContract(id);
-                if (duplicateContract!=null) {
+                Contract duplicateContract = contractService.duplicateContract(id);
+                if (duplicateContract != null) {
                     return ResponseEntity.ok(ResponseObject.builder()
                             .message(MessageKeys.DUPLICATE_CONTRACT_SUCCESSFULLY)
                             .status(HttpStatus.OK)
@@ -189,10 +192,10 @@
             }
         }
 
-        @PostMapping("/{id}/duplicate-with-partner")
+        @PostMapping("/{id}/duplicate-with-partner" )
         public ResponseEntity<ResponseObject> duplicateContractWithPartner(
                 @PathVariable Long id,
-                @RequestParam("partnerId") Long partnerId) {
+                @RequestParam("partnerId" ) Long partnerId) {
             try {
                 Contract duplicateContract = contractService.duplicateContractWithPartner(id, partnerId);
                 if (duplicateContract != null) {
@@ -219,7 +222,7 @@
             }
         }
 
-        @DeleteMapping("/soft-delete/{id}")
+        @DeleteMapping("/soft-delete/{id}" )
         public ResponseEntity<ResponseObject> softDeleteContract(@PathVariable Long id) {
             try {
                 boolean deleted = contractService.softDelete(id);
@@ -247,7 +250,7 @@
             }
         }
 
-        @PutMapping("/status/{contractId}")
+        @PutMapping("/status/{contractId}" )
         public ResponseEntity<ResponseObject> updateContractStatus(
                 @PathVariable Long contractId,
                 @RequestParam ContractStatus status) {
@@ -275,7 +278,7 @@
             }
         }
 
-        @PutMapping("/update/{contractId}")
+        @PutMapping("/update/{contractId}" )
         public ResponseEntity<ResponseObject> updateContract(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
             try {
                 Contract contract = contractService.updateContract(contractId, dto);
@@ -295,9 +298,9 @@
             }
         }
 
-        @PostMapping("/rollback")
+        @PostMapping("/rollback" )
         public ResponseEntity<ResponseObject> rollbackContract(@RequestParam Long originalContractId,
-                                                         @RequestParam int version) {
+                                                               @RequestParam int version) {
             try {
                 Contract rollbackContract = contractService.rollbackContract(originalContractId, version);
                 return ResponseEntity.ok(ResponseObject.builder()
@@ -316,16 +319,16 @@
             }
         }
 
-        @GetMapping("/original/{originalContractId}/versions")
+        @GetMapping("/original/{originalContractId}/versions" )
         public ResponseEntity<ResponseObject> getAllVersions(
                 @PathVariable Long originalContractId,
-                @RequestParam(defaultValue = "0") int page,
-                @RequestParam(defaultValue = "10") int size,
-                @RequestParam(defaultValue = "version") String sortBy,
-                @RequestParam(defaultValue = "asc") String order) {
+                @RequestParam(defaultValue = "0" ) int page,
+                @RequestParam(defaultValue = "10" ) int size,
+                @RequestParam(defaultValue = "version" ) String sortBy,
+                @RequestParam(defaultValue = "asc" ) String order) {
             try {
                 User currentUser = securityUtils.getLoggedInUser();
-                Sort sort = order.equalsIgnoreCase("desc")
+                Sort sort = order.equalsIgnoreCase("desc" )
                         ? Sort.by(sortBy).descending()
                         : Sort.by(sortBy).ascending();
                 Pageable pageable = PageRequest.of(page, size, sort);
@@ -333,7 +336,7 @@
                 Page<GetAllContractReponse> versions = contractService.getAllVersionsByOriginalContractId(originalContractId, pageable, currentUser);
 
                 return ResponseEntity.ok(ResponseObject.builder()
-                        .message("Lấy tất cả phiên bản hợp đồng thành công")
+                        .message("Lấy tất cả phiên bản hợp đồng thành công" )
                         .status(HttpStatus.OK)
                         .data(versions)
                         .build());
@@ -347,11 +350,11 @@
             }
         }
 
-        @GetMapping("/compare-versions")
+        @GetMapping("/compare-versions" )
         public ResponseEntity<List<ContractResponse>> getContractVersions(
-                @RequestParam("originalContractId") Long originalContractId,
-                @RequestParam("version1") Integer version1,
-                @RequestParam("version2") Integer version2
+                @RequestParam("originalContractId" ) Long originalContractId,
+                @RequestParam("version1" ) Integer version1,
+                @RequestParam("version2" ) Integer version2
         ) {
             List<ContractResponse> responses = contractService.getContractsByOriginalIdAndVersions(
                     originalContractId, version1, version2
@@ -359,18 +362,18 @@
             return ResponseEntity.ok(responses);
         }
 
-        @GetMapping("/partner/{partnerId}")
+        @GetMapping("/partner/{partnerId}" )
         public ResponseEntity<ResponseObject> getAllContractsByPartnerId(
                 @PathVariable Long partnerId,
-                @RequestParam(defaultValue = "0") int page,
-                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(defaultValue = "0" ) int page,
+                @RequestParam(defaultValue = "10" ) int size,
                 @RequestParam(required = false) String keyword,
                 @RequestParam(required = false) ContractStatus status,
                 @RequestParam(required = false) LocalDateTime signingDate,
-                @RequestParam(defaultValue = "id") String sortBy,
-                @RequestParam(defaultValue = "asc") String order) {
+                @RequestParam(defaultValue = "id" ) String sortBy,
+                @RequestParam(defaultValue = "asc" ) String order) {
             try {
-                Sort sort = order.equalsIgnoreCase("desc")
+                Sort sort = order.equalsIgnoreCase("desc" )
                         ? Sort.by(sortBy).descending()
                         : Sort.by(sortBy).ascending();
                 Pageable pageable = PageRequest.of(page, size, sort);
@@ -384,7 +387,7 @@
                 );
 
                 return ResponseEntity.ok(ResponseObject.builder()
-                        .message("Lấy hợp đồng theo partner thành công")
+                        .message("Lấy hợp đồng theo partner thành công" )
                         .status(HttpStatus.OK)
                         .data(contracts)
                         .build());
@@ -458,6 +461,6 @@
 
             return filePath;
         }
-    }
 
+    }
 
