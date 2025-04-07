@@ -33,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,33 +122,64 @@ public class PartnerContractService implements IPartnerContractService {
             throw new IllegalArgumentException("Only PDF or Word files are allowed.");
         }
 
-        // Upload file lên Cloudinary vào thư mục contract_partner
+        // Upload file lên Cloudinary vào thư mục "contract_partner"
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "resource_type", "raw",  // Định dạng file bất kỳ
-                "folder", "contract_partner"
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "contract_partner",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", false     // Không thêm ký tự ngẫu nhiên
         ));
 
-        // Lấy public ID
+        // Lấy public ID của file đã upload
         String publicId = (String) uploadResult.get("public_id");
 
-        // Tạo URL bảo mật
+        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+        String originalFilename = file.getOriginalFilename();
+        String customFilename = normalizeFilename(originalFilename);
+
+        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
         String secureUrl = cloudinary.url()
                 .resourceType("raw")
                 .publicId(publicId)
                 .secure(true)
-                .transformation(new Transformation().flags("attachment"))
+                .transformation(new Transformation().flags("attachment:" + encodedFilename))
                 .generate();
 
         return secureUrl;
     }
 
-    // Hàm phụ trợ kiểm tra định dạng file
+    // Hàm kiểm tra định dạng file hỗ trợ (PDF, Word 2003, Word 2007+)
     private boolean isSupportedFileType(String contentType) {
         return contentType != null && (
                 contentType.equals("application/pdf") ||
                         contentType.equals("application/msword") ||
                         contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         );
+    }
+
+    // Hàm chuẩn hóa tên file tiếng Việt: bỏ dấu, loại bỏ ký tự không hợp lệ, chuyển khoảng trắng thành dấu gạch dưới
+    private String normalizeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "file";
+        }
+        // Loại bỏ extension nếu có
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex != -1) {
+            filename = filename.substring(0, dotIndex);
+        }
+        // Chuẩn hóa Unicode: tách dấu
+        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+        // Loại bỏ dấu (diacritics)
+        normalized = normalized.replaceAll("\\p{M}", "");
+        // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+        normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
+        // Chuyển khoảng trắng thành dấu gạch dưới và trim
+        normalized = normalized.trim().replaceAll("\\s+", "_");
+        return normalized;
     }
 
     @Override
