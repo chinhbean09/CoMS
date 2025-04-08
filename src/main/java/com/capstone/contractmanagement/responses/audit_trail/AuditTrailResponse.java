@@ -43,9 +43,12 @@ public class AuditTrailResponse {
         } else if ("PaymentSchedule".equals(auditTrail.getEntityName())) {
             this.oldValue = formatPaymentSchedule(auditTrail.getOldValue());
             this.newValue = formatPaymentSchedule(auditTrail.getNewValue());
-        } else if ("ContractItem".equals(auditTrail.getEntityName())){
+        } else if ("ContractItem".equals(auditTrail.getEntityName())) {
             this.oldValue = formatContractItem(auditTrail.getOldValue());
             this.newValue = formatContractItem(auditTrail.getNewValue());
+        } else if ("ContractPartner".equals(auditTrail.getEntityName())) {
+            this.oldValue = formatContractPartner(auditTrail.getOldValue());
+            this.newValue = formatContractPartner(auditTrail.getNewValue());
         } else {
             this.oldValue = auditTrail.getOldValue();
             this.newValue = auditTrail.getNewValue();
@@ -139,7 +142,6 @@ public class AuditTrailResponse {
         StringBuilder result = new StringBuilder();
         String[] parts = fullValue.split(", ");
 
-        // Trích xuất các trường cần thiết
         for (String part : parts) {
             if (part.startsWith("Order: ")) {
                 if (!result.isEmpty()) result.append(", ");
@@ -163,6 +165,7 @@ public class AuditTrailResponse {
         return !result.isEmpty() ? result.toString() : null;
     }
 
+    // Hàm format cho ContractItem
     private String formatContractItem(String fullValue) {
         if (fullValue == null) {
             return null;
@@ -171,7 +174,6 @@ public class AuditTrailResponse {
         StringBuilder result = new StringBuilder();
         String[] parts = fullValue.split(", ");
 
-        // Trích xuất các trường cần thiết
         for (String part : parts) {
             if (part.startsWith("itemOrder: ")) {
                 if (!result.isEmpty()) result.append(", ");
@@ -179,7 +181,6 @@ public class AuditTrailResponse {
             } else if (part.startsWith("amount: ")) {
                 if (!result.isEmpty()) result.append(", ");
                 result.append("Số tiền: ").append(part.substring("amount: ".length()));
-
             } else if (part.startsWith("description: ")) {
                 if (!result.isEmpty()) result.append(", ");
                 result.append("Nội dung: ").append(part.substring("description: ".length()));
@@ -189,6 +190,45 @@ public class AuditTrailResponse {
         return !result.isEmpty() ? result.toString() : null;
     }
 
+    // Hàm format cho ContractPartner (mới thêm)
+    private String formatContractPartner(String fullValue) {
+        if (fullValue == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] parts = fullValue.split(", ");
+
+        for (String part : parts) {
+            if (part.startsWith("partnerType: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Loại đối tác: ").append(part.substring("partnerType: ".length()));
+            } else if (part.startsWith("partnerName: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Tên đối tác: ").append(part.substring("partnerName: ".length()));
+            } else if (part.startsWith("partnerAddress: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Địa chỉ: ").append(part.substring("partnerAddress: ".length()));
+            } else if (part.startsWith("partnerTaxCode: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Mã số thuế: ").append(part.substring("partnerTaxCode: ".length()));
+            } else if (part.startsWith("partnerPhone: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Số điện thoại: ").append(part.substring("partnerPhone: ".length()));
+            } else if (part.startsWith("partnerEmail: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Email: ").append(part.substring("partnerEmail: ".length()));
+            } else if (part.startsWith("spokesmanName: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Người đại diện: ").append(part.substring("spokesmanName: ".length()));
+            } else if (part.startsWith("position: ")) {
+                if (!result.isEmpty()) result.append(", ");
+                result.append("Chức vụ: ").append(part.substring("position: ".length()));
+            }
+        }
+
+        return !result.isEmpty() ? result.toString() : null;
+    }
 
     // Hàm dịch trạng thái từ tiếng Anh sang tiếng Việt
     private String translateStatus(String status) {
