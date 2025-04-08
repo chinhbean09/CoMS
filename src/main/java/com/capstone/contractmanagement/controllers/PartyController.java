@@ -115,12 +115,13 @@ public class PartyController {
 
     @GetMapping("/check-exists")
     public ResponseEntity<ResponseObject> checkPartnerExists(
-            @RequestParam(required = true) String taxCode
+            @RequestParam(required = true) String taxCode,
+            @RequestParam(required = true) PartnerType partnerType
     ) {
         boolean exists = false;
 
         if (taxCode != null && !taxCode.trim().isEmpty()) {
-            exists = partyService.existsByTaxCodeAndPartnerType(taxCode);
+            exists = partyService.existsByTaxCodeAndPartnerType(taxCode, partnerType);
         } else {
             return ResponseEntity.badRequest().body(ResponseObject.builder()
                     .status(HttpStatus.BAD_REQUEST)
