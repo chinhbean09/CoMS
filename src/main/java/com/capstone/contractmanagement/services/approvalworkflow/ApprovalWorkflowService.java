@@ -608,7 +608,13 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING và là phiên bản mới nhất
-        List<Contract> pendingContracts = contractRepository.findLatest();
+        List<Contract> pendingContracts = contractRepository.findLatestByStatusIn(List.of(
+                ContractStatus.APPROVAL_PENDING,
+                ContractStatus.APPROVED,
+                ContractStatus.ACTIVE,
+                ContractStatus.SIGNED,
+                ContractStatus.REJECTED,
+                ContractStatus.PENDING));
 
         // Lọc các hợp đồng theo approverId, keyword và contractTypeId
         List<Contract> filteredContracts = pendingContracts.stream()
@@ -793,7 +799,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         if (currentUser.isManager()) {
             // Quản lý: lấy số lượng hợp đồng và phụ lục đang chờ phê duyệt mà người đó được giao
             long contractsPendingApprovalForManager = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-                    ContractStatus.APPROVAL_PENDING,true, currentUser.getId(), ApprovalStatus.APPROVING);
+                    ContractStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
 
             long addendaPendingApprovalForManager = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
                     AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
@@ -802,9 +808,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             stats.put("addendaPendingApprovalForManager", (int) addendaPendingApprovalForManager);
 
         } else {
-            // Nhân viên: lấy số lượng hợp đồng/phụ lục mà nhân viên đã tạo đang chờ phê duyệt và bị từ chối
-
-            // Số lượng hợp đồng mà nhân viên đã tạo, đang chờ phê duyệt
+            // Nhân viên: lấy số lượng hợp đồng/phụ lục mà nhân viên đã tạo
             long contractsPendingApproval = contractRepository.countByUser_IdAndStatusAndIsLatestVersion(currentUser.getId(), ContractStatus.APPROVAL_PENDING, true);
 
             // Số lượng hợp đồng mà nhân viên đã tạo, bị từ chối
@@ -812,14 +816,20 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
             // Số lượng phụ lục mà nhân viên đã tạo, đang chờ phê duyệt
             long addendaPendingApproval = addendumRepository.countByContract_User_IdAndStatusAndContract_IsLatestVersion(currentUser.getId(), AddendumStatus.APPROVAL_PENDING, true);
+            long addendaRejected = addendumRepository.countByContract_User_IdAndStatusAndContract_IsLatestVersion(currentUser.getId(), AddendumStatus.REJECTED, true);
 
-            // Số lượng phụ lục mà nhân viên đã tạo, bị từ chối
-            long addendaRejected = addendumRepository.countByContract_User_IdAndStatusAndContract_IsLatestVersion(currentUser.getId(), AddendumStatus.APPROVAL_PENDING, true);
+            // Nhân viên được giao duyệt hợp đồng/phụ lục
+            long contractsAssignedToApprove = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    ContractStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
+            long addendaAssignedToApprove = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
 
             stats.put("contractsPendingApproval", (int) contractsPendingApproval);
             stats.put("contractsRejected", (int) contractsRejected);
             stats.put("addendaPendingApproval", (int) addendaPendingApproval);
             stats.put("addendaRejected", (int) addendaRejected);
+            stats.put("contractsAssignedToApprove", (int) contractsAssignedToApprove);
+            stats.put("addendaAssignedToApprove", (int) addendaAssignedToApprove);
         }
 
         return stats;
