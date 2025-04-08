@@ -279,18 +279,19 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         AuditTrail auditTrail = AuditTrail.builder()
                 .contract(contract)
-                .entityName("Contract") // Tên thực thể là "Contract"
-                .entityId(contract.getId()) // ID của hợp đồng
-                .action(action) // Hành động: "Status updated"
-                .fieldName(fieldName) // Trường thay đổi: "status"
-                .oldValue(oldStatusVi) // Giá trị cũ (đã dịch sang tiếng Việt)
-                .newValue(newStatusVi) // Giá trị mới (đã dịch sang tiếng Việt)
-                .changedBy(changedBy) // Người thực hiện thay đổi
-                .changedAt(LocalDateTime.now()) // Thời điểm thay đổi
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
                 .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'", oldStatusVi, newStatusVi)) // Tóm tắt thay đổi
                 .build();
         auditTrailRepository.save(auditTrail);
     }
+
     @Override
     @Transactional
     public void assignWorkflowToContract(Long contractId, Long workflowId) throws DataNotFoundException {
@@ -494,7 +495,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         // Ghi audit trail
         String changedBy = currentUser.getUsername();
-        logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.REJECTED.name(), changedBy);
+        logAuditTrail(contract, "REJECT", "status", oldStatus, ContractStatus.REJECTED.name(), changedBy);
 
         // Gửi thông báo cho người tạo hợp đồng để yêu cầu chỉnh sửa
         Map<String, Object> payload = new HashMap<>();
@@ -697,7 +698,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
 
         String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
-        logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.APPROVAL_PENDING.name(), changedBy);
+        logAuditTrail(contract, "RESUBMIT", "status", oldStatus, ContractStatus.APPROVAL_PENDING.name(), changedBy);
 
         if (firstStageOpt.isPresent()) {
             ApprovalStage firstStage = firstStageOpt.get();
