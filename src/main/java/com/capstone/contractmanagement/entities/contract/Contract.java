@@ -166,7 +166,6 @@
         @JsonIgnore
         private List<Addendum> addenda = new ArrayList<>();
 
-
         //Việc tăng số phiên bản (version) trong hệ thống giúp phản ánh rằng hợp đồng
         //đã được chỉnh sửa và cho phép bạn theo dõi trạng thái tổng thể của hợp đồng qua thời gian.
         @Column(name = "version", nullable = false)
