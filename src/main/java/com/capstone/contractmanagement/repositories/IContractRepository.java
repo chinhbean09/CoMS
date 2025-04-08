@@ -45,6 +45,10 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     List<Contract> findByStatusAndIsLatestVersion(ContractStatus status, boolean isLatestVersion);
 
+    // find all latest contracts
+    @Query("SELECT c FROM Contract c WHERE c.isLatestVersion = true")
+    List<Contract> findLatest();
+
     @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatus(@Param("status") ContractStatus status, Pageable pageable);
 
