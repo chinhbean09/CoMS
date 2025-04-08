@@ -440,11 +440,21 @@
 
                 Contract contract = optionalContract.get();
 
+                if (contract.getStatus() != ContractStatus.APPROVED) {
+                    return ResponseEntity.badRequest().body(
+                            ResponseObject.builder()
+                                    .status(HttpStatus.BAD_REQUEST)
+                                    .message("Chỉ được ký hợp đồng ở trạng thái 'Đã phê duyệt'")
+                                    .data(null)
+                                    .build()
+                    );
+                }
+
                 // Save signed file (can throw IOException)
                 String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
 
                 // Update contract details
-                String oldStatus = contract.getStatus().name(); // Lưu trạng thái cũ trước khi thay đổi
+                String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
                 contract.setSignedFilePath(filePath);
                 contract.setSignedBy(currentUser.getFullName());
 
@@ -547,7 +557,11 @@
                     .newValue(newStatusVi)
                     .changedBy(changedBy)
                     .changedAt(LocalDateTime.now())
-                    .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'", oldStatusVi, newStatusVi))
+                    .changeSummary(String.format("Hợp đồng được ký bởi %s vào lúc %s. Trạng thái thay đổi từ '%s' sang '%s'",
+                            changedBy,
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now()),
+                            oldStatusVi,
+                            newStatusVi))
                     .build();
             auditTrailRepository.save(auditTrail);
         }
