@@ -21,7 +21,7 @@ public interface IPartnerService {
     void updatePartnerStatus(Long partyId, Boolean isDeleted) throws DataNotFoundException, OperationNotPermittedException;
 
     // check if partner exists by taxCode and partnerType
-    boolean existsByTaxCodeAndPartnerType(String taxCode);
+    boolean existsByTaxCodeAndPartnerType(String taxCode, PartnerType partnerType);
 
 
 
