@@ -869,6 +869,7 @@ public class ContractService implements IContractService{
                 .signingDate(contract.getSigningDate())
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
+                .signedFilePath(contract.getSignedFilePath())
                 .build();
     }
     private UserContractResponse convertUserToUserContractResponse(User user) {
@@ -3057,7 +3058,7 @@ public class ContractService implements IContractService{
             case "CANCELLED": return "Đã hủy";
             case "ENDED": return "Kết thúc";
             case "DELETED": return "Đã xóa";
-            default: return status; // Giữ nguyên nếu không có bản dịch
+            default: return status;
         }
     }
 
@@ -3351,13 +3352,10 @@ public class ContractService implements IContractService{
 
         // Compare basic info
         compareBasicInfo(v1, v2, changes);
-
         // Compare contract terms
         compareContractTerms(v1.getContractTerms(), v2.getContractTerms(), changes);
-
         // Compare additional terms
         compareAdditionalTerms(v1.getAdditionalTermDetails(), v2.getAdditionalTermDetails(), changes);
-
         return changes;
     }
 
@@ -3455,6 +3453,7 @@ public class ContractService implements IContractService{
                 .changeType(changeType)
                 .build();
     }
+
 
     private ContractComparisonDTO createAdditionalTermDTO(AdditionalTermSnapshot term, String groupName,
                                                           String changeType, Object oldValue) {
@@ -3556,11 +3555,9 @@ public class ContractService implements IContractService{
                     if (matches && status != null) {
                         matches = contract.getStatus() == status;
                     }
-
                     return matches;
                 })
                 .collect(Collectors.toList());
-
         // Vì đã dùng phân trang ban đầu nhưng sau đó lọc lại theo điều kiện,
         // ta cần tái tạo Page từ kết quả đã lọc
         int start = (int) pageable.getOffset();
@@ -3570,6 +3567,4 @@ public class ContractService implements IContractService{
 
         return filteredPage.map(this::convertToGetAllContractResponse);
     }
-
-
 }

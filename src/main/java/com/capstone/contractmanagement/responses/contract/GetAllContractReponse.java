@@ -36,5 +36,6 @@ public class GetAllContractReponse {
     private LocalDateTime expiryDate;
     private LocalDateTime effectiveDate;
     private LocalDateTime signingDate;
+    private String signedFilePath;
 
 }

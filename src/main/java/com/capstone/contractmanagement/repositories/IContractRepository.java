@@ -17,25 +17,25 @@ import java.util.Optional;
 
 public interface IContractRepository extends JpaRepository<Contract, Long> {
     // Các phương thức hiện có (giữ nguyên)
-    Page<Contract> findByStatus(ContractStatus status, Pageable pageable);
-
-    Page<Contract> findByTitleContainingIgnoreCaseAndStatus(String title, ContractStatus status, Pageable pageable);
-
-    Page<Contract> findByStatusNot(ContractStatus status, Pageable pageable);
-
-    Page<Contract> findByTitleContainingIgnoreCaseAndStatusNot(String title, ContractStatus status, Pageable pageable);
-
-    long countByOriginalContractId(Long originalContractId);
-
-    Page<Contract> findByStatusAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
-
-    Page<Contract> findByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
-            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
-
-    Page<Contract> findByStatusNotAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
-
-    Page<Contract> findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
-            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
+//    Page<Contract> findByStatus(ContractStatus status, Pageable pageable);
+//
+//    Page<Contract> findByTitleContainingIgnoreCaseAndStatus(String title, ContractStatus status, Pageable pageable);
+//
+//    Page<Contract> findByStatusNot(ContractStatus status, Pageable pageable);
+//
+//    Page<Contract> findByTitleContainingIgnoreCaseAndStatusNot(String title, ContractStatus status, Pageable pageable);
+//
+//    long countByOriginalContractId(Long originalContractId);
+//
+//    Page<Contract> findByStatusAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
+//
+//    Page<Contract> findByTitleContainingIgnoreCaseAndStatusAndContractTypeId(
+//            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
+//
+//    Page<Contract> findByStatusNotAndContractTypeId(ContractStatus status, Long contractTypeId, Pageable pageable);
+//
+//    Page<Contract> findByTitleContainingIgnoreCaseAndStatusNotAndContractTypeId(
+//            String title, ContractStatus status, Long contractTypeId, Pageable pageable);
 
     @Query("SELECT COUNT(c) FROM Contract c WHERE c.contractNumber LIKE :prefix% AND c.createdAt >= :startOfDay AND c.createdAt < :endOfDay")
     int countByContractNumberStartingWithAndDate(@Param("prefix") String prefix, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
