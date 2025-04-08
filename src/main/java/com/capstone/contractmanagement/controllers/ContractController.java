@@ -533,7 +533,7 @@
 
                 if (coords == null) {
                     return ResponseEntity.badRequest().body(ResponseObject.builder()
-                            .message("Không tìm thấy 'ĐẠI DIỆN BÊN A' trong file PDF để lấy tọa độ.")
+                            .message("Không tìm thấy 'ĐẠI DIỆN BÊN A' hoặc 'KÝ VÀ GHI RÕ HỌ TÊN' phù hợp trong file PDF.")
                             .status(HttpStatus.BAD_REQUEST)
                             .build());
                 }
@@ -545,10 +545,11 @@
                         .build());
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(ResponseObject.builder().message("Internal server error: " + e.getMessage())
-                                .status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+                        .body(ResponseObject.builder()
+                                .message("Lỗi server: " + e.getMessage())
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .build());
             }
         }
-
     }
 

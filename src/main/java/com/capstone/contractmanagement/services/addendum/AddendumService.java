@@ -3,10 +3,7 @@ package com.capstone.contractmanagement.services.addendum;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
-import com.capstone.contractmanagement.entities.Addendum;
-import com.capstone.contractmanagement.entities.AddendumType;
-import com.capstone.contractmanagement.entities.Partner;
-import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -52,6 +49,7 @@ public class AddendumService implements IAddendumService{
     private final IUserRepository userRepository;
     private final IPartnerRepository partnerRepository;
     private final IContractPartnerRepository contractPartnerRepository;
+    private final IAuditTrailRepository auditTrailRepository;
 
     @Override
     @Transactional
@@ -97,6 +95,7 @@ public class AddendumService implements IAddendumService{
             // Lưu phụ lục
             addendumRepository.save(addendum);
 
+            logAuditTrailForAddendum(addendum, "CREATE", "status", null, AddendumStatus.CREATED.name(), currentUser.getUsername());
             // Trả về thông tin phụ lục đã tạo
             return AddendumResponse.builder()
                     .addendumId(addendum.getId())
@@ -211,8 +210,12 @@ public class AddendumService implements IAddendumService{
     @Transactional
     public String updateAddendum(Long addendumId, AddendumDTO addendumDTO) throws DataNotFoundException {
         // Tìm phụ lục theo id
+
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+
+        String oldStatus = addendum.getStatus().name();
+
         if (addendum.getStatus().equals(AddendumStatus.APPROVAL_PENDING)) {
             throw new RuntimeException("Phụ lục đang trong quy trình duyệt, không được phép cập nhật.");
         }
@@ -235,6 +238,8 @@ public class AddendumService implements IAddendumService{
         addendum.setUpdatedAt(LocalDateTime.now());
 
         addendumRepository.save(addendum);
+        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        logAuditTrailForAddendum(addendum, "UPDATE", "status", oldStatus, AddendumStatus.UPDATED.name(), changedBy);
         return "Addendum updated successfully.";
     }
 
@@ -370,16 +375,15 @@ public class AddendumService implements IAddendumService{
             approvalWorkflowRepository.save(clonedWorkflow);
             workflowToAssign = clonedWorkflow;
         }
-
+        String oldStatus = addendum.getStatus().name();
         // Gán workflow (mới hoặc gốc nếu chưa gán) cho phụ lục
         addendum.setApprovalWorkflow(workflowToAssign);
         addendum.setStatus(AddendumStatus.APPROVAL_PENDING);
         addendumRepository.save(addendum);
 
         // Lưu lại lịch sử thay đổi (AuditTrail)
-//        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
-//        logAuditTrailForAddendum(addendum, "UPDATE", "approvalWorkflow", oldStatus, workflowToAssign.getStatus().name(), changedBy);
-
+        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        logAuditTrailForAddendum(addendum, "UPDATE", "status", oldStatus, AddendumStatus.APPROVAL_PENDING.name(), changedBy);
         // Lấy stage có stageOrder nhỏ nhất để gửi thông báo
         workflowToAssign.getStages().stream()
                 .min(Comparator.comparingInt(ApprovalStage::getStageOrder))
@@ -463,10 +467,13 @@ public class AddendumService implements IAddendumService{
                 notificationService.saveNotification(nextApprover, notificationMessage, addendum.getContract());
                 messagingTemplate.convertAndSendToUser(nextApprover.getFullName(), "/queue/notifications", payload);
             } else {
+                String oldStatus = addendum.getStatus().name();
                 // Nếu không còn bước tiếp theo, cập nhật trạng thái phụ lục thành APPROVED
                 addendum.setStatus(AddendumStatus.APPROVED);
                 addendumRepository.save(addendum);
 
+                String changedBy = currentUser.getUsername();
+                logAuditTrailForAddendum(addendum, "UPDATE", "status", oldStatus, AddendumStatus.APPROVED.name(), changedBy);
                 Map<String, Object> payload = new HashMap<>();
                 String notificationMessage = "Phụ lục: " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " đã duyệt xong.";
                 payload.put("message", notificationMessage);
@@ -519,13 +526,15 @@ public class AddendumService implements IAddendumService{
         stage.setComment(workflowDTO.getComment());
         approvalStageRepository.save(stage);
 
+        String oldStatus = addendum.getStatus().name();
         // Cập nhật trạng thái phụ lục thành REJECTED
         addendum.setStatus(AddendumStatus.REJECTED);
         addendumRepository.save(addendum);
 
         // Ghi audit trail
-        String changedBy = currentUser.getUsername();
 
+        String changedBy = currentUser.getUsername();
+        logAuditTrailForAddendum(addendum, "REJECT", "status", oldStatus, AddendumStatus.REJECTED.name(), changedBy);
         // Gửi thông báo cho người tạo phụ lục để yêu cầu chỉnh sửa
         Map<String, Object> payload = new HashMap<>();
         String notificationMessage = "Bạn có phụ lục " + addendum.getTitle() + " của hợp đồng số " + addendum.getContractNumber() + " đã bị từ chối phê duyệt. Vui lòng kiểm tra lại.";
@@ -556,11 +565,14 @@ public class AddendumService implements IAddendumService{
             stage.setComment(null);
             approvalStageRepository.save(stage);
         });
+        String oldStatus = addendum.getStatus().name();
 
         // Cập nhật lại trạng thái của phụ lục về APPROVAL_PENDING (để báo hiệu đang chờ duyệt lại)
         addendum.setStatus(AddendumStatus.APPROVAL_PENDING);
         addendumRepository.save(addendum);
 
+        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        logAuditTrailForAddendum(addendum, "RESUBMIT", "status", oldStatus, AddendumStatus.APPROVAL_PENDING.name(), changedBy);
         // Tìm bước duyệt đầu tiên (stage có stageOrder nhỏ nhất)
         Optional<ApprovalStage> firstStageOpt = workflow.getStages().stream()
                 .min(Comparator.comparingInt(ApprovalStage::getStageOrder));
@@ -1053,5 +1065,58 @@ public class AddendumService implements IAddendumService{
                                 : null
                 )
                 .build();
+
     }
+
+    private String translateAddendumStatusToVietnamese(String status) {
+        switch (status) {
+            case "DRAFT":
+                return "Bản nháp";
+            case "CREATED":
+                return "Đã tạo";
+            case "UPDATED":
+                return "Đã cập nhật";
+            case "APPROVAL_PENDING":
+                return "Chờ phê duyệt";
+            case "APPROVED":
+                return "Đã phê duyệt";
+            case "REJECTED":
+                return "Bị từ chối";
+            case "SIGNED":
+                return "Đã ký";
+            case "ACTIVE":
+                return "Đang có hiệu lực";
+            case "COMPLETED":
+                return "Hoàn thành";
+            case "EXPIRED":
+                return "Hết hạn";
+            case "CANCELLED":
+                return "Đã hủy";
+            default:
+                return status;
+        }
+    }
+
+    private void logAuditTrailForAddendum(Addendum addendum, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = oldValue != null ? translateAddendumStatusToVietnamese(oldValue) : null;
+        String newStatusVi = newValue != null ? translateAddendumStatusToVietnamese(newValue) : null;
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(addendum.getContract()) // Liên kết với hợp đồng của phụ lục
+                .entityName("Addendum")
+                .entityId(addendum.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(String.format("Đã cập nhật trạng thái phụ lục từ '%s' sang '%s'",
+                        oldStatusVi != null ? oldStatusVi : "Không có",
+                        newStatusVi != null ? newStatusVi : "Không có"))
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+
+
 }
