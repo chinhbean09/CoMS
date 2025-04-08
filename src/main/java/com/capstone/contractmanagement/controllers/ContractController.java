@@ -427,6 +427,17 @@
                     );
                 }
 
+                SecurityUtils securityUtils = new SecurityUtils();
+                User currentUser = securityUtils.getLoggedInUser();
+                if (currentUser == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(ResponseObject.builder()
+                                    .status(HttpStatus.UNAUTHORIZED)
+                                    .message("Unauthorized")
+                                    .data(null)
+                                    .build());
+                }
+
                 Contract contract = optionalContract.get();
 
                 // Save signed file (can throw IOException)
@@ -435,7 +446,7 @@
                 // Update contract details
                 String oldStatus = contract.getStatus().name(); // Lưu trạng thái cũ trước khi thay đổi
                 contract.setSignedFilePath(filePath);
-                contract.setSignedBy(request.getSignedBy());
+                contract.setSignedBy(currentUser.getFullName());
 
                 // Parse signedAt with error handling
                 try {
@@ -458,7 +469,7 @@
                 contractRepository.save(contract);
 
                 // Ghi audit trail
-                logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), request.getSignedBy());
+                logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName() );
 
                 return ResponseEntity.ok(ResponseObject.builder()
                         .status(HttpStatus.OK)
