@@ -62,11 +62,12 @@ public class UserController {
     private final IAppConfigService appConfigService;
 
     @GetMapping("/generate-secret-key")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> generateSecretKey() {
         return ResponseEntity.ok(jwtTokenUtils.generateSecretKey());
     }
 
-        @PostMapping("/register")
+    @PostMapping("/register")
     public ResponseEntity<ResponseObject> registerUser(
             @Valid @RequestBody CreateUserDTO userDTO,
             BindingResult result
@@ -242,6 +243,7 @@ public class UserController {
     }
 
     @GetMapping("/get-user/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<UserResponse> getUser(@Valid @PathVariable Long id) {
         try {
             User user = userService.getUser(id);
@@ -314,7 +316,7 @@ public class UserController {
     }
 
     @GetMapping("/get-all-users")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<?> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

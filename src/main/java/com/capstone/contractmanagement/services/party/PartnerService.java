@@ -45,7 +45,7 @@
 //
 //            // Kiểm tra trùng số tài khoản ngân hàng
 //            if (createPartnerDTO.getBanking() != null && !createPartnerDTO.getBanking().isEmpty()) {
-//                for (CreateBankDTO bankDTO : createPartnerDTO.getBanking()) {
+//                for (CreateBankDTO bank   DTO : createPartnerDTO.getBanking()) {
 //                    if (bankRepository.existsByBackAccountNumber(bankDTO.getBackAccountNumber())) {
 //                        throw new RuntimeException("Số tài khoản ngân hàng đã tồn tại: " + bankDTO.getBackAccountNumber());
 //                    }
