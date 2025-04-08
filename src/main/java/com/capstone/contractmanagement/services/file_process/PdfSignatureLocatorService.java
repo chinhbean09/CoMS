@@ -86,10 +86,14 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
         pageTextPositions.clear();
 
         // Đọc PDF và thu thập text positions
+        float pageHeight = 0;
         try (PDDocument document = PDDocument.load(inputStream)) {
             this.setStartPage(1);
             this.setEndPage(document.getNumberOfPages());
             this.getText(document);
+            // Lấy chiều cao của trang 2
+            pageHeight = document.getPage(1).getMediaBox().getHeight(); // Trang 2 (chỉ số bắt đầu từ 0)
+            System.out.println("Chiều cao của trang 2: " + pageHeight);
         }
 
         // Xử lý từng trang để tìm cụm từ
@@ -116,12 +120,12 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
             System.out.println("Page: " + ky.page + ", x: " + ky.x + ", y: " + ky.y);
         }
 
-        // Sắp xếp kyGhiRoHoTenList theo thứ tự từ trên xuống dưới (y giảm dần)
+        // Sắp xếp kyGhiRoHoTenList theo thứ tự từ dưới lên trên (y tăng dần)
         kyGhiRoHoTenList.sort((a, b) -> {
             if (a.page != b.page) {
                 return Integer.compare(a.page, b.page);
             }
-            return Float.compare(b.y, a.y); // Sắp xếp y giảm dần (từ trên xuống dưới)
+            return Float.compare(a.y, b.y); // Sắp xếp y tăng dần (từ dưới lên trên)
         });
 
         // Log các vị trí của "KÝ VÀ GHI RÕ HỌ TÊN" sau khi sắp xếp
@@ -144,19 +148,21 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
         // Tìm "KÝ VÀ GHI RÕ HỌ TÊN" phù hợp
         MatchInfo bestKy = null;
         float closestYDistance = Float.MAX_VALUE; // Khoảng cách gần nhất đến "ĐẠI DIỆN BÊN A"
+        float xThreshold = 50.0f; // Ngưỡng khoảng cách x để xác định "KÝ VÀ GHI RÕ HỌ TÊN" của bên A
 
         for (MatchInfo ky : kyGhiRoHoTenList) {
             // Trường hợp 1: Cùng trang với "ĐẠI DIỆN BÊN A"
-            if (ky.page == lastDaiDienBenA.page && ky.y < lastDaiDienBenA.y) {
-                float yDistance = lastDaiDienBenA.y - ky.y;
-                if (yDistance < closestYDistance) {
+            if (ky.page == lastDaiDienBenA.page && ky.y > lastDaiDienBenA.y) { // y lớn hơn nghĩa là bên dưới
+                float yDistance = ky.y - lastDaiDienBenA.y;
+                float xDistance = Math.abs(ky.x - lastDaiDienBenA.x);
+                if (yDistance < closestYDistance && xDistance < xThreshold) { // Chỉ chọn nếu x gần với "ĐẠI DIỆN BÊN A"
                     closestYDistance = yDistance;
                     bestKy = ky;
                 }
             }
             // Trường hợp 2: Trên trang tiếp theo
             else if (ky.page == lastDaiDienBenA.page + 1) {
-                if (bestKy == null || ky.y > bestKy.y) { // Ưu tiên y lớn nhất trên trang tiếp theo
+                if (bestKy == null || ky.y < bestKy.y) { // Ưu tiên y nhỏ nhất trên trang tiếp theo (đầu trang)
                     bestKy = ky;
                     closestYDistance = Float.MAX_VALUE; // Reset khoảng cách vì ưu tiên trang tiếp theo
                 }
@@ -164,25 +170,46 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
         }
 
         if (bestKy == null) {
-            // Nếu không tìm thấy "KÝ VÀ GHI RÕ HỌ TÊN" phù hợp, trả về tọa độ dưới "ĐẠI DIỆN BÊN A"
-            System.out.println("Không tìm thấy KÝ VÀ GHI RÕ HỌ TÊN phù hợp, trả về tọa độ dưới ĐẠI DIỆN BÊN A");
+            // Nếu không tìm thấy "KÝ VÀ GHI RÕ HỌ TÊN" phù hợp, trả về tọa độ trên "ĐẠI DIỆN BÊN A"
+            System.out.println("Không tìm thấy KÝ VÀ GHI RÕ HỌ TÊN phù hợp, trả về tọa độ trên ĐẠI DIỆN BÊN A");
+            float llyFallback = pageHeight - (lastDaiDienBenA.y + 10); // Dịch xuống 10 đơn vị
+            float uryFallback = pageHeight - (lastDaiDienBenA.y + 60); // Dịch xuống 60 đơn vị
+            float llxFallback = lastDaiDienBenA.x - 30; // Di chuyển sang trái 30 đơn vị
+            float heightFallback = llyFallback - uryFallback; // Chiều cao
+            float widthFallback = (4.0f / 3.0f) * heightFallback; // Chiều rộng theo tỉ lệ 3:4
             return new SignatureCoordinates(
-                    lastDaiDienBenA.x,
-                    lastDaiDienBenA.y - 50,
-                    lastDaiDienBenA.x + 200,
-                    lastDaiDienBenA.y - 20,
+                    llxFallback,
+                    llyFallback,
+                    llxFallback + widthFallback,
+                    uryFallback,
                     lastDaiDienBenA.page
             );
         }
 
         System.out.println("KÝ VÀ GHI RÕ HỌ TÊN được chọn - Page: " + bestKy.page + ", x: " + bestKy.x + ", y: " + bestKy.y);
 
-        // Trả về tọa độ dưới "KÝ VÀ GHI RÕ HỌ TÊN"
+        // Tọa độ ban đầu (trong hệ tọa độ PDFBox: y = 0 ở đầu trang)
+        float lly = bestKy.y + 10; // Dịch xuống 10 đơn vị
+        float ury = bestKy.y + 60; // Dịch xuống 60 đơn vị (chiều cao 50 đơn vị)
+
+        // Chuyển đổi tọa độ sang hệ tọa độ ngược (y = 0 ở đáy trang, y tăng khi đi lên)
+        float llyConverted = pageHeight - lly;
+        float uryConverted = pageHeight - ury;
+
+        // Di chuyển sang trái 30 đơn vị
+        float llxAdjusted = bestKy.x - 30;
+
+        // Tính chiều cao và chiều rộng theo tỉ lệ 3:4
+        float height = llyConverted - uryConverted; // Chiều cao trong hệ tọa độ ngược
+        float width = (4.0f / 3.0f) * height; // Chiều rộng theo tỉ lệ 3:4
+        float urxAdjusted = 277;
+
+        // Trả về tọa độ đã điều chỉnh
         return new SignatureCoordinates(
-                bestKy.x,
-                bestKy.y - 50,
-                bestKy.x + 200,
-                bestKy.y - 20,
+                llxAdjusted,
+                llyConverted,
+                urxAdjusted,
+                uryConverted,
                 bestKy.page
         );
     }
