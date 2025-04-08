@@ -53,9 +53,7 @@ public class WebSecurityConfig {
                                     String.format("%s/users/block-or-enable/**", apiPrefix),
                                     String.format("%s/users/oauth2/facebook", apiPrefix),
                                     String.format("%s/users/oauth2/google", apiPrefix),
-                                    String.format("%s/forgot-password/**", apiPrefix),
-                                    String.format("%s/contracts/sign", apiPrefix)
-                            )
+                                    String.format("%s/forgot-password/**", apiPrefix))
                             .permitAll()
                             .anyRequest()
                             .authenticated();
