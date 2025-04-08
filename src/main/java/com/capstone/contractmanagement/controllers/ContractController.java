@@ -20,6 +20,9 @@
     import com.capstone.contractmanagement.services.file_process.IPdfSignatureLocatorService;
     import com.capstone.contractmanagement.services.file_process.PdfSignatureLocatorService;
     import com.capstone.contractmanagement.utils.MessageKeys;
+    import com.cloudinary.Cloudinary;
+    import com.cloudinary.Transformation;
+    import com.cloudinary.utils.ObjectUtils;
     import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
@@ -28,6 +31,7 @@
     import org.springframework.data.domain.Sort;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
+    import org.springframework.scheduling.annotation.Async;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
@@ -35,8 +39,10 @@
 
     import java.io.File;
     import java.io.IOException;
+    import java.net.URLEncoder;
     import java.nio.file.Files;
     import java.nio.file.Paths;
+    import java.text.Normalizer;
     import java.time.LocalDateTime;
     import java.time.ZoneId;
     import java.time.ZonedDateTime;
@@ -55,6 +61,8 @@
         private final IContractRepository contractRepository;
         private final IAuditTrailRepository auditTrailRepository;
         private final IPdfSignatureLocatorService signatureLocatorService;
+        private final Cloudinary cloudinary;
+
 
         @PostMapping
         @Transactional
@@ -447,23 +455,75 @@
             }
         }
 
+        //@Async("taskExecutor")
         private String saveSignedFile(String fileName, String fileBase64) throws IOException {
-            // Decode Base64 content
+
+//            // Decode Base64 content
+//            byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+//
+//            // Use a configurable file storage directory (update this value appropriately)
+//            String storagePath = "C:\\OnlineSign\\Signed";
+//            File directory = new File(storagePath);
+//            if (!directory.exists()) {
+//                directory.mkdirs(); // Create the directory if it doesn't exist
+//            }
+//
+//            String filePath = storagePath + File.separator + "signed-" + fileName;
+//
+//            // Write file bytes to the file system
+//            Files.write(Paths.get(filePath), fileBytes);
+//
+//            return filePath;
+            // Decode base64 to byte array
             byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
 
-            // Use a configurable file storage directory (update this value appropriately)
-            String storagePath = "C:\\OnlineSign\\Signed";
-            File directory = new File(storagePath);
-            if (!directory.exists()) {
-                directory.mkdirs(); // Create the directory if it doesn't exist
+            // Upload as a raw file to Cloudinary
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                    "resource_type", "raw",      // Cho phép upload file dạng raw
+                    "folder", "signed_contracts",
+                    "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                    "unique_filename", false     // Không thêm ký tự ngẫu nhiên
+            ));
+
+            // Lấy public ID của file đã upload
+            String publicId = (String) uploadResult.get("public_id");
+
+            // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+            String customFilename = normalizeFilename(fileName);
+
+            // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+            String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+            // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+            // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+            String secureUrl = cloudinary.url()
+                    .resourceType("raw")
+                    .publicId(publicId)
+                    .secure(true)
+                    .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                    .generate();
+
+            return secureUrl;
+        }
+
+        private String normalizeFilename(String filename) {
+            if (filename == null || filename.isEmpty()) {
+                return "file";
             }
-
-            String filePath = storagePath + File.separator + "signed-" + fileName;
-
-            // Write file bytes to the file system
-            Files.write(Paths.get(filePath), fileBytes);
-
-            return filePath;
+            // Loại bỏ extension nếu có
+            int dotIndex = filename.lastIndexOf('.');
+            if (dotIndex != -1) {
+                filename = filename.substring(0, dotIndex);
+            }
+            // Chuẩn hóa Unicode: tách dấu
+            String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+            // Loại bỏ dấu (diacritics)
+            normalized = normalized.replaceAll("\\p{M}", "");
+            // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+            normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
+            // Chuyển khoảng trắng thành dấu gạch dưới và trim
+            normalized = normalized.trim().replaceAll("\\s+", "_");
+            return normalized;
         }
 
         @PostMapping("/find-location/pdf")
