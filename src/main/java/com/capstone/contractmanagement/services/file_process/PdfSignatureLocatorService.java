@@ -95,6 +95,11 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
         return null;
     }
 
+//    @Override
+//    public SignatureCoordinates findCoordinate(InputStream inputStream) throws Exception {
+//        return null;
+//    }
+
     public static class SignatureCoordinates {
         public float llx, lly, urx, ury;
         public int page;
