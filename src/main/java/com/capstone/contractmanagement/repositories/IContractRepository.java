@@ -204,6 +204,9 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusIn(@Param("statuses") List<ContractStatus> statuses, Pageable pageable);
 
+    @Query("SELECT c FROM Contract c WHERE c.status IN :statuses AND c.isLatestVersion = true")
+    List<Contract> findLatestByStatusIn(@Param("statuses") List<ContractStatus> statuses);
+
     @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status IN :statuses AND c.isLatestVersion = true")
     Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusIn(
             @Param("title") String title,
