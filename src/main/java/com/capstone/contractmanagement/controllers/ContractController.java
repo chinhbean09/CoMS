@@ -528,7 +528,7 @@
                 case "DELETED":
                     return "Đã xóa";
                 default:
-                    return status; // Trả về giá trị gốc nếu không có bản dịch
+                    return status;
             }
         }
 
@@ -562,7 +562,7 @@
                     "resource_type", "raw",      // Cho phép upload file dạng raw
                     "folder", "signed_contracts",
                     "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                    "unique_filename", false     // Không thêm ký tự ngẫu nhiên
+                    "unique_filename", false
             ));
 
             // Lấy public ID của file đã upload
