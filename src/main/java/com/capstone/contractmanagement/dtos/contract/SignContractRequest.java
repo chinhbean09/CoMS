@@ -13,7 +13,6 @@ public class SignContractRequest {
     private Long contractId;
     private String fileName;
     private String fileBase64;
-    private String signedBy;
     private String signedAt;
 
 }
