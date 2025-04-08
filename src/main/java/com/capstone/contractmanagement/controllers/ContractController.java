@@ -603,7 +603,7 @@
             normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
             // Chuyển khoảng trắng thành dấu gạch dưới và trim
             normalized = normalized.trim().replaceAll("\\s+", "_");
-            return normalized;
+            return normalized + ".pdf";
         }
 
         @PostMapping("/find-location/pdf")
