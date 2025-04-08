@@ -269,4 +269,5 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     boolean existsByPartnerIdAndStatus(Long partnerId, ContractStatus status);
 
+    boolean existsByContractNumber(String contractNumber);
 }
