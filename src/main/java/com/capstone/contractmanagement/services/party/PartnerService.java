@@ -297,7 +297,7 @@
         }
 
         @Override
-        public boolean existsByTaxCodeAndPartnerType(String taxCode) {
+        public boolean existsByTaxCodeAndPartnerType(String taxCode, PartnerType partnerType) {
             return partyRepository.existsByTaxCodeAndPartnerType(taxCode, PartnerType.PARTNER_A);
         }
     }
