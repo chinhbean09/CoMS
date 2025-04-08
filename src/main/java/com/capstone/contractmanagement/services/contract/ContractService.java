@@ -866,6 +866,9 @@ public class ContractService implements IContractService{
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .partnerA(partnerA) // Thêm partnerA
                 .partnerB(partnerB) // Thêm partnerB
+                .signingDate(contract.getSigningDate())
+                .effectiveDate(contract.getEffectiveDate())
+                .expiryDate(contract.getExpiryDate())
                 .build();
     }
     private UserContractResponse convertUserToUserContractResponse(User user) {
