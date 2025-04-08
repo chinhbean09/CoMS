@@ -33,4 +33,8 @@ public class GetAllContractReponse {
 
     private ContractPartnerDTO partnerA;
     private ContractPartnerDTO partnerB;
+    private LocalDateTime expiryDate;
+    private LocalDateTime effectiveDate;
+    private LocalDateTime signingDate;
+
 }
