@@ -608,7 +608,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // Lấy tất cả các hợp đồng đang ở trạng thái APPROVAL_PENDING và là phiên bản mới nhất
-        List<Contract> pendingContracts = contractRepository.findByStatusAndIsLatestVersion(ContractStatus.APPROVAL_PENDING, true);
+        List<Contract> pendingContracts = contractRepository.findLatest();
 
         // Lọc các hợp đồng theo approverId, keyword và contractTypeId
         List<Contract> filteredContracts = pendingContracts.stream()
