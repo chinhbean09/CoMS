@@ -413,13 +413,18 @@
         }
 
         @PostMapping("/sign")
-        public ResponseEntity<?> signContract(@RequestBody @Valid SignContractRequest request) {
+        public ResponseEntity<ResponseObject> signContract(@RequestBody @Valid SignContractRequest request) {
             try {
                 // Fetch contract by ID from the repository
                 Optional<Contract> optionalContract = contractRepository.findById(request.getContractId());
-
                 if (optionalContract.isEmpty()) {
-                    return ResponseEntity.badRequest().body("Contract not found");
+                    return ResponseEntity.badRequest().body(
+                            ResponseObject.builder()
+                                    .status(HttpStatus.BAD_REQUEST)
+                                    .message("Contract not found")
+                                    .data(null)
+                                    .build()
+                    );
                 }
 
                 Contract contract = optionalContract.get();
@@ -428,6 +433,7 @@
                 String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
 
                 // Update contract details
+                String oldStatus = contract.getStatus().name(); // Lưu trạng thái cũ trước khi thay đổi
                 contract.setSignedFilePath(filePath);
                 contract.setSignedBy(request.getSignedBy());
 
@@ -436,7 +442,13 @@
                     LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
                     contract.setSignedAt(signedAt);
                 } catch (DateTimeParseException e) {
-                    return ResponseEntity.badRequest().body("Invalid signedAt format. Use ISO-8601 format.");
+                    return ResponseEntity.badRequest().body(
+                            ResponseObject.builder()
+                                    .status(HttpStatus.BAD_REQUEST)
+                                    .message("Invalid signedAt format. Use ISO-8601 format.")
+                                    .data(null)
+                                    .build()
+                    );
                 }
 
                 // Update contract status
@@ -445,36 +457,93 @@
                 // Save the contract changes
                 contractRepository.save(contract);
 
-                return ResponseEntity.ok().body("Contract signed and saved successfully");
+                // Ghi audit trail
+                logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), request.getSignedBy());
+
+                return ResponseEntity.ok(ResponseObject.builder()
+                        .status(HttpStatus.OK)
+                        .message("Hợp đồng đã được ký và sao lưu thành công.")
+                        .data(null)
+                        .build());
+
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Error saving signed file: " + e.getMessage());
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .message("Lỗi xảy ra khi ký file: " + e.getMessage())
+                                .data(null)
+                                .build());
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Internal server error: " + e.getMessage());
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .message("Lỗi hệ thống: " + e.getMessage())
+                                .data(null)
+                                .build());
             }
+        }
+
+        // Phương thức dịch trạng thái hợp đồng sang tiếng Việt (sao chép từ ApprovalWorkflowService)
+        private String translateContractStatusToVietnamese(String status) {
+            switch (status) {
+                case "DRAFT":
+                    return "Bản nháp";
+                case "CREATED":
+                    return "Đã tạo";
+                case "UPDATED":
+                    return "Đã cập nhật";
+                case "APPROVAL_PENDING":
+                    return "Chờ phê duyệt";
+                case "APPROVED":
+                    return "Đã phê duyệt";
+                case "PENDING":
+                    return "Chưa ký";
+                case "REJECTED":
+                    return "Bị từ chối";
+                case "FIXED":
+                    return "Đã chỉnh sửa";
+                case "SIGNED":
+                    return "Đã ký";
+                case "ACTIVE":
+                    return "Đang có hiệu lực";
+                case "COMPLETED":
+                    return "Hoàn thành";
+                case "EXPIRED":
+                    return "Hết hạn";
+                case "CANCELLED":
+                    return "Đã hủy";
+                case "ENDED":
+                    return "Kết thúc";
+                case "DELETED":
+                    return "Đã xóa";
+                default:
+                    return status; // Trả về giá trị gốc nếu không có bản dịch
+            }
+        }
+
+        // Phương thức ghi audit trail
+        private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+            String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+            String newStatusVi = translateContractStatusToVietnamese(newValue);
+
+            AuditTrail auditTrail = AuditTrail.builder()
+                    .contract(contract) // Liên kết với hợp đồng
+                    .entityName("Contract")
+                    .entityId(contract.getId())
+                    .action(action)
+                    .fieldName(fieldName)
+                    .oldValue(oldStatusVi)
+                    .newValue(newStatusVi)
+                    .changedBy(changedBy)
+                    .changedAt(LocalDateTime.now())
+                    .changeSummary(String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'", oldStatusVi, newStatusVi))
+                    .build();
+            auditTrailRepository.save(auditTrail);
         }
 
         //@Async("taskExecutor")
         private String saveSignedFile(String fileName, String fileBase64) throws IOException {
 
-//            // Decode Base64 content
-//            byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
-//
-//            // Use a configurable file storage directory (update this value appropriately)
-//            String storagePath = "C:\\OnlineSign\\Signed";
-//            File directory = new File(storagePath);
-//            if (!directory.exists()) {
-//                directory.mkdirs(); // Create the directory if it doesn't exist
-//            }
-//
-//            String filePath = storagePath + File.separator + "signed-" + fileName;
-//
-//            // Write file bytes to the file system
-//            Files.write(Paths.get(filePath), fileBytes);
-//
-//            return filePath;
-            // Decode base64 to byte array
             byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
 
             // Upload as a raw file to Cloudinary
@@ -550,6 +619,9 @@
                                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .build());
             }
+
+
         }
+
     }
 
