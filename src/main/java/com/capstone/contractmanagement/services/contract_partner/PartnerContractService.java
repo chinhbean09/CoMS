@@ -270,20 +270,20 @@ public class PartnerContractService implements IPartnerContractService {
         PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
                 .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
 
-        // Nếu thuộc Contract, kiểm tra điều kiện
-        if (paymentSchedule.getContract() != null) {
-            Contract contract = paymentSchedule.getContract();
-
-            // Kiểm tra status SIGNED + ACTIVE (dựa vào ngày)
-            boolean isActive = contract.getEffectiveDate() != null &&
-                    contract.getExpiryDate() != null &&
-                    !contract.getEffectiveDate().isAfter(LocalDateTime.now()) &&
-                    !contract.getExpiryDate().isBefore(LocalDateTime.now());
-
-            if (!ContractStatus.SIGNED.equals(contract.getStatus()) || !isActive) {
-                throw new InvalidParamException("Chỉ cho upload bằng chứng thanh toán khi hợp đồng đã ký hoặc đang hoạt động");
-            }
-        }
+//        // Nếu thuộc Contract, kiểm tra điều kiện
+//        if (paymentSchedule.getContract() != null) {
+//            Contract contract = paymentSchedule.getContract();
+//
+//            // Kiểm tra status SIGNED + ACTIVE (dựa vào ngày)
+//            boolean isActive = contract.getEffectiveDate() != null &&
+//                    contract.getExpiryDate() != null &&
+//                    !contract.getEffectiveDate().isAfter(LocalDateTime.now()) &&
+//                    !contract.getExpiryDate().isBefore(LocalDateTime.now());
+//
+//            if (!ContractStatus.SIGNED.equals(contract.getStatus()) || !isActive) {
+//                throw new InvalidParamException("Chỉ cho upload bằng chứng thanh toán khi hợp đồng đã ký hoặc đang hoạt động");
+//            }
+//        }
 
         try {
             // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
