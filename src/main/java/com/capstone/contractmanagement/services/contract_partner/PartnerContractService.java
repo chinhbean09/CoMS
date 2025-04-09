@@ -5,7 +5,9 @@ import com.capstone.contractmanagement.dtos.contract_partner.PartnerContractDTO;
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract.ContractItem;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
@@ -267,6 +269,21 @@ public class PartnerContractService implements IPartnerContractService {
     public void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException {
         PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
                 .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+
+        // Nếu thuộc Contract, kiểm tra điều kiện
+        if (paymentSchedule.getContract() != null) {
+            Contract contract = paymentSchedule.getContract();
+
+            // Kiểm tra status SIGNED + ACTIVE (dựa vào ngày)
+            boolean isActive = contract.getEffectiveDate() != null &&
+                    contract.getExpiryDate() != null &&
+                    !contract.getEffectiveDate().isAfter(LocalDateTime.now()) &&
+                    !contract.getExpiryDate().isBefore(LocalDateTime.now());
+
+            if (!ContractStatus.SIGNED.equals(contract.getStatus()) || !isActive) {
+                throw new InvalidParamException("Chỉ cho upload bằng chứng thanh toán khi hợp đồng đã ký hoặc đang hoạt động");
+            }
+        }
 
         try {
             // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
