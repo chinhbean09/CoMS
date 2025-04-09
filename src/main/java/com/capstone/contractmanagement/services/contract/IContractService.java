@@ -12,6 +12,7 @@ import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,4 +60,8 @@ public interface IContractService {
             LocalDateTime signingDate);
 
     Contract duplicateContractWithPartner(Long contractId, Long partnerId);
+
+    void uploadSignedContract(Long contractId, List<MultipartFile> files) throws DataNotFoundException;
+
+    List<String> getSignedContractUrl(Long contractId) throws DataNotFoundException;
     }
