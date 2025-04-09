@@ -277,4 +277,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     boolean existsByPartnerIdAndStatus(Long partnerId, ContractStatus status);
 
     boolean existsByContractNumber(String contractNumber);
+
+    @Query("SELECT ps.signedContractUrls FROM Contract ps WHERE ps.id = :contractId")
+    List<String> findSignedContractUrls(@Param("contractId") Long contractId);
 }
