@@ -207,4 +207,9 @@
         @Column(name = "signed_at")
         private LocalDateTime signedAt;
 
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_signed_url", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "signed_contract_url")
+        private List<String> signedContractUrls; // Lưu nhiều URL trong một trường
+
     }
