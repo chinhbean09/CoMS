@@ -1173,8 +1173,8 @@ public class ContractService implements IContractService{
             for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
                 PaymentSchedule newPayment = PaymentSchedule.builder()
                         .amount(originalPayment.getAmount())
-                        .paymentDate(null)
-                        .notifyPaymentDate(null)
+                        .paymentDate(originalPayment.getPaymentDate())
+                        .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
                         .paymentOrder(originalPayment.getPaymentOrder())
                         .status(PaymentStatus.UNPAID)
                         .paymentMethod(originalPayment.getPaymentMethod())
@@ -1319,8 +1319,8 @@ public class ContractService implements IContractService{
         for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
             PaymentSchedule newPayment = PaymentSchedule.builder()
                     .amount(originalPayment.getAmount())
-                    .paymentDate(null)
-                    .notifyPaymentDate(null)
+                    .paymentDate(originalPayment.getPaymentDate())
+                    .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
                     .paymentOrder(originalPayment.getPaymentOrder())
                     .status(PaymentStatus.UNPAID)
                     .paymentMethod(originalPayment.getPaymentMethod())
