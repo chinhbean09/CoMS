@@ -419,24 +419,35 @@ public class UserService implements IUserService {
         User user = UserRepository.findById(id).orElse(null);
         if (user != null && avatar != null && !avatar.isEmpty()) {
             try {
-                // Check if the uploaded file is an image
+                // Kiểm tra định dạng ảnh
                 MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(avatar.getContentType()));
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
                         !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
                     throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
                 }
 
-                // Upload the avatar to Cloudinary
-                Map uploadResult = cloudinary.uploader().upload(avatar.getBytes(),
-                        ObjectUtils.asMap("folder", "user_avatar/" + id, "public_id", avatar.getOriginalFilename()));
+                // Tạo tên duy nhất cho avatar theo userId
+                String publicId = "avatar_" + id;
 
-                // Get the URL of the uploaded avatar
+                // Upload avatar lên Cloudinary, ghi đè nếu đã có
+                Map uploadResult = cloudinary.uploader().upload(
+                        avatar.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "user_avatar/" + id,
+                                "public_id", publicId,
+                                "overwrite", true,
+                                "resource_type", "image"
+                        )
+                );
+
+                // Lấy URL ảnh mới
                 String avatarUrl = uploadResult.get("secure_url").toString();
                 user.setAvatar(avatarUrl);
 
-                // Save the updated user entity
+                // Cập nhật user
                 UserRepository.save(user);
                 return user;
+
             } catch (IOException e) {
                 logger.error("Failed to upload avatar for user with ID {}", id, e);
             }
