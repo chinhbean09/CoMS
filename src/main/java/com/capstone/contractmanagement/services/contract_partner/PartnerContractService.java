@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -129,7 +130,7 @@ public class PartnerContractService implements IPartnerContractService {
                 "resource_type", "raw",      // Cho phép upload file dạng raw
                 "folder", "contract_partner",
                 "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", false     // Không thêm ký tự ngẫu nhiên
+                "unique_filename", true     // Không thêm ký tự ngẫu nhiên
         ));
 
         // Lấy public ID của file đã upload
@@ -286,39 +287,74 @@ public class PartnerContractService implements IPartnerContractService {
 //        }
 
         try {
-            // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
-            paymentSchedule.getBillUrls().clear();  // Nếu bạn muốn thay thế các hình ảnh cũ
+            // 🔥 Xoá các file cũ trên Cloudinary nếu có
+            for (String oldUrl : paymentSchedule.getBillUrls()) {
+                String publicId = extractPublicIdFromUrl(oldUrl);
+                if (publicId != null) {
+                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
+                }
+            }
+
+            // Xoá danh sách URL cũ trong DB
+            paymentSchedule.getBillUrls().clear();
 
             List<String> uploadedUrls = new ArrayList<>();
 
             for (MultipartFile file : files) {
-                // Kiểm tra nếu file là hình ảnh hợp lệ
+                // Kiểm tra định dạng hình ảnh
                 MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
                         !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
                     throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
                 }
 
-                // Upload file lên Cloudinary
-                Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                        ObjectUtils.asMap("folder", "payment_bill/" + paymentScheduleId, "public_id", file.getOriginalFilename()));
+                // Upload lên Cloudinary
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "payment_bill/" + paymentScheduleId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", "image"
+                        )
+                );
 
-                // Lấy URL bảo mật của file đã upload
+                // Lấy URL ảnh đã upload
                 String billUrl = uploadResult.get("secure_url").toString();
                 uploadedUrls.add(billUrl);
             }
 
-            // Thêm các URL đã upload vào danh sách billUrls
+            // Lưu danh sách URL mới
             paymentSchedule.getBillUrls().addAll(uploadedUrls);
-
-            // Cập nhật trạng thái thanh toán nếu cần
-            paymentSchedule.setStatus(PaymentStatus.PAID); // Bạn có thể thay đổi trạng thái tùy theo logic của mình
-
-            // Lưu PaymentSchedule đã cập nhật
+            paymentSchedule.setStatus(PaymentStatus.PAID);
             paymentScheduleRepository.save(paymentSchedule);
+
         } catch (IOException e) {
             logger.error("Failed to upload bill urls for payment schedule with ID {}", paymentScheduleId, e);
         }
+    }
+
+    private String extractPublicIdFromUrl(String url) {
+        try {
+            // Ví dụ URL:
+            // https://res.cloudinary.com/your_cloud_name/image/upload/v1234567890/payment_bill/12/filename_xyz.png
+            // Cần tách phần sau: payment_bill/12/filename_xyz
+
+            URI uri = new URI(url);
+            String path = uri.getPath(); // /your_cloud_name/image/upload/v1234567890/payment_bill/12/file.png
+            int versionIndex = path.indexOf("/v"); // tìm vị trí bắt đầu version
+
+            if (versionIndex != -1) {
+                String publicPath = path.substring(versionIndex + 2); // bỏ "/v" và version
+                int slashIndex = publicPath.indexOf('/');
+                if (slashIndex != -1) {
+                    return publicPath.substring(slashIndex + 1, publicPath.lastIndexOf('.')); // bỏ phần mở rộng .jpg/.png
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to extract publicId from URL: {}", url);
+        }
+        return null;
     }
 
     private LocalDateTime convertToLocalDateTime(List<Integer> dateTimeList) {
