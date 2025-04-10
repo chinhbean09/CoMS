@@ -577,7 +577,7 @@
                     "resource_type", "raw",      // Cho phép upload file dạng raw
                     "folder", "signed_contracts",
                     "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                    "unique_filename", false
+                    "unique_filename", true
             ));
 
             // Lấy public ID của file đã upload
