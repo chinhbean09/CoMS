@@ -1401,35 +1401,53 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
 
         try {
+            //  Xoá file cũ khỏi Cloudinary (nếu có)
+//            for (String oldUrl : contract.getSignedContractUrls()) {
+//                String publicId = extractPublicIdFromUrl(oldUrl);
+//                if (publicId != null) {
+//                    // Xác định resource_type là raw (pdf) hay image
+//                    String resourceType = publicId.endsWith(".pdf") ? "raw" : "image";
+//                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+//                }
+//            }
             // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
-            contract.getSignedContractUrls().clear();  // Nếu bạn muốn thay thế các hình ảnh cũ
+            contract.getSignedContractUrls().clear();
 
             List<String> uploadedUrls = new ArrayList<>();
 
             for (MultipartFile file : files) {
-                // Kiểm tra nếu file là hình ảnh hợp lệ
+                // Kiểm tra định dạng hợp lệ
                 MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
-                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
-                        !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
-                    throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
                 }
 
-                // Upload file lên Cloudinary
-                Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                        ObjectUtils.asMap("folder", "signed_contract_done/" + contractId, "public_id", file.getOriginalFilename()));
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
 
-                // Lấy URL bảo mật của file đã upload
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "signed_contract_done/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType
+                        )
+                );
+
+                // Lấy URL an toàn của file
                 String signedUrl = uploadResult.get("secure_url").toString();
                 uploadedUrls.add(signedUrl);
             }
 
-            // Thêm các URL đã upload vào danh sách billUrls
+            // Ghi lại danh sách URL mới
             contract.getSignedContractUrls().addAll(uploadedUrls);
 
-            // Cập nhật trạng thái thanh toán nếu cần
-            contract.setStatus(ContractStatus.ACTIVE); // Bạn có thể thay đổi trạng thái tùy theo logic của mình
-
-            // Lưu PaymentSchedule đã cập nhật
+            // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
+            contract.setStatus(ContractStatus.ACTIVE);
             contractRepository.save(contract);
         } catch (IOException e) {
             logger.error("Failed to upload bill urls for payment schedule with ID {}", contractId, e);
