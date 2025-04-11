@@ -123,6 +123,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .spokesmanName("Đặng Nam Tiến")
                 .taxCode("93245244534467")
                 .position("Giám đốc")
+                .user(userRepository.findById(1L).orElse(null))
                 .build();
         partyRepository.save(partner);
         System.out.println("Partner initialized!");
@@ -255,13 +256,13 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         // Khởi tạo các dữ liệu khác
         initializeTypeTerms();
-        initializeParty();
+
 
         // Khởi tạo các tài khoản
         initializeUser(email, phoneNumber, fullName, address, password, "ADMIN", 1L);
         initializeUser(managerEmail, managerPhoneNumber, managerFullName, managerAddress, password, "MANAGER", 3L);
         initializeUser(staffEmail, staffPhoneNumber, staffFullName, staffAddress, password, "STAFF", 4L);
-
+        initializeParty();
         // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
         initializeAppConfig();
