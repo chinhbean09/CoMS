@@ -27,4 +27,5 @@ public interface IMailService {
     void sendEmailContractOverdue(Contract contract);
     void sendEmailContractEffectiveDate(Contract contract);
     void sendEmailContractExpiryDate(Contract contract);
+    void sendEmailContractSignedSuccess(Contract contract);
 }

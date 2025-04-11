@@ -870,6 +870,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .suspend(contract.getSuspend())
                 .suspendContent(contract.getSuspendContent())
                 .version(contract.getVersion())
+                .signedFilePath(contract.getSignedFilePath())
                 // Các danh sách term, additional config, payment schedules có thể được map theo logic riêng nếu cần.
                 .legalBasisTerms(new ArrayList<>())
                 .generalTerms(new ArrayList<>())

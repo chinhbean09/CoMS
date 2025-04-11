@@ -19,6 +19,7 @@
     import com.capstone.contractmanagement.services.contract.IContractService;
     import com.capstone.contractmanagement.services.file_process.IPdfSignatureLocatorService;
     import com.capstone.contractmanagement.services.file_process.PdfSignatureLocatorService;
+    import com.capstone.contractmanagement.services.sendmails.IMailService;
     import com.capstone.contractmanagement.utils.MessageKeys;
     import com.cloudinary.Cloudinary;
     import com.cloudinary.Transformation;
@@ -63,6 +64,7 @@
         private final IAuditTrailRepository auditTrailRepository;
         private final IPdfSignatureLocatorService signatureLocatorService;
         private final Cloudinary cloudinary;
+        private final IMailService mailService;
 
 
         @PostMapping
@@ -478,6 +480,8 @@
 
                 // Save the contract changes
                 contractRepository.save(contract);
+                // send mail
+                mailService.sendEmailContractSignedSuccess(contract);
 
                 // Ghi audit trail
                 logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName() );
@@ -618,7 +622,7 @@
             normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
             // Chuyển khoảng trắng thành dấu gạch dưới và trim
             normalized = normalized.trim().replaceAll("\\s+", "_");
-            return normalized + ".pdf";
+            return normalized;
         }
 
         @PostMapping("/find-location/pdf")
