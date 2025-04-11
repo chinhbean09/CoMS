@@ -313,7 +313,6 @@ public class MailService implements IMailService{
     }
 
     @Override
-    @Async("taskExecutor")
     public void sendEmailContractSignedSuccess(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
@@ -324,7 +323,6 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", contract.getContractNumber());
             props.put("contractTitle", contract.getTitle());
-            props.put("signedBy", contract.getSignedBy());
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template już định nghĩa
