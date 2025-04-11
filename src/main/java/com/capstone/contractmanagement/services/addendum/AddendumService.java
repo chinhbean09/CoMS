@@ -618,11 +618,10 @@ public class AddendumService implements IAddendumService{
 
         Page<Addendum> addenda;
 
-        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
-        boolean isStaff = currentUser.getRole() != null &&
-                "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
+        boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
 
-        if (isStaff && !isCeo) {
+        if (isStaff) {
             if (hasStatusFilter) {
                 if (hasTypeFilter) {
                     if (hasSearch) {

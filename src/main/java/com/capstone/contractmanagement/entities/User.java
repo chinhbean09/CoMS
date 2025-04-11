@@ -70,21 +70,12 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "modified_by")
     private String modifiedBy;
 
-    @Column(name = "facebook_account_id")
-    private String facebookAccountId;
-
-    @Column(name = "google_account_id")
-    private String googleAccountId;
-
     @Column(name = "avatar")
     private String avatar;
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)
     private GenderList gender;
-
-    @Column(name = "is_ceo", nullable = true)
-    private Boolean isCeo  = Boolean.FALSE;
 
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts = 0;
@@ -109,9 +100,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
         if (role != null) {
             authorityList.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName()));
-        }
-        if (Boolean.TRUE.equals(isCeo)) {
-            authorityList.add(new SimpleGrantedAuthority("ROLE_CEO"));
         }
         return authorityList;
     }
