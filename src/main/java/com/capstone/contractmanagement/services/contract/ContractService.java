@@ -716,7 +716,9 @@ public class ContractService implements IContractService{
         boolean hasContractTypeFilter = contractTypeId != null;
         Page<Contract> contracts;
 
-        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
+        boolean isCeo = currentUser.getRole() != null &&
+                "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
         boolean isStaff = currentUser.getRole() != null &&
                 "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
 
@@ -3484,8 +3486,8 @@ public class ContractService implements IContractService{
     @Override
     @Transactional(readOnly = true)
     public Page<GetAllContractReponse> getAllVersionsByOriginalContractId(Long originalContractId, Pageable pageable, User currentUser) {
-        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
         boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
 
         Page<Contract> versions;
         if (isStaff && !isCeo) {
