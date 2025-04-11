@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.contract;
 
+import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.contract.*;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
@@ -12,27 +13,30 @@ import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.*;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.utils.MessageKeys;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import org.apache.http.HttpEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.net.http.HttpHeaders;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -58,6 +62,9 @@ public class ContractService implements IContractService{
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final SecurityUtils securityUtils;
     private final IApprovalWorkflowRepository workflowRepository;
+    private final Cloudinary cloudinary;
+    private final LocalizationUtils localizationUtils;
+    private static final Logger logger = LoggerFactory.getLogger(ContractService.class);
 
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
@@ -1387,6 +1394,77 @@ public class ContractService implements IContractService{
         contractRepository.save(savedDuplicateContract);
 
         return savedDuplicateContract;
+    }
+
+    @Override
+    @Transactional
+    public void uploadSignedContract(Long contractId, List<MultipartFile> files) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+
+        try {
+            //  Xoá file cũ khỏi Cloudinary (nếu có)
+//            for (String oldUrl : contract.getSignedContractUrls()) {
+//                String publicId = extractPublicIdFromUrl(oldUrl);
+//                if (publicId != null) {
+//                    // Xác định resource_type là raw (pdf) hay image
+//                    String resourceType = publicId.endsWith(".pdf") ? "raw" : "image";
+//                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+//                }
+//            }
+            // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
+            contract.getSignedContractUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "signed_contract_done/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+                uploadedUrls.add(signedUrl);
+            }
+
+            // Ghi lại danh sách URL mới
+            contract.getSignedContractUrls().addAll(uploadedUrls);
+
+            // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
+            contract.setStatus(ContractStatus.ACTIVE);
+            contractRepository.save(contract);
+        } catch (IOException e) {
+            logger.error("Failed to upload bill urls for payment schedule with ID {}", contractId, e);
+        }
+    }
+
+    @Override
+    public List<String> getSignedContractUrl(Long contractId) throws DataNotFoundException {
+        List<String> billUrls = contractRepository.findSignedContractUrls(contractId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("No bill URLs found for payment with ID: " + contractId);
+        }
+
+        return billUrls;
     }
 
     public int calculateNewVersion(Long originalContractId, Contract currentContract) {
