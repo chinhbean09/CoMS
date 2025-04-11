@@ -1,19 +1,32 @@
 package com.capstone.contractmanagement.controllers;
 
+import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.addendum.SignAddendumRequest;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
+import com.capstone.contractmanagement.dtos.contract.SignContractRequest;
+import com.capstone.contractmanagement.entities.Addendum;
+import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.AddendumStatus;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.repositories.IAddendumRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import com.capstone.contractmanagement.responses.contract.GetContractForApproverResponse;
 import com.capstone.contractmanagement.services.addendum.IAddendumService;
+import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
+import com.cloudinary.utils.ObjectUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -21,13 +34,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 
 @RestController
 @RequestMapping("${api.prefix}/addendums")
 @RequiredArgsConstructor
 public class AddendumController {
     private final IAddendumService addendumService;
+    private final IAddendumRepository addendumRepository;
+    private final IMailService mailService;
+    private final Cloudinary cloudinary;
 
     // api create addendum
     @PostMapping("/create")
@@ -231,5 +253,152 @@ public class AddendumController {
                 .message("Nhân bản phụ lục thành công")
                 .data(addendumResponse)
                 .build());
+    }
+
+    @PostMapping("/sign")
+    public ResponseEntity<ResponseObject> signContract(@RequestBody @Valid SignAddendumRequest request) {
+        try {
+            // Fetch contract by ID from the repository
+            Optional<Addendum> optionalAddendum = addendumRepository.findById(request.getAddendumId());
+            if (optionalAddendum.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Addendum not found")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            SecurityUtils securityUtils = new SecurityUtils();
+            User currentUser = securityUtils.getLoggedInUser();
+            if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.UNAUTHORIZED)
+                                .message("Unauthorized")
+                                .data(null)
+                                .build());
+            }
+
+            Addendum addendum = optionalAddendum.get();
+
+            if (addendum.getStatus() != AddendumStatus.APPROVED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Chỉ được ký phụ lục ở trạng thái 'Đã phê duyệt'")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Save signed file (can throw IOException)
+            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+
+            // Update contract details
+            String oldStatus = addendum.getStatus() != null ? addendum.getStatus().name() : "UNKNOWN";
+            addendum.setSignedFilePath(filePath);
+            addendum.setSignedBy(currentUser.getFullName());
+
+            // Parse signedAt with error handling
+            try {
+                LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                addendum.setSignedAt(signedAt);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Invalid signedAt format. Use ISO-8601 format.")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Update contract status
+            addendum.setStatus(AddendumStatus.SIGNED);
+
+            // Save the contract changes
+            addendumRepository.save(addendum);
+            // send mail
+            //mailService.sendEmailContractSignedSuccess(contract);
+
+            // Ghi audit trail
+            //logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName() );
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Hợp đồng đã được ký và sao lưu thành công.")
+                    .data(null)
+                    .build());
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi xảy ra khi ký file: " + e.getMessage())
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi hệ thống: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+
+    private String saveSignedFile(String fileName, String fileBase64) throws IOException {
+
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "signed_addenda",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", true
+        ));
+
+        // Lấy public ID của file đã upload
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+        String customFilename = normalizeFilename(fileName);
+
+        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                .generate();
+
+        return secureUrl;
+    }
+
+    private String normalizeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "file";
+        }
+        // Loại bỏ extension nếu có
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex != -1) {
+            filename = filename.substring(0, dotIndex);
+        }
+        // Chuẩn hóa Unicode: tách dấu
+        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+        // Loại bỏ dấu (diacritics)
+        normalized = normalized.replaceAll("\\p{M}", "");
+        // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+        normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
+        // Chuyển khoảng trắng thành dấu gạch dưới và trim
+        normalized = normalized.trim().replaceAll("\\s+", "_");
+        return normalized;
     }
 }
