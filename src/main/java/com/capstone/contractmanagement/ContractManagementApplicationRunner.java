@@ -259,8 +259,8 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         // Khởi tạo các tài khoản
         initializeUser(email, phoneNumber, fullName, address, password, "ADMIN", 1L);
-        initializeUser(managerEmail, managerPhoneNumber, managerFullName, managerAddress, password, "MANAGER", 2L);
-        initializeUser(staffEmail, staffPhoneNumber, staffFullName, staffAddress, password, "STAFF", 3L);
+        initializeUser(managerEmail, managerPhoneNumber, managerFullName, managerAddress, password, "MANAGER", 3L);
+        initializeUser(staffEmail, staffPhoneNumber, staffFullName, staffAddress, password, "STAFF", 4L);
 
         // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
