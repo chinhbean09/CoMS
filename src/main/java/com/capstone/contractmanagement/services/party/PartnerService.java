@@ -5,6 +5,7 @@
     import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
     import com.capstone.contractmanagement.entities.Bank;
     import com.capstone.contractmanagement.entities.Partner;
+    import com.capstone.contractmanagement.entities.Role;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.enums.PartnerType;
@@ -227,22 +228,32 @@
 
             boolean hasSearch = search != null && !search.trim().isEmpty();
             boolean hasPartnerType = partnerType != null;
+            boolean isDirector = currentUser.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(currentUser.getRole().getRoleName());
 
-            if (hasSearch && hasPartnerType) {
-                // Có cả search và lọc theo partnerType
-                partyPage = partyRepository.searchByFieldsAndPartnerTypeAndUser(search.trim(), partnerType, currentUser, pageable);
-            } else if (hasSearch) {
-                // Chỉ search
-                partyPage = partyRepository.searchByFieldsAndUser(search.trim(), currentUser, pageable);
-            } else if (hasPartnerType) {
-                // Chỉ lọc theo partnerType
-                partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndUserAndIdNot(partnerType, currentUser, 1L, pageable);
+            if (isDirector) {
+                // Nếu là Director thì không lọc theo user
+                if (hasSearch && hasPartnerType) {
+                    partyPage = partyRepository.searchByFieldsAndPartnerType(search.trim(), partnerType, pageable);
+                } else if (hasSearch) {
+                    partyPage = partyRepository.searchByFields(search.trim(), pageable);
+                } else if (hasPartnerType) {
+                    partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndIdNot(partnerType, 1L, pageable);
+                } else {
+                    partyPage = partyRepository.findByIsDeletedFalseAndIdNot(pageable, 1L);
+                }
             } else {
-                // Không lọc gì, chỉ lấy toàn bộ (trừ id = 1 và isDeleted = false)
-                partyPage = partyRepository.findByIsDeletedFalseAndUserAndIdNot(currentUser, 1L, pageable);
+                // Logic cũ cho các role khác
+                if (hasSearch && hasPartnerType) {
+                    partyPage = partyRepository.searchByFieldsAndPartnerTypeAndUser(search.trim(), partnerType, currentUser, pageable);
+                } else if (hasSearch) {
+                    partyPage = partyRepository.searchByFieldsAndUser(search.trim(), currentUser, pageable);
+                } else if (hasPartnerType) {
+                    partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndUserAndIdNot(partnerType, currentUser, 1L, pageable);
+                } else {
+                    partyPage = partyRepository.findByIsDeletedFalseAndUserAndIdNot(currentUser, 1L, pageable);
+                }
             }
 
-            // Convert sang response
             return partyPage.map(party ->
                     ListPartnerResponse.builder()
                             .partyId(party.getId())
