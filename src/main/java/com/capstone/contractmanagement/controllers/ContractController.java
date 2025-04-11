@@ -30,6 +30,7 @@
     import org.springframework.data.domain.Pageable;
     import org.springframework.data.domain.Sort;
     import org.springframework.http.HttpStatus;
+    import org.springframework.http.MediaType;
     import org.springframework.http.ResponseEntity;
     import org.springframework.scheduling.annotation.Async;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -576,7 +577,7 @@
                     "resource_type", "raw",      // Cho phép upload file dạng raw
                     "folder", "signed_contracts",
                     "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                    "unique_filename", false
+                    "unique_filename", true
             ));
 
             // Lấy public ID của file đã upload
@@ -646,6 +647,26 @@
             }
 
 
+        }
+
+        @PutMapping(value = "/upload-signed-contracts-file/{contractId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long contractId,
+                                                                    @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
+            contractService.uploadSignedContract(contractId, files);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .data(null)
+                    .message("Cập nhật các hình ảnh hợp đồng đã kí")
+                    .build());
+        }
+
+        @GetMapping("/signed-contract-urls/{contractId}")
+        public ResponseEntity<ResponseObject> getBillUrls(@PathVariable Long contractId) throws DataNotFoundException {
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Lấy link hợp đồng đã ký")
+                    .status(HttpStatus.OK)
+                    .data(contractService.getSignedContractUrl(contractId))
+                    .build());
         }
 
     }
