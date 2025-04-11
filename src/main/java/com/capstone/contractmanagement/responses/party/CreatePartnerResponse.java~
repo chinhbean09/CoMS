@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class ListPartnerResponse {
+public class CreatePartnerResponse {
     private Long partyId;
     private String partnerCode;
     private PartnerType partnerType; // Loại bên (Bên A, Bên B)
@@ -23,6 +23,5 @@ public class ListPartnerResponse {
     private String position;
     private Boolean isDeleted;
     private String abbreviation;
-    private CreatedByResponse createdBy;
     private List<BankResponse> banking;
 }

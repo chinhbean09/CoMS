@@ -68,5 +68,8 @@ public class Partner {
     @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }

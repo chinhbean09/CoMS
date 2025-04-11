@@ -1,6 +1,5 @@
 package com.capstone.contractmanagement.entities;
 
-import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.enums.GenderList;
@@ -88,9 +87,7 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @JsonManagedReference
     private List<ContractTemplate> contractTemplates = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Partner> partners = new ArrayList<>();
+    
 
     @Override
     public Map<String, Object> getAttributes() {

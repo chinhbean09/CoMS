@@ -5,6 +5,7 @@
     import com.capstone.contractmanagement.dtos.party.UpdatePartnerDTO;
     import com.capstone.contractmanagement.entities.Bank;
     import com.capstone.contractmanagement.entities.Partner;
+    import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.enums.PartnerType;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
@@ -14,12 +15,15 @@
     import com.capstone.contractmanagement.repositories.IPartnerRepository;
     import com.capstone.contractmanagement.responses.bank.BankResponse;
     import com.capstone.contractmanagement.responses.party.CreatePartnerResponse;
+    import com.capstone.contractmanagement.responses.party.CreatedByResponse;
     import com.capstone.contractmanagement.responses.party.ListPartnerResponse;
     import com.capstone.contractmanagement.utils.MessageKeys;
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.PageRequest;
     import org.springframework.data.domain.Pageable;
+    import org.springframework.security.core.Authentication;
+    import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +60,8 @@
 //                    }
 //                }
 //            }
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = (User) authentication.getPrincipal();
             // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
             String partnerCode = "P" + String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
 
@@ -71,6 +77,7 @@
                     .email(createPartnerDTO.getEmail())
                     .note(createPartnerDTO.getNote())
                     .position(createPartnerDTO.getPosition())
+                    .user(currentUser)
                     .isDeleted(false)
                     .abbreviation(createPartnerDTO.getAbbreviation())
                     .build();
@@ -118,6 +125,10 @@
                     .phone(partner.getPhone())
                     .email(partner.getEmail())
                     .note(partner.getNote())
+                    .createdBy(CreatedByResponse.builder()
+                            .userId(partner.getUser().getId())
+                            .username(partner.getUser().getUsername())
+                            .build())
                     .position(partner.getPosition())
                     .isDeleted(partner.getIsDeleted())
                     .abbreviation(partner.getAbbreviation())
@@ -190,6 +201,10 @@
                     .email(existingPartner.getEmail())
                     .banking(bankResponses)
                     .note(existingPartner.getNote())
+                    .createdBy(CreatedByResponse.builder()
+                            .userId(existingPartner.getUser().getId())
+                            .username(existingPartner.getUser().getUsername())
+                            .build())
                     .position(existingPartner.getPosition())
                     .isDeleted(existingPartner.getIsDeleted())
                     .abbreviation(existingPartner.getAbbreviation())
@@ -205,6 +220,8 @@
         @Override
         @Transactional
         public Page<ListPartnerResponse> getAllPartners(String search, int page, int size, PartnerType partnerType) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = (User) authentication.getPrincipal();
             Pageable pageable = PageRequest.of(page, size);
             Page<Partner> partyPage;
 
@@ -213,16 +230,16 @@
 
             if (hasSearch && hasPartnerType) {
                 // Có cả search và lọc theo partnerType
-                partyPage = partyRepository.searchByFieldsAndPartnerType(search.trim(), partnerType, pageable);
+                partyPage = partyRepository.searchByFieldsAndPartnerTypeAndUser(search.trim(), partnerType, currentUser, pageable);
             } else if (hasSearch) {
                 // Chỉ search
-                partyPage = partyRepository.searchByFields(search.trim(), pageable);
+                partyPage = partyRepository.searchByFieldsAndUser(search.trim(), currentUser, pageable);
             } else if (hasPartnerType) {
                 // Chỉ lọc theo partnerType
-                partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndIdNot(partnerType, 1L, pageable);
+                partyPage = partyRepository.findByIsDeletedFalseAndPartnerTypeAndUserAndIdNot(partnerType, currentUser, 1L, pageable);
             } else {
                 // Không lọc gì, chỉ lấy toàn bộ (trừ id = 1 và isDeleted = false)
-                partyPage = partyRepository.findByIsDeletedFalseAndIdNot(pageable, 1L);
+                partyPage = partyRepository.findByIsDeletedFalseAndUserAndIdNot(currentUser, 1L, pageable);
             }
 
             // Convert sang response
@@ -240,6 +257,10 @@
                             .note(party.getNote())
                             .position(party.getPosition())
                             .isDeleted(party.getIsDeleted())
+                            .createdBy(CreatedByResponse.builder()
+                                    .userId(party.getUser().getId())
+                                    .username(party.getUser().getUsername())
+                                    .build())
                             .banking(party.getBanking().stream()
                                     .map(bank -> BankResponse.builder()
                                             .bankName(bank.getBankName())
@@ -268,6 +289,10 @@
                     .email(partner.getEmail())
                     .note(partner.getNote())
                     .position(partner.getPosition())
+                    .createdBy(CreatedByResponse.builder()
+                            .userId(partner.getUser().getId())
+                            .username(partner.getUser().getUsername())
+                            .build())
                     .isDeleted(partner.getIsDeleted())
                     .banking(partner.getBanking().stream() // Nếu Partner có danh sách Banks
                             .map(bank -> BankResponse.builder()
