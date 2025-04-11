@@ -95,8 +95,9 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         if (roleRepository.count() == 0) {
             roleRepository.saveAll(List.of(
                     Role.builder().id(1L).roleName("ADMIN").build(),
-                    Role.builder().id(2L).roleName("MANAGER").build(),
-                    Role.builder().id(3L).roleName("STAFF").build()
+                    Role.builder().id(2L).roleName("DIRECTOR").build(),
+                    Role.builder().id(3L).roleName("MANAGER").build(),
+                    Role.builder().id(4L).roleName("STAFF").build()
             ));
             System.out.println("Roles initialized!");
         } else {

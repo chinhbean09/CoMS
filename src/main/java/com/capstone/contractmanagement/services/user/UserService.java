@@ -86,7 +86,7 @@ public class UserService implements IUserService {
         }
 
         // Use the default roleId = 2 if none is provided
-        Long roleId = userDTO.getRoleId() != null ? userDTO.getRoleId() : 2L;
+        Long roleId = userDTO.getRoleId();
         Role role = RoleRepository.findById(roleId)
                 .orElseThrow(() -> new DataNotFoundException(
                         localizationUtils.getLocalizedMessage(MessageKeys.ROLE_DOES_NOT_EXISTS)));
@@ -107,7 +107,6 @@ public class UserService implements IUserService {
                 .fullName(userDTO.getFullName())
                 .active(true)
                 .address(userDTO.getAddress())
-                .isCeo(userDTO.getIsCeo())
                 .department(department)
                 .DateOfBirth(userDTO.getDateOfBirth())
                 .build();
@@ -368,7 +367,6 @@ public class UserService implements IUserService {
         user.setEmail(userDTO.getEmail());
         user.setGender(userDTO.getGender());
         user.setAddress(userDTO.getAddress());
-        user.setIsCeo(userDTO.getIsCeo());
         user.setDateOfBirth(userDTO.getDateOfBirth());
         user.setRole(RoleRepository.findById(userDTO.getRoleId())
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
