@@ -45,7 +45,7 @@ public interface IPartnerRepository extends JpaRepository<Partner, Long> {
             "LOWER(p.partnerCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Partner> searchByFieldsAndPartnerTypeAndUser(@Param("search") String search, @Param("partnerType") PartnerType partnerType, @Param("user") User user, Pageable pageable);
 
-    Page<Partner> findByIsDeletedFalseAndUserAndIdNot(User user, Long excludedId, Pageable pageable);
+    Page<Partner> findByIsDeletedFalseAndUser(User user, Pageable pageable);
 
-    Page<Partner> findByIsDeletedFalseAndPartnerTypeAndUserAndIdNot(PartnerType partnerType, User user, Long excludedId, Pageable pageable);
+    Page<Partner> findByIsDeletedFalseAndPartnerTypeAndUser(PartnerType partnerType, User user, Pageable pageable);
 }
