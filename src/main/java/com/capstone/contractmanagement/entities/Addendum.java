@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 //Phụ lục là một tài liệu bổ sung, ghi nhận các thay đổi cụ thể trong điều khoản hợp đồng mà không thay thế toàn bộ hợp đồng gốc.
 //Đây là thực tiễn phổ biến trong pháp lý, giúp giữ nguyên tính liên tục của hợp đồng
@@ -72,4 +73,18 @@ public class Addendum {
     @JoinColumn(name = "approval_workflow_id")
     @JsonIgnore
     private ApprovalWorkflow approvalWorkflow;
+
+    @Column(name = "signed_file_path")
+    private String signedFilePath;
+
+    @Column(name = "signed_by")
+    private String signedBy;
+
+    @Column(name = "signed_at")
+    private LocalDateTime signedAt;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "addendum_signed_url", joinColumns = @JoinColumn(name = "addendum_id"))
+    @Column(name = "signed_addendum_url")
+    private List<String> signedAddendumUrls; // Lưu nhiều URL trong một trường
 }
