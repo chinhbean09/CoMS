@@ -365,10 +365,12 @@ public class UserController {
     @GetMapping("/get-all-staff-and-manager")
     public ResponseEntity<ResponseObject> getAllStaffAndManager(
             @RequestParam(value = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(value = "size", defaultValue = "10", required = false) int size
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "role", required = false) String role
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserResponse> usersPage = userService.getAllStaffAndManager(pageable);
+        Page<UserResponse> usersPage = userService.getAllStaffAndManager(role, pageable);
+
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(usersPage)
