@@ -37,7 +37,7 @@ public interface IUserService {
     User updateUserAvatar(long id, MultipartFile avatar);
     void changePassword(Long id, UpdatePasswordDTO changePasswordDTO) throws DataNotFoundException;
 
-    Page<UserResponse> getAllStaffAndManager(Pageable pageable);
+    Page<UserResponse> getAllStaffAndManager(String roleName, Pageable pageable);
 
     List<UserListCustom> getAll();
 

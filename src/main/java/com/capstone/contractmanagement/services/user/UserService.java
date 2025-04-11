@@ -468,9 +468,16 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Page<UserResponse> getAllStaffAndManager(Pageable pageable) {
-        List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
-        Page<User> usersPage = UserRepository.findByRole_RoleNameIn(roleNames, pageable);
+    public Page<UserResponse> getAllStaffAndManager(String roleName, Pageable pageable) {
+        Page<User> usersPage;
+
+        if (roleName == null || roleName.isBlank()) {
+            List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
+            usersPage = UserRepository.findByRole_RoleNameInAndActiveTrue(roleNames, pageable);
+        } else {
+            usersPage = UserRepository.findByRole_RoleNameAndActiveTrue(roleName.toUpperCase(), pageable);
+        }
+
         return usersPage.map(UserResponse::fromUser);
     }
 
