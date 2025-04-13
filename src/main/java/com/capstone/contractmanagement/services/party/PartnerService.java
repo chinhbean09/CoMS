@@ -30,6 +30,7 @@
 
     import java.util.ArrayList;
     import java.util.List;
+    import java.util.Optional;
     import java.util.concurrent.ThreadLocalRandom;
     import java.util.stream.Collectors;
 
@@ -268,10 +269,12 @@
                             .note(party.getNote())
                             .position(party.getPosition())
                             .isDeleted(party.getIsDeleted())
-                            .createdBy(CreatedByResponse.builder()
-                                    .userId(party.getUser().getId())
-                                    .username(party.getUser().getUsername())
-                                    .build())
+                            .createdBy(Optional.ofNullable(party.getUser())
+                                    .map(user -> CreatedByResponse.builder()
+                                            .userId(user.getId())
+                                            .username(user.getUsername())
+                                            .build())
+                                    .orElse(null))
                             .banking(party.getBanking().stream()
                                     .map(bank -> BankResponse.builder()
                                             .bankName(bank.getBankName())
