@@ -85,7 +85,7 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     private String staffCode;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private List<ContractTemplate> contractTemplates = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
