@@ -9,4 +9,5 @@ public interface IApprovalWorkflowRepository extends JpaRepository<ApprovalWorkf
     List<ApprovalWorkflow> findByContractType_Id(Long contractTypeId);
     List<ApprovalWorkflow> findTop3ByContractType_IdOrderByCreatedAtDesc(Long contractTypeId);
     List<ApprovalWorkflow> findTop3ByAddendumType_IdOrderByCreatedAtDesc(Long addendumTypeId);
+    List<ApprovalWorkflow> findTop3ByOrderByCreatedAtDesc();
 }
