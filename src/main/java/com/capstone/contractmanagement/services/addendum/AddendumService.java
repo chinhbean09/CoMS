@@ -22,7 +22,6 @@ import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
-import com.capstone.contractmanagement.services.contract.ContractService;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -163,10 +162,10 @@ public class AddendumService implements IAddendumService{
                         .content(addendum.getContent())
                         .effectiveDate(addendum.getEffectiveDate())
                         .contractNumber(addendum.getContractNumber())
-                        .addendumType(AddendumTypeResponse.builder()
-                                .addendumTypeId(addendum.getAddendumType().getId())
-                                .name(addendum.getAddendumType().getName())
-                                .build())
+//                        .addendumType(AddendumTypeResponse.builder()
+//                                .addendumTypeId(addendum.getAddendumType().getId())
+//                                .name(addendum.getAddendumType().getName())
+//                                .build())
                         .status(addendum.getStatus())
                         .createdBy(UserAddendumResponse.builder()
                                 .userId(addendum.getUser().getId())
@@ -208,10 +207,10 @@ public class AddendumService implements IAddendumService{
                             .partnerA(partnerA)
                             .partnerB(partnerB)
                             .contractId(addendum.getContract().getId())
-                            .addendumType(AddendumTypeResponse.builder()
-                                    .addendumTypeId(addendum.getAddendumType().getId())
-                                    .name(addendum.getAddendumType().getName())
-                                    .build())
+//                            .addendumType(AddendumTypeResponse.builder()
+//                                    .addendumTypeId(addendum.getAddendumType().getId())
+//                                    .name(addendum.getAddendumType().getName())
+//                                    .build())
                             .createdAt(addendum.getCreatedAt())
                             .updatedAt(addendum.getUpdatedAt())
                             .build();
@@ -286,10 +285,10 @@ public class AddendumService implements IAddendumService{
                 .partnerA(partnerA)
                 .partnerB(contractPartners)
                 .contractId(addendum.getContract().getId())
-                .addendumType(AddendumTypeResponse.builder()
-                        .addendumTypeId(addendum.getAddendumType().getId())
-                        .name(addendum.getAddendumType().getName())
-                        .build())
+//                .addendumType(AddendumTypeResponse.builder()
+//                        .addendumTypeId(addendum.getAddendumType().getId())
+//                        .name(addendum.getAddendumType().getName())
+//                        .build())
                 .effectiveDate(addendum.getEffectiveDate())
                 .createdAt(addendum.getCreatedAt())
                 .build();
@@ -917,20 +916,26 @@ public class AddendumService implements IAddendumService{
                 workflow.getStages().add(stage);
             });
 
-            // ✅ Thêm bước duyệt cuối cùng là Director
-//            User director = userRepository.findAll().stream()
-//                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
-//                    .findFirst()
-//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
-//
-//            ApprovalStage directorStage = ApprovalStage.builder()
-//                    .stageOrder(workflow.getStages().size() + 1)
-//                    .approver(director)
-//                    .status(ApprovalStatus.NOT_STARTED)
-//                    .approvalWorkflow(workflow)
-//                    .build();
-//
-//            workflow.getStages().add(directorStage);
+            // ✅ Kiểm tra người duyệt cuối cùng có phải là DIRECTOR chưa
+            User lastApprover = workflow.getStages().get(workflow.getStages().size() - 1).getApprover();
+            boolean isDirector = lastApprover.getRole() != null &&
+                    Role.DIRECTOR.equalsIgnoreCase(lastApprover.getRole().getRoleName());
+
+            if (!isDirector) {
+                User director = userRepository.findAll().stream()
+                        .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
+
+                ApprovalStage directorStage = ApprovalStage.builder()
+                        .stageOrder(workflow.getStages().size() + 1)
+                        .approver(director)
+                        .status(ApprovalStatus.NOT_STARTED)
+                        .approvalWorkflow(workflow)
+                        .build();
+
+                workflow.getStages().add(directorStage);
+            }
         }
 
         // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
@@ -939,12 +944,12 @@ public class AddendumService implements IAddendumService{
         approvalWorkflowRepository.save(workflow);
 
 
-        if (approvalWorkflowDTO.getAddendumTypeId() != null) {
-            AddendumType addendumType = addendumTypeRepository.findById(approvalWorkflowDTO.getAddendumTypeId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phụ lục với id " + approvalWorkflowDTO.getAddendumTypeId()));
-            workflow.setAddendumType(addendumType);
-            approvalWorkflowRepository.save(workflow);
-        }
+//        if (approvalWorkflowDTO.getAddendumTypeId() != null) {
+//            AddendumType addendumType = addendumTypeRepository.findById(approvalWorkflowDTO.getAddendumTypeId())
+//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phụ lục với id " + approvalWorkflowDTO.getAddendumTypeId()));
+//            workflow.setAddendumType(addendumType);
+//            approvalWorkflowRepository.save(workflow);
+//        }
 
         // Trả về response với các thông tin cần thiết
         return ApprovalWorkflowResponse.builder()
@@ -969,8 +974,8 @@ public class AddendumService implements IAddendumService{
 
     @Override
     @Transactional
-    public List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId) {
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByAddendumType_IdOrderByCreatedAtDesc(addendumTypeId);
+    public List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId() {
+        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByOrderByCreatedAtDesc();
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
         return workflow.stream()
