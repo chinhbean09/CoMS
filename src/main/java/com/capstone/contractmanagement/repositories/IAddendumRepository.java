@@ -124,5 +124,7 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
     List<Addendum> findByStatusAndAddendumTypeId(AddendumStatus status, Long addendumTypeId);
 
     boolean existsByContractIdAndTitle(Long contractId, String title);
+    @Query("SELECT a.signedAddendumUrls FROM Addendum a WHERE a.id = :addendumId")
+    List<String> findSignedAddendumUrls(@Param("addendumId") Long addendumId);
 
 }
