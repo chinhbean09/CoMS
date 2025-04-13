@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.AuditTrail;
+import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -87,6 +88,20 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         .build();
                 workflow.getStages().add(stage);
             });
+            // ✅ Thêm bước duyệt cuối cùng là Director
+//            User director = userRepository.findAll().stream()
+//                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+//                    .findFirst()
+//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
+//
+//            ApprovalStage directorStage = ApprovalStage.builder()
+//                    .stageOrder(workflow.getStages().size() + 1)
+//                    .approver(director)
+//                    .status(ApprovalStatus.NOT_STARTED)
+//                    .approvalWorkflow(workflow)
+//                    .build();
+//
+//            workflow.getStages().add(directorStage);
         }
 
         // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
@@ -841,7 +856,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .id(contract.getId())
                 .title(contract.getTitle())
                 .user(mapUserToUserContractResponse(contract.getUser()))
-                .partner(contract.getPartner())
+                .partnerB(contract.getPartner())
                 .contractNumber(contract.getContractNumber())
                 .status(contract.getStatus())
                 .createdAt(contract.getCreatedAt())
