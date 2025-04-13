@@ -10,6 +10,7 @@ import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -53,4 +54,8 @@ public interface IAddendumService {
     List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException;
 
     AddendumResponse duplicateAddendum(Long addendumId, Long contractId) throws DataNotFoundException;
+
+    void uploadSignedAddendum(Long addendumId, List<MultipartFile> files) throws DataNotFoundException;
+
+    List<String> getSignedAddendumUrl(Long addendumId) throws DataNotFoundException;
 }

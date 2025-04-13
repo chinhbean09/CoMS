@@ -30,9 +30,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -321,14 +323,14 @@ public class AddendumController {
             // Save the contract changes
             addendumRepository.save(addendum);
             // send mail
-            //mailService.sendEmailContractSignedSuccess(contract);
+            mailService.sendEmailAddendumSignedSuccess(addendum);
 
             // Ghi audit trail
             //logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName() );
 
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
-                    .message("Hợp đồng đã được ký và sao lưu thành công.")
+                    .message("Phụ lục đã được ký và sao lưu thành công.")
                     .data(null)
                     .build());
 
@@ -400,5 +402,25 @@ public class AddendumController {
         // Chuyển khoảng trắng thành dấu gạch dưới và trim
         normalized = normalized.trim().replaceAll("\\s+", "_");
         return normalized;
+    }
+
+    @PutMapping(value = "/upload-signed-addenda-file/{addendumId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long addendumId,
+                                                                @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
+        addendumService.uploadSignedAddendum(addendumId, files);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(null)
+                .message("Cập nhật các hình ảnh phụ lục đã kí")
+                .build());
+    }
+
+    @GetMapping("/signed-addenda-urls/{addendumId}")
+    public ResponseEntity<ResponseObject> getBillUrls(@PathVariable Long addendumId) throws DataNotFoundException {
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Lấy link phụ lục đã ký")
+                .status(HttpStatus.OK)
+                .data(addendumService.getSignedAddendumUrl(addendumId))
+                .build());
     }
 }

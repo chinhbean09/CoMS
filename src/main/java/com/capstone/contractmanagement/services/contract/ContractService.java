@@ -1461,7 +1461,7 @@ public class ContractService implements IContractService{
         List<String> billUrls = contractRepository.findSignedContractUrls(contractId);
 
         if (billUrls == null || billUrls.isEmpty()) {
-            throw new DataNotFoundException("No bill URLs found for payment with ID: " + contractId);
+            throw new DataNotFoundException("Không tìm thấy URLs với hợp đồng ID: " + contractId);
         }
 
         return billUrls;
