@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.addendum;
 
+import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
@@ -13,6 +14,7 @@ import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PartnerType;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
@@ -20,17 +22,25 @@ import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
+import com.capstone.contractmanagement.services.contract.ContractService;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,6 +60,9 @@ public class AddendumService implements IAddendumService{
     private final IPartnerRepository partnerRepository;
     private final IContractPartnerRepository contractPartnerRepository;
     private final IAuditTrailRepository auditTrailRepository;
+    private final Cloudinary cloudinary;
+    private final LocalizationUtils localizationUtils;
+    private static final Logger logger = LoggerFactory.getLogger(AddendumService.class);
 
     @Override
     @Transactional
@@ -903,6 +916,21 @@ public class AddendumService implements IAddendumService{
                         .build();
                 workflow.getStages().add(stage);
             });
+
+            // ✅ Thêm bước duyệt cuối cùng là Director
+//            User director = userRepository.findAll().stream()
+//                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+//                    .findFirst()
+//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
+//
+//            ApprovalStage directorStage = ApprovalStage.builder()
+//                    .stageOrder(workflow.getStages().size() + 1)
+//                    .approver(director)
+//                    .status(ApprovalStatus.NOT_STARTED)
+//                    .approvalWorkflow(workflow)
+//                    .build();
+//
+//            workflow.getStages().add(directorStage);
         }
 
         // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
@@ -1037,6 +1065,77 @@ public class AddendumService implements IAddendumService{
         } else {
             throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng đang không ở trạng thái hoạt động");
         }
+    }
+
+    @Override
+    @Transactional
+    public void uploadSignedAddendum(Long addendumId, List<MultipartFile> files) throws DataNotFoundException {
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
+
+        try {
+            //  Xoá file cũ khỏi Cloudinary (nếu có)
+//            for (String oldUrl : contract.getSignedContractUrls()) {
+//                String publicId = extractPublicIdFromUrl(oldUrl);
+//                if (publicId != null) {
+//                    // Xác định resource_type là raw (pdf) hay image
+//                    String resourceType = publicId.endsWith(".pdf") ? "raw" : "image";
+//                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+//                }
+//            }
+            // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
+            addendum.getSignedAddendumUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "signed_addendum_done/" + addendumId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+                uploadedUrls.add(signedUrl);
+            }
+
+            // Ghi lại danh sách URL mới
+            addendum.getSignedAddendumUrls().addAll(uploadedUrls);
+
+            // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
+            //addendum.setStatus(ContractStatus.ACTIVE);
+            addendumRepository.save(addendum);
+        } catch (IOException e) {
+            logger.error("Failed to upload urls for addendum with ID {}", addendumId, e);
+        }
+    }
+
+    @Override
+    public List<String> getSignedAddendumUrl(Long addendumId) throws DataNotFoundException {
+        List<String> billUrls = addendumRepository.findSignedAddendumUrls(addendumId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy URLs với phụ lục ID: " + addendumId);
+        }
+
+        return billUrls;
     }
 
 

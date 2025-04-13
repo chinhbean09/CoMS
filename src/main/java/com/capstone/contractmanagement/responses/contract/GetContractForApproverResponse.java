@@ -24,7 +24,7 @@ public class GetContractForApproverResponse {
     private Long id;
     private String title;
     private UserContractResponse user;
-    private Partner partner;
+    private Partner partnerB;
     private String contractNumber;
     private ContractStatus status;
     private LocalDateTime createdAt;
