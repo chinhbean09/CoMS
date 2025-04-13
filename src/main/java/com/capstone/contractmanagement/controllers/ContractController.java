@@ -4,6 +4,7 @@
     import com.capstone.contractmanagement.dtos.contract.*;
     import com.capstone.contractmanagement.entities.AuditTrail;
     import com.capstone.contractmanagement.entities.PaymentSchedule;
+    import com.capstone.contractmanagement.entities.Role;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.entities.contract.Contract;
     import com.capstone.contractmanagement.entities.contract.ContractAdditionalTermDetail;
@@ -34,6 +35,7 @@
     import org.springframework.http.MediaType;
     import org.springframework.http.ResponseEntity;
     import org.springframework.scheduling.annotation.Async;
+    import org.springframework.security.access.prepost.PreAuthorize;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.bind.annotation.*;
@@ -416,6 +418,7 @@
         }
 
         @PostMapping("/sign")
+        @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> signContract(@RequestBody @Valid SignContractRequest request) {
             try {
                 // Fetch contract by ID from the repository
@@ -424,7 +427,7 @@
                     return ResponseEntity.badRequest().body(
                             ResponseObject.builder()
                                     .status(HttpStatus.BAD_REQUEST)
-                                    .message("Contract not found")
+                                    .message("Không tìm thấy hợp đồng")
                                     .data(null)
                                     .build()
                     );
@@ -432,11 +435,11 @@
 
                 SecurityUtils securityUtils = new SecurityUtils();
                 User currentUser = securityUtils.getLoggedInUser();
-                if (currentUser == null) {
+                if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(ResponseObject.builder()
                                     .status(HttpStatus.UNAUTHORIZED)
-                                    .message("Unauthorized")
+                                    .message("Chỉ có giám đốc mới được quyền ký hợp đồng")
                                     .data(null)
                                     .build());
                 }
@@ -626,6 +629,7 @@
         }
 
         @PostMapping("/find-location/pdf")
+        @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> locateSignature(@RequestParam("file") MultipartFile file) {
             try {
                 PdfSignatureLocatorService.SignatureCoordinates coords = signatureLocatorService.findCoordinates(file.getInputStream());

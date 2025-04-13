@@ -8,6 +8,7 @@ import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.dtos.contract.SignContractRequest;
 import com.capstone.contractmanagement.entities.Addendum;
+import com.capstone.contractmanagement.entities.AuditTrail;
 import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -15,6 +16,7 @@ import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IAddendumRepository;
+import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -52,6 +54,7 @@ public class AddendumController {
     private final IAddendumRepository addendumRepository;
     private final IMailService mailService;
     private final Cloudinary cloudinary;
+    private final IAuditTrailRepository auditTrailRepository;
 
     // api create addendum
     @PostMapping("/create")
@@ -258,7 +261,7 @@ public class AddendumController {
     }
 
     @PostMapping("/sign")
-    public ResponseEntity<ResponseObject> signContract(@RequestBody @Valid SignAddendumRequest request) {
+    public ResponseEntity<ResponseObject> signAddenda(@RequestBody @Valid SignAddendumRequest request) {
         try {
             // Fetch contract by ID from the repository
             Optional<Addendum> optionalAddendum = addendumRepository.findById(request.getAddendumId());
@@ -278,7 +281,7 @@ public class AddendumController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ResponseObject.builder()
                                 .status(HttpStatus.UNAUTHORIZED)
-                                .message("Unauthorized")
+                                .message("Chỉ có giám đốc mới được quyền ký")
                                 .data(null)
                                 .build());
             }
@@ -423,4 +426,65 @@ public class AddendumController {
                 .data(addendumService.getSignedAddendumUrl(addendumId))
                 .build());
     }
+
+//    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+//        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+//        String newStatusVi = translateContractStatusToVietnamese(newValue);
+//
+//        AuditTrail auditTrail = AuditTrail.builder()
+//                .contract(contract) // Liên kết với hợp đồng
+//                .entityName("Addenda")
+//                .entityId(contract.getId())
+//                .action(action)
+//                .fieldName(fieldName)
+//                .oldValue(oldStatusVi)
+//                .newValue(newStatusVi)
+//                .changedBy(changedBy)
+//                .changedAt(LocalDateTime.now())
+//                .changeSummary(String.format("Phụ lục được ký bởi %s vào lúc %s. Trạng thái thay đổi từ '%s' sang '%s'",
+//                        changedBy,
+//                        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now()),
+//                        oldStatusVi,
+//                        newStatusVi))
+//                .build();
+//        auditTrailRepository.save(auditTrail);
+//    }
+
+    private String translateContractStatusToVietnamese(String status) {
+        switch (status) {
+            case "DRAFT":
+                return "Bản nháp";
+            case "CREATED":
+                return "Đã tạo";
+            case "UPDATED":
+                return "Đã cập nhật";
+            case "APPROVAL_PENDING":
+                return "Chờ phê duyệt";
+            case "APPROVED":
+                return "Đã phê duyệt";
+            case "PENDING":
+                return "Chưa ký";
+            case "REJECTED":
+                return "Bị từ chối";
+            case "FIXED":
+                return "Đã chỉnh sửa";
+            case "SIGNED":
+                return "Đã ký";
+            case "ACTIVE":
+                return "Đang có hiệu lực";
+            case "COMPLETED":
+                return "Hoàn thành";
+            case "EXPIRED":
+                return "Hết hạn";
+            case "CANCELLED":
+                return "Đã hủy";
+            case "ENDED":
+                return "Kết thúc";
+            case "DELETED":
+                return "Đã xóa";
+            default:
+                return status;
+        }
+    }
+
 }

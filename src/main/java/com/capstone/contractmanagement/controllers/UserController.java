@@ -55,7 +55,7 @@ import static org.hibernate.query.sqm.tree.SqmNode.log;
 
 public class UserController {
     private final JwtTokenUtils jwtTokenUtils;
-    private final LocalizationUtils localizationUtils;
+//    private final LocalizationUtils localizationUtils;
     private final IUserRepository UserRepository;
     private final IUserService userService;
     private final ITokenService tokenService;
@@ -68,6 +68,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> registerUser(
             @Valid @RequestBody CreateUserDTO userDTO,
             BindingResult result
@@ -253,12 +254,11 @@ public class UserController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok(ResponseObject.builder()
-                    .status(HttpStatus.CREATED)
+                    .status(HttpStatus.OK)
                     .data(null)
                     .message(MessageKeys.DELETE_USER_SUCCESSFULLY)
                     .build());        }
@@ -315,7 +315,6 @@ public class UserController {
     }
 
     @GetMapping("/get-all-users")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<?> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -385,5 +384,4 @@ public class UserController {
                 .data(list)
                 .build());
     }
-
 }
