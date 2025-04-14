@@ -30,52 +30,54 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     private static final int EXPIRY_NOTIFY_DAYS = 5;
 
     @Override
-    @Scheduled(cron = "0 0 8 * * ?") // Chạy định kỳ hàng ngày lúc 8 giờ sáng
+    @Scheduled(cron = "0 0 8 * * ?") // Chạy hàng ngày lúc 8h sáng
     public void checkContractDates() {
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. Kiểm tra hợp đồng sắp có hiệu lực
+        // 1. Thông báo sắp hiệu lực
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getEffectiveDate() != null)
+                .filter(contract -> contract.getNotifyEffectiveDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> !contract.getIsEffectiveNotified())
-                .filter(Contract::getIsLatestVersion)// Chưa gửi thông báo hiệu lực
-                .filter(contract -> {
-                    LocalDateTime notifyDate = contract.getEffectiveDate().minusDays(EFFECTIVE_NOTIFY_DAYS);
-                    return now.isAfter(notifyDate) && now.isBefore(contract.getEffectiveDate());
-                })
+                .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveNotified()))
+                .filter(Contract::getIsLatestVersion)
+                .filter(contract -> !now.isBefore(contract.getNotifyEffectiveDate()))
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToEffectiveNotify) {
-            String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate();
+            String message = contract.getNotifyEffectiveContent() != null
+                    ? contract.getNotifyEffectiveContent()
+                    : "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate();
             sendNotification(contract, message, true);
             mailService.sendEmailContractEffectiveDate(contract);
+            contract.setStatus(ContractStatus.ACTIVE);
+            contractRepository.save(contract);
         }
 
-        // 2. Kiểm tra hợp đồng sắp hết hạn
+        // 2. Thông báo sắp hết hạn
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)
+                .filter(contract -> contract.getNotifyExpiryDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> !contract.getIsExpiryNotified())
-                .filter(contract -> contract.getIsLatestVersion())// Chưa gửi thông báo hết hạn
-                .filter(contract -> {
-                    LocalDateTime notifyDate = contract.getExpiryDate().minusDays(EXPIRY_NOTIFY_DAYS);
-                    return now.isAfter(notifyDate) && now.isBefore(contract.getExpiryDate());
-                })
+                .filter(contract -> Boolean.FALSE.equals(contract.getIsExpiryNotified()))
+                .filter(Contract::getIsLatestVersion)
+                .filter(contract -> !now.isBefore(contract.getNotifyExpiryDate()))
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToExpiryNotify) {
-            String message = "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate();
+            String message = contract.getNotifyExpiryContent() != null
+                    ? contract.getNotifyExpiryContent()
+                    : "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate();
             sendNotification(contract, message, false);
             mailService.sendEmailContractExpiryDate(contract);
         }
 
-        // 3. Kiểm tra hợp đồng quá hạn hiệu lực: khi thời điểm hiện tại sau ngày hiệu lực và chưa được thông báo quá hạn hiệu lực
+        // 3. Thông báo quá hạn hiệu lực
         List<Contract> contractsEffectiveOverdue = contractRepository.findAll().stream()
-                .filter(contract -> contract.getEffectiveDate() != null)
+                .filter(contract -> contract.getExpiryDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveOverdueNotified()))  // Chưa gửi thông báo quá hạn hiệu lực
-                .filter(contract -> now.isAfter(contract.getEffectiveDate()))
+                .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveOverdueNotified()))
+                .filter(contract -> !now.isBefore(contract.getExpiryDate()))
                 .filter(Contract::getIsLatestVersion)
                 .collect(Collectors.toList());
 
@@ -83,6 +85,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             String message = "Hợp đồng '" + contract.getTitle() + "' đã quá hạn hiệu lực từ ngày " + contract.getExpiryDate();
             sendOverdueNotification(contract, message);
             mailService.sendEmailContractOverdue(contract);
+            contract.setStatus(ContractStatus.EXPIRED);
+            contractRepository.save(contract);
         }
     }
 
