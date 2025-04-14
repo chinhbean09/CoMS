@@ -59,75 +59,65 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     }
 
     @Override
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(cron = "0 0 8 * * ?")
     public void checkPaymentDue() {
         LocalDateTime now = LocalDateTime.now();
 
-        int reminderDeadline = appConfigService.getPaymentDeadlineValue();
-
-        // 1. Gửi thông báo nhắc nhở 5 phút trước thời hạn
-        LocalDateTime reminderWindowEnd = now.plusDays(reminderDeadline);
-        List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByPaymentDateBetweenAndStatus(now, reminderWindowEnd, PaymentStatus.UNPAID);
+        // 1. Thông báo nhắc thanh toán dựa vào notifyPaymentDate
+        List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByStatus(PaymentStatus.UNPAID);
         for (PaymentSchedule payment : reminderPayments) {
-            // Kiểm tra nếu hợp đồng là phiên bản mới nhất
-            if (payment.getContract() != null && payment.getContract().getIsLatestVersion() != null && payment.getContract().getIsLatestVersion()) {
-                if (!payment.isReminderEmailSent()) {
-                    // Tạo payload dạng JSON
-                    Map<String, Object> payload = new HashMap<>();
-                    String reminderMessage = "Nhắc nhở: Hợp đồng '" + payment.getContract().getTitle() +
-                            "' sẽ đến hạn thanh toán lúc " + payment.getPaymentDate() +
-                            ". Vui lòng chuẩn bị thanh toán.";
-                    Long contractId = payment.getContract().getId();
-                    payload.put("message", reminderMessage);
-                    payload.put("contractId", contractId);
+            Contract contract = payment.getContract();
 
-                    // Lấy username của người dùng
-                    String username = payment.getContract().getUser().getFullName();
-                    User user = payment.getContract().getUser();
+            if (contract != null && Boolean.TRUE.equals(contract.getIsLatestVersion())) {
+                if (payment.getNotifyPaymentDate() != null &&
+                        !payment.isReminderEmailSent() &&
+                        !now.isBefore(payment.getNotifyPaymentDate())) {
 
-                    // Gửi thông báo dưới dạng JSON
-                    messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                    notificationService.saveNotification(user, reminderMessage, payment.getContract());
+                    String message = payment.getNotifyPaymentContent() != null
+                            ? payment.getNotifyPaymentContent()
+                            : "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
+                            "' sẽ đến hạn thanh toán vào " + payment.getPaymentDate();
+
+                    sendPaymentNotification(contract, message, payment, true);
                     mailService.sendEmailReminder(payment);
-
-                    // Đánh dấu đã gửi email nhắc nhở
                     payment.setReminderEmailSent(true);
                     paymentScheduleRepository.save(payment);
                 }
             }
         }
 
-        // 2. Gửi thông báo quá hạn nếu đã vượt qua dueDate
-        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByPaymentDateBeforeAndStatus(now, PaymentStatus.UNPAID);
+        // 2. Thông báo quá hạn nếu vượt quá paymentDate
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByStatus(PaymentStatus.UNPAID);
         for (PaymentSchedule payment : overduePayments) {
-            // Kiểm tra nếu hợp đồng là phiên bản mới nhất
-            if (payment.getContract() != null && payment.getContract().getIsLatestVersion() != null && payment.getContract().getIsLatestVersion()) {
-                if (now.isAfter(payment.getPaymentDate()) && !payment.isOverdueEmailSent()) {
+            Contract contract = payment.getContract();
+
+            if (contract != null && Boolean.TRUE.equals(contract.getIsLatestVersion())) {
+                if (payment.getPaymentDate() != null &&
+                        now.isAfter(payment.getPaymentDate()) &&
+                        !payment.isOverdueEmailSent()) {
+
+                    String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
+                            "' đã quá hạn thanh toán vào ngày " + payment.getPaymentDate();
+
                     payment.setStatus(PaymentStatus.OVERDUE);
-                    paymentScheduleRepository.save(payment);
-
-                    // Tạo payload dạng JSON cho thông báo quá hạn
-                    Map<String, Object> payload = new HashMap<>();
-                    String overdueMessage = "Quá hạn: Hợp đồng '" + payment.getContract().getTitle() +
-                            "' đã quá hạn thanh toán lúc " + payment.getPaymentDate() + ".";
-                    Long contractId = payment.getContract().getId();
-                    payload.put("message", overdueMessage);
-                    payload.put("contractId", contractId);
-
-                    String username = payment.getContract().getUser().getFullName();
-                    User user = payment.getContract().getUser();
-
-                    // Gửi thông báo dưới dạng JSON
-                    messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
-                    notificationService.saveNotification(user, overdueMessage, payment.getContract());
-                    mailService.sendEmailExpired(payment);
-
-                    // Đánh dấu đã gửi email quá hạn
                     payment.setOverdueEmailSent(true);
                     paymentScheduleRepository.save(payment);
+
+                    sendPaymentNotification(contract, overdueMessage, payment, false);
+                    mailService.sendEmailExpired(payment);
                 }
             }
         }
+    }
+
+    private void sendPaymentNotification(Contract contract, String message, PaymentSchedule payment, boolean isReminder) {
+        User user = contract.getUser();
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("message", message);
+        payload.put("contractId", contract.getId());
+
+        messagingTemplate.convertAndSendToUser(user.getFullName(), "/queue/payment", payload);
+        notificationService.saveNotification(user, message, contract);
     }
 
     @Override
