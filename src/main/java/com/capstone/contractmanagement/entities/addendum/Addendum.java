@@ -105,4 +105,10 @@ public class Addendum {
     @JsonIgnore
     private List<AddendumItem> addendumItems = new ArrayList<>();
 
+
+    @Column(name = "extend_contract_date")
+    private LocalDateTime extendContractDate; // Ngày gia hạn hợp đồng
+
+    @Column(name = "contract_expiration_date")
+    private LocalDateTime contractExpirationDate; // Ngày hết hạn hợp đồng
 }

@@ -32,6 +32,7 @@ public class AddendumDTO {
     // additionalConfig: cấu trúc map
     private Map<String, Map<String, List<AddendumTermSnapshotDTO>>> additionalConfig;
 
-
+    private LocalDateTime extendContractDate;
+    private LocalDateTime contractExpirationDate;
 
 }

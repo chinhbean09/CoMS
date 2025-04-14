@@ -42,4 +42,6 @@ public class AddendumResponse {
     private List<PaymentScheduleResponse> paymentSchedules;
     private List<ContractItemDTO> contractItems;
 
+    private LocalDateTime extendContractDate; // Thêm trường mới
+    private LocalDateTime contractExpirationDate; // Thêm trường mới
 }

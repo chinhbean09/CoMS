@@ -106,6 +106,8 @@ public class AddendumService implements IAddendumService{
                     .title(addendumDTO.getTitle())
                     .content(addendumDTO.getContent())
                     .effectiveDate(addendumDTO.getEffectiveDate())
+                    .extendContractDate(addendumDTO.getExtendContractDate()) // Thêm ngày gia hạn
+                    .contractExpirationDate(addendumDTO.getContractExpirationDate()) // Thêm ngày hết hạn
                     .contractNumber(contract.getContractNumber())
                     .status(AddendumStatus.CREATED)
                     .user(currentUser)
@@ -365,6 +367,8 @@ public class AddendumService implements IAddendumService{
 //                            .build())
                     .partnerA(partnerA)
                     .partnerB(contractPartners)
+                    .extendContractDate(savedAddendum.getExtendContractDate())
+                    .contractExpirationDate(savedAddendum.getContractExpirationDate())
                     .effectiveDate(savedAddendum.getEffectiveDate())
                     .createdAt(savedAddendum.getCreatedAt())
                     .updatedAt(savedAddendum.getUpdatedAt())
@@ -462,6 +466,15 @@ public class AddendumService implements IAddendumService{
         }
         if (addendumDTO.getEffectiveDate() != null && !addendumDTO.getEffectiveDate().equals(addendum.getEffectiveDate())) {
             addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
+            isChanged = true;
+        }
+
+        if (addendumDTO.getExtendContractDate() != null && !Objects.equals(addendumDTO.getExtendContractDate(), addendum.getExtendContractDate())) {
+            addendum.setExtendContractDate(addendumDTO.getExtendContractDate());
+            isChanged = true;
+        }
+        if (addendumDTO.getContractExpirationDate() != null && !Objects.equals(addendumDTO.getContractExpirationDate(), addendum.getContractExpirationDate())) {
+            addendum.setContractExpirationDate(addendumDTO.getContractExpirationDate());
             isChanged = true;
         }
 
@@ -749,6 +762,7 @@ public class AddendumService implements IAddendumService{
             return "No changes detected.";
         }
     }
+
     @Override
     @Transactional
     public void deleteAddendum(Long addendumId) throws DataNotFoundException {
@@ -1657,50 +1671,168 @@ public class AddendumService implements IAddendumService{
     @Override
     @Transactional
     public AddendumResponse duplicateAddendum(Long addendumId, Long contractId) throws DataNotFoundException {
+        // Lấy thông tin người dùng hiện tại
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
 
+        // Tìm hợp đồng
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng với id: " + contractId));
 
-        Addendum originAddendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
-
-        if (contract.getStatus() == ContractStatus.ACTIVE || contract.getStatus() == ContractStatus.EXPIRED) {
-            Addendum newAddendum = new Addendum();
-
-            newAddendum.setTitle(originAddendum.getTitle() + " (Copy)");
-            newAddendum.setStatus(AddendumStatus.CREATED);
-            newAddendum.setUser(currentUser);
-            newAddendum.setContent(originAddendum.getContent());
-            newAddendum.setCreatedAt(LocalDateTime.now());
-            newAddendum.setEffectiveDate(originAddendum.getEffectiveDate());
-            newAddendum.setUpdatedAt(null);
-            newAddendum.setContract(contract);
-            newAddendum.setContractNumber(originAddendum.getContractNumber());
-            addendumRepository.save(newAddendum);
-
-            return AddendumResponse.builder()
-                    .addendumId(newAddendum.getId())
-                    .title(newAddendum.getTitle())
-                    .content(newAddendum.getContent())
-                    .contractNumber(newAddendum.getContractNumber())
-                    .status(newAddendum.getStatus())
-                    .createdBy(UserAddendumResponse.builder()
-                            .userId(currentUser.getId())
-                            .userName(currentUser.getUsername())
-                            .build())
-                    .contractId(newAddendum.getContract().getId())
-
-                    .effectiveDate(newAddendum.getEffectiveDate())
-                    .createdAt(newAddendum.getCreatedAt())
-                    .updatedAt(newAddendum.getUpdatedAt())
-                    .build();
-        } else {
-            throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng đang không ở trạng thái hoạt động");
+        // Kiểm tra trạng thái hợp đồng
+        if (contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.EXPIRED) {
+            throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng đang không ở trạng thái hoạt động hoặc đã hết hạn");
         }
-    }
 
+        // Tìm phụ lục gốc
+        Addendum originAddendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id: " + addendumId));
+
+        // Kiểm tra trùng lặp tiêu đề
+        String newTitle = originAddendum.getTitle() + " (Copy)";
+        boolean isTitleExist = addendumRepository.existsByContractIdAndTitleAndIdNot(contractId, newTitle, addendumId);
+        if (isTitleExist) {
+            // Nếu tiêu đề đã tồn tại, thêm số thứ tự để tránh trùng lặp
+            int copyNumber = 1;
+            String baseTitle = newTitle;
+            do {
+                newTitle = baseTitle + " (" + copyNumber + ")";
+                copyNumber++;
+            } while (addendumRepository.existsByContractIdAndTitleAndIdNot(contractId, newTitle, addendumId));
+        }
+
+        // Tạo bản sao của phụ lục
+        Addendum newAddendum = Addendum.builder()
+                .title(newTitle)
+                .content(originAddendum.getContent())
+                .effectiveDate(originAddendum.getEffectiveDate())
+                .extendContractDate(originAddendum.getExtendContractDate()) // Sao chép ngày gia hạn
+                .contractExpirationDate(originAddendum.getContractExpirationDate()) // Sao chép ngày hết hạn
+                .contractNumber(contract.getContractNumber())
+                .status(AddendumStatus.CREATED)
+                .user(currentUser)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(null)
+                .contract(contract)
+                .signedFilePath(null)
+                .signedBy(null)
+                .signedAt(null)
+                .signedAddendumUrls(new ArrayList<>())
+                .build();
+
+        // Sao chép AddendumItems
+        List<AddendumItem> duplicateItems = new ArrayList<>();
+        for (AddendumItem originalItem : originAddendum.getAddendumItems()) {
+            AddendumItem duplicateItem = AddendumItem.builder()
+                    .description(originalItem.getDescription())
+                    .amount(originalItem.getAmount())
+                    .itemOrder(originalItem.getItemOrder())
+                    .addendum(newAddendum)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            duplicateItems.add(duplicateItem);
+        }
+        newAddendum.setAddendumItems(duplicateItems);
+
+        // Sao chép AddendumTerms
+        List<AddendumTerm> duplicateTerms = new ArrayList<>();
+        for (AddendumTerm originalTerm : originAddendum.getAddendumTerms()) {
+            AddendumTerm duplicateTerm = AddendumTerm.builder()
+                    .termLabel(originalTerm.getTermLabel())
+                    .termValue(originalTerm.getTermValue())
+                    .termType(originalTerm.getTermType())
+                    .originalTermId(originalTerm.getOriginalTermId())
+                    .addendum(newAddendum)
+                    .build();
+            duplicateTerms.add(duplicateTerm);
+        }
+        newAddendum.setAddendumTerms(duplicateTerms);
+
+        // Sao chép AdditionalTermDetails
+        List<AddendumAdditionalTermDetail> duplicateDetails = new ArrayList<>();
+        for (AddendumAdditionalTermDetail originalDetail : originAddendum.getAdditionalTermDetails()) {
+            // Tạo bản sao của các danh sách con
+            List<AdditionalTermSnapshot> commonTermsCopy = new ArrayList<>();
+            for (AdditionalTermSnapshot snapshot : originalDetail.getCommonTerms()) {
+                commonTermsCopy.add(AdditionalTermSnapshot.builder()
+                        .termId(snapshot.getTermId())
+                        .termLabel(snapshot.getTermLabel())
+                        .termValue(snapshot.getTermValue())
+                        .build());
+            }
+
+            List<AdditionalTermSnapshot> aTermsCopy = new ArrayList<>();
+            for (AdditionalTermSnapshot snapshot : originalDetail.getATerms()) {
+                aTermsCopy.add(AdditionalTermSnapshot.builder()
+                        .termId(snapshot.getTermId())
+                        .termLabel(snapshot.getTermLabel())
+                        .termValue(snapshot.getTermValue())
+                        .build());
+            }
+
+            List<AdditionalTermSnapshot> bTermsCopy = new ArrayList<>();
+            for (AdditionalTermSnapshot snapshot : originalDetail.getBTerms()) {
+                bTermsCopy.add(AdditionalTermSnapshot.builder()
+                        .termId(snapshot.getTermId())
+                        .termLabel(snapshot.getTermLabel())
+                        .termValue(snapshot.getTermValue())
+                        .build());
+            }
+
+            AddendumAdditionalTermDetail duplicateDetail = AddendumAdditionalTermDetail.builder()
+                    .typeTermId(originalDetail.getTypeTermId())
+                    .commonTerms(commonTermsCopy)
+                    .aTerms(aTermsCopy)
+                    .bTerms(bTermsCopy)
+                    .addendum(newAddendum)
+                    .build();
+            duplicateDetails.add(duplicateDetail);
+        }
+        newAddendum.setAdditionalTermDetails(duplicateDetails);
+
+        // Sao chép PaymentSchedules
+        List<AddendumPaymentSchedule> duplicatePayments = new ArrayList<>();
+        for (AddendumPaymentSchedule originalPayment : originAddendum.getPaymentSchedules()) {
+            AddendumPaymentSchedule duplicatePayment = AddendumPaymentSchedule.builder()
+                    .paymentOrder(originalPayment.getPaymentOrder())
+                    .amount(originalPayment.getAmount())
+                    .paymentDate(originalPayment.getPaymentDate())
+                    .status(PaymentStatus.UNPAID) // Đặt trạng thái mới
+                    .paymentMethod(originalPayment.getPaymentMethod())
+                    .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
+                    .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
+                    .reminderEmailSent(false)
+                    .overdueEmailSent(false)
+                    .addendum(newAddendum)
+                    .build();
+            duplicatePayments.add(duplicatePayment);
+        }
+        newAddendum.setPaymentSchedules(duplicatePayments);
+
+        // Lưu bản sao vào cơ sở dữ liệu
+        Addendum savedAddendum = addendumRepository.save(newAddendum);
+
+        // Ghi log audit
+        logAuditTrailForAddendum(savedAddendum, "CREATE", "status", null, AddendumStatus.CREATED.name(), currentUser.getUsername());
+
+        // Trả về thông tin bản sao
+        return AddendumResponse.builder()
+                .addendumId(savedAddendum.getId())
+                .title(savedAddendum.getTitle())
+                .content(savedAddendum.getContent())
+                .contractNumber(savedAddendum.getContractNumber())
+                .status(savedAddendum.getStatus())
+                .createdBy(UserAddendumResponse.builder()
+                        .userId(savedAddendum.getUser().getId())
+                        .userName(savedAddendum.getUser().getUsername())
+                        .build())
+                .contractId(savedAddendum.getContract().getId())
+                .effectiveDate(savedAddendum.getEffectiveDate())
+                .createdAt(savedAddendum.getCreatedAt())
+                .updatedAt(savedAddendum.getUpdatedAt())
+                .build();
+    }
     @Override
     @Transactional
     public void uploadSignedAddendum(Long addendumId, List<MultipartFile> files) throws DataNotFoundException {
