@@ -1,5 +1,6 @@
-package com.capstone.contractmanagement.entities;
+package com.capstone.contractmanagement.entities.addendum;
 
+import com.capstone.contractmanagement.entities.*;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.AddendumStatus;
@@ -8,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 //Phụ lục là một tài liệu bổ sung, ghi nhận các thay đổi cụ thể trong điều khoản hợp đồng mà không thay thế toàn bộ hợp đồng gốc.
@@ -87,4 +89,23 @@ public class Addendum {
     @CollectionTable(name = "addendum_signed_url", joinColumns = @JoinColumn(name = "addendum_id"))
     @Column(name = "signed_addendum_url")
     private List<String> signedAddendumUrls; // Lưu nhiều URL trong một trường
+
+    @OneToMany(mappedBy = "addendum", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AddendumPaymentSchedule> paymentSchedules = new ArrayList<>();
+
+    // Mối quan hệ với AddendumAdditionalTermDetail
+    @OneToMany(mappedBy = "addendum", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AddendumAdditionalTermDetail> additionalTermDetails = new ArrayList<>();
+
+    // Mối quan hệ với AddendumTerm
+    @OneToMany(mappedBy = "addendum", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AddendumTerm> addendumTerms = new ArrayList<>();
+
+    @OneToMany(mappedBy = "addendum", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AddendumItem> addendumItems = new ArrayList<>();
+
 }
