@@ -17,6 +17,8 @@ public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
 
     List<Addendum> findByContract(Contract contract);
 
+    boolean existsByContractIdAndTitleAndIdNot(Long contractId, String title, Long addendumId);
+
     List<Addendum> findByStatus(AddendumStatus status);
 
     //List<Addendum> findByAddendumType(AddendumType addendumType);
