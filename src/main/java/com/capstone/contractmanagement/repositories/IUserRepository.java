@@ -42,8 +42,23 @@ public interface IUserRepository extends JpaRepository<User, Long> {
     Page<User> findByDepartment(DepartmentList department, Pageable pageable);
 
     // Tìm kiếm theo fullName (không phân biệt hoa thường) có phân trang
-    Page<User> findByFullNameContainingIgnoreCase(String fullName, Pageable pageable);
 
     // Lọc theo department và tìm kiếm theo fullName có phân trang
-    Page<User> findByDepartmentAndFullNameContainingIgnoreCase(DepartmentList department, String fullName, Pageable pageable);
+    Page<User> findByDepartmentAndFullNameContainingIgnoreCase(String department, String fullName, Pageable pageable);
+
+    Page<User> findByDepartment_Id(Long departmentId, Pageable pageable);
+
+    Page<User> findByRole_Id(Long roleId, Pageable pageable);
+
+    Page<User> findByFullNameContainingIgnoreCase(String fullName, Pageable pageable);
+
+    Page<User> findByDepartment_IdAndFullNameContainingIgnoreCase(Long departmentId, String fullName, Pageable pageable);
+
+    Page<User> findByRole_IdAndFullNameContainingIgnoreCase(Long roleId, String fullName, Pageable pageable);
+
+    Page<User> findByDepartment_IdAndRole_Id(Long departmentId, Long roleId, Pageable pageable);
+
+    Page<User> findByDepartment_IdAndRole_IdAndFullNameContainingIgnoreCase(
+            Long departmentId, Long roleId, String fullName, Pageable pageable
+    );
 }
