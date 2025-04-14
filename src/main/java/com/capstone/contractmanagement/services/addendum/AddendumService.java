@@ -1262,102 +1262,64 @@ public class AddendumService implements IAddendumService{
             Long userId,
             String keyword,
             List<AddendumStatus> statuses,
-            List<Long> addendumTypeIds,
             int page,
             int size,
             User currentUser) {
 
-//        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-//        boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
-//        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
-//        boolean hasTypeFilter = addendumTypeIds != null && !addendumTypeIds.isEmpty();
-//
-//        Page<Addendum> addenda;
-//
-//        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
-//        boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
-//
-//        if (isStaff) {
-//            if (hasStatusFilter) {
-//                if (hasTypeFilter) {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusInAndAddendumTypeIdIn(
-//                                userId, keyword.trim(), statuses, addendumTypeIds, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByContractUserIdAndStatusInAndAddendumTypeIdIn(
-//                                userId, statuses, addendumTypeIds, pageable);
-//                    }
-//                } else {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusIn(
-//                                userId, keyword.trim(), statuses, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByContractUserIdAndStatusIn(
-//                                userId, statuses, pageable);
-//                    }
-//                }
-//            } else {
-//                if (hasTypeFilter) {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndAddendumTypeIdIn(
-//                                userId, keyword.trim(), addendumTypeIds, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByContractUserIdAndAddendumTypeIdIn(
-//                                userId, addendumTypeIds, pageable);
-//                    }
-//                } else {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByContractUserIdAndKeyword(
-//                                userId, keyword.trim(), pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByContractUserId(userId, pageable);
-//                    }
-//                }
-//            }
-//        } else if (isCeo) {
-//            if (hasStatusFilter) {
-//                if (hasTypeFilter) {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByKeywordAndStatusInAndAddendumTypeIdIn(
-//                                keyword.trim(), statuses, addendumTypeIds, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByStatusInAndAddendumTypeIdIn(
-//                                statuses, addendumTypeIds, pageable);
-//                    }
-//                } else {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByKeywordAndStatusIn(
-//                                keyword.trim(), statuses, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByStatusIn(statuses, pageable);
-//                    }
-//                }
-//            } else {
-//                if (hasTypeFilter) {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByKeywordAndAddendumTypeIdIn(
-//                                keyword.trim(), addendumTypeIds, pageable);
-//                    } else {
-//                        addenda = addendumRepository.findByAddendumTypeIdIn(addendumTypeIds, pageable);
-//                    }
-//                } else {
-//                    if (hasSearch) {
-//                        addenda = addendumRepository.findByKeyword(keyword.trim(), pageable);
-//                    } else {
-//                        addenda = addendumRepository.findAll(pageable);
-//                    }
-//                }
-//            }
-//        } else {
-//            addenda = Page.empty(pageable);
-//        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        return null;
+        boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
+        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
+
+        Page<Addendum> addenda;
+
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getRoleName() : "";
+        boolean isDirector = "DIRECTOR".equalsIgnoreCase(roleName);
+        boolean isStaff = "STAFF".equalsIgnoreCase(roleName);
+
+        if (isStaff) {
+            if (hasStatusFilter) {
+                if (hasSearch) {
+                    addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusIn(
+                            userId, keyword.trim(), statuses, pageable);
+                } else {
+                    addenda = addendumRepository.findByContractUserIdAndStatusIn(
+                            userId, statuses, pageable);
+                }
+            } else {
+                if (hasSearch) {
+                    addenda = addendumRepository.findByContractUserIdAndKeyword(
+                            userId, keyword.trim(), pageable);
+                } else {
+                    addenda = addendumRepository.findByContractUserId(userId, pageable);
+                }
+            }
+        } else if (isDirector) {
+            if (hasStatusFilter) {
+                if (hasSearch) {
+                    addenda = addendumRepository.findByKeywordAndStatusIn(
+                            keyword.trim(), statuses, pageable);
+                } else {
+                    addenda = addendumRepository.findByStatusIn(statuses, pageable);
+                }
+            } else {
+                if (hasSearch) {
+                    addenda = addendumRepository.findByKeyword(keyword.trim(), pageable);
+                } else {
+                    addenda = addendumRepository.findAll(pageable);
+                }
+            }
+        } else {
+            // Không có quyền
+            addenda = Page.empty(pageable);
+        }
+
+        return addenda.map(this::mapToAddendumResponse);
     }
 
     @Override
     @Transactional
-    public Page<AddendumResponse> getAddendaForManager(Long approverId, String keyword, Long addendumTypeId, int page, int size) {
+    public Page<AddendumResponse> getAddendaForManager(Long approverId, String keyword, int page, int size) {
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -1419,7 +1381,7 @@ public class AddendumService implements IAddendumService{
 
     @Override
     @Transactional
-    public Page<AddendumResponse> getAddendaForApprover(Long approverId, String keyword, Long addendumTypeId, int page, int size) {
+    public Page<AddendumResponse> getAddendaForApprover(Long approverId, String keyword, int page, int size) {
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
