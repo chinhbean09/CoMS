@@ -875,6 +875,7 @@ public class ContractService implements IContractService{
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .partnerA(partnerA) // Thêm partnerA
                 .partnerB(partnerB) // Thêm partnerB
+                .daysDeleted(contract.getDaysDeleted())
                 .signingDate(contract.getSigningDate())
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
@@ -3099,6 +3100,7 @@ public class ContractService implements IContractService{
         // Cập nhật trạng thái
         contract.setStatus(ContractStatus.DELETED);
         contract.setUpdatedAt(LocalDateTime.now());
+        contract.setDaysDeleted(LocalDateTime.now());
 
         // Lưu hợp đồng
         Contract savedContract = contractRepository.save(contract);
