@@ -74,7 +74,7 @@ public class TermController {
     }
 
     @GetMapping("/get-all")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getAllTerms(
             @RequestParam(required = false) List<Long> typeTermIds,
             @RequestParam(defaultValue = "false") boolean includeLegalBasis,
@@ -105,7 +105,7 @@ public class TermController {
     }
 
     @GetMapping("/get-all-less-field")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getAllTermsLessField(
             @RequestParam(required = false) List<Long> typeTermIds,
             @RequestParam(defaultValue = "false") boolean includeLegalBasis,
@@ -137,7 +137,7 @@ public class TermController {
 
 
     @GetMapping("/get-by-id/{termId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getTermById(@PathVariable Long termId) throws DataNotFoundException {
         CreateTermResponse termResponse = termService.getTermById(termId);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
@@ -147,7 +147,7 @@ public class TermController {
     }
 
     @DeleteMapping("/delete/{termId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteTerm(@PathVariable Long termId) throws DataNotFoundException {
         termService.deleteTerm(termId);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
@@ -176,7 +176,7 @@ public class TermController {
     }
 
     @GetMapping("/get-all-type-terms")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getAllTypeTerms( ) {
         List<TypeTermResponse> typeTerms = termService.getAllTypeTerms();
 
@@ -194,7 +194,7 @@ public class TermController {
     }
 
     @GetMapping("/get-type-term-by-id/{typeTermId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getTypeTermById(@PathVariable Long typeTermId) {
         TypeTermResponse typeTermResponse = termService.getTypeTermById(typeTermId);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
@@ -205,7 +205,7 @@ public class TermController {
 
     // get all terms by type term id
     @GetMapping("/get-terms-by-type-term-id/{typeTermId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getTermsByTypeTermId(@PathVariable Long typeTermId,
                                                                @RequestParam(required = false) String keyword,
                                                                @RequestParam(defaultValue = "0") int page,
@@ -218,7 +218,7 @@ public class TermController {
     }
 
     @PutMapping("/update-status/{termId}/{isDeleted}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateTermStatus(@PathVariable Long termId, @PathVariable Boolean isDeleted) {
         try {
             termService.updateTermStatus(termId, true);
@@ -255,7 +255,7 @@ public class TermController {
     }
 
     @GetMapping("/legal-basis")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getAllLegalBasisTerms() {
         try {
             List<Term> legalBasisTerms = termRepository.findAllLegalBasisTerms();
@@ -289,7 +289,7 @@ public class TermController {
     }
 
     @GetMapping("/additional")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<List<TypeTermResponse>> getAdditionalTypeTerms() {
         List<TypeTerm> typeTerms = typeTermRepository.findByIdentifier(TypeTermIdentifier.ADDITIONAL_TERMS);
         List<TypeTermResponse> responses = typeTerms.stream()
@@ -326,7 +326,7 @@ public class TermController {
     }
 
     @PostMapping("/import-file-excel")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> importTermsFromExcel(
             @RequestParam("file") MultipartFile file,
             @RequestParam("typeTermId") Long typeTermId) throws IOException {
@@ -343,7 +343,7 @@ public class TermController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> searchTerms(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
