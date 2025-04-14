@@ -422,35 +422,333 @@ public class AddendumService implements IAddendumService{
     @Override
     @Transactional
     public String updateAddendum(Long addendumId, AddendumDTO addendumDTO) throws DataNotFoundException {
-        // Tìm phụ lục theo id
+        // Lấy thông tin người dùng hiện tại
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
 
+        // Tìm hợp đồng
+        Contract contract = contractRepository.findById(addendumDTO.getContractId())
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+
+        // Tìm phụ lục
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
 
-        String oldStatus = addendum.getStatus().name();
-
+        // Kiểm tra trạng thái phụ lục
         if (addendum.getStatus().equals(AddendumStatus.APPROVAL_PENDING)) {
             throw new RuntimeException("Phụ lục đang trong quy trình duyệt, không được phép cập nhật.");
         }
 
-        if (addendumDTO.getTitle() != null) {
+        // Lưu trạng thái cũ để ghi log
+        String oldStatus = addendum.getStatus().name();
+
+        // Biến để theo dõi thay đổi
+        boolean isChanged = false;
+
+        // Kiểm tra trùng lặp tiêu đề chỉ khi tiêu đề thay đổi
+        if (addendumDTO.getTitle() != null && !addendum.getTitle().equals(addendumDTO.getTitle())) {
+            boolean isTitleExist = addendumRepository.existsByContractIdAndTitleAndIdNot(contract.getId(), addendumDTO.getTitle(), addendumId);
+            if (isTitleExist) {
+                throw new DataNotFoundException("Tên phụ lục bị trùng: " + addendumDTO.getTitle());
+            }
             addendum.setTitle(addendumDTO.getTitle());
+            isChanged = true;
         }
-        if (addendumDTO.getContent() != null) {
+
+        // Cập nhật các trường cơ bản nếu có giá trị
+        if (addendumDTO.getContent() != null && !addendumDTO.getContent().equals(addendum.getContent())) {
             addendum.setContent(addendumDTO.getContent());
+            isChanged = true;
         }
-        if (addendumDTO.getEffectiveDate() != null) {
+        if (addendumDTO.getEffectiveDate() != null && !addendumDTO.getEffectiveDate().equals(addendum.getEffectiveDate())) {
             addendum.setEffectiveDate(addendumDTO.getEffectiveDate());
+            isChanged = true;
         }
-        addendum.setStatus(AddendumStatus.UPDATED);
-        addendum.setUpdatedAt(LocalDateTime.now());
 
-        addendumRepository.save(addendum);
-        String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
-        logAuditTrailForAddendum(addendum, "UPDATE", "status", oldStatus, AddendumStatus.UPDATED.name(), changedBy);
-        return "Addendum updated successfully.";
+        // Cập nhật AddendumItems
+        if (addendumDTO.getContractItems() != null && !addendumDTO.getContractItems().isEmpty()) {
+            // Xóa toàn bộ phần tử hiện có trong collection
+            addendum.getAddendumItems().clear();
+            int order = 1;
+            for (ContractItemDTO itemDTO : addendumDTO.getContractItems()) {
+                if (itemDTO.getDescription() == null || itemDTO.getDescription().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Mô tả hạng mục không được để trống.");
+                }
+                if (itemDTO.getAmount() == null || itemDTO.getAmount() <= 0.0) {
+                    throw new IllegalArgumentException("Số tiền hạng mục phải lớn hơn 0.");
+                }
+                AddendumItem item = AddendumItem.builder()
+                        .addendum(addendum)
+                        .description(itemDTO.getDescription())
+                        .amount(itemDTO.getAmount())
+                        .itemOrder(order++)
+                        .build();
+                addendum.getAddendumItems().add(item);
+            }
+            isChanged = true;
+        } else {
+            // Nếu contractItems là null hoặc rỗng, xóa toàn bộ addendumItems
+            if (!addendum.getAddendumItems().isEmpty()) {
+                addendum.getAddendumItems().clear();
+                isChanged = true;
+            }
+        }
+
+        // Cập nhật AddendumTerms
+        boolean hasTerms = (addendumDTO.getLegalBasisTerms() != null && !addendumDTO.getLegalBasisTerms().isEmpty()) ||
+                (addendumDTO.getGeneralTerms() != null && !addendumDTO.getGeneralTerms().isEmpty()) ||
+                (addendumDTO.getOtherTerms() != null && !addendumDTO.getOtherTerms().isEmpty());
+
+        if (hasTerms) {
+            // Xóa toàn bộ phần tử hiện có trong collection
+            addendum.getAddendumTerms().clear();
+
+            // Căn cứ pháp lý
+            if (addendumDTO.getLegalBasisTerms() != null && !addendumDTO.getLegalBasisTerms().isEmpty()) {
+                for (AddendumTermSnapshotDTO termDTO : addendumDTO.getLegalBasisTerms()) {
+                    if (termDTO.getId() == null) {
+                        throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
+                    }
+                    Term term = termRepository.findById(termDTO.getId())
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
+                    }
+                    AddendumTerm addendumTerm = AddendumTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(termDTO.getLabel())
+                            .termValue(termDTO.getValue())
+                            .termType(TypeTermIdentifier.LEGAL_BASIS)
+                            .addendum(addendum)
+                            .build();
+                    addendum.getAddendumTerms().add(addendumTerm);
+                }
+            }
+
+            // Điều khoản chung
+            if (addendumDTO.getGeneralTerms() != null && !addendumDTO.getGeneralTerms().isEmpty()) {
+                for (AddendumTermSnapshotDTO termDTO : addendumDTO.getGeneralTerms()) {
+                    if (termDTO.getId() == null) {
+                        throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
+                    }
+                    Term term = termRepository.findById(termDTO.getId())
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
+                    }
+                    AddendumTerm addendumTerm = AddendumTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(termDTO.getLabel())
+                            .termValue(termDTO.getValue())
+                            .termType(TypeTermIdentifier.GENERAL_TERMS)
+                            .addendum(addendum)
+                            .build();
+                    addendum.getAddendumTerms().add(addendumTerm);
+                }
+            }
+
+            // Điều khoản khác
+            if (addendumDTO.getOtherTerms() != null && !addendumDTO.getOtherTerms().isEmpty()) {
+                for (AddendumTermSnapshotDTO termDTO : addendumDTO.getOtherTerms()) {
+                    if (termDTO.getId() == null) {
+                        throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
+                    }
+                    Term term = termRepository.findById(termDTO.getId())
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
+                    }
+                    AddendumTerm addendumTerm = AddendumTerm.builder()
+                            .originalTermId(term.getId())
+                            .termLabel(termDTO.getLabel())
+                            .termValue(termDTO.getValue())
+                            .termType(TypeTermIdentifier.OTHER_TERMS)
+                            .addendum(addendum)
+                            .build();
+                    addendum.getAddendumTerms().add(addendumTerm);
+                }
+            }
+            isChanged = true;
+        } else {
+            // Nếu tất cả terms đều null hoặc rỗng, xóa toàn bộ addendumTerms
+            if (!addendum.getAddendumTerms().isEmpty()) {
+                addendum.getAddendumTerms().clear();
+                isChanged = true;
+            }
+        }
+
+        // Cập nhật AdditionalTermDetails
+        if (addendumDTO.getAdditionalConfig() != null && !addendumDTO.getAdditionalConfig().isEmpty()) {
+            // Xóa toàn bộ phần tử hiện có
+            addendum.getAdditionalTermDetails().clear();
+            Map<String, Map<String, List<AddendumTermSnapshotDTO>>> configMap = addendumDTO.getAdditionalConfig();
+            for (Map.Entry<String, Map<String, List<AddendumTermSnapshotDTO>>> entry : configMap.entrySet()) {
+                String key = entry.getKey();
+                Long configTypeTermId;
+                try {
+                    configTypeTermId = Long.parseLong(key);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
+                }
+                Map<String, List<AddendumTermSnapshotDTO>> groupConfig = entry.getValue();
+
+                // Map nhóm Common
+                List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("Common") && !groupConfig.get("Common").isEmpty()) {
+                    for (AddendumTermSnapshotDTO termDTO : groupConfig.get("Common")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                        commonSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(termDTO.getLabel())
+                                .termValue(termDTO.getValue())
+                                .build());
+                    }
+                }
+
+                // Map nhóm A
+                List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("A") && !groupConfig.get("A").isEmpty()) {
+                    for (AddendumTermSnapshotDTO termDTO : groupConfig.get("A")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                        aSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(termDTO.getLabel())
+                                .termValue(termDTO.getValue())
+                                .build());
+                    }
+                }
+
+                // Map nhóm B
+                List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("B") && !groupConfig.get("B").isEmpty()) {
+                    for (AddendumTermSnapshotDTO termDTO : groupConfig.get("B")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                        bSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(termDTO.getLabel())
+                                .termValue(termDTO.getValue())
+                                .build());
+                    }
+                }
+
+                // Kiểm tra trùng lặp
+                Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonA.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
+                }
+                Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
+                }
+                Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionAB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
+                }
+
+                // Kiểm tra type term
+                for (AdditionalTermSnapshot snap : commonSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : aSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : bSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+
+                AddendumAdditionalTermDetail configDetail = AddendumAdditionalTermDetail.builder()
+                        .typeTermId(configTypeTermId)
+                        .commonTerms(commonSnapshots)
+                        .aTerms(aSnapshots)
+                        .bTerms(bSnapshots)
+                        .addendum(addendum)
+                        .build();
+                addendum.getAdditionalTermDetails().add(configDetail);
+            }
+            isChanged = true;
+        } else {
+            // Nếu additionalConfig là null hoặc rỗng, xóa toàn bộ additionalTermDetails
+            if (!addendum.getAdditionalTermDetails().isEmpty()) {
+                addendum.getAdditionalTermDetails().clear();
+                isChanged = true;
+            }
+        }
+
+        // Cập nhật PaymentSchedules
+        if (addendumDTO.getPayments() != null && !addendumDTO.getPayments().isEmpty()) {
+            // Xóa toàn bộ phần tử hiện có
+            addendum.getPaymentSchedules().clear();
+            int order = 1;
+            for (PaymentDTO paymentDTO : addendumDTO.getPayments()) {
+                if (paymentDTO.getAmount() == null || paymentDTO.getAmount() <= 0.0) {
+                    throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0.");
+                }
+                if (paymentDTO.getPaymentDate() == null) {
+                    throw new IllegalArgumentException("Ngày thanh toán không được để trống.");
+                }
+                AddendumPaymentSchedule paymentSchedule = AddendumPaymentSchedule.builder()
+                        .amount(paymentDTO.getAmount())
+                        .paymentDate(paymentDTO.getPaymentDate())
+                        .notifyPaymentDate(paymentDTO.getNotifyPaymentDate())
+                        .paymentOrder(order++)
+                        .status(PaymentStatus.UNPAID)
+                        .paymentMethod(paymentDTO.getPaymentMethod())
+                        .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+                        .reminderEmailSent(false)
+                        .overdueEmailSent(false)
+                        .addendum(addendum)
+                        .build();
+                addendum.getPaymentSchedules().add(paymentSchedule);
+            }
+            isChanged = true;
+        } else {
+            // Nếu payments là null hoặc rỗng, xóa toàn bộ paymentSchedules
+            if (!addendum.getPaymentSchedules().isEmpty()) {
+                addendum.getPaymentSchedules().clear();
+                isChanged = true;
+            }
+        }
+
+        // Chỉ lưu nếu có thay đổi
+        if (isChanged) {
+            addendum.setStatus(AddendumStatus.UPDATED);
+            addendum.setUpdatedAt(LocalDateTime.now());
+            Addendum updatedAddendum = addendumRepository.save(addendum);
+
+            // Ghi log audit
+            logAuditTrailForAddendum(updatedAddendum, "UPDATE", "status", oldStatus, AddendumStatus.UPDATED.name(), currentUser.getUsername());
+            return "Addendum updated successfully.";
+        } else {
+            return "No changes detected.";
+        }
     }
-
     @Override
     @Transactional
     public void deleteAddendum(Long addendumId) throws DataNotFoundException {
@@ -491,6 +789,7 @@ public class AddendumService implements IAddendumService{
 //    }
 
     @Override
+    @Transactional
     public Optional<AddendumResponse> getAddendumById(Long addendumId) throws DataNotFoundException {
         return addendumRepository.findById(addendumId)
                 .map(addendum -> {
