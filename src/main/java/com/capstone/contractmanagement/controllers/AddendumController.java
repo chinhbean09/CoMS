@@ -159,13 +159,12 @@ public class AddendumController {
     public ResponseEntity<ResponseObject> getFilteredAddenda(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<AddendumStatus> statuses,
-            @RequestParam(required = false) List<Long> addendumTypeIds,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal User currentUser
     ) {
         Page<AddendumResponse> responsePage = addendumService.getAddendaByUserWithFilters(
-                currentUser.getId(), keyword, statuses, addendumTypeIds, page, size, currentUser
+                currentUser.getId(), keyword, statuses, page, size, currentUser
         );
 
         return ResponseEntity.ok(ResponseObject.builder()
@@ -178,10 +177,9 @@ public class AddendumController {
     @GetMapping("/get-addendum-for-approver/{approverId}")
     public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId,
                                                                  @RequestParam(value = "keyword", required = false) String keyword,
-                                                                 @RequestParam(value = "addendumTypeId", required = false) Long addendumTypeId,
                                                                  @RequestParam(value = "page", defaultValue = "0") int page,
                                                                  @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
-        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForManager(approverId, keyword, addendumTypeId, page, size);
+        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForManager(approverId, keyword, page, size);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
@@ -192,10 +190,9 @@ public class AddendumController {
     @GetMapping("/get-addendum-for-manager/{managerId}")
     public ResponseEntity<ResponseObject> getAddendaForManager(@PathVariable Long managerId,
                                                                @RequestParam(value = "keyword", required = false) String keyword,
-                                                               @RequestParam(value = "addendumTypeId", required = false) Long addendumTypeId,
                                                                @RequestParam(value = "page", defaultValue = "0") int page,
                                                                @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
-        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForApprover(managerId, keyword, addendumTypeId, page, size);
+        Page<AddendumResponse> addendumResponses = addendumService.getAddendaForApprover(managerId, keyword, page, size);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
