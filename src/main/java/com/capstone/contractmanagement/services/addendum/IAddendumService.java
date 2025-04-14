@@ -20,7 +20,7 @@ public interface IAddendumService {
 
     List<AddendumResponse> getAllByContractId(Long contractId) throws DataNotFoundException;
 
-    List<AddendumResponse> getAllByAddendumType(Long addendumTypeId) throws DataNotFoundException;
+    //List<AddendumResponse> getAllByAddendumType(Long addendumTypeId) throws DataNotFoundException;
 
     String updateAddendum(Long addendumId, AddendumDTO addendumDTO) throws DataNotFoundException;
 

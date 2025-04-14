@@ -60,9 +60,6 @@ public class Addendum {
     @JoinColumn(name = "contract_id", nullable = true)
     private Contract contract;
 
-    @ManyToOne
-    @JoinColumn(name = "addendum_type_id")
-    private AddendumType addendumType;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

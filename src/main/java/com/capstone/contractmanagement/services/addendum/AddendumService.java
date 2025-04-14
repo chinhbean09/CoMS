@@ -17,7 +17,6 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
-import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
 import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -49,7 +48,6 @@ import java.util.stream.Collectors;
 public class AddendumService implements IAddendumService{
     private final IAddendumRepository addendumRepository;
     private final IContractRepository contractRepository;
-    private final IAddendumTypeRepository addendumTypeRepository;
     private final IApprovalWorkflowRepository approvalWorkflowRepository;
     private final IMailService mailService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -85,8 +83,7 @@ public class AddendumService implements IAddendumService{
         Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(contract.getId(), PartnerType.PARTNER_B);
 
         // Lấy loại phụ lục
-        AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
-                .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
+
 
         if (contract.getStatus() == ContractStatus.ACTIVE
                 || contract.getStatus() == ContractStatus.EXPIRED) {
@@ -100,7 +97,6 @@ public class AddendumService implements IAddendumService{
                     .user(currentUser)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(null)
-                    .addendumType(addendumType)
                     .contract(contract)
                     .build();
 
@@ -120,10 +116,6 @@ public class AddendumService implements IAddendumService{
                             .userName(currentUser.getUsername())
                             .build())
                     .contractId(addendum.getContract().getId())
-                    .addendumType(AddendumTypeResponse.builder()
-                            .addendumTypeId(addendum.getAddendumType().getId())
-                            .name(addendum.getAddendumType().getName())
-                            .build())
                     .partnerA(partnerA)
                     .partnerB(contractPartners)
                     .effectiveDate(addendum.getEffectiveDate())
@@ -180,43 +172,6 @@ public class AddendumService implements IAddendumService{
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<AddendumResponse> getAllByAddendumType(Long addendumTypeId) throws DataNotFoundException {
-        AddendumType addendumType = addendumTypeRepository.findById(addendumTypeId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum type not found with id: " + addendumTypeId));
-        List<Addendum> addenda = addendumRepository.findByAddendumType(addendumType);
-        Partner partnerA = partnerRepository.findById(1L)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
-        return addenda.stream()
-                .map(addendum -> {
-                    // Lấy partner B theo contract
-                    Optional<ContractPartner> partnerB = contractPartnerRepository
-                            .findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
-
-                    return AddendumResponse.builder()
-                            .addendumId(addendum.getId())
-                            .title(addendum.getTitle())
-                            .content(addendum.getContent())
-                            .effectiveDate(addendum.getEffectiveDate())
-                            .contractNumber(addendum.getContractNumber())
-                            .status(addendum.getStatus())
-                            .createdBy(UserAddendumResponse.builder()
-                                    .userId(addendum.getUser().getId())
-                                    .userName(addendum.getUser().getFullName())
-                                    .build())
-                            .partnerA(partnerA)
-                            .partnerB(partnerB)
-                            .contractId(addendum.getContract().getId())
-//                            .addendumType(AddendumTypeResponse.builder()
-//                                    .addendumTypeId(addendum.getAddendumType().getId())
-//                                    .name(addendum.getAddendumType().getName())
-//                                    .build())
-                            .createdAt(addendum.getCreatedAt())
-                            .updatedAt(addendum.getUpdatedAt())
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional
@@ -230,11 +185,6 @@ public class AddendumService implements IAddendumService{
 
         if (addendum.getStatus().equals(AddendumStatus.APPROVAL_PENDING)) {
             throw new RuntimeException("Phụ lục đang trong quy trình duyệt, không được phép cập nhật.");
-        }
-        if (addendumDTO.getAddendumTypeId() != null) {
-            AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
-                    .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
-            addendum.setAddendumType(addendumType);
         }
 
         if (addendumDTO.getTitle() != null) {
@@ -623,92 +573,94 @@ public class AddendumService implements IAddendumService{
             int size,
             User currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
-        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
-        boolean hasTypeFilter = addendumTypeIds != null && !addendumTypeIds.isEmpty();
+//        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+//        boolean hasSearch = keyword != null && !keyword.trim().isEmpty();
+//        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
+//        boolean hasTypeFilter = addendumTypeIds != null && !addendumTypeIds.isEmpty();
+//
+//        Page<Addendum> addenda;
+//
+//        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
+//        boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+//
+//        if (isStaff) {
+//            if (hasStatusFilter) {
+//                if (hasTypeFilter) {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusInAndAddendumTypeIdIn(
+//                                userId, keyword.trim(), statuses, addendumTypeIds, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByContractUserIdAndStatusInAndAddendumTypeIdIn(
+//                                userId, statuses, addendumTypeIds, pageable);
+//                    }
+//                } else {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusIn(
+//                                userId, keyword.trim(), statuses, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByContractUserIdAndStatusIn(
+//                                userId, statuses, pageable);
+//                    }
+//                }
+//            } else {
+//                if (hasTypeFilter) {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByContractUserIdAndKeywordAndAddendumTypeIdIn(
+//                                userId, keyword.trim(), addendumTypeIds, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByContractUserId(
+//                                userId, addendumTypeIds, pageable);
+//                    }
+//                } else {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByContractUserIdAndKeyword(
+//                                userId, keyword.trim(), pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByContractUserId(userId, pageable);
+//                    }
+//                }
+//            }
+//        } else if (isCeo) {
+//            if (hasStatusFilter) {
+//                if (hasTypeFilter) {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByKeywordAndStatusInAndAddendumTypeIdIn(
+//                                keyword.trim(), statuses, addendumTypeIds, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByStatusInAndAddendumTypeIdIn(
+//                                statuses, addendumTypeIds, pageable);
+//                    }
+//                } else {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByKeywordAndStatusIn(
+//                                keyword.trim(), statuses, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByStatusIn(statuses, pageable);
+//                    }
+//                }
+//            } else {
+//                if (hasTypeFilter) {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByKeywordAndAddendumTypeIdIn(
+//                                keyword.trim(), addendumTypeIds, pageable);
+//                    } else {
+//                        addenda = addendumRepository.findByAddendumTypeIdIn(addendumTypeIds, pageable);
+//                    }
+//                } else {
+//                    if (hasSearch) {
+//                        addenda = addendumRepository.findByKeyword(keyword.trim(), pageable);
+//                    } else {
+//                        addenda = addendumRepository.findAll(pageable);
+//                    }
+//                }
+//            }
+//        } else {
+//            addenda = Page.empty(pageable);
+//        }
+//
+//        return addenda.map(this::mapToAddendumResponse);
 
-        Page<Addendum> addenda;
-
-        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
-        boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
-
-        if (isStaff) {
-            if (hasStatusFilter) {
-                if (hasTypeFilter) {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusInAndAddendumTypeIdIn(
-                                userId, keyword.trim(), statuses, addendumTypeIds, pageable);
-                    } else {
-                        addenda = addendumRepository.findByContractUserIdAndStatusInAndAddendumTypeIdIn(
-                                userId, statuses, addendumTypeIds, pageable);
-                    }
-                } else {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByContractUserIdAndKeywordAndStatusIn(
-                                userId, keyword.trim(), statuses, pageable);
-                    } else {
-                        addenda = addendumRepository.findByContractUserIdAndStatusIn(
-                                userId, statuses, pageable);
-                    }
-                }
-            } else {
-                if (hasTypeFilter) {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByContractUserIdAndKeywordAndAddendumTypeIdIn(
-                                userId, keyword.trim(), addendumTypeIds, pageable);
-                    } else {
-                        addenda = addendumRepository.findByContractUserIdAndAddendumTypeIdIn(
-                                userId, addendumTypeIds, pageable);
-                    }
-                } else {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByContractUserIdAndKeyword(
-                                userId, keyword.trim(), pageable);
-                    } else {
-                        addenda = addendumRepository.findByContractUserId(userId, pageable);
-                    }
-                }
-            }
-        } else if (isCeo) {
-            if (hasStatusFilter) {
-                if (hasTypeFilter) {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByKeywordAndStatusInAndAddendumTypeIdIn(
-                                keyword.trim(), statuses, addendumTypeIds, pageable);
-                    } else {
-                        addenda = addendumRepository.findByStatusInAndAddendumTypeIdIn(
-                                statuses, addendumTypeIds, pageable);
-                    }
-                } else {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByKeywordAndStatusIn(
-                                keyword.trim(), statuses, pageable);
-                    } else {
-                        addenda = addendumRepository.findByStatusIn(statuses, pageable);
-                    }
-                }
-            } else {
-                if (hasTypeFilter) {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByKeywordAndAddendumTypeIdIn(
-                                keyword.trim(), addendumTypeIds, pageable);
-                    } else {
-                        addenda = addendumRepository.findByAddendumTypeIdIn(addendumTypeIds, pageable);
-                    }
-                } else {
-                    if (hasSearch) {
-                        addenda = addendumRepository.findByKeyword(keyword.trim(), pageable);
-                    } else {
-                        addenda = addendumRepository.findAll(pageable);
-                    }
-                }
-            }
-        } else {
-            addenda = Page.empty(pageable);
-        }
-
-        return addenda.map(this::mapToAddendumResponse);
+        return null;
     }
 
     @Override
@@ -757,13 +709,6 @@ public class AddendumService implements IAddendumService{
                         String lowerKeyword = keyword.toLowerCase();
                         return addendum.getTitle().toLowerCase().contains(lowerKeyword)
                                 || addendum.getContent().toLowerCase().contains(lowerKeyword);
-                    }
-                    return true;
-                })
-                .filter(addendum -> {
-                    if (addendumTypeId != null) {
-                        return addendum.getAddendumType() != null
-                                && addendum.getAddendumType().getId().equals(addendumTypeId);
                     }
                     return true;
                 })
@@ -821,13 +766,6 @@ public class AddendumService implements IAddendumService{
                         String lowerKeyword = keyword.toLowerCase();
                         return addendum.getTitle().toLowerCase().contains(lowerKeyword)
                                 || addendum.getContent().toLowerCase().contains(lowerKeyword);
-                    }
-                    return true;
-                })
-                .filter(addendum -> {
-                    if (addendumTypeId != null) {
-                        return addendum.getAddendumType() != null
-                                && addendum.getAddendumType().getId().equals(addendumTypeId);
                     }
                     return true;
                 })
@@ -1036,7 +974,6 @@ public class AddendumService implements IAddendumService{
 
         if (contract.getStatus() == ContractStatus.ACTIVE || contract.getStatus() == ContractStatus.EXPIRED) {
             Addendum newAddendum = new Addendum();
-            newAddendum.setAddendumType(originAddendum.getAddendumType());
             newAddendum.setTitle(originAddendum.getTitle() + " (Copy)");
             newAddendum.setStatus(AddendumStatus.CREATED);
             newAddendum.setUser(currentUser);
@@ -1059,10 +996,6 @@ public class AddendumService implements IAddendumService{
                             .userName(currentUser.getUsername())
                             .build())
                     .contractId(newAddendum.getContract().getId())
-                    .addendumType(AddendumTypeResponse.builder()
-                            .addendumTypeId(newAddendum.getAddendumType().getId())
-                            .name(newAddendum.getAddendumType().getName())
-                            .build())
                     .effectiveDate(newAddendum.getEffectiveDate())
                     .createdAt(newAddendum.getCreatedAt())
                     .updatedAt(newAddendum.getUpdatedAt())
@@ -1159,14 +1092,6 @@ public class AddendumService implements IAddendumService{
                 .createdAt(addendum.getCreatedAt())
                 .updatedAt(addendum.getUpdatedAt())
                 .contractId(addendum.getContract() != null ? addendum.getContract().getId() : null)
-                .addendumType(
-                        addendum.getAddendumType() != null ?
-                                AddendumTypeResponse.builder()
-                                        .addendumTypeId(addendum.getAddendumType().getId())
-                                        .name(addendum.getAddendumType().getName())
-                                        .build()
-                                : null
-                )
                 .build();
 
     }
