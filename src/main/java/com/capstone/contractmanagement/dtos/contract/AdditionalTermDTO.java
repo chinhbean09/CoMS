@@ -11,6 +11,4 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AdditionalTermDTO {
     private Long id;
-//    private String name;
-//    private String identifier;  // Ví dụ: "ADDITIONAL_TERMS"
 }
