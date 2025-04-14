@@ -224,9 +224,9 @@ public class AddendumController {
     }
 
     // api get approval workflow by contract type id
-    @GetMapping("/get-workflow-by-addendum-type/{addendumTypeId}")
-    public ResponseEntity<ResponseObject> getApprovalWorkflowByAddendumTypeId(@PathVariable Long addendumTypeId) {
-        List<ApprovalWorkflowResponse> approvalWorkflowResponse = addendumService.getWorkflowByAddendumTypeId(addendumTypeId);
+    @GetMapping("/get-workflow-by-addendum-type")
+    public ResponseEntity<ResponseObject> getApprovalWorkflowByAddendumTypeId() {
+        List<ApprovalWorkflowResponse> approvalWorkflowResponse = addendumService.getWorkflowByAddendumTypeId();
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
