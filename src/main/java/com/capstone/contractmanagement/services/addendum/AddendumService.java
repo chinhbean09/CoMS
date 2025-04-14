@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.dtos.addendum.AddendumTermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractItemDTO;
+import com.capstone.contractmanagement.dtos.contract.ContractPartnerDTO;
 import com.capstone.contractmanagement.dtos.contract.TermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.entities.*;
@@ -24,6 +25,10 @@ import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
+import com.capstone.contractmanagement.responses.contract.ContractResponse;
+import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
+import com.capstone.contractmanagement.responses.term.TermResponse;
+import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -64,6 +69,7 @@ public class AddendumService implements IAddendumService{
     private final Cloudinary cloudinary;
     private final LocalizationUtils localizationUtils;
     private final ITermRepository termRepository;
+    private final ITypeTermRepository typeTermRepository;
 
 
     private static final Logger logger = LoggerFactory.getLogger(AddendumService.class);
@@ -330,6 +336,8 @@ public class AddendumService implements IAddendumService{
                             .status(PaymentStatus.UNPAID)
                             .paymentMethod(paymentDTO.getPaymentMethod())
                             .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+                            .reminderEmailSent(false)
+                            .overdueEmailSent(false)
                             .addendum(addendum)
                             .build();
                     paymentSchedules.add(paymentSchedule);
@@ -497,34 +505,183 @@ public class AddendumService implements IAddendumService{
         addendumRepository.delete(addendum);
     }
 
+//    @Override
+//    public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
+//        Addendum addendum = addendumRepository.findById(addendumId)
+//                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+//        Partner partnerA = partnerRepository.findById(1L)
+//                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+//        Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
+//        return AddendumResponse.builder()
+//                .addendumId(addendum.getId())
+//                .title(addendum.getTitle())
+//                .content(addendum.getContent())
+//                .contractNumber(addendum.getContractNumber())
+//                .status(addendum.getStatus())
+//                .createdBy(UserAddendumResponse.builder()
+//                        .userId(addendum.getUser().getId())
+//                        .userName(addendum.getUser().getFullName())
+//                        .build())
+//                .partnerA(partnerA)
+//                .partnerB(contractPartners)
+//                .contractId(addendum.getContract().getId())
+////                .addendumType(AddendumTypeResponse.builder()
+////                        .addendumTypeId(addendum.getAddendumType().getId())
+////                        .name(addendum.getAddendumType().getName())
+////                        .build())
+//                .effectiveDate(addendum.getEffectiveDate())
+//                .createdAt(addendum.getCreatedAt())
+//                .build();
+//    }
+
     @Override
-    public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
-        Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+    public Optional<AddendumResponse> getAddendumById(Long addendumId) throws DataNotFoundException {
+        return addendumRepository.findById(addendumId)
+                .map(addendum -> {
+                    // Force lazy loading của các collection khi session còn mở.
+                    addendum.getAddendumTerms().size();
+                    addendum.getAddendumItems().size();
+                    addendum.getAdditionalTermDetails().forEach(detail -> {
+                        detail.getCommonTerms().size();
+                        detail.getATerms().size();
+                        detail.getBTerms().size();
+                    });
+                    try {
+                        return convertAddendumToResponse(addendum);
+                    } catch (DataNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    private AddendumResponse convertAddendumToResponse(Addendum addendum) throws DataNotFoundException {
+        // Map các ContractTerm thành ContractTermResponse
+        List<TermResponse> legalBasisTerms = addendum.getAddendumTerms().stream()
+                .filter(term -> term.getTermType() == TypeTermIdentifier.LEGAL_BASIS)
+                .map(term -> TermResponse.builder()
+                        .id(term.getOriginalTermId())
+                        .label(term.getTermLabel())
+                        .value(term.getTermValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<TermResponse> generalTerms = addendum.getAddendumTerms().stream()
+                .filter(term -> term.getTermType() == TypeTermIdentifier.GENERAL_TERMS)
+                .map(term -> TermResponse.builder()
+                        .id(term.getOriginalTermId())
+                        .label(term.getTermLabel())
+                        .value(term.getTermValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<TermResponse> otherTerms = addendum.getAddendumTerms().stream()
+                .filter(term -> term.getTermType() == TypeTermIdentifier.OTHER_TERMS)
+                .map(term -> TermResponse.builder()
+                        .id(term.getOriginalTermId())
+                        .label(term.getTermLabel())
+                        .value(term.getTermValue())
+                        .build())
+                .collect(Collectors.toList());
+
+
+        List<TypeTermResponse> additionalTerms = addendum.getAdditionalTermDetails().stream()
+                .map(detail -> typeTermRepository.findById(detail.getTypeTermId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(typeTerm -> TypeTermResponse.builder()
+                        .id(typeTerm.getId())
+                        .name(typeTerm.getName())
+                        .identifier(typeTerm.getIdentifier())
+                        .build())
+                .distinct()
+                .collect(Collectors.toList());
+
+
+        // Map additionalConfig từ ContractAdditionalTermDetail sang Map<String, Map<String, List<TermResponse>>>
+        Map<String, Map<String, List<TermResponse>>> additionalConfig = addendum.getAdditionalTermDetails()
+                .stream()
+                .collect(Collectors.toMap(
+                        detail -> String.valueOf(detail.getTypeTermId()),
+                        detail -> {
+                            Map<String, List<TermResponse>> innerMap = new HashMap<>();
+                            innerMap.put("Common", convertAdditionalTermSnapshotsToTermResponseList(detail.getCommonTerms()));
+                            innerMap.put("A", convertAdditionalTermSnapshotsToTermResponseList(detail.getATerms()));
+                            innerMap.put("B", convertAdditionalTermSnapshotsToTermResponseList(detail.getBTerms()));
+                            return innerMap;
+                        }
+                ));
         Partner partnerA = partnerRepository.findById(1L)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
         Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
+
+
         return AddendumResponse.builder()
                 .addendumId(addendum.getId())
                 .title(addendum.getTitle())
                 .content(addendum.getContent())
                 .contractNumber(addendum.getContractNumber())
                 .status(addendum.getStatus())
+                .contractId(addendum.getContract().getId())
                 .createdBy(UserAddendumResponse.builder()
                         .userId(addendum.getUser().getId())
                         .userName(addendum.getUser().getFullName())
                         .build())
                 .partnerA(partnerA)
                 .partnerB(contractPartners)
-                .contractId(addendum.getContract().getId())
-//                .addendumType(AddendumTypeResponse.builder()
-//                        .addendumTypeId(addendum.getAddendumType().getId())
-//                        .name(addendum.getAddendumType().getName())
-//                        .build())
-                .effectiveDate(addendum.getEffectiveDate())
-                .createdAt(addendum.getCreatedAt())
+                .legalBasisTerms(legalBasisTerms)
+                .generalTerms(generalTerms)
+                .otherTerms(otherTerms)
+                .paymentSchedules(convertPaymentSchedules(addendum.getPaymentSchedules()))
+                .additionalTerms(additionalTerms)
+                .additionalConfig(additionalConfig)
+                .contractItems(convertContractItems(addendum.getAddendumItems()))
                 .build();
     }
+
+    private List<ContractItemDTO> convertContractItems(List<AddendumItem> addendumItems) {
+        if (addendumItems == null || addendumItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return addendumItems.stream()
+                .map(item -> ContractItemDTO.builder()
+                        .id(item.getId())
+                        .description(item.getDescription())
+                        .itemOrder(item.getItemOrder())
+                        .amount(item.getAmount())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
+    private List<TermResponse> convertAdditionalTermSnapshotsToTermResponseList(List<AdditionalTermSnapshot> snapshots) {
+        return snapshots.stream()
+                .map(snap -> TermResponse.builder()
+                        .id(snap.getTermId())
+                        .label(snap.getTermLabel())
+                        .value(snap.getTermValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+    private List<PaymentScheduleResponse> convertPaymentSchedules(List<AddendumPaymentSchedule> paymentSchedules) {
+        if (paymentSchedules == null || paymentSchedules.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return paymentSchedules.stream()
+                .map(schedule -> PaymentScheduleResponse.builder()
+                        .id(schedule.getId())
+                        .paymentOrder(schedule.getPaymentOrder())
+                        .amount(schedule.getAmount())
+                        .notifyPaymentDate(schedule.getNotifyPaymentDate())
+                        .paymentDate(schedule.getPaymentDate())
+                        .status(schedule.getStatus())
+                        .paymentMethod(schedule.getPaymentMethod())
+                        .notifyPaymentContent(schedule.getNotifyPaymentContent())
+                        .reminderEmailSent(schedule.isReminderEmailSent())
+                        .overdueEmailSent(schedule.isOverdueEmailSent())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     @Transactional

@@ -48,4 +48,11 @@ public class AddendumPaymentSchedule {
     @JoinColumn(name = "addendum_id", nullable = false)
     @JsonIgnore
     private Addendum addendum;
+
+    @Column(name = "reminder_email_sent")
+    private boolean reminderEmailSent;
+
+    // Flag gửi email quá hạn
+    @Column(name = "overdue_email_sent")
+    private boolean overdueEmailSent;
 }
