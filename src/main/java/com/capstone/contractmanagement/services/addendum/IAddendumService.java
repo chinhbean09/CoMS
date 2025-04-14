@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IAddendumService {
 
@@ -26,7 +27,7 @@ public interface IAddendumService {
 
     void deleteAddendum(Long addendumId) throws DataNotFoundException;
 
-    AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException;
+    Optional<AddendumResponse> getAddendumById(Long addendumId) throws DataNotFoundException;
     void assignApprovalWorkflowOfContractToAddendum(Long addendumId) throws DataNotFoundException;
 
     void assignWorkflowToAddendum(Long addendumId, Long workflowId) throws DataNotFoundException;
