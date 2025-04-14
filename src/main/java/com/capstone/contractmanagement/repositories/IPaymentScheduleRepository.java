@@ -15,4 +15,5 @@ public interface IPaymentScheduleRepository extends JpaRepository<PaymentSchedul
 
     @Query("SELECT ps.billUrls FROM PaymentSchedule ps WHERE ps.id = :paymentId")
     List<String> findBillUrlsByPaymentId(@Param("paymentId") Long paymentId);
+    List<PaymentSchedule> findByStatus(PaymentStatus status);
 }
