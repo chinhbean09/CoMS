@@ -42,7 +42,7 @@ public class TermController {
     private final ITypeTermRepository typeTermRepository;
 
     @PostMapping("/create/{typeTermId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseObject createTerm(@PathVariable Long typeTermId, @RequestBody CreateTermDTO termRequest) {
         CreateTermResponse termResponse = termService.createTerm(typeTermId, termRequest);
         return ResponseObject.builder()
@@ -53,7 +53,7 @@ public class TermController {
     }
 
     @PostMapping("/create-type-term")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseObject createTypeTerm(@RequestBody CreateTypeTermDTO request) {
         TypeTerm typeTerm = termService.createTypeTerm(request);
                  return ResponseObject.builder()
@@ -159,14 +159,14 @@ public class TermController {
 
     // update type term
     @PutMapping("/update-type-term/{typeTermId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<String> updateTypeTerm(@PathVariable Long typeTermId, @RequestBody UpdateTypeTermDTO request) {
         return ResponseEntity.ok(termService.updateTypeTerm(typeTermId, request));
     }
 
     // delete type term
     @DeleteMapping("/delete-type-term/{typeTermId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteTypeTerm(@PathVariable Long typeTermId) {
         termService.deleteTypeTerm(typeTermId);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
