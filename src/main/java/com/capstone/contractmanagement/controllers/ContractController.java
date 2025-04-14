@@ -70,6 +70,7 @@
 
 
         @PostMapping
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         @Transactional
         public ResponseEntity<ResponseObject> createContract(@Valid @RequestBody ContractDTO contractDTO) {
             try {
@@ -120,6 +121,7 @@
         }
 
         @GetMapping
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
         public ResponseEntity<ResponseObject> getAllContracts(
                 @RequestParam(defaultValue = "0" ) int page,
                 @RequestParam(defaultValue = "10" ) int size,
@@ -156,6 +158,7 @@
         }
 
         @GetMapping("/{id}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> getContractById(@PathVariable Long id) throws DataNotFoundException {
             Optional<ContractResponse> contract = contractService.getContractById(id);
             if (contract.isEmpty()) {
@@ -173,6 +176,7 @@
         }
 
         @DeleteMapping("/{id}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> deleteContract(@PathVariable Long id) {
             contractService.deleteContract(id);
             return ResponseEntity.ok(ResponseObject.builder()
@@ -182,6 +186,7 @@
         }
 
         @PostMapping("/{id}/duplicate" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> duplicateContract(@PathVariable Long id) {
             try {
                 Contract duplicateContract = contractService.duplicateContract(id);
@@ -210,6 +215,7 @@
         }
 
         @PostMapping("/{id}/duplicate-with-partner" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> duplicateContractWithPartner(
                 @PathVariable Long id,
                 @RequestParam("partnerId" ) Long partnerId) {
@@ -240,6 +246,7 @@
         }
 
         @DeleteMapping("/soft-delete/{id}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> softDeleteContract(@PathVariable Long id) {
             try {
                 boolean deleted = contractService.softDelete(id);
@@ -268,6 +275,7 @@
         }
 
         @PutMapping("/status/{contractId}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> updateContractStatus(
                 @PathVariable Long contractId,
                 @RequestParam ContractStatus status) {
@@ -296,6 +304,7 @@
         }
 
         @PutMapping("/update/{contractId}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> updateContract(@PathVariable Long contractId, @RequestBody ContractUpdateDTO dto) {
             try {
                 Contract contract = contractService.updateContract(contractId, dto);
@@ -316,6 +325,7 @@
         }
 
         @PostMapping("/rollback" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> rollbackContract(@RequestParam Long originalContractId,
                                                                @RequestParam int version) {
             try {
@@ -337,6 +347,7 @@
         }
 
         @GetMapping("/original/{originalContractId}/versions" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
         public ResponseEntity<ResponseObject> getAllVersions(
                 @PathVariable Long originalContractId,
                 @RequestParam(defaultValue = "0" ) int page,
@@ -380,6 +391,7 @@
         }
 
         @GetMapping("/partner/{partnerId}" )
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> getAllContractsByPartnerId(
                 @PathVariable Long partnerId,
                 @RequestParam(defaultValue = "0" ) int page,
@@ -658,6 +670,7 @@
         }
 
         @PutMapping(value = "/upload-signed-contracts-file/{contractId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
         public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long contractId,
                                                                     @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
             contractService.uploadSignedContract(contractId, files);
@@ -669,6 +682,7 @@
         }
 
         @GetMapping("/signed-contract-urls/{contractId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> getBillUrls(@PathVariable Long contractId) throws DataNotFoundException {
             return ResponseEntity.ok(ResponseObject.builder()
                     .message("Lấy link hợp đồng đã ký")
