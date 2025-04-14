@@ -52,6 +52,9 @@
         @Column(name = "updated_at")
         private LocalDateTime updatedAt;
 
+        @Column(name = "day_deleted")
+        private LocalDateTime daysDeleted;
+
         // Relationship với PaymentSchedules
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
