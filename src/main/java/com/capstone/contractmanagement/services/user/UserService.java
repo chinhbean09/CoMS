@@ -2,13 +2,11 @@ package com.capstone.contractmanagement.services.user;
 
  import com.capstone.contractmanagement.components.JwtTokenUtils;
  import com.capstone.contractmanagement.components.LocalizationUtils;
- import com.capstone.contractmanagement.dtos.DataMailDTO;
  import com.capstone.contractmanagement.dtos.user.*;
  import com.capstone.contractmanagement.entities.Department;
  import com.capstone.contractmanagement.entities.Role;
  import com.capstone.contractmanagement.entities.Token;
  import com.capstone.contractmanagement.entities.User;
- import com.capstone.contractmanagement.enums.DepartmentList;
  import com.capstone.contractmanagement.exceptions.DataNotFoundException;
  import com.capstone.contractmanagement.exceptions.InvalidParamException;
  import com.capstone.contractmanagement.exceptions.PermissionDenyException;
@@ -19,13 +17,10 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.responses.User.UserListCustom;
  import com.capstone.contractmanagement.responses.User.UserResponse;
  import com.capstone.contractmanagement.services.sendmails.IMailService;
- import com.capstone.contractmanagement.utils.MailTemplate;
  import com.capstone.contractmanagement.utils.MessageKeys;
  import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import jakarta.mail.MessagingException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+ import jakarta.transaction.Transactional;
  import jakarta.validation.Valid;
  import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -40,13 +35,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+ import org.springframework.security.core.AuthenticationException;
+ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
- import org.springframework.validation.BindingResult;
  import org.springframework.web.bind.annotation.RequestBody;
  import org.springframework.web.multipart.MultipartFile;
 
@@ -382,21 +374,34 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Page<UserResponse> getAllUsers(int page, int size, DepartmentList department, String search) {
+    public Page<UserResponse> getAllUsers(int page, int size, Long departmentId, Long roleId, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage;
 
-        // Nếu có tìm kiếm theo fullName
-        if (search != null && !search.isEmpty()) {
-            if (department != null) {
-                userPage = UserRepository.findByDepartmentAndFullNameContainingIgnoreCase(department, search, pageable);
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        boolean hasDepartment = departmentId != null;
+        boolean hasRole = roleId != null;
+
+        if (hasSearch) {
+            if (hasDepartment && hasRole) {
+                userPage = UserRepository.findByDepartment_IdAndRole_IdAndFullNameContainingIgnoreCase(
+                        departmentId, roleId, search, pageable);
+            } else if (hasDepartment) {
+                userPage = UserRepository.findByDepartment_IdAndFullNameContainingIgnoreCase(
+                        departmentId, search, pageable);
+            } else if (hasRole) {
+                userPage = UserRepository.findByRole_IdAndFullNameContainingIgnoreCase(
+                        roleId, search, pageable);
             } else {
                 userPage = UserRepository.findByFullNameContainingIgnoreCase(search, pageable);
             }
         } else {
-            // Nếu không tìm kiếm theo fullName
-            if (department != null) {
-                userPage = UserRepository.findByDepartment(department, pageable);
+            if (hasDepartment && hasRole) {
+                userPage = UserRepository.findByDepartment_IdAndRole_Id(departmentId, roleId, pageable);
+            } else if (hasDepartment) {
+                userPage = UserRepository.findByDepartment_Id(departmentId, pageable);
+            } else if (hasRole) {
+                userPage = UserRepository.findByRole_Id(roleId, pageable);
             } else {
                 userPage = UserRepository.findAll(pageable);
             }
