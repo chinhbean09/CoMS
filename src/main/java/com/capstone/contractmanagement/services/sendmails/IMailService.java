@@ -1,7 +1,7 @@
 package com.capstone.contractmanagement.services.sendmails;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
-import com.capstone.contractmanagement.entities.Addendum;
+import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
