@@ -89,28 +89,25 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 workflow.getStages().add(stage);
             });
 
+            // ✅ Kiểm tra người duyệt cuối cùng có phải là DIRECTOR chưa
+            User lastApprover = workflow.getStages().get(workflow.getStages().size() - 1).getApprover();
+            boolean isDirector = lastApprover.getRole() != null &&
+                    Role.DIRECTOR.equalsIgnoreCase(lastApprover.getRole().getRoleName());
+            
+             //✅ Thêm bước duyệt cuối cùng là Director
+            User director = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
 
-                // ✅ Kiểm tra người duyệt cuối cùng có phải là DIRECTOR chưa
-                User lastApprover = workflow.getStages().get(workflow.getStages().size() - 1).getApprover();
-                boolean isDirector = lastApprover.getRole() != null &&
-                        Role.DIRECTOR.equalsIgnoreCase(lastApprover.getRole().getRoleName());
+            ApprovalStage directorStage = ApprovalStage.builder()
+                    .stageOrder(workflow.getStages().size() + 1)
+                    .approver(director)
+                    .status(ApprovalStatus.NOT_STARTED)
+                    .approvalWorkflow(workflow)
+                    .build();
 
-                if (!isDirector) {
-                //✅ Thêm bước duyệt cuối cùng là Director
-                User director = userRepository.findAll().stream()
-                        .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
-
-                ApprovalStage directorStage = ApprovalStage.builder()
-                        .stageOrder(workflow.getStages().size() + 1)
-                        .approver(director)
-                        .status(ApprovalStatus.NOT_STARTED)
-                        .approvalWorkflow(workflow)
-                        .build();
-
-                workflow.getStages().add(directorStage);
-            }
+            workflow.getStages().add(directorStage);
         }
 
         // Cập nhật số lượng stage tùy chỉnh dựa trên số stage đã thêm
