@@ -49,7 +49,7 @@ public interface IAddendumService {
 
     ApprovalWorkflowResponse createWorkflowForAddendum(AddendumApprovalWorkflowDTO approvalWorkflowDTO);
 
-    List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId();
+    List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId(Long addendumTypeId);
 
     List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException;
 

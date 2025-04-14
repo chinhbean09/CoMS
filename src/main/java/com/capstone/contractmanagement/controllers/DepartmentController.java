@@ -21,7 +21,7 @@ public class DepartmentController {
     private final IDepartmentService departmentService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> createDepartment(@RequestBody DepartmentDTO departmentDTO) {
         DepartmentResponse response = departmentService.createDepartment(departmentDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -32,7 +32,7 @@ public class DepartmentController {
     }
 
     @PutMapping("/update/{departmentId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateDepartment(@PathVariable Long departmentId, @RequestBody DepartmentDTO departmentDTO) throws DataNotFoundException {
         DepartmentResponse response = departmentService.updateDepartment(departmentId, departmentDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -43,7 +43,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/get-all")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getAllDepartment() {
         List<DepartmentResponse> responses = departmentService.getAllDepartment();
         return ResponseEntity.ok(ResponseObject.builder()
@@ -54,7 +54,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/get-by-id/{departmentId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getDepartment(@PathVariable Long departmentId) throws DataNotFoundException {
         DepartmentResponse responses = departmentService.getDepartmentById(departmentId);
         return ResponseEntity.ok(ResponseObject.builder()
