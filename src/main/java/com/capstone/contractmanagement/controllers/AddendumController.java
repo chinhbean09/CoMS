@@ -99,7 +99,7 @@ public class AddendumController {
 
     @GetMapping("/get-by-id/{addendumId}")
     public ResponseEntity<ResponseObject> getAddendumById(@PathVariable Long addendumId) throws DataNotFoundException {
-        AddendumResponse addendumResponse = addendumService.getAddendumById(addendumId);
+        Optional<AddendumResponse> addendumResponse = addendumService.getAddendumById(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .message("Lấy phụ lục theo id")
