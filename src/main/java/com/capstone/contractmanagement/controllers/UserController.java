@@ -1,7 +1,6 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.components.JwtTokenUtils;
-import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.Token;
@@ -12,7 +11,6 @@ import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.User.LoginResponse;
 import com.capstone.contractmanagement.responses.User.UserListCustom;
-import com.capstone.contractmanagement.responses.User.UserListResponse;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.responses.token.RefreshTokenDTO;
 import com.capstone.contractmanagement.services.app_config.IAppConfigService;
@@ -26,11 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -44,7 +40,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hibernate.query.sqm.tree.SqmNode.log;
@@ -318,10 +313,11 @@ public class UserController {
     public ResponseEntity<?> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) DepartmentList department,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long roleId,
             @RequestParam(required = false) String search) {
         try {
-            Page<UserResponse> users = userService.getAllUsers(page, size, department, search);
+            Page<UserResponse> users = userService.getAllUsers(page, size, departmentId, roleId , search);
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
