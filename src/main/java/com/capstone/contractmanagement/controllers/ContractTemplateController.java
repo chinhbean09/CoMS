@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 
@@ -31,6 +32,7 @@ public class ContractTemplateController {
     private final IContractTemplateService templateService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> createTemplate(@RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.createTemplate(dto);
@@ -51,6 +53,7 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getTemplateById(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponse> templateOpt = templateService.getTemplateById(id);
@@ -80,6 +83,7 @@ public class ContractTemplateController {
 
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllTemplates(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
