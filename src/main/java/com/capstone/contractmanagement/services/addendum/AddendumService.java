@@ -442,6 +442,9 @@ public class AddendumService implements IAddendumService{
         // Lưu trạng thái cũ để ghi log
         String oldStatus = addendum.getStatus().name();
 
+        // Biến để theo dõi thay đổi
+        boolean isChanged = false;
+
         // Kiểm tra trùng lặp tiêu đề chỉ khi tiêu đề thay đổi
         if (addendumDTO.getTitle() != null && !addendum.getTitle().equals(addendumDTO.getTitle())) {
             boolean isTitleExist = addendumRepository.existsByContractIdAndTitleAndIdNot(contract.getId(), addendumDTO.getTitle(), addendumId);
@@ -449,10 +452,10 @@ public class AddendumService implements IAddendumService{
                 throw new DataNotFoundException("Tên phụ lục bị trùng: " + addendumDTO.getTitle());
             }
             addendum.setTitle(addendumDTO.getTitle());
+            isChanged = true;
         }
 
         // Cập nhật các trường cơ bản nếu có giá trị
-        boolean isChanged = false;
         if (addendumDTO.getContent() != null && !addendumDTO.getContent().equals(addendum.getContent())) {
             addendum.setContent(addendumDTO.getContent());
             isChanged = true;
@@ -463,7 +466,7 @@ public class AddendumService implements IAddendumService{
         }
 
         // Cập nhật AddendumItems
-        if (addendumDTO.getContractItems() != null) {
+        if (addendumDTO.getContractItems() != null && !addendumDTO.getContractItems().isEmpty()) {
             // Xóa toàn bộ phần tử hiện có trong collection
             addendum.getAddendumItems().clear();
             int order = 1;
@@ -483,14 +486,25 @@ public class AddendumService implements IAddendumService{
                 addendum.getAddendumItems().add(item);
             }
             isChanged = true;
+        } else {
+            // Nếu contractItems là null hoặc rỗng, xóa toàn bộ addendumItems
+            if (!addendum.getAddendumItems().isEmpty()) {
+                addendum.getAddendumItems().clear();
+                isChanged = true;
+            }
         }
 
         // Cập nhật AddendumTerms
-        if (addendumDTO.getLegalBasisTerms() != null || addendumDTO.getGeneralTerms() != null || addendumDTO.getOtherTerms() != null) {
+        boolean hasTerms = (addendumDTO.getLegalBasisTerms() != null && !addendumDTO.getLegalBasisTerms().isEmpty()) ||
+                (addendumDTO.getGeneralTerms() != null && !addendumDTO.getGeneralTerms().isEmpty()) ||
+                (addendumDTO.getOtherTerms() != null && !addendumDTO.getOtherTerms().isEmpty());
+
+        if (hasTerms) {
             // Xóa toàn bộ phần tử hiện có trong collection
             addendum.getAddendumTerms().clear();
+
             // Căn cứ pháp lý
-            if (addendumDTO.getLegalBasisTerms() != null) {
+            if (addendumDTO.getLegalBasisTerms() != null && !addendumDTO.getLegalBasisTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getLegalBasisTerms()) {
                     if (termDTO.getId() == null) {
                         throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
@@ -512,7 +526,7 @@ public class AddendumService implements IAddendumService{
             }
 
             // Điều khoản chung
-            if (addendumDTO.getGeneralTerms() != null) {
+            if (addendumDTO.getGeneralTerms() != null && !addendumDTO.getGeneralTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getGeneralTerms()) {
                     if (termDTO.getId() == null) {
                         throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
@@ -534,7 +548,7 @@ public class AddendumService implements IAddendumService{
             }
 
             // Điều khoản khác
-            if (addendumDTO.getOtherTerms() != null) {
+            if (addendumDTO.getOtherTerms() != null && !addendumDTO.getOtherTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getOtherTerms()) {
                     if (termDTO.getId() == null) {
                         throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
@@ -555,10 +569,16 @@ public class AddendumService implements IAddendumService{
                 }
             }
             isChanged = true;
+        } else {
+            // Nếu tất cả terms đều null hoặc rỗng, xóa toàn bộ addendumTerms
+            if (!addendum.getAddendumTerms().isEmpty()) {
+                addendum.getAddendumTerms().clear();
+                isChanged = true;
+            }
         }
 
         // Cập nhật AdditionalTermDetails
-        if (addendumDTO.getAdditionalConfig() != null) {
+        if (addendumDTO.getAdditionalConfig() != null && !addendumDTO.getAdditionalConfig().isEmpty()) {
             // Xóa toàn bộ phần tử hiện có
             addendum.getAdditionalTermDetails().clear();
             Map<String, Map<String, List<AddendumTermSnapshotDTO>>> configMap = addendumDTO.getAdditionalConfig();
@@ -574,7 +594,7 @@ public class AddendumService implements IAddendumService{
 
                 // Map nhóm Common
                 List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
-                if (groupConfig.containsKey("Common")) {
+                if (groupConfig.containsKey("Common") && !groupConfig.get("Common").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("Common")) {
                         if (termDTO.getId() == null) {
                             throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
@@ -591,7 +611,7 @@ public class AddendumService implements IAddendumService{
 
                 // Map nhóm A
                 List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
-                if (groupConfig.containsKey("A")) {
+                if (groupConfig.containsKey("A") && !groupConfig.get("A").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("A")) {
                         if (termDTO.getId() == null) {
                             throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
@@ -608,7 +628,7 @@ public class AddendumService implements IAddendumService{
 
                 // Map nhóm B
                 List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
-                if (groupConfig.containsKey("B")) {
+                if (groupConfig.containsKey("B") && !groupConfig.get("B").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("B")) {
                         if (termDTO.getId() == null) {
                             throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
@@ -673,10 +693,16 @@ public class AddendumService implements IAddendumService{
                 addendum.getAdditionalTermDetails().add(configDetail);
             }
             isChanged = true;
+        } else {
+            // Nếu additionalConfig là null hoặc rỗng, xóa toàn bộ additionalTermDetails
+            if (!addendum.getAdditionalTermDetails().isEmpty()) {
+                addendum.getAdditionalTermDetails().clear();
+                isChanged = true;
+            }
         }
 
         // Cập nhật PaymentSchedules
-        if (addendumDTO.getPayments() != null) {
+        if (addendumDTO.getPayments() != null && !addendumDTO.getPayments().isEmpty()) {
             // Xóa toàn bộ phần tử hiện có
             addendum.getPaymentSchedules().clear();
             int order = 1;
@@ -702,6 +728,12 @@ public class AddendumService implements IAddendumService{
                 addendum.getPaymentSchedules().add(paymentSchedule);
             }
             isChanged = true;
+        } else {
+            // Nếu payments là null hoặc rỗng, xóa toàn bộ paymentSchedules
+            if (!addendum.getPaymentSchedules().isEmpty()) {
+                addendum.getPaymentSchedules().clear();
+                isChanged = true;
+            }
         }
 
         // Chỉ lưu nếu có thay đổi
@@ -717,7 +749,6 @@ public class AddendumService implements IAddendumService{
             return "No changes detected.";
         }
     }
-
     @Override
     @Transactional
     public void deleteAddendum(Long addendumId) throws DataNotFoundException {
