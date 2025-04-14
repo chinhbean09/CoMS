@@ -71,6 +71,14 @@ public class ContractTypeService implements IContractTypeService {
     public void updateDeleteStatus(Long id, Boolean isDeleted) {
         ContractType contractType = contractTypeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
+
+        if (isDeleted) {
+            // Check if any ContractTemplate is using this ContractType
+            if (!contractType.getTemplates().isEmpty() || !contractType.getContracts().isEmpty()) {
+                throw new IllegalStateException("Không thể xóa loại hợp đồng này vì nó đang được sử dụng trong hợp đồng/mẫu hợp đồng");
+            }
+        }
+
         contractType.setDeleted(isDeleted);
         contractTypeRepository.save(contractType);
     }
