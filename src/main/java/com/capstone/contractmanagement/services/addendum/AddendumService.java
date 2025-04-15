@@ -155,8 +155,8 @@ public class AddendumService implements IAddendumService{
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.LEGAL_BASIS)
                             .addendum(addendum)
                             .build());
@@ -174,8 +174,8 @@ public class AddendumService implements IAddendumService{
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.GENERAL_TERMS)
                             .addendum(addendum)
                             .build());
@@ -194,8 +194,8 @@ public class AddendumService implements IAddendumService{
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.OTHER_TERMS)
                             .addendum(addendum)
                             .build());
@@ -227,8 +227,8 @@ public class AddendumService implements IAddendumService{
                                     .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                             commonSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
-                                    .termLabel(termDTO.getLabel())
-                                    .termValue(termDTO.getValue())
+                                    .termLabel(term.getLabel())
+                                    .termValue(term.getValue())
                                     .build());
                         }
                     }
@@ -244,8 +244,8 @@ public class AddendumService implements IAddendumService{
                                     .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                             aSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
-                                    .termLabel(termDTO.getLabel())
-                                    .termValue(termDTO.getValue())
+                                    .termLabel(term.getLabel())
+                                    .termValue(term.getValue())
                                     .build());
                         }
                     }
@@ -261,8 +261,8 @@ public class AddendumService implements IAddendumService{
                                     .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                             bSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
-                                    .termLabel(termDTO.getLabel())
-                                    .termValue(termDTO.getValue())
+                                    .termLabel(term.getLabel())
+                                    .termValue(term.getValue())
                                     .build());
                         }
                     }
@@ -529,8 +529,8 @@ public class AddendumService implements IAddendumService{
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.LEGAL_BASIS)
                             .addendum(addendum)
                             .build();
@@ -551,8 +551,8 @@ public class AddendumService implements IAddendumService{
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.GENERAL_TERMS)
                             .addendum(addendum)
                             .build();
@@ -573,8 +573,8 @@ public class AddendumService implements IAddendumService{
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
-                            .termLabel(termDTO.getLabel())
-                            .termValue(termDTO.getValue())
+                            .termLabel(term.getLabel())
+                            .termValue(term.getValue())
                             .termType(TypeTermIdentifier.OTHER_TERMS)
                             .addendum(addendum)
                             .build();
@@ -616,8 +616,8 @@ public class AddendumService implements IAddendumService{
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         commonSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
@@ -633,8 +633,8 @@ public class AddendumService implements IAddendumService{
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         aSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
@@ -650,8 +650,8 @@ public class AddendumService implements IAddendumService{
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                         bSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
-                                .termLabel(termDTO.getLabel())
-                                .termValue(termDTO.getValue())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
                                 .build());
                     }
                 }
