@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Sắp đến hạn thanh toán</title>
+    <title>Thông báo hợp đồng hết hạn</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
     <style>
         body {
@@ -23,11 +23,11 @@
           margin: auto;
           background-color: #ffffff;
           border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           overflow: hidden;
         }
         .header {
-          background-color: #56caff;
+          background-color: #ff6b6b;
           padding: 20px;
           text-align: center;
           color: #ffffff;
@@ -45,18 +45,18 @@
           margin: 15px 0;
           font-size: 16px;
         }
-        .payment-info {
+        .contract-info {
           background-color: #f9fbfd;
-          border-left: 4px solid #56caff;
+          border-left: 4px solid #ff6b6b;
           padding: 15px 20px;
           margin: 20px 0;
           border-radius: 4px;
         }
-        .payment-info p {
+        .contract-info p {
           margin: 8px 0;
           font-weight: 500;
+          color: #ff6b6b;
           font-size: 18px;
-          color: #56caff;
         }
         .footer {
           padding: 20px;
@@ -69,7 +69,7 @@
           .body, .header, .footer {
             padding: 20px;
           }
-          .payment-info {
+          .contract-info {
             margin: 15px 0;
           }
         }
@@ -81,16 +81,17 @@
         <td>
             <div class="email-content">
                 <div class="header">
-                    <h1>Sắp đến hạn thanh toán</h1>
+                    <h1>Hợp Đồng Sắp Hết Hạn</h1>
                 </div>
                 <div class="body">
                     <p>Xin chào,</p>
-                    <p>Chúng tôi xin nhắc nhở bạn thanh toán hợp đồng đúng hạn để tránh những phiền phức không mong muốn. Dưới đây là thông tin chi tiết:</p>
-                    <div class="payment-info">
-                        <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
-                        <p th:text="'Ngày hết hạn: ' + ${dueDate}"></p>
+                    <p>Chúng tôi xin thông báo rằng hợp đồng của bạn sắp hết hạn với thông tin chi tiết như sau:</p>
+                    <div class="contract-info">
+                        <p th:text="'Hợp đồng: ' + ${contractTitle}">Hợp đồng: [Tiêu đề hợp đồng]</p>
+                        <p th:text="'Số hợp đồng: ' + ${contractNumber}">Số hợp đồng: [Số hợp đồng]</p>
+                        <p th:text="'Ngày hết hạn: ' + ${contractExpiryDate}">Ngày hết hạn: [Ngày hết hạn]</p>
                     </div>
-                    <p>Nếu bạn đã thanh toán, vui lòng bỏ qua email này. Nếu cần hỗ trợ hoặc có bất kỳ câu hỏi nào, hãy liên hệ với chúng tôi.</p>
+                    <p>Vui lòng liên hệ với chúng tôi nếu bạn cần gia hạn hoặc có bất kỳ câu hỏi nào.</p>
                     <p>Trân trọng,</p>
                 </div>
                 <div class="footer">
