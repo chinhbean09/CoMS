@@ -23,7 +23,7 @@ public class AddendumResponse {
     private String content;
     private String contractNumber;
     private LocalDateTime effectiveDate;
-    private AddendumTypeResponse addendumType;
+    //private AddendumTypeResponse addendumType;
     private AddendumStatus status;
     private UserAddendumResponse createdBy;
     private LocalDateTime createdAt;

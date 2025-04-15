@@ -831,6 +831,17 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             stats.put("contractsPendingApprovalForManager", (int) contractsPendingApprovalForManager);
             stats.put("addendaPendingApprovalForManager", (int) addendaPendingApprovalForManager);
 
+        } else if (currentUser.getRole().getRoleName().equals("DIRECTOR")) {
+            // CEO: lấy số lượng hợp đồng và phụ lục mà người đó được giao
+            long contractsPendingApprovalForDirector = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    ContractStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
+
+            long addendaPendingApprovalForDirector = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
+
+            stats.put("contractsPendingApprovalForDirector", (int) contractsPendingApprovalForDirector);
+            stats.put("addendaPendingApprovalForDirector", (int) addendaPendingApprovalForDirector);
+
         } else {
             // Nhân viên: lấy số lượng hợp đồng/phụ lục mà nhân viên đã tạo
             long contractsPendingApproval = contractRepository.countByUser_IdAndStatusAndIsLatestVersion(currentUser.getId(), ContractStatus.APPROVAL_PENDING, true);
