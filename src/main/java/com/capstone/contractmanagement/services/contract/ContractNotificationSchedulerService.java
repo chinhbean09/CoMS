@@ -1,7 +1,9 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.services.notification.INotificationService;
@@ -10,11 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,18 +34,20 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     private static final int EXPIRY_NOTIFY_DAYS = 5;
 
     @Override
+    @Transactional
+    //@Scheduled(fixedDelay = 60000)
     @Scheduled(cron = "0 0 8 * * ?") // Chạy hàng ngày lúc 8h sáng
     public void checkContractDates() {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. Thông báo sắp hiệu lực
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
-                .filter(contract -> contract.getEffectiveDate() != null)
+                .filter(contract -> getActualEffectiveDate(contract) != null) // Kiểm tra ngày hiệu lực thực tế từ phụ lục
                 .filter(contract -> contract.getNotifyEffectiveDate() != null)
-                .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveNotified()))
+                .filter(contract -> contract.getStatus() == ContractStatus.SIGNED || contract.getStatus() == ContractStatus.APPROVED)
+                //.filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveNotified()))
                 .filter(Contract::getIsLatestVersion)
-                .filter(contract -> !now.isBefore(contract.getNotifyEffectiveDate()))
+                .filter(contract -> !now.isBefore(getNotifyEffectiveDateFromAddendum(contract)))
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToEffectiveNotify) {
@@ -56,12 +62,12 @@ public class ContractNotificationSchedulerService implements IContractNotificati
 
         // 2. Thông báo sắp hết hạn
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
-                .filter(contract -> contract.getExpiryDate() != null)
+                .filter(contract -> getActualExpiryDate(contract) != null)
                 .filter(contract -> contract.getNotifyExpiryDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
                 .filter(contract -> Boolean.FALSE.equals(contract.getIsExpiryNotified()))
                 .filter(Contract::getIsLatestVersion)
-                .filter(contract -> !now.isBefore(contract.getNotifyExpiryDate()))
+                .filter(contract -> !now.isBefore(getNotifyExpiryDateFromAddendum(contract)))
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToExpiryNotify) {
@@ -74,10 +80,10 @@ public class ContractNotificationSchedulerService implements IContractNotificati
 
         // 3. Thông báo quá hạn hiệu lực
         List<Contract> contractsEffectiveOverdue = contractRepository.findAll().stream()
-                .filter(contract -> contract.getExpiryDate() != null)
+                .filter(contract -> getActualExpiryDate(contract) != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
-                .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveOverdueNotified()))
-                .filter(contract -> !now.isBefore(contract.getExpiryDate()))
+                //.filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveOverdueNotified()))
+                .filter(contract -> !now.isBefore(getActualExpiryDate(contract)))
                 .filter(Contract::getIsLatestVersion)
                 .collect(Collectors.toList());
 
@@ -124,5 +130,45 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         contract.setIsEffectiveOverdueNotified(true);
         // Lưu lại hợp đồng sau khi cập nhật thông báo đã gửi
         contractRepository.save(contract);
+    }
+
+    private LocalDateTime getActualEffectiveDate(Contract contract) {
+        // Kiểm tra nếu có phụ lục gia hạn
+        return contract.getAddenda().stream()
+                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED)
+                .map(Addendum::getExtendContractDate) // Ngày gia hạn từ phụ lục
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo) // Lấy ngày gia hạn sớm nhất
+                .orElse(contract.getEffectiveDate()); // Nếu không có phụ lục, dùng ngày hiệu lực ban đầu
+    }
+
+    private LocalDateTime getActualExpiryDate(Contract contract) {
+        // Kiểm tra nếu có phụ lục thay đổi ngày hết hạn
+        return contract.getAddenda().stream()
+                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED)
+                .map(Addendum::getContractExpirationDate) // Ngày hết hạn từ phụ lục
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo) // Lấy ngày hết hạn muộn nhất
+                .orElse(contract.getExpiryDate()); // Nếu không có phụ lục, dùng ngày hết hạn ban đầu
+    }
+
+    private LocalDateTime getNotifyEffectiveDateFromAddendum(Contract contract) {
+        // Kiểm tra nếu có phụ lục đã duyệt, lấy ngày gia hạn hợp đồng từ phụ lục
+        return contract.getAddenda().stream()
+                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED)
+                .map(Addendum::getExtendContractDate)  // Ngày gia hạn hợp đồng từ phụ lục
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)  // Lấy ngày gia hạn sớm nhất trong các phụ lục
+                .orElse(contract.getNotifyEffectiveDate());  // Nếu không có phụ lục, dùng ngày thông báo hiệu lực trong hợp đồng gốc
+    }
+
+    private LocalDateTime getNotifyExpiryDateFromAddendum(Contract contract) {
+        // Kiểm tra nếu có phụ lức thay đổi ngày hết hazole, lấy ngày hết hazole hợp đồng từ phụ lức
+        return contract.getAddenda().stream()
+                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED)
+                .map(Addendum::getContractExpirationDate)  // Ngày hết hazole hợp đồng từ phụ lức
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)  // Lấy ngày hết hazole muộn nhất trong các phụ lức
+                .orElse(contract.getNotifyExpiryDate());  // Nếu không có phụ lức, dùng ngày hết hazole trong hợp đồng gốc
     }
 }
