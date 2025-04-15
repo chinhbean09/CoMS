@@ -77,14 +77,15 @@ public class PaymentScheduleService implements IPaymentScheduleService {
             // Nếu có phụ lục thanh toán, kiểm tra các đợt thanh toán từ phụ lục
             if (!addendumPayments.isEmpty()) {
                 for (AddendumPaymentSchedule addendumPayment : addendumPayments) {
-                    if (addendumPayment.getNotifyPaymentDate() != null &&
+                    if (//addendumPayment.getNotifyPaymentDate() != null &&
                             !addendumPayment.isReminderEmailSent() &&
-                            !now.isBefore(addendumPayment.getNotifyPaymentDate())) {
+                            !now.isBefore(addendumPayment.getPaymentDate())) {
 
                         String message = addendumPayment.getNotifyPaymentContent() != null
                                 ? addendumPayment.getNotifyPaymentContent()
                                 : "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
-                                "' sẽ đến hạn thanh toán vào " + addendumPayment.getPaymentDate();
+                                "' sẽ đến hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
+                                " vào ngày " + addendumPayment.getPaymentDate();
 
                         sendPaymentNotification(contract, message);
                         mailService.sendEmailReminder(null, addendumPayment); // Gửi email nhắc nhở cho phụ lục
@@ -102,7 +103,8 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                         String message = payment.getNotifyPaymentContent() != null
                                 ? payment.getNotifyPaymentContent()
                                 : "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
-                                "' sẽ đến hạn thanh toán vào " + payment.getPaymentDate();
+                                "' sẽ đến hạn thanh toán đợt " + payment.getPaymentOrder() +
+                                " vào ngày " + payment.getPaymentDate();
 
                         sendPaymentNotification(contract, message);
                         mailService.sendEmailReminder(payment, null);
@@ -129,7 +131,8 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                             !addendumPayment.isOverdueEmailSent()) {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
-                                "' đã quá hạn thanh toán vào ngày " + addendumPayment.getPaymentDate();
+                                "' đã quá hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
+                                " vào ngày " + addendumPayment.getPaymentDate();
 
                         addendumPayment.setStatus(PaymentStatus.OVERDUE);
                         addendumPayment.setOverdueEmailSent(true);
@@ -147,7 +150,8 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                             !payment.isOverdueEmailSent()) {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
-                                "' đã quá hạn thanh toán vào ngày " + payment.getPaymentDate();
+                                "' đã quá hạn thanh toán đợt " + payment.getPaymentOrder() +
+                                " vào ngày " + payment.getPaymentDate();
 
                         payment.setStatus(PaymentStatus.OVERDUE);
                         payment.setOverdueEmailSent(true);
