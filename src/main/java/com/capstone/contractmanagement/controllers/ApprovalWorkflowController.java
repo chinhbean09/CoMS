@@ -98,7 +98,7 @@ public class ApprovalWorkflowController {
 
     // api APPROVED stage
     @PutMapping("/approve/{contractId}/{stageId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> approveStage(@PathVariable Long contractId, @PathVariable Long stageId) throws DataNotFoundException {
         approvalWorkflowService.approvedStage(contractId, stageId);
         return ResponseEntity.ok(ResponseObject.builder()
