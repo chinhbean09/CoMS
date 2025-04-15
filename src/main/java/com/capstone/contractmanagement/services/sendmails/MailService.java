@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.entities.addendum.AddendumPaymentSchedule;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.utils.MailTemplate;
@@ -79,7 +80,7 @@ public class MailService implements IMailService{
             dataMailDTO.setTo(user.getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
             Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", contract.getTitle());
+            props.put("contractNumber", contract.getContractNumber());
             dataMailDTO.setProps(props); // Set props to dataMailDTO
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_CONTRACT_REQUEST);
         } catch (Exception e) {
@@ -109,7 +110,7 @@ public class MailService implements IMailService{
 
     @Override
     @Async("taskExecutor")
-    public void sendEmailReminder(PaymentSchedule payment) {
+    public void sendEmailReminder(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
@@ -117,8 +118,15 @@ public class MailService implements IMailService{
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getPaymentDate());
+            if (addendumPayment != null) {
+                props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
+                props.put("dueDate", addendumPayment.getPaymentDate());
+            }
+            if (payment != null){
+                props.put("contractTitle", payment.getContract().getTitle());
+                props.put("dueDate", payment.getPaymentDate());
+            }
+
             dataMailDTO.setProps(props);
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
         } catch (Exception e) {
@@ -129,15 +137,22 @@ public class MailService implements IMailService{
 
     @Override
     @Async("taskExecutor")
-    public void sendEmailExpired(PaymentSchedule payment) {
+    public void sendEmailExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
             dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", payment.getContract().getTitle());
-            props.put("dueDate", payment.getPaymentDate());
+            if (addendumPayment != null) {
+                props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
+                props.put("dueDate", addendumPayment.getPaymentDate());
+            }
+            if (payment != null){
+                props.put("contractTitle", payment.getContract().getTitle());
+                props.put("dueDate", payment.getPaymentDate());
+            }
+
             dataMailDTO.setProps(props);
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
         } catch (Exception e) {
