@@ -80,7 +80,7 @@ public class MailService implements IMailService{
             dataMailDTO.setTo(user.getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
             Map<String, Object> props = new HashMap<>();
-            props.put("contractTitle", contract.getTitle());
+            props.put("contractNumber", contract.getContractNumber());
             dataMailDTO.setProps(props); // Set props to dataMailDTO
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.UPDATE_CONTRACT_REQUEST);
         } catch (Exception e) {
