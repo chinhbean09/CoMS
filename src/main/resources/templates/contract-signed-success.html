@@ -1,42 +1,100 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
-    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'/>
-    <style type="text/css">
+    <meta charset="UTF-8">
+    <title>Thông Báo Ký Hợp Đồng</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+    <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            font-size: 16px;
-            color: #333;
-            line-height: 1.6;
+          margin: 0;
+          padding: 0;
+          background-color: #f4f7f9;
+          font-family: 'Roboto', sans-serif;
+          color: #333;
+        }
+        .email-wrapper {
+          width: 100%;
+          background-color: #f4f7f9;
+          padding: 40px 0;
+        }
+        .email-content {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+        }
+        .header {
+          background-color: #4caf50;
+          padding: 24px;
+          text-align: center;
+          color: #fff;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 20px;
+        }
+        .body {
+          padding: 30px;
+        }
+        .body p {
+          font-size: 16px;
+          margin: 12px 0;
+        }
+        .contract-info {
+          background-color: #f0f9ff;
+          padding: 16px;
+          border-left: 4px solid #4caf50;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .contract-info p {
+          font-size: 17px;
+          margin: 8px 0;
+          color: #1d77c2;
+        }
+        .footer {
+          padding: 20px;
+          font-size: 14px;
+          color: #888;
+          text-align: center;
+          border-top: 1px solid #eee;
         }
 
-        .container {
-            width: 80%;
-            margin: 0 auto;
-        }
-
-        .otp {
-            font-size: 24px;
-            color: #56caff;
-            margin-top: 20px;
-        }
-
-        .note {
-            font-size: 14px;
-            color: #999;
-            margin-top: 30px;
+        @media (max-width: 600px) {
+          .body, .header, .footer {
+            padding: 20px;
+          }
         }
     </style>
-    <title>Notification</title>
 </head>
 <body>
-<div class="container">
-    <h2>Hợp đồng đã được kí</h2>
-    <p class="otp" th:text="${contractTitle}"></p>
-    <p class="otp" th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
-    <p class="otp">Đã được kí bởi <em th:text="${signedBy}"></em>, hãy bắt đầu gửi cho khách hàng kí</p>
-    <p class="note">This is an automated email, please do not reply.</p>
+<div class="email-wrapper">
+    <div class="email-content">
+        <div class="header">
+            <h1>Hợp Đồng Đã Được Ký</h1>
+        </div>
+        <div class="body">
+            <p>Xin chào,</p>
+            <p>Hợp đồng sau đã được ký thành công bởi:</p>
+
+            <div class="contract-info">
+                <p th:text="'Tên hợp đồng: ' + ${contractTitle}"></p>
+                <p th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
+                <p th:text="'Người ký: ' + ${signedBy}"></p>
+            </div>
+
+            <p>Bạn có thể tiếp tục gửi hợp đồng này đến khách hàng để ký tiếp theo.</p>
+            <p>Mọi thông tin chi tiết vui lòng kiểm tra trên hệ thống.</p>
+
+            <p>Trân trọng,</p>
+            <p><strong>Phòng Hợp đồng</strong></p>
+        </div>
+        <div class="footer">
+            <p>Đây là email tự động. Vui lòng không trả lời.</p>
+        </div>
+    </div>
 </div>
 </body>
 </html>

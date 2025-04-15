@@ -87,9 +87,9 @@
                     <p>Xin chào,</p>
                     <p>Chúng tôi xin thông báo rằng hợp đồng của bạn đã có hiệu lực với thông tin chi tiết như sau:</p>
                     <div class="contract-info">
-                        <p th:text="'Hợp đồng: ' + ${contractTitle}">Hợp đồng: [Tiêu đề hợp đồng]</p>
-                        <p th:text="'Số hợp đồng: ' + ${contractNumber}">Số hợp đồng: [Số hợp đồng]</p>
-                        <p th:text="'Ngày bắt đầu hiệu lực: ' + ${contractEffectiveDate}">Ngày bắt đầu hiệu lực: [Ngày hiệu lực]</p>
+                        <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
+                        <p th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
+                        <p th:text="'Ngày bắt đầu hiệu lực: ' + ${contractEffectiveDate}"></p>
                     </div>
                     <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc số điện thoại hỗ trợ.</p>
                     <p>Trân trọng,</p>
