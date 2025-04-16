@@ -113,6 +113,7 @@ public class AddendumService implements IAddendumService{
                     .user(currentUser)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(null)
+                    .contractContent(addendumDTO.getContractContent())
 //                    .addendumType(addendumType)
                     .contract(contract)
                     .build();
@@ -458,6 +459,10 @@ public class AddendumService implements IAddendumService{
         // Cập nhật các trường cơ bản nếu có giá trị
         if (addendumDTO.getContent() != null && !addendumDTO.getContent().equals(addendum.getContent())) {
             addendum.setContent(addendumDTO.getContent());
+            isChanged = true;
+        }
+        if (addendumDTO.getContractContent() != null && !addendumDTO.getContractContent().equals(addendum.getContractContent())) {
+            addendum.setContractContent(addendumDTO.getContractContent());
             isChanged = true;
         }
         if (addendumDTO.getEffectiveDate() != null && !addendumDTO.getEffectiveDate().equals(addendum.getEffectiveDate())) {
@@ -899,6 +904,7 @@ public class AddendumService implements IAddendumService{
                 .paymentSchedules(convertPaymentSchedules(addendum.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)
                 .additionalConfig(additionalConfig)
+                .contractContent(addendum.getContractContent())
                 .contractItems(convertContractItems(addendum.getAddendumItems()))
                 .build();
     }
@@ -1675,6 +1681,7 @@ public class AddendumService implements IAddendumService{
                 .signedFilePath(null)
                 .signedBy(null)
                 .signedAt(null)
+                .contractContent(originAddendum.getContractContent())
                 .signedAddendumUrls(new ArrayList<>())
                 .build();
 

@@ -34,5 +34,6 @@ public class AddendumDTO {
 
     private LocalDateTime extendContractDate;
     private LocalDateTime contractExpirationDate;
+    private String contractContent;
 
 }
