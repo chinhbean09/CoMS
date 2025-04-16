@@ -882,6 +882,7 @@ public class ContractService implements IContractService{
                 .signingDate(contract.getSigningDate())
                 .effectiveDate(contract.getEffectiveDate())
                 .expiryDate(contract.getExpiryDate())
+
                 .signedFilePath(contract.getSignedFilePath())
                 .build();
     }
@@ -1149,6 +1150,9 @@ public class ContractService implements IContractService{
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .version(1)
+                    .isEffectiveNotified(false)
+                    .isExpiryNotified(false)
+                    .isEffectiveOverdueNotified(false)
                     .isLatestVersion(true)
                     .duplicateNumber(duplicateNumber)
                     .build();
@@ -1295,6 +1299,9 @@ public class ContractService implements IContractService{
                 .createdAt(now)
                 .updatedAt(now)
                 .version(1)
+                .isEffectiveNotified(false)
+                .isExpiryNotified(false)
+                .isEffectiveOverdueNotified(false)
                 .isLatestVersion(true)
                 .duplicateNumber(duplicateNumber)
                 .build();
@@ -1579,6 +1586,9 @@ public class ContractService implements IContractService{
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
                         : currentContract.getContractType())
                 .isLatestVersion(true)
+                .isEffectiveNotified(currentContract.getIsEffectiveNotified())
+                .isExpiryNotified(currentContract.getIsExpiryNotified())
+                .isEffectiveOverdueNotified(currentContract.getIsEffectiveOverdueNotified())
                 .sourceContractId(currentContract.getSourceContractId())
                 .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
