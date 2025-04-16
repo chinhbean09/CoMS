@@ -41,7 +41,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         LocalDateTime now = LocalDateTime.now();
 
         // Bước 1: Cập nhật trạng thái hợp đồng nếu có phụ lục gia hạn được duyệt
-        updateContractStatusBasedOnAddendum();
+        //updateContractStatusBasedOnAddendum();
 
         // Bước 2: Thông báo sắp hiệu lực
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
@@ -108,12 +108,16 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         for (Contract contract : expiredContracts) {
             boolean hasApprovedAddendum = contract.getAddenda().stream()
                     .anyMatch(addendum -> addendum.getStatus() == AddendumStatus.SIGNED && addendum.getExtendContractDate() != null);
+
             if (hasApprovedAddendum) {
-                contract.setStatus(ContractStatus.ACTIVE);
-                contract.setIsEffectiveNotified(false);
-                contract.setIsExpiryNotified(false);
-                contract.setIsEffectiveOverdueNotified(false);
-                contractRepository.save(contract);
+                // Chỉ thay đổi trạng thái và reset cờ khi hợp đồng chuyển từ EXPIRED sang ACTIVE
+                if (contract.getStatus() == ContractStatus.EXPIRED) {
+                    contract.setStatus(ContractStatus.ACTIVE);
+                    contract.setIsEffectiveNotified(false);  // Reset các cờ thông báo chỉ khi hợp đồng chuyển sang ACTIVE
+                    contract.setIsExpiryNotified(false);
+                    contract.setIsEffectiveOverdueNotified(false);
+                    contractRepository.save(contract);
+                }
             }
         }
     }
