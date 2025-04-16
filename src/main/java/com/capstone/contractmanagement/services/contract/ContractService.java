@@ -139,6 +139,9 @@ public class ContractService implements IContractService{
                 .version(1)
                 .isLatestVersion(true)
                 .duplicateNumber(0)
+                .isEffectiveNotified(false)
+                .isExpiryNotified(false)
+                .isEffectiveOverdueNotified(false)
                 .build();
 
         List<ContractPartner> contractPartners = buildContractPartners(contract, partnerA, partnerB);
