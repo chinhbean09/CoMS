@@ -62,7 +62,8 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 8 * * ?")
+    //@Scheduled(cron = "0 0 8 * * ?")
+    @Scheduled(fixedDelay = 60000)
     public void checkPaymentDue() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -168,7 +169,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     private List<AddendumPaymentSchedule> getAddendumPaymentSchedules(Contract contract) {
         // Lấy tất cả các đợt thanh toán từ phụ lục đã duyệt
         return contract.getAddenda().stream()
-                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED)
+                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
                 .flatMap(addendum -> addendum.getPaymentSchedules().stream()) // Lấy các đợt thanh toán từ phụ lục
                 .collect(Collectors.toList());
     }
