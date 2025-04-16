@@ -84,7 +84,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         messagingTemplate.convertAndSendToUser(user.getFullName(), "/queue/notifications", payload);
 
         // Lưu thông báo vào hệ thống (Notification entity)
-        //notificationService.saveNotification(user, message, cp);
+        notificationService.saveNotification(user, message, null);
 
         // Cập nhật trạng thái thông báo đã được gửi
         if (isEffective) {

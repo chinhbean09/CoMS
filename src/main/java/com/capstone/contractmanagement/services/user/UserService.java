@@ -384,16 +384,13 @@ public class UserService implements IUserService {
 
         if (hasSearch) {
             if (hasDepartment && hasRole) {
-                userPage = UserRepository.findByDepartment_IdAndRole_IdAndFullNameContainingIgnoreCase(
-                        departmentId, roleId, search, pageable);
+                userPage = UserRepository.searchByDepartmentAndRoleAndFullNameOrStaffCode(departmentId, roleId, search, pageable);
             } else if (hasDepartment) {
-                userPage = UserRepository.findByDepartment_IdAndFullNameContainingIgnoreCase(
-                        departmentId, search, pageable);
+                userPage = UserRepository.searchByDepartmentAndFullNameOrStaffCode(departmentId, search, pageable);
             } else if (hasRole) {
-                userPage = UserRepository.findByRole_IdAndFullNameContainingIgnoreCase(
-                        roleId, search, pageable);
+                userPage = UserRepository.searchByRoleAndFullNameOrStaffCode(roleId, search, pageable);
             } else {
-                userPage = UserRepository.findByFullNameContainingIgnoreCase(search, pageable);
+                userPage = UserRepository.searchByFullNameOrStaffCode(search, pageable);
             }
         } else {
             if (hasDepartment && hasRole) {

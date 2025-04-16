@@ -61,4 +61,35 @@ public interface IUserRepository extends JpaRepository<User, Long> {
     Page<User> findByDepartment_IdAndRole_IdAndFullNameContainingIgnoreCase(
             Long departmentId, Long roleId, String fullName, Pageable pageable
     );
+
+    // Search toàn bộ theo fullName hoặc staffCode
+    @Query("SELECT u FROM User u WHERE " +
+            "(LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.staffCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<User> searchByFullNameOrStaffCode(@Param("search") String search, Pageable pageable);
+
+    // Tìm theo department và tìm kiếm theo fullName hoặc staffCode
+    @Query("SELECT u FROM User u WHERE u.department.id = :deptId " +
+            "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.staffCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<User> searchByDepartmentAndFullNameOrStaffCode(@Param("deptId") Long deptId,
+                                                        @Param("search") String search,
+                                                        Pageable pageable);
+
+    // Tìm theo role và tìm kiếm theo fullName hoặc staffCode
+    @Query("SELECT u FROM User u WHERE u.role.id = :roleId " +
+            "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.staffCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<User> searchByRoleAndFullNameOrStaffCode(@Param("roleId") Long roleId,
+                                                  @Param("search") String search,
+                                                  Pageable pageable);
+
+    // Tìm theo department và role và tìm kiếm theo fullName hoặc staffCode
+    @Query("SELECT u FROM User u WHERE u.department.id = :deptId AND u.role.id = :roleId " +
+            "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.staffCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<User> searchByDepartmentAndRoleAndFullNameOrStaffCode(@Param("deptId") Long deptId,
+                                                               @Param("roleId") Long roleId,
+                                                               @Param("search") String search,
+                                                               Pageable pageable);
 }

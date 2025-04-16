@@ -906,6 +906,8 @@ public class AddendumService implements IAddendumService{
                 .additionalConfig(additionalConfig)
                 .contractContent(addendum.getContractContent())
                 .contractItems(convertContractItems(addendum.getAddendumItems()))
+                .extendContractDate(addendum.getExtendContractDate())
+                .contractExpirationDate(addendum.getContractExpirationDate())
                 .build();
     }
 
@@ -1339,19 +1341,28 @@ public class AddendumService implements IAddendumService{
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        // Lấy tất cả các phụ lục đang ở trạng thái APPROVAL_PENDING
-        //List<Addendum> pendingAddenda = addendumRepository.findByStatus(AddendumStatus.APPROVAL_PENDING);
+        // Lấy tất cả các phụ lục
         List<Addendum> pendingAddenda = addendumRepository.findAll();
 
-        // Lọc các phụ lục theo approverId, keyword và addendumTypeId
-        // Lọc phụ lục dựa trên quyền duyệt của approver
+        // Lọc các phụ lục theo approverId, keyword và trạng thái duyệt
         List<Addendum> filteredAddenda = pendingAddenda.stream()
                 .filter(addendum -> {
                     ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
                     if (workflow == null || workflow.getStages().isEmpty()) return false;
 
+                    // Kiểm tra nếu phụ lục có bất kỳ bước nào đã được duyệt qua
+                    boolean approverHasCompletedStep = workflow.getStages().stream()
+                            .anyMatch(stage -> stage.getApprover().getId().equals(approverId) &&
+                                    stage.getStatus() == ApprovalStatus.APPROVED);
+
+                    // Nếu người duyệt đã duyệt xong ít nhất 1 bước, không cho hiển thị phụ lục đó nữa
+                    if (approverHasCompletedStep) {
+                        return false;
+                    }
+
+                    // Nếu phụ lục đang trong quá trình duyệt
                     if (addendum.getStatus() == AddendumStatus.APPROVAL_PENDING) {
-                        // Tìm bước duyệt hiện tại (sớm nhất có trạng thái NOT_STARTED / REJECTED / APPROVING)
+                        // Tìm bước duyệt hiện tại (có trạng thái NOT_STARTED, REJECTED, hoặc APPROVING)
                         OptionalInt currentStageOrderOpt = workflow.getStages().stream()
                                 .filter(stage -> stage.getStatus() == ApprovalStatus.NOT_STARTED
                                         || stage.getStatus() == ApprovalStatus.REJECTED
@@ -1363,18 +1374,17 @@ public class AddendumService implements IAddendumService{
 
                         int currentStageOrder = currentStageOrderOpt.getAsInt();
 
-                        // Kiểm tra nếu approver có quyền duyệt bước này
+                        // Kiểm tra xem approver có quyền duyệt bước này không
                         return workflow.getStages().stream()
                                 .anyMatch(stage -> stage.getStageOrder() <= currentStageOrder
                                         && stage.getApprover().getId().equals(approverId));
-                    } else {
-                        // Đã duyệt xong: kiểm tra xem approver có từng duyệt qua không
-                        return workflow.getStages().stream()
-                                .anyMatch(stage -> stage.getApprover().getId().equals(approverId)
-                                        && stage.getStatus() == ApprovalStatus.APPROVED);
                     }
+
+                    // Nếu không, không cho hiển thị phụ lục (đã duyệt hoặc đã bị từ chối)
+                    return false;
                 })
                 .filter(addendum -> {
+                    // Lọc theo từ khóa (nếu có)
                     if (keyword != null && !keyword.trim().isEmpty()) {
                         String lowerKeyword = keyword.toLowerCase();
                         return addendum.getTitle().toLowerCase().contains(lowerKeyword)
@@ -1382,7 +1392,6 @@ public class AddendumService implements IAddendumService{
                     }
                     return true;
                 })
-
                 .collect(Collectors.toList());
 
         // Áp dụng phân trang
