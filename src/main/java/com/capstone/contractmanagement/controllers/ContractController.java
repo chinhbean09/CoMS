@@ -691,5 +691,17 @@
                     .build());
         }
 
+        @PostMapping("/upload-file-base64")
+        public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long contractId,
+                                                               @RequestParam String fileBase64,
+                                                               @RequestParam String fileName) throws DataNotFoundException, IOException {
+            contractService.uploadSignedContractBase64(contractId, fileBase64, fileName);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Tải lên thành công")
+                    .status(HttpStatus.OK)
+                    .data(null)
+                    .build());
+        }
+
     }
 
