@@ -44,4 +44,7 @@ public class AddendumResponse {
 
     private LocalDateTime extendContractDate; // Thêm trường mới
     private LocalDateTime contractExpirationDate; // Thêm trường mới
+
+    private String contractContent;
+
 }
