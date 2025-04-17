@@ -110,7 +110,7 @@ public class MailService implements IMailService{
 
     @Override
     @Async("taskExecutor")
-    public void sendEmailReminder(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
+    public void sendEmailPaymentReminder(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
@@ -139,7 +139,7 @@ public class MailService implements IMailService{
 
     @Override
     @Async("taskExecutor")
-    public void sendEmailExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
+    public void sendEmailPaymentExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
             dataMailDTO.setTo(payment.getContract().getUser().getEmail());
@@ -411,6 +411,7 @@ public class MailService implements IMailService{
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendEmailAddendumEndExtendedDate(Addendum addendum) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
