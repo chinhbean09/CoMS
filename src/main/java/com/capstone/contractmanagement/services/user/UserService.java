@@ -88,6 +88,13 @@ public class UserService implements IUserService {
             throw new PermissionDenyException("Not allowed to register for an Admin account");
         }
 
+        // **MỚI**: Không cho tạo thêm Director nếu đã có sẵn
+        if (Role.DIRECTOR.equalsIgnoreCase(role.getRoleName())
+                && UserRepository.existsByRole_RoleName(Role.DIRECTOR)) {
+            throw new PermissionDenyException(
+                    localizationUtils.getLocalizedMessage("Đã có Giám đốc trong hệ thống."));
+        }
+
         Department department = departmentRepository.findById(userDTO.getDepartmentId())
                 .orElseThrow(() -> new DataNotFoundException(
                         localizationUtils.getLocalizedMessage(MessageKeys.DEPARTMENT_NOT_FOUND)));
