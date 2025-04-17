@@ -1894,6 +1894,7 @@ public class AddendumService implements IAddendumService{
                         .userName(addendum.getUser().getFullName())
                         .build())
                 .createdAt(addendum.getCreatedAt())
+                .signedFilePath(addendum.getSignedFilePath())
                 .updatedAt(addendum.getUpdatedAt())
                 .contractId(addendum.getContract() != null ? addendum.getContract().getId() : null)
                 .build();
