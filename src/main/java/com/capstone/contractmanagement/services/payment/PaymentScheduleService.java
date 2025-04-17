@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     @Override
     //@Scheduled(cron = "0 0 8 * * ?")
     @Scheduled(fixedDelay = 60000)
+    @Transactional
     public void checkPaymentDue() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -80,11 +82,9 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 for (AddendumPaymentSchedule addendumPayment : addendumPayments) {
                     if (//addendumPayment.getNotifyPaymentDate() != null &&
                             !addendumPayment.isReminderEmailSent() &&
-                            !now.isBefore(addendumPayment.getPaymentDate())) {
+                            !now.isBefore(addendumPayment.getNotifyPaymentDate())) {
 
-                        String message = addendumPayment.getNotifyPaymentContent() != null
-                                ? addendumPayment.getNotifyPaymentContent()
-                                : "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
+                        String message = "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
                                 "' sẽ đến hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
                                 " vào ngày " + addendumPayment.getPaymentDate();
 
@@ -101,9 +101,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                             !payment.isReminderEmailSent() &&
                             !now.isBefore(payment.getNotifyPaymentDate())) {
 
-                        String message = payment.getNotifyPaymentContent() != null
-                                ? payment.getNotifyPaymentContent()
-                                : "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
+                        String message = "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
                                 "' sẽ đến hạn thanh toán đợt " + payment.getPaymentOrder() +
                                 " vào ngày " + payment.getPaymentDate();
 
@@ -128,7 +126,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
             if (!addendumPayments.isEmpty()) {
                 for (AddendumPaymentSchedule addendumPayment : addendumPayments) {
                     if (addendumPayment.getPaymentDate() != null &&
-                            now.isAfter(addendumPayment.getPaymentDate()) &&
+                            !now.isBefore(addendumPayment.getPaymentDate()) &&
                             !addendumPayment.isOverdueEmailSent()) {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
@@ -147,7 +145,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                 // Không có phụ lục, xử lý thanh toán bình thường từ PaymentSchedule
                 if (contract != null && Boolean.TRUE.equals(contract.getIsLatestVersion())) {
                     if (payment.getPaymentDate() != null &&
-                            now.isAfter(payment.getPaymentDate()) &&
+                            !now.isBefore(payment.getPaymentDate()) &&
                             !payment.isOverdueEmailSent()) {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
