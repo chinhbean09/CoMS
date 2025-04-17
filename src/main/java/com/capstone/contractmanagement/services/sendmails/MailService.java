@@ -121,10 +121,12 @@ public class MailService implements IMailService{
             if (addendumPayment != null) {
                 props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
                 props.put("dueDate", addendumPayment.getPaymentDate());
+                props.put("stage", addendumPayment.getPaymentOrder());
             }
             if (payment != null){
                 props.put("contractTitle", payment.getContract().getTitle());
                 props.put("dueDate", payment.getPaymentDate());
+                props.put("stage", payment.getPaymentOrder());
             }
 
             dataMailDTO.setProps(props);
@@ -140,17 +142,19 @@ public class MailService implements IMailService{
     public void sendEmailExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
+            dataMailDTO.setTo(payment.getContract().getUser().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
             if (addendumPayment != null) {
                 props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
                 props.put("dueDate", addendumPayment.getPaymentDate());
+                props.put("stage", addendumPayment.getPaymentOrder());
             }
             if (payment != null){
                 props.put("contractTitle", payment.getContract().getTitle());
                 props.put("dueDate", payment.getPaymentDate());
+                props.put("stage", payment.getPaymentOrder());
             }
 
             dataMailDTO.setProps(props);

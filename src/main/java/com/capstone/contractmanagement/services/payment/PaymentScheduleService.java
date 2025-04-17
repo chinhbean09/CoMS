@@ -9,6 +9,7 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.repositories.IAddendumPaymentScheduleRepository;
 import com.capstone.contractmanagement.repositories.IContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.services.app_config.IAppConfigService;
@@ -37,6 +38,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     private final IMailService mailService;
     private final INotificationService notificationService;
     private final IAppConfigService appConfigService;
+    private final IAddendumPaymentScheduleRepository addendumPaymentScheduleRepository;
 
     @Override
     public String createPaymentSchedule(Long contractId, CreatePaymentScheduleDTO createPaymentScheduleDTO) throws DataNotFoundException {
@@ -70,7 +72,15 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. Thông báo nhắc thanh toán dựa vào notifyPaymentDate
-        List<PaymentSchedule> reminderPayments = paymentScheduleRepository.findByStatus(PaymentStatus.UNPAID);
+        List<PaymentSchedule> reminderPayments = paymentScheduleRepository
+                .findByStatus(PaymentStatus.UNPAID)
+                .stream()
+                // chỉ lấy những paymentSchedules liên kết với Contract
+                .filter(ps -> ps.getContract() != null)
+                // bỏ qua những record gắn partnerContract
+                .filter(ps -> ps.getPartnerContract() == null)
+                .collect(Collectors.toList());
+
         for (PaymentSchedule payment : reminderPayments) {
             Contract contract = payment.getContract();
 
@@ -91,7 +101,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                         sendPaymentNotification(contract, message);
                         mailService.sendEmailReminder(null, addendumPayment); // Gửi email nhắc nhở cho phụ lục
                         addendumPayment.setReminderEmailSent(true);
-                        paymentScheduleRepository.save(payment);
+                        addendumPaymentScheduleRepository.save(addendumPayment);
                     }
                 }
             } else {
@@ -115,7 +125,12 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         }
 
         // 2. Thông báo quá hạn nếu vượt quá paymentDate
-        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findByStatus(PaymentStatus.UNPAID);
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository
+                .findByStatus(PaymentStatus.UNPAID)
+                .stream()
+                .filter(ps -> ps.getContract() != null)
+                .filter(ps -> ps.getPartnerContract() == null)
+                .collect(Collectors.toList());
         for (PaymentSchedule payment : overduePayments) {
             Contract contract = payment.getContract();
 
@@ -135,7 +150,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                         addendumPayment.setStatus(PaymentStatus.OVERDUE);
                         addendumPayment.setOverdueEmailSent(true);
-                        paymentScheduleRepository.save(payment);
+                        addendumPaymentScheduleRepository.save(addendumPayment);
 
                         sendPaymentNotification(contract, overdueMessage);
                         mailService.sendEmailExpired(null, addendumPayment); // Gửi email quá hạn cho phụ lục
@@ -193,67 +208,4 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
         return billUrls;
     }
-
-//    private void sendEmailReminder(PaymentSchedule payment) {
-//        // Gửi email nhắc nhỏ
-//        try {
-//            DataMailDTO dataMailDTO = new DataMailDTO();
-//            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
-//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("contractTitle", payment.getContract().getTitle());
-//            props.put("dueDate", payment.getPaymentDate());
-//            dataMailDTO.setProps(props);
-//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
-//        } catch (Exception e) {
-//            // Xu ly loi
-//            e.printStackTrace();
-//        }
-//    }
-
-    // gửi mail đã hết hạn thanh toán
-//    private void sendEmailExpired(PaymentSchedule payment) {
-//        // Gửi email nhắc nhỏ
-//        try {
-//            DataMailDTO dataMailDTO = new DataMailDTO();
-//            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
-//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("contractTitle", payment.getContract().getTitle());
-//            props.put("dueDate", payment.getPaymentDate());
-//            dataMailDTO.setProps(props);
-//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_EXPIRED);
-//        } catch (Exception e) {
-//            // Xu ly loi
-//            e.printStackTrace();
-//        }
-//    }
-
-//    @Scheduled(fixedRate = 60000)
-//    public void checkPaymentDue() {
-//        LocalDateTime now = LocalDateTime.now();
-//        // Số ngày trước hạn cần nhắc nhở, ví dụ 3 ngày
-//        int reminderDays = 3;
-//        LocalDateTime reminderThreshold = now.plusDays(reminderDays);
-//
-//        // Tìm các khoản thanh toán sắp đến hạn (trong khoảng từ bây giờ đến 3 ngày sau)
-//        List<PaymentSchedule> upcomingPayments = paymentScheduleRepository
-//                .findByDueDateBetweenAndStatus(now, reminderThreshold, "Chưa thanh toán");
-//        for (PaymentSchedule payment : upcomingPayments) {
-//            String message = "Hợp đồng '" + payment.getContract().getTitle() + "' sẽ đến hạn thanh toán vào: "
-//                    + payment.getDueDate() + ". Vui lòng thanh toán sớm.";
-//            messagingTemplate.convertAndSend("/topic/payment", message);
-//        }
-//
-//        // Kiểm tra các khoản thanh toán đã quá hạn để gửi email nhắc nhở
-//        List<PaymentSchedule> overduePayments = paymentScheduleRepository
-//                .findByDueDateBeforeAndStatus(now, "Chưa thanh toán");
-//        for (PaymentSchedule payment : overduePayments) {
-//            if (now.isAfter(payment.getDueDate())) {
-//                sendEmailReminder(payment);
-//            }
-//        }
-//    }
 }

@@ -29,6 +29,7 @@ public class AddendumResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long contractId;
+    private String signedFilePath;
     private Partner partnerA;
     private Optional<ContractPartner> partnerB;
 
