@@ -11,9 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class AddendumTermSnapshotDTO {
-    // Đây là ID của term gốc (để tham chiếu nếu cần)
+
     private Long id;
-    private String label;      // Label của điều khoản
-    private String value;      // Nội dung (value) của điều khoản
+
 }
 
