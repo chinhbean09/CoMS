@@ -290,11 +290,11 @@ public class AddendumController {
             }
 
             // Save signed file (can throw IOException)
-            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+            //String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
 
             // Update contract details
             String oldStatus = addendum.getStatus() != null ? addendum.getStatus().name() : "UNKNOWN";
-            addendum.setSignedFilePath(filePath);
+            //addendum.setSignedFilePath(filePath);
             addendum.setSignedBy(currentUser.getFullName());
 
             // Parse signedAt with error handling
@@ -328,13 +328,6 @@ public class AddendumController {
                     .data(null)
                     .build());
 
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseObject.builder()
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .message("Lỗi xảy ra khi ký file: " + e.getMessage())
-                            .data(null)
-                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()

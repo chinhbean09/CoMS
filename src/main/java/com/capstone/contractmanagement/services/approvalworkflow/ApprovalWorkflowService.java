@@ -847,8 +847,17 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             long addendaPendingApprovalForDirector = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
                     AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
 
+            // CEO: lấy số lượng hợp đồng và phụ lục đã phê duyệt và là phiên bản mới nhất
+            long contractsApprovedForDirector = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    ContractStatus.APPROVED, true, currentUser.getId(), ApprovalStatus.APPROVED);
+
+            long addendaApprovedForDirector = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
+                    AddendumStatus.APPROVED, true, currentUser.getId(), ApprovalStatus.APPROVED);
+
             stats.put("contractsPendingApprovalForDirector", (int) contractsPendingApprovalForDirector);
             stats.put("addendaPendingApprovalForDirector", (int) addendaPendingApprovalForDirector);
+            stats.put("contractsSignPendingForDirector", (int) contractsApprovedForDirector);
+            stats.put("addendaSignPendingForDirector", (int) addendaApprovedForDirector);
 
         } else {
             // Nhân viên: lấy số lượng hợp đồng/phụ lục mà nhân viên đã tạo
