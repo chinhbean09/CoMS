@@ -112,7 +112,15 @@ public class Addendum {
     @Column(name = "contract_expiration_date")
     private LocalDateTime contractExpirationDate; // Ngày hết hạn hợp đồng
 
+
+    @Column(name = "is_effective_notified")
+    private Boolean isEffectiveNotified = false;
+
+    @Column(name = "is_expiry_notified")
+    private Boolean isExpiryNotified = false;
+
     @Column(name = "contract_content", columnDefinition = "TEXT")
     private String contractContent;
+
 
 }

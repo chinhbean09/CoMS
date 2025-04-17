@@ -30,4 +30,6 @@ public interface IMailService {
     void sendEmailContractExpiryDate(Contract contract);
     void sendEmailContractSignedSuccess(Contract contract);
     void sendEmailAddendumSignedSuccess(Addendum addendum);
+    void sendEmailAddendumExtendedDate(Addendum addendum);
+    void sendEmailAddendumEndExtendedDate(Addendum addendum);
 }
