@@ -1,6 +1,5 @@
 package com.capstone.contractmanagement.services.payment;
 
-import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.dtos.payment.CreatePaymentScheduleDTO;
 import com.capstone.contractmanagement.entities.addendum.AddendumPaymentSchedule;
 import com.capstone.contractmanagement.entities.contract.Contract;
@@ -15,7 +14,6 @@ import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.services.app_config.IAppConfigService;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
-import com.capstone.contractmanagement.utils.MailTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -99,7 +97,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                                 " vào ngày " + addendumPayment.getPaymentDate();
 
                         sendPaymentNotification(contract, message);
-                        mailService.sendEmailReminder(null, addendumPayment); // Gửi email nhắc nhở cho phụ lục
+                        mailService.sendEmailPaymentReminder(null, addendumPayment); // Gửi email nhắc nhở cho phụ lục
                         addendumPayment.setReminderEmailSent(true);
                         addendumPaymentScheduleRepository.save(addendumPayment);
                     }
@@ -116,7 +114,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                                 " vào ngày " + payment.getPaymentDate();
 
                         sendPaymentNotification(contract, message);
-                        mailService.sendEmailReminder(payment, null);
+                        mailService.sendEmailPaymentReminder(payment, null);
                         payment.setReminderEmailSent(true);
                         paymentScheduleRepository.save(payment);
                     }
@@ -153,7 +151,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                         addendumPaymentScheduleRepository.save(addendumPayment);
 
                         sendPaymentNotification(contract, overdueMessage);
-                        mailService.sendEmailExpired(null, addendumPayment); // Gửi email quá hạn cho phụ lục
+                        mailService.sendEmailPaymentExpired(null, addendumPayment); // Gửi email quá hạn cho phụ lục
                     }
                 }
             } else {
@@ -172,7 +170,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
                         paymentScheduleRepository.save(payment);
 
                         sendPaymentNotification(contract, overdueMessage);
-                        mailService.sendEmailExpired(payment, null);
+                        mailService.sendEmailPaymentExpired(payment, null);
                     }
                 }
             }
