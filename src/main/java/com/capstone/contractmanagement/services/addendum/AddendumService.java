@@ -33,6 +33,7 @@ import com.capstone.contractmanagement.services.notification.INotificationServic
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -47,6 +48,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1880,6 +1883,62 @@ public class AddendumService implements IAddendumService{
         return billUrls;
     }
 
+    @Override
+    public void uploadFileBase64(Long addendumId, String file, String fileName) throws DataNotFoundException, IOException {
+        Addendum addendum = addendumRepository.findById(addendumId)
+                .orElseThrow(() -> new DataNotFoundException("Addendum not found"));
+
+        byte[] fileBytes = Base64.getDecoder().decode(file);
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "signed_addenda",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", true
+        ));
+
+        // Lấy public ID của file đã upload
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+        String customFilename = normalizeFilename(fileName);
+
+        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                .generate();
+
+        addendum.setSignedFilePath(secureUrl);
+        addendumRepository.save(addendum);
+    }
+
+    private String normalizeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "file";
+        }
+        // Loại bỏ extension nếu có
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex != -1) {
+            filename = filename.substring(0, dotIndex);
+        }
+        // Chuẩn hóa Unicode: tách dấu
+        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+        // Loại bỏ dấu (diacritics)
+        normalized = normalized.replaceAll("\\p{M}", "");
+        // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+        normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
+        // Chuyển khoảng trắng thành dấu gạch dưới và trim
+        normalized = normalized.trim().replaceAll("\\s+", "_");
+        return normalized;
+    }
 
     private AddendumResponse mapToAddendumResponse(Addendum addendum) {
         return AddendumResponse.builder()

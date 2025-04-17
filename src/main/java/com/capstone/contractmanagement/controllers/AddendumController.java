@@ -290,7 +290,7 @@ public class AddendumController {
             }
 
             // Save signed file (can throw IOException)
-            //String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
 
             // Update contract details
             String oldStatus = addendum.getStatus() != null ? addendum.getStatus().name() : "UNKNOWN";
@@ -469,6 +469,18 @@ public class AddendumController {
             default:
                 return status;
         }
+    }
+
+    @PostMapping("/upload-file-base64")
+    public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long addendumId,
+                                                           @RequestParam String fileBase64,
+                                                           @RequestParam String fileName) throws DataNotFoundException, IOException {
+        addendumService.uploadFileBase64(addendumId, fileBase64, fileName);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Tải lên thành công")
+                .status(HttpStatus.OK)
+                .data(null)
+                .build());
     }
 
 }
