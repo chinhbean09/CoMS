@@ -114,7 +114,7 @@ public class MailService implements IMailService{
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getPartner().getEmail());
+            dataMailDTO.setTo(payment.getContract().getUser().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
@@ -370,6 +370,59 @@ public class MailService implements IMailService{
 
             // Gửi email HTML theo template już định nghĩa
             sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.ADDENDUM_SIGNED_SUCCESS);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + addendum.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendEmailAddendumExtendedDate(Addendum addendum) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(addendum.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", addendum.getContractNumber());
+            props.put("addendumTitle", addendum.getTitle());
+            props.put("addendumExtendContractDate", addendum.getExtendContractDate());
+            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_EXTENDED_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + addendum.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailAddendumEndExtendedDate(Addendum addendum) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(addendum.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_END_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", addendum.getContractNumber());
+            props.put("addendumTitle", addendum.getTitle());
+            props.put("addendumExtendContractDate", addendum.getExtendContractDate());
+            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_EXTENDED_END_REMINDER);
 
             // Log thông báo gửi email thành công
             System.out.println("Đã gửi email nhắc nhở cho: " + addendum.getUser().getEmail());

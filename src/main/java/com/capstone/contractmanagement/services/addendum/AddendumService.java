@@ -112,6 +112,8 @@ public class AddendumService implements IAddendumService{
                     .status(AddendumStatus.CREATED)
                     .user(currentUser)
                     .createdAt(LocalDateTime.now())
+                    .isEffectiveNotified(false)
+                    .isExpiryNotified(false)
                     .updatedAt(null)
 //                    .addendumType(addendumType)
                     .contract(contract)
