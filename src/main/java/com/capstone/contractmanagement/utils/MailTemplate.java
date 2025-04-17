@@ -24,6 +24,8 @@ public class MailTemplate {
         public final static String CONTRACT_OVERDUE_NOTIFICATION = "HỢP ĐỒNG ĐÃ HẾT HẠN";
         public final static String CONTRACT_SIGNED_SUCCESS = "HỢP ĐỒNG ĐÃ ĐƯỢC KÍ";
         public final static String ADDENDUM_SIGNED_SUCCESS = "PHỤ LỤC ĐÃ ĐƯỢC KÍ";
+        public final static String CONTRACT_EXTENDED_REMINDER = "HỢP ĐỒNG ĐÃ ĐƯỢC GIA HẠN";
+        public final static String CONTRACT_EXTENDED_END_REMINDER = "HỢP ĐỒNG ĐÃ HẾT HIỆU LỰC GIA HẠN";
 //        public final static String BOOKING_PAYMENT_SUCCESS = "BOOKING PAYMENT SUCCESSFUL!";
 //
 //        public final static String PACKAGE_PAYMENT_SUCCESS = "PACKAGE PAYMENT SUCCESSFUL!";
@@ -53,6 +55,8 @@ public class MailTemplate {
         public final static String CONTRACT_OVERDUE_NOTIFICATION = "contract-overdue-notification";
         public final static String CONTRACT_SIGNED_SUCCESS = "contract-signed-success";
         public final static String ADDENDUM_SIGNED_SUCCESS = "addendum-signed-success";
+        public final static String CONTRACT_EXTENDED_REMINDER = "contract-extended-reminder";
+        public final static String CONTRACT_EXTENDED_END_REMINDER = "contract-extended-end-reminder";
 
 
 //        public final static String NEW_PASSWORD = "new-password";
