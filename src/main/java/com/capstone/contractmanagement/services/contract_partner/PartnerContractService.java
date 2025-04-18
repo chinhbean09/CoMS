@@ -130,7 +130,8 @@ public class PartnerContractService implements IPartnerContractService {
                 "resource_type", "raw",      // Cho phép upload file dạng raw
                 "folder", "contract_partner",
                 "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", true     // Không thêm ký tự ngẫu nhiên
+                "unique_filename", true,     // Không thêm ký tự ngẫu nhiên
+                "format", getFileExtension(contentType)  // Đảm bảo file được upload với đúng định dạng
         ));
 
         // Lấy public ID của file đã upload
@@ -138,18 +139,26 @@ public class PartnerContractService implements IPartnerContractService {
 
         // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
         String originalFilename = file.getOriginalFilename();
+
+        // Normalize the filename (remove diacritics and replace spaces with underscores)
         String customFilename = normalizeFilename(originalFilename);
+
+        // Ensure there’s only one extension (e.g., "file_okl9cf.pdf" instead of "file_okl9cf.pdf.pdf")
+        String fileExtension = getFileExtension(contentType);
+//        if (!customFilename.endsWith("." + fileExtension)) {
+//            customFilename += "." + fileExtension;
+//        }
 
         // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
         String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
 
-        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
-        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        // Tạo URL bảo mật với transformation flag attachment:<encoded_filename>
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo custom filename
         String secureUrl = cloudinary.url()
                 .resourceType("raw")
                 .publicId(publicId)
                 .secure(true)
-                .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                .transformation(new Transformation().flags("attachment:" + customFilename))
                 .generate();
 
         return secureUrl;
@@ -162,6 +171,24 @@ public class PartnerContractService implements IPartnerContractService {
                         contentType.equals("application/msword") ||
                         contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         );
+    }
+
+    // Hàm lấy phần mở rộng (extension) của file dựa trên MIME type
+    private String getFileExtension(String contentType) {
+        if (contentType == null) {
+            return "pdf";  // Default extension if MIME type is not recognized
+        }
+
+        switch (contentType) {
+            case "application/pdf":
+                return "pdf";
+            case "application/msword":
+                return "doc";
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                return "docx";
+            default:
+                return "pdf";  // Default to PDF if MIME type doesn't match
+        }
     }
 
     // Hàm chuẩn hóa tên file tiếng Việt: bỏ dấu, loại bỏ ký tự không hợp lệ, chuyển khoảng trắng thành dấu gạch dưới
