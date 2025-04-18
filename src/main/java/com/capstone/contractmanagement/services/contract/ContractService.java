@@ -1415,7 +1415,7 @@ public class ContractService implements IContractService{
     @Transactional
     public void uploadSignedContract(Long contractId, List<MultipartFile> files) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
 
         try {
             //  Xoá file cũ khỏi Cloudinary (nếu có)
@@ -1451,12 +1451,37 @@ public class ContractService implements IContractService{
                                 "folder", "signed_contract_done/" + contractId,
                                 "use_filename", true,
                                 "unique_filename", true,
-                                "resource_type", resourceType
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
                         )
                 );
 
                 // Lấy URL an toàn của file
                 String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Ensure filename has the .pdf extension
+//                    if (!customFilename.endsWith(".pdf")) {
+//                        customFilename += ".pdf";
+//                    }
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
                 uploadedUrls.add(signedUrl);
             }
 
@@ -1467,7 +1492,7 @@ public class ContractService implements IContractService{
             contract.setStatus(ContractStatus.ACTIVE);
             contractRepository.save(contract);
         } catch (IOException e) {
-            logger.error("Failed to upload bill urls for payment schedule with ID {}", contractId, e);
+            logger.error("Failed to upload bill urls for contract with ID {}", contractId, e);
         }
     }
 

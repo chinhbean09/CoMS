@@ -349,7 +349,8 @@ public class AddendumController {
                 "resource_type", "raw",      // Cho phép upload file dạng raw
                 "folder", "signed_addenda",
                 "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", true
+                "unique_filename", true,
+                "format", "pdf"
         ));
 
         // Lấy public ID của file đã upload
@@ -367,7 +368,7 @@ public class AddendumController {
                 .resourceType("raw")
                 .publicId(publicId)
                 .secure(true)
-                .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                .transformation(new Transformation().flags("attachment:" + customFilename))
                 .generate();
 
         return secureUrl;
