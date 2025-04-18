@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.components.SecurityUtils;
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.addendum.SignAddendumRequest;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
@@ -473,9 +474,9 @@ public class AddendumController {
 
     @PostMapping("/upload-file-base64")
     public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long addendumId,
-                                                           @RequestParam String fileBase64,
+                                                           @RequestBody FileBase64DTO fileBase64DTO,
                                                            @RequestParam String fileName) throws DataNotFoundException, IOException {
-        addendumService.uploadFileBase64(addendumId, fileBase64, fileName);
+        addendumService.uploadFileBase64(addendumId, fileBase64DTO, fileName);
         return ResponseEntity.ok(ResponseObject.builder()
                 .message("Tải lên thành công")
                 .status(HttpStatus.OK)

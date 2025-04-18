@@ -54,9 +54,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToEffectiveNotify) {
-            String message = contract.getNotifyEffectiveContent() != null
-                    ? contract.getNotifyEffectiveContent()
-                    : "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate();
+            String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate();
             sendNotification(contract, message, true);
             mailService.sendEmailContractEffectiveDate(contract);
             contract.setStatus(ContractStatus.ACTIVE);
@@ -74,9 +72,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToExpiryNotify) {
-            String message = contract.getNotifyExpiryContent() != null
-                    ? contract.getNotifyExpiryContent()
-                    : "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate();
+            String message = "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate();
             sendNotification(contract, message, false);
             mailService.sendEmailContractExpiryDate(contract);
         }
