@@ -1918,6 +1918,7 @@ public class AddendumService implements IAddendumService{
                 .generate();
 
         addendum.setSignedFilePath(secureUrl);
+        addendum.setStatus(AddendumStatus.SIGNED);
         addendumRepository.save(addendum);
     }
 
