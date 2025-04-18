@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.entities.approval_workflow;
 
 
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract.ContractType;
@@ -56,5 +57,8 @@ public class ApprovalWorkflow {
     @JoinColumn(name = "contract_type_id")
     private ContractType contractType;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }
