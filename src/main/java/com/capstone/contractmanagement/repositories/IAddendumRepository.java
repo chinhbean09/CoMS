@@ -16,6 +16,7 @@ import java.util.List;
 public interface IAddendumRepository extends JpaRepository<Addendum, Long> {
 
     List<Addendum> findByContract(Contract contract);
+    long countByStatusAndContract_IsLatestVersion(AddendumStatus status, Boolean isLatestVersion);
 
     boolean existsByContractIdAndTitleAndIdNot(Long contractId, String title, Long addendumId);
 
