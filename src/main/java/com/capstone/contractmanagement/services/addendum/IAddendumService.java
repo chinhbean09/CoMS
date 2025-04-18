@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.addendum;
 
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
@@ -59,5 +60,5 @@ public interface IAddendumService {
 
     List<String> getSignedAddendumUrl(Long addendumId) throws DataNotFoundException;
 
-    void uploadFileBase64(Long addendumId, String file, String fileName) throws DataNotFoundException, IOException;
+    void uploadFileBase64(Long addendumId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
 }
