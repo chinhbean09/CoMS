@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,12 +59,15 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     @Override
     @Transactional
     public ApprovalWorkflowResponse createWorkflow(ApprovalWorkflowDTO approvalWorkflowDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
         // Tạo đối tượng workflow mà không gán contract qua builder
 //        ContractType contractType = contractTypeRepository.findById(approvalWorkflowDTO.getContractTypeId())
 //                .orElseThrow(() -> new RuntimeException("Contract type not found with id: " + approvalWorkflowDTO.getContractTypeId()));
         ApprovalWorkflow workflow = ApprovalWorkflow.builder()
                 .name(approvalWorkflowDTO.getName())
                 //.contractType(contractType)
+                .user(currentUser)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -323,6 +327,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Khong tìm thấy hợp đồng với id " + contractId));
 
+//        LocalDateTime now = LocalDateTime.now();
+//        // CHỈ CHO ÁP DỤNG KHI HÔM NAY ≤ ngày hiệu lực
+//        if (contract.getEffectiveDate().isBefore(now)) {
+//            throw new DataNotFoundException(
+//                    "Không thể gán quy trình duyệt: hợp đồng đã có hiệu lực từ ngày "
+//                            + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+//            );
+//        }
         // Tìm workflow gốc theo workflowId
         ApprovalWorkflow originalWorkflow = approvalWorkflowRepository.findById(workflowId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
@@ -577,8 +589,10 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     @Transactional
     public List<ApprovalWorkflowResponse> getWorkflowByContractTypeId(Long contractTypeId) throws DataNotFoundException {
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
         // Tìm ApprovalWorkflow theo contractTypeId (bạn cần định nghĩa phương thức này trong IApprovalWorkflowRepository)
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByContractType_IdOrderByCreatedAtDesc(contractTypeId);
+        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByContractType_IdAndUser_IdOrderByCreatedAtDesc(contractTypeId, currentUser.getId());
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
         return workflow.stream()
@@ -848,11 +862,11 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     AddendumStatus.APPROVAL_PENDING, true, currentUser.getId(), ApprovalStatus.APPROVING);
 
             // CEO: lấy số lượng hợp đồng và phụ lục đã phê duyệt và là phiên bản mới nhất
-            long contractsApprovedForDirector = contractRepository.countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-                    ContractStatus.APPROVED, true, currentUser.getId(), ApprovalStatus.APPROVED);
+            long contractsApprovedForDirector = contractRepository.countByStatusAndIsLatestVersion(
+                    ContractStatus.APPROVED, true);
 
-            long addendaApprovedForDirector = addendumRepository.countByStatusAndContract_IsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
-                    AddendumStatus.APPROVED, true, currentUser.getId(), ApprovalStatus.APPROVED);
+            long addendaApprovedForDirector = addendumRepository.countByStatusAndContract_IsLatestVersion(
+                    AddendumStatus.APPROVED, true);
 
             stats.put("contractsPendingApprovalForDirector", (int) contractsPendingApprovalForDirector);
             stats.put("addendaPendingApprovalForDirector", (int) addendaPendingApprovalForDirector);
