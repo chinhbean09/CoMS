@@ -258,7 +258,6 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     // Đếm số hợp đồng cần phê duyệt mà người duyệt được giao
     long countByStatusAndIsLatestVersionAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
             ContractStatus status, Boolean isLatestVersion, Long approverId, ApprovalStatus approvalStatus);
-    long countByStatusAndIsLatestVersion(ContractStatus status, Boolean isLatestVersion);
 
     long countByUser_IdAndStatusAndApprovalWorkflow_Stages_Approver_IdAndApprovalWorkflow_Stages_Status(
             Long userId,

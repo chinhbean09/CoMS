@@ -1514,8 +1514,11 @@ public class AddendumService implements IAddendumService{
     @Transactional
     public ApprovalWorkflowResponse createWorkflowForAddendum(AddendumApprovalWorkflowDTO approvalWorkflowDTO) {
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
         ApprovalWorkflow workflow = ApprovalWorkflow.builder()
                 .name(approvalWorkflowDTO.getName())
+                .user(currentUser)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -1600,7 +1603,9 @@ public class AddendumService implements IAddendumService{
     @Override
     @Transactional
     public List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId() {
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByOrderByCreatedAtDesc();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(currentUser.getId());
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
         return workflow.stream()

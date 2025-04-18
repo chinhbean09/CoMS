@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -120,12 +121,12 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             if (addendumPayment != null) {
                 props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
-                props.put("dueDate", addendumPayment.getPaymentDate());
+                props.put("dueDate", addendumPayment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", addendumPayment.getPaymentOrder());
             }
             if (payment != null){
                 props.put("contractTitle", payment.getContract().getTitle());
-                props.put("dueDate", payment.getPaymentDate());
+                props.put("dueDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", payment.getPaymentOrder());
             }
 
@@ -148,12 +149,12 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             if (addendumPayment != null) {
                 props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
-                props.put("dueDate", addendumPayment.getPaymentDate());
+                props.put("dueDate", addendumPayment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", addendumPayment.getPaymentOrder());
             }
             if (payment != null){
                 props.put("contractTitle", payment.getContract().getTitle());
-                props.put("dueDate", payment.getPaymentDate());
+                props.put("dueDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", payment.getPaymentOrder());
             }
 
@@ -267,7 +268,7 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", contract.getContractNumber());
             props.put("contractTitle", contract.getTitle());
-            props.put("contractExpiryDate", contract.getExpiryDate());
+            props.put("contractExpiryDate", contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template đã định nghĩa
@@ -292,7 +293,7 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", contract.getContractNumber());
             props.put("contractTitle", contract.getTitle());
-            props.put("contractEffectiveDate", contract.getEffectiveDate());
+            props.put("contractEffectiveDate", contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template đã định nghĩa
@@ -317,7 +318,7 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", contract.getContractNumber());
             props.put("contractTitle", contract.getTitle());
-            props.put("contractExpiryDate", contract.getExpiryDate());
+            props.put("contractExpiryDate", contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template już định nghĩa
@@ -395,8 +396,8 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", addendum.getContractNumber());
             props.put("addendumTitle", addendum.getTitle());
-            props.put("addendumExtendContractDate", addendum.getExtendContractDate());
-            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate());
+            props.put("addendumExtendContractDate", addendum.getExtendContractDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template już định nghĩa
@@ -422,8 +423,8 @@ public class MailService implements IMailService{
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", addendum.getContractNumber());
             props.put("addendumTitle", addendum.getTitle());
-            props.put("addendumExtendContractDate", addendum.getExtendContractDate());
-            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate());
+            props.put("addendumExtendContractDate", addendum.getExtendContractDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            props.put("addendumContractExpirationDate", addendum.getContractExpirationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             dataMailDTO.setProps(props);
 
             // Gửi email HTML theo template już định nghĩa
