@@ -1516,6 +1516,7 @@ public class ContractService implements IContractService{
                 .generate();
 
         contract.setSignedFilePath(secureUrl);
+        contract.setStatus(ContractStatus.SIGNED);
         contractRepository.save(contract);
     }
 
