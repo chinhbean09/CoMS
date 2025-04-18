@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumTermSnapshotDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
@@ -1884,11 +1885,11 @@ public class AddendumService implements IAddendumService{
     }
 
     @Override
-    public void uploadFileBase64(Long addendumId, String file, String fileName) throws DataNotFoundException, IOException {
+    public void uploadFileBase64(Long addendumId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException {
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Addendum not found"));
 
-        byte[] fileBytes = Base64.getDecoder().decode(file);
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
         // Upload as a raw file to Cloudinary
         Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(

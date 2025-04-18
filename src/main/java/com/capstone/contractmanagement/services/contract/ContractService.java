@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.components.SecurityUtils;
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.contract.*;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentScheduleDTO;
@@ -1482,11 +1483,11 @@ public class ContractService implements IContractService{
     }
 
     @Override
-    public void uploadSignedContractBase64(Long contractId, String file, String fileName) throws DataNotFoundException, IOException {
+    public void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Contract schedule not found"));
 
-        byte[] fileBytes = Base64.getDecoder().decode(file);
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
         // Upload as a raw file to Cloudinary
         Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
