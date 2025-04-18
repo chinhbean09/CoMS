@@ -597,47 +597,51 @@
                     "resource_type", "raw",      // Cho phép upload file dạng raw
                     "folder", "signed_contracts",
                     "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                    "unique_filename", true
+                    "unique_filename", true,     // Tạo tên file duy nhất
+                    "format", "pdf"              // Force the file to be uploaded as a PDF
             ));
 
             // Lấy public ID của file đã upload
             String publicId = (String) uploadResult.get("public_id");
 
-            // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+            // Normalize filename (remove diacritics, replace spaces with underscores)
             String customFilename = normalizeFilename(fileName);
-
-            // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+            // URL-encode the normalized filename (only encoding ASCII characters)
             String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
 
-            // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+            // Tạo URL bảo mật với transformation flag attachment
             // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
             String secureUrl = cloudinary.url()
                     .resourceType("raw")
                     .publicId(publicId)
                     .secure(true)
-                    .transformation(new Transformation().flags("attachment:" + encodedFilename))
+                    .transformation(new Transformation().flags("attachment:" + customFilename))
                     .generate();
 
             return secureUrl;
         }
 
+        // Function to normalize the filename: remove diacritics, replace spaces with underscores
         private String normalizeFilename(String filename) {
             if (filename == null || filename.isEmpty()) {
                 return "file";
             }
-            // Loại bỏ extension nếu có
+
+            // Remove extension if it exists
             int dotIndex = filename.lastIndexOf('.');
             if (dotIndex != -1) {
                 filename = filename.substring(0, dotIndex);
             }
-            // Chuẩn hóa Unicode: tách dấu
+
+            // Normalize Unicode: remove diacritics
             String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
-            // Loại bỏ dấu (diacritics)
+            // Remove diacritical marks (accents)
             normalized = normalized.replaceAll("\\p{M}", "");
-            // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+            // Keep letters, numbers, underscores, hyphens, spaces, and exclamation marks
             normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
-            // Chuyển khoảng trắng thành dấu gạch dưới và trim
+            // Replace spaces with underscores and trim
             normalized = normalized.trim().replaceAll("\\s+", "_");
+
             return normalized;
         }
 
@@ -701,6 +705,17 @@
                     .message("Tải lên thành công")
                     .status(HttpStatus.OK)
                     .data(null)
+                    .build());
+        }
+
+        @PostMapping("/upload-file-base64get-count")
+        public ResponseEntity<ResponseObject> uploadFileBase64GetCount(
+                                                               @RequestBody FileBase64DTO fileBase64
+                                                               ) throws IOException {
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Tải lên file lên thành công")
+                    .status(HttpStatus.OK)
+                    .data(signatureLocatorService.getPdfPageCountFromBase64(fileBase64.getFileBase64()))
                     .build());
         }
 
