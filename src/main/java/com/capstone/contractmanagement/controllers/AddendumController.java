@@ -314,6 +314,7 @@ public class AddendumController {
 
             // Update contract status
             addendum.setStatus(AddendumStatus.SIGNED);
+            addendum.setSignedFilePath(filePath);
 
             // Save the contract changes
             addendumRepository.save(addendum);
