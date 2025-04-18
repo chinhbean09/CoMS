@@ -1858,12 +1858,35 @@ public class AddendumService implements IAddendumService{
                                 "folder", "signed_addendum_done/" + addendumId,
                                 "use_filename", true,
                                 "unique_filename", true,
-                                "resource_type", resourceType
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
                         )
                 );
 
                 // Lấy URL an toàn của file
                 String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Ensure filename has the .pdf extension
+//                    if (!customFilename.endsWith(".pdf")) {
+//                        customFilename += ".pdf";
+//                    }
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
                 uploadedUrls.add(signedUrl);
             }
 
