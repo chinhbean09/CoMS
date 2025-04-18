@@ -1,10 +1,13 @@
 package com.capstone.contractmanagement.services.file_process;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.Normalizer;
 import java.util.*;
@@ -168,6 +171,21 @@ public class PdfSignatureLocatorService extends PDFTextStripper implements IPdfS
                 Math.round(uryConverted),
                 bestKy.page
         );
+    }
+
+    @Override
+    public int getPdfPageCountFromBase64(String base64EncodedPdf) throws IOException {
+        // Decode the Base64 string to byte array
+        byte[] pdfBytes = Base64.getDecoder().decode(base64EncodedPdf);
+
+        // Create a PDDocument instance from the byte array
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(pdfBytes);
+             PDDocument document = PDDocument.load(bis)) {
+
+            // Get the number of pages in the PDF
+            PDPageTree pages = document.getPages();
+            return pages.getCount();
+        }
     }
 
     public static class SignatureCoordinates {
