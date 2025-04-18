@@ -1,6 +1,7 @@
     package com.capstone.contractmanagement.controllers;
 
     import com.capstone.contractmanagement.components.SecurityUtils;
+    import com.capstone.contractmanagement.dtos.FileBase64DTO;
     import com.capstone.contractmanagement.dtos.contract.*;
     import com.capstone.contractmanagement.entities.AuditTrail;
     import com.capstone.contractmanagement.entities.PaymentSchedule;
@@ -693,7 +694,7 @@
 
         @PostMapping("/upload-file-base64")
         public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long contractId,
-                                                               @RequestParam String fileBase64,
+                                                               @RequestBody FileBase64DTO fileBase64,
                                                                @RequestParam String fileName) throws DataNotFoundException, IOException {
             contractService.uploadSignedContractBase64(contractId, fileBase64, fileName);
             return ResponseEntity.ok(ResponseObject.builder()

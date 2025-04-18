@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.services.contract;
 
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.contract.ContractComparisonDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
@@ -66,5 +67,5 @@ public interface IContractService {
 
     List<String> getSignedContractUrl(Long contractId) throws DataNotFoundException;
 
-    void uploadSignedContractBase64(Long contractId, String file, String fileName) throws DataNotFoundException, IOException;
+    void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
     }
