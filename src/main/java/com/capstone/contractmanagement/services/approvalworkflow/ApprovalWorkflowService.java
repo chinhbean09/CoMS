@@ -189,58 +189,55 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
     @Override
     @Transactional
     public void updateWorkflow(Long id, ApprovalWorkflowDTO approvalWorkflowDTO) throws DataNotFoundException {
-        // Kiểm tra xem workflow có tồn tại hay không
+        // 1. Lấy workflow và kiểm tra tồn tại
         ApprovalWorkflow workflow = approvalWorkflowRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
 
-        // Cập nhật thông tin chung của workflow
+        // 2. Cập nhật tên workflow và xóa sạch các bước cũ
         workflow.setName(approvalWorkflowDTO.getName());
-
-        // Nếu muốn thay thế hoàn toàn các stage cũ, xóa sạch collection hiện có
         workflow.getStages().clear();
 
+        // 3. Lấy DTO và bắt buộc phải có ít nhất 2 bước duyệt
         List<ApprovalStageDTO> dtoStages = approvalWorkflowDTO.getStages();
         if (dtoStages == null || dtoStages.size() < 2) {
             throw new RuntimeException("Quy trình phải có ít nhất 2 người duyệt.");
         }
 
-        // Nếu có danh sách stage trong DTO, kiểm tra duplicate approver
-        if (approvalWorkflowDTO.getStages() != null) {
-            // Sử dụng Set để kiểm tra duplicate
-            Set<Long> approverIds = new HashSet<>();
-            for (var stageDTO : approvalWorkflowDTO.getStages()) {
-                if (stageDTO.getApproverId() == null) {
-                    throw new RuntimeException("Trùng người duyệt tại stage: " + stageDTO.getStageOrder());
-                }
-                if (!approverIds.add(stageDTO.getApproverId())) {
-                    throw new RuntimeException("Trùng ID người duyệt: " + stageDTO.getApproverId());
-                }
+        // 4. Kiểm tra duplicate approver và build lại các bước từ DTO
+        Set<Long> approverIds = new HashSet<>();
+        for (ApprovalStageDTO stageDTO : dtoStages) {
+            Long approverId = stageDTO.getApproverId();
+            if (approverId == null) {
+                throw new RuntimeException("Stage " + stageDTO.getStageOrder() + ": approverId không được để trống.");
             }
-            // Thêm các stage mới sau khi xác nhận không có duplicate
-            approvalWorkflowDTO.getStages().forEach(stageDTO -> {
-                User approver = userRepository.findById(stageDTO.getApproverId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt với id " + stageDTO.getApproverId()));
-                ApprovalStage stage = ApprovalStage.builder()
-                        .stageOrder(stageDTO.getStageOrder())
-                        .approver(approver)
-                        .status(ApprovalStatus.NOT_STARTED)
-                        .approvalWorkflow(workflow)
-                        .build();
-                workflow.getStages().add(stage);
-            });
+            if (!approverIds.add(approverId)) {
+                throw new RuntimeException("Trùng ID người duyệt: " + approverId);
+            }
+            User approver = userRepository.findById(approverId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt với id " + approverId));
+            ApprovalStage stage = ApprovalStage.builder()
+                    .stageOrder(stageDTO.getStageOrder())
+                    .approver(approver)
+                    .status(ApprovalStatus.NOT_STARTED)
+                    .approvalWorkflow(workflow)
+                    .build();
+            workflow.getStages().add(stage);
         }
 
-        // 5. Kiểm tra bước cuối có phải DIRECTOR không
+        // 5. Kiểm tra xem bước cuối do DTO cung cấp đã là DIRECTOR chưa
         ApprovalStage lastStage = workflow.getStages().stream()
                 .max(Comparator.comparingInt(ApprovalStage::getStageOrder))
                 .get();
-        if (lastStage.getApprover().getRole().getRoleName() != Role.DIRECTOR) {
-            // 5a. Tìm một director bất kỳ (hoặc theo quy tắc riêng của bạn)
+        String lastRoleName = lastStage.getApprover().getRole().getRoleName();
+        // So sánh đúng String với enum name
+        if (!lastRoleName.equalsIgnoreCase(Role.DIRECTOR)) {
+            // 5a. Tự động tìm một user có role DIRECTOR
             User director = userRepository.findAll().stream()
-                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+                    .filter(u -> u.getRole() != null
+                            && Role.DIRECTOR.equalsIgnoreCase(u.getRole().getRoleName()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
-            // 5b. Tạo bước mới với order = maxOrder + 1
+            // 5b. Tạo bước mới với stageOrder = maxOrder + 1
             int nextOrder = lastStage.getStageOrder() + 1;
             ApprovalStage directorStage = ApprovalStage.builder()
                     .stageOrder(nextOrder)
@@ -251,9 +248,8 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             workflow.getStages().add(directorStage);
         }
 
-        // Cập nhật lại customStagesCount dựa trên số lượng stage hiện có
+        // 6. Cập nhật lại customStagesCount và lưu workflow
         workflow.setCustomStagesCount(workflow.getStages().size());
-
         approvalWorkflowRepository.save(workflow);
     }
 
