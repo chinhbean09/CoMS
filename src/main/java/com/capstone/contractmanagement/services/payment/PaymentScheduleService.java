@@ -43,7 +43,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
     public String createPaymentSchedule(Long contractId, CreatePaymentScheduleDTO createPaymentScheduleDTO) throws DataNotFoundException {
         // check if contract exists
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
         // create payment schedule
 
         PaymentSchedule paymentSchedule = PaymentSchedule.builder()
@@ -60,7 +60,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
         paymentScheduleRepository.save(paymentSchedule);
 
-        return "Create payment schedule successfully";
+        return "Tạo đợt thanh toán thành công";
     }
 
     @Override
@@ -202,7 +202,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
         List<String> billUrls = paymentScheduleRepository.findBillUrlsByPaymentId(paymentId);
 
         if (billUrls == null || billUrls.isEmpty()) {
-            throw new DataNotFoundException("No bill URLs found for payment with ID: " + paymentId);
+            throw new DataNotFoundException("Không tìm thấy bill url với đợt thanh toán");
         }
 
         return billUrls;

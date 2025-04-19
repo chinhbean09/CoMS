@@ -250,7 +250,7 @@ public class ContractService implements IContractService{
                 try {
                     configTypeTermId = Long.parseLong(key);
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
+                    throw new IllegalArgumentException("Key trong điều khoản bổ sung phải là số đại diện loại điều khoản. Key không hợp lệ");
                 }
                 Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
 
@@ -259,10 +259,10 @@ public class ContractService implements IContractService{
                 if (groupConfig.containsKey("Common")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("Common")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm điều khoản chung không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         commonSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -276,10 +276,10 @@ public class ContractService implements IContractService{
                 if (groupConfig.containsKey("A")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("A")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên A không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         aSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -293,10 +293,10 @@ public class ContractService implements IContractService{
                 if (groupConfig.containsKey("B")) {
                     for (TermSnapshotDTO termDTO : groupConfig.get("B")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên B không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         bSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -582,7 +582,7 @@ public class ContractService implements IContractService{
         auditTrail.setChangeSummary(changeSummary);
 
         if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
-            throw new IllegalStateException("Hợp đồng trong AuditTrail không tồn tại hoặc không có ID.");
+            throw new IllegalStateException("Hợp đồng trong Kiểm toán không tồn tại.");
         }
 
         return auditTrail;
@@ -596,11 +596,11 @@ public class ContractService implements IContractService{
         String enterpriseAbbr = partnerA.getAbbreviation();
 
         Partner partner = partnerRepository.findById(dto.getPartnerId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác"));
         String partnerAbbr = partner.getAbbreviation();
 
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng"));
         ContractType contractType = template.getContractType();
         String contractTypeAbbr = generateContractTypeAbbreviation(contractType.getName());
         String contractAbbr = generateContractAbbreviation(dto.getContractTitle(), partnerAbbr);
@@ -1113,7 +1113,7 @@ public class ContractService implements IContractService{
         public Contract duplicateContract(Long contractId) {
             // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
             Contract originalContract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
 
             // 2. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
             Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
@@ -1252,14 +1252,14 @@ public class ContractService implements IContractService{
     public Contract duplicateContractWithPartner(Long contractId, Long partnerId) {
         // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
         Contract originalContract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
 
         // 2. Lấy Partner từ partnerId để lấy thông tin
         Partner partnerFromId = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Partner với id: " + partnerId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác"));
 
         Partner partnerA = partnerRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A"));
 
         // 3. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
         Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
@@ -1415,7 +1415,7 @@ public class ContractService implements IContractService{
     @Transactional
     public void uploadSignedContract(Long contractId, List<MultipartFile> files) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         try {
             //  Xoá file cũ khỏi Cloudinary (nếu có)
@@ -1492,7 +1492,7 @@ public class ContractService implements IContractService{
             contract.setStatus(ContractStatus.ACTIVE);
             contractRepository.save(contract);
         } catch (IOException e) {
-            logger.error("Failed to upload bill urls for contract with ID {}", contractId, e);
+            logger.error("Không tải lên được url hóa đơn cho hợp đồng", e);
         }
     }
 
@@ -1501,7 +1501,7 @@ public class ContractService implements IContractService{
         List<String> billUrls = contractRepository.findSignedContractUrls(contractId);
 
         if (billUrls == null || billUrls.isEmpty()) {
-            throw new DataNotFoundException("Không tìm thấy URLs với hợp đồng ID: " + contractId);
+            throw new DataNotFoundException("Không tìm thấy URLs");
         }
 
         return billUrls;
@@ -1510,7 +1510,7 @@ public class ContractService implements IContractService{
     @Override
     public void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract schedule not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy lịch trình thanh toán cho hợp đồng"));
 
         byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
@@ -1671,7 +1671,7 @@ public class ContractService implements IContractService{
                 .maxDateLate(dto.getMaxDateLate() != null ? dto.getMaxDateLate() : currentContract.getMaxDateLate())
                 .contractType(dto.getContractTypeId() != null
                         ? contractTypeRepository.findById(dto.getContractTypeId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng"))
                         : currentContract.getContractType())
                 .isLatestVersion(true)
                 .isEffectiveNotified(currentContract.getIsEffectiveNotified())
@@ -1756,7 +1756,7 @@ public class ContractService implements IContractService{
                         ? dto.getPartnerB().getPosition() : existingPartnerB.getPosition())           // Thêm position
                 .partner(dto.getPartnerB() != null && dto.getPartnerB().getPartnerId() != null
                         ? partnerRepository.findById(dto.getPartnerB().getPartnerId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy partner B với ID: " + dto.getPartnerB().getPartnerId()))
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác B"))
                         : existingPartnerB.getPartner())
                 .build();
 
@@ -1827,7 +1827,7 @@ public class ContractService implements IContractService{
 
                 // check tồn tại term trong database
                 Term term = termRepository.findById(termDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Điều khoản"));
 
                 // validate loại term
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
@@ -1934,7 +1934,7 @@ public class ContractService implements IContractService{
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại GENERAL_TERMS");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản chung");
                 }
                 newTermIds.add(term.getId());
                 ContractTerm existingTerm = currentContract.getContractTerms().stream()
@@ -2013,7 +2013,7 @@ public class ContractService implements IContractService{
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại OTHER_TERMS");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại các điều khoản khác");
                 }
                 newTermIds.add(term.getId());
                 ContractTerm existingTerm = currentContract.getContractTerms().stream()
@@ -2146,7 +2146,7 @@ public class ContractService implements IContractService{
 
                                 // Kiểm tra term có tồn tại trong database không
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
 
                                 // Tạo snapshot từ term
                                 return AdditionalTermSnapshot.builder()
@@ -2163,7 +2163,7 @@ public class ContractService implements IContractService{
                     aSnapshots = groupConfig.get("A").stream()
                             .map(termDTO -> {
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                                 return AdditionalTermSnapshot.builder()
                                         .termId(term.getId())
                                         .termLabel(term.getLabel())
@@ -2176,7 +2176,7 @@ public class ContractService implements IContractService{
                     bSnapshots = groupConfig.get("B").stream()
                             .map(termDTO -> {
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                                 return AdditionalTermSnapshot.builder()
                                         .termId(term.getId())
                                         .termLabel(term.getLabel())
@@ -2190,21 +2190,21 @@ public class ContractService implements IContractService{
                 unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionCommonA.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'A'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên Chung' và 'Bên A'");
                 }
 
                 Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionCommonB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên Chung' và 'Bên B'");
                 }
 
                 Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionAB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'A' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên A' và 'Bên B'");
                 }
                 // Tạo newDetail tạm thời để so sánh
                 ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
@@ -2706,10 +2706,10 @@ public class ContractService implements IContractService{
                         auditTrail.setNewValue(serializePaymentSchedule(savedPayment));
                         System.out.println("Updated audit trail: " + auditTrail.getNewValue());
                     } else {
-                        System.err.println("Không tìm thấy PaymentSchedule tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
+                        System.err.println("Không tìm thấy lịch thanh toán tương ứng trong savedNewContract cho kiểm toán: " + auditTrail.getNewValue());
                     }
                 } else {
-                    System.err.println("Không tìm thấy PaymentSchedule trong map cho audit trail: " + auditTrail.getNewValue());
+                    System.err.println("Không tìm thấy lịch thanh toán trong map cho kiểm toán: " + auditTrail.getNewValue());
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -2741,10 +2741,10 @@ public class ContractService implements IContractService{
                         auditTrail.setNewValue(serializeContractItem(savedItem));
                         System.out.println("Updated audit trail: " + auditTrail.getNewValue());
                     } else {
-                        System.err.println("Không tìm thấy ContractItem tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
+                        System.err.println("Không tìm thấy mục hợp đồng tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
                     }
                 } else {
-                    System.err.println("Không tìm thấy ContractItem trong map cho audit trail: " + auditTrail.getNewValue());
+                    System.err.println("Không tìm thấy mục hợp đồng trong map cho audit trail: " + auditTrail.getNewValue());
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -3013,7 +3013,7 @@ public class ContractService implements IContractService{
     // Helper method để map TermSnapshotDTO thành AdditionalTermSnapshot
     private AdditionalTermSnapshot mapToSnapshot(TermSnapshotDTO dto) {
         Term term = termRepository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + dto.getId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
         return AdditionalTermSnapshot.builder()
                 .termId(term.getId())
                 .termLabel(term.getLabel())
@@ -3152,7 +3152,7 @@ public class ContractService implements IContractService{
                 return Integer.parseInt(part.substring(7));
             }
         }
-        throw new RuntimeException("Không thể trích xuất paymentOrder từ newValue: " + newValue);
+        throw new RuntimeException("Không thể trích xuất thanh toán: " + newValue);
     }
 
     private Long getTermIdFromNewValue(String newValue) {
@@ -3164,7 +3164,7 @@ public class ContractService implements IContractService{
         // Tìm vị trí của "typeTermId="
         int startIndex = newValue.indexOf("typeTermId=");
         if (startIndex == -1) {
-            throw new RuntimeException("Không thể trích xuất typeTermId từ newValue: " + newValue);
+            throw new RuntimeException("Không thể trích xuất loại điều khoản: " + newValue);
         }
         startIndex += "typeTermId=".length();
         int endIndex = newValue.indexOf(",", startIndex);
@@ -3283,7 +3283,7 @@ public class ContractService implements IContractService{
     public ContractStatus updateContractStatus(Long contractId, ContractStatus newStatus) {
         // Tìm hợp đồng
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
 
         // Kiểm tra trạng thái hiện tại và trạng thái mới có hợp lệ không
         ContractStatus currentStatus = contract.getStatus();
@@ -3339,7 +3339,7 @@ public class ContractService implements IContractService{
     public Contract rollbackContract(Long originalContractId, int targetVersion) {
         // 1. Tìm hợp đồng cần rollback về
         Contract targetContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, targetVersion)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với originalContractId: " + originalContractId + " và version: " + targetVersion));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng: " + " và version: " + targetVersion));
 
         // 2. Tìm phiên bản hiện tại (mới nhất) để so sánh và ghi log
         Integer currentMaxVersion = contractRepository.findMaxVersionByOriginalContractId(originalContractId);

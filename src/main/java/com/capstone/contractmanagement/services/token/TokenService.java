@@ -69,11 +69,11 @@ public class TokenService implements ITokenService {
     public Token refreshToken(String refreshToken, User user) throws Exception {
         Token existingToken = ITokenRepository.findByRefreshToken(refreshToken);
         if (existingToken == null) {
-            throw new DataNotFoundException("Refresh token does not exist");
+            throw new DataNotFoundException("Không tìm thấy refresh token");
         }
         if (existingToken.getRefreshExpirationDate().isBefore(LocalDateTime.now())) {
             ITokenRepository.delete(existingToken);
-            throw new ExpiredTokenException("Refresh token is expired");
+            throw new ExpiredTokenException("refresh token hết hạn");
         }
         String token = jwtTokenUtils.generateToken(user);
         LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expiration);
@@ -91,7 +91,7 @@ public class TokenService implements ITokenService {
         if (tokenEntity != null) {
             ITokenRepository.delete(tokenEntity);
         } else {
-            throw new RuntimeException("Token not found.");
+            throw new RuntimeException("Không tìm thấy token.");
         }
     }
 }
