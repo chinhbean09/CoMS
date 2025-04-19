@@ -89,9 +89,11 @@ public class PaymentScheduleService implements IPaymentScheduleService {
             // Nếu có phụ lục thanh toán, kiểm tra các đợt thanh toán từ phụ lục
             if (!addendumPayments.isEmpty()) {
                 for (AddendumPaymentSchedule addendumPayment : addendumPayments) {
+                    LocalDateTime fiveMinutesBefore = addendumPayment.getPaymentDate().minusMinutes(5);
                     if (//addendumPayment.getNotifyPaymentDate() != null &&
+                            now.isAfter(fiveMinutesBefore) &&
                             !addendumPayment.isReminderEmailSent() &&
-                            !now.isBefore(addendumPayment.getNotifyPaymentDate())) {
+                            now.isBefore(addendumPayment.getPaymentDate())) {
 
                         String message = "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
                                 "' sẽ đến hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
