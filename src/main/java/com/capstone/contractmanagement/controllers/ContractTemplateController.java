@@ -264,7 +264,7 @@ public class ContractTemplateController {
             @PathVariable Long id,
             @RequestParam ContractTemplateStatus status) {
         try {
-            ContractTemplateStatus updatedContract = templateService.updateContractStatus(id, status);
+            ContractTemplateStatus updatedContract = templateService.updateContractTemplateStatus(id, status);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.UPDATE_CONTRACT_STATUS_SUCCESSFULLY)

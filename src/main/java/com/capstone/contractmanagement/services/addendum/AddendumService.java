@@ -85,7 +85,7 @@ public class AddendumService implements IAddendumService{
 
         // Lấy hợp đồng từ DTO
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
-                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         // Kiểm tra xem có phụ lục nào với cùng title cho hợp đồng này chưa
         boolean isTitleExist = addendumRepository.existsByContractIdAndTitle(contract.getId(), addendumDTO.getTitle());
@@ -153,12 +153,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getLegalBasisTerms() != null) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getLegalBasisTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản Căn cứ pháp lý không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
                             .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý.");
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -172,12 +172,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getGeneralTerms() != null) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getGeneralTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản chung không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung.");
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -192,12 +192,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getOtherTerms() != null) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getOtherTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản khác không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác.");
                     }
                     addendumTerms.add(AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -219,7 +219,7 @@ public class AddendumService implements IAddendumService{
                     try {
                         configTypeTermId = Long.parseLong(key);
                     } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
+                        throw new IllegalArgumentException("Key trong điều khoản bổ sung phải là số đại diện cho của loại điều khoản. Key không hợp lệ");
                     }
                     Map<String, List<AddendumTermSnapshotDTO>> groupConfig = entry.getValue();
 
@@ -228,10 +228,10 @@ public class AddendumService implements IAddendumService{
                     if (groupConfig.containsKey("Common")) {
                         for (AddendumTermSnapshotDTO termDTO : groupConfig.get("Common")) {
                             if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
+                                throw new IllegalArgumentException("Điều khoản trong nhóm điều khoản chung không được để trống.");
                             }
                             Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                             commonSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
                                     .termLabel(term.getLabel())
@@ -245,10 +245,10 @@ public class AddendumService implements IAddendumService{
                     if (groupConfig.containsKey("A")) {
                         for (AddendumTermSnapshotDTO termDTO : groupConfig.get("A")) {
                             if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
+                                throw new IllegalArgumentException("Điều khoản trong nhóm bên A không được để trống.");
                             }
                             Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                             aSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
                                     .termLabel(term.getLabel())
@@ -262,10 +262,10 @@ public class AddendumService implements IAddendumService{
                     if (groupConfig.containsKey("B")) {
                         for (AddendumTermSnapshotDTO termDTO : groupConfig.get("B")) {
                             if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
+                                throw new IllegalArgumentException("Điều khoản trong nhóm bên B không được để trống.");
                             }
                             Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                             bSnapshots.add(AdditionalTermSnapshot.builder()
                                     .termId(term.getId())
                                     .termLabel(term.getLabel())
@@ -278,37 +278,37 @@ public class AddendumService implements IAddendumService{
                     Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     if (!unionCommonA.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
+                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên Chung' và 'Bên A'.");
                     }
                     Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     if (!unionCommonB.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
+                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên Chung' và 'Bên B'.");
                     }
                     Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                     if (!unionAB.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
+                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên A' và 'Bên B'.");
                     }
 
                     // Kiểm tra type term
                     for (AdditionalTermSnapshot snap : commonSnapshots) {
                         Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                             throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                         }
                     }
                     for (AdditionalTermSnapshot snap : aSnapshots) {
                         Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                             throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                         }
                     }
                     for (AdditionalTermSnapshot snap : bSnapshots) {
                         Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                         if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                             throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                         }
@@ -382,7 +382,7 @@ public class AddendumService implements IAddendumService{
                     .build();
         }
 
-        throw new DataNotFoundException("Cannot create addendum: Contract is not ACTIVE");
+        throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng không HOẠT ĐỘNG");
     }
 
     @Override
@@ -390,10 +390,10 @@ public class AddendumService implements IAddendumService{
     public List<AddendumResponse> getAllByContractId(Long contractId) throws DataNotFoundException {
         // Kiểm tra hợp đồng có tồn tại không
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Contract not found with id: " + contractId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         Partner partnerA = partnerRepository.findById(1L)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A"));
 
         Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(contract.getId(), PartnerType.PARTNER_B);
         // Lấy danh sách phụ lục theo contract id (giả sử repository có method: findByContract_Id)
@@ -401,7 +401,7 @@ public class AddendumService implements IAddendumService{
 
         // Nếu không có phụ lục, có thể trả về danh sách rỗng hoặc ném ngoại lệ
         if (addenda.isEmpty()) {
-            throw new DataNotFoundException("No addendum found for contract id: " + contractId);
+            throw new DataNotFoundException("Không tìm thấy phụ lục cho hợp đồng");
         }
 
         // Map entity thành DTO
@@ -435,11 +435,11 @@ public class AddendumService implements IAddendumService{
 
         // Tìm hợp đồng
         Contract contract = contractRepository.findById(addendumDTO.getContractId())
-                .orElseThrow(() -> new DataNotFoundException("Contract not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         // Tìm phụ lục
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục cho hợp đồng"));
 
         // Kiểm tra trạng thái phụ lục
         if (addendum.getStatus().equals(AddendumStatus.APPROVAL_PENDING)) {
@@ -527,12 +527,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getLegalBasisTerms() != null && !addendumDTO.getLegalBasisTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getLegalBasisTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản Căn cứ pháp lý không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý.");
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -549,12 +549,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getGeneralTerms() != null && !addendumDTO.getGeneralTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getGeneralTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản chung không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung.");
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -571,12 +571,12 @@ public class AddendumService implements IAddendumService{
             if (addendumDTO.getOtherTerms() != null && !addendumDTO.getOtherTerms().isEmpty()) {
                 for (AddendumTermSnapshotDTO termDTO : addendumDTO.getOtherTerms()) {
                     if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
+                        throw new IllegalArgumentException("Điều khoản khác không được để trống.");
                     }
                     Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                     if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác.");
                     }
                     AddendumTerm addendumTerm = AddendumTerm.builder()
                             .originalTermId(term.getId())
@@ -608,7 +608,7 @@ public class AddendumService implements IAddendumService{
                 try {
                     configTypeTermId = Long.parseLong(key);
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
+                    throw new IllegalArgumentException("Key trong điều khoản bổ sung phải là số đại diện cho của loại điều khoản. Key không hợp lệ" );
                 }
                 Map<String, List<AddendumTermSnapshotDTO>> groupConfig = entry.getValue();
 
@@ -617,10 +617,10 @@ public class AddendumService implements IAddendumService{
                 if (groupConfig.containsKey("Common") && !groupConfig.get("Common").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("Common")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm điều khoản chung không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         commonSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -634,10 +634,10 @@ public class AddendumService implements IAddendumService{
                 if (groupConfig.containsKey("A") && !groupConfig.get("A").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("A")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên A không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         aSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -651,10 +651,10 @@ public class AddendumService implements IAddendumService{
                 if (groupConfig.containsKey("B") && !groupConfig.get("B").isEmpty()) {
                     for (AddendumTermSnapshotDTO termDTO : groupConfig.get("B")) {
                         if (termDTO.getId() == null) {
-                            throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên B không được để trống.");
                         }
                         Term term = termRepository.findById(termDTO.getId())
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                         bSnapshots.add(AdditionalTermSnapshot.builder()
                                 .termId(term.getId())
                                 .termLabel(term.getLabel())
@@ -667,37 +667,37 @@ public class AddendumService implements IAddendumService{
                 Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionCommonA.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên Chung' và 'Bên A'.");
                 }
                 Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionCommonB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên Chung' và 'Bên B'.");
                 }
                 Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 if (!unionAB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Bên A' và 'Bên B'.");
                 }
 
                 // Kiểm tra type term
                 for (AdditionalTermSnapshot snap : commonSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                         throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
                 }
                 for (AdditionalTermSnapshot snap : aSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                         throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
                 }
                 for (AdditionalTermSnapshot snap : bSnapshots) {
                     Term term = termRepository.findById(snap.getTermId())
-                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản"));
                     if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
                         throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
                     }
@@ -775,39 +775,10 @@ public class AddendumService implements IAddendumService{
     public void deleteAddendum(Long addendumId) throws DataNotFoundException {
         // Tìm phụ lục theo id
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
         // Xóa phụ lục
         addendumRepository.delete(addendum);
     }
-
-//    @Override
-//    public AddendumResponse getAddendumById(Long addendumId) throws DataNotFoundException {
-//        Addendum addendum = addendumRepository.findById(addendumId)
-//                .orElseThrow(() -> new DataNotFoundException("Addendum not found with id: " + addendumId));
-//        Partner partnerA = partnerRepository.findById(1L)
-//                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
-//        Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
-//        return AddendumResponse.builder()
-//                .addendumId(addendum.getId())
-//                .title(addendum.getTitle())
-//                .content(addendum.getContent())
-//                .contractNumber(addendum.getContractNumber())
-//                .status(addendum.getStatus())
-//                .createdBy(UserAddendumResponse.builder()
-//                        .userId(addendum.getUser().getId())
-//                        .userName(addendum.getUser().getFullName())
-//                        .build())
-//                .partnerA(partnerA)
-//                .partnerB(contractPartners)
-//                .contractId(addendum.getContract().getId())
-////                .addendumType(AddendumTypeResponse.builder()
-////                        .addendumTypeId(addendum.getAddendumType().getId())
-////                        .name(addendum.getAddendumType().getName())
-////                        .build())
-//                .effectiveDate(addendum.getEffectiveDate())
-//                .createdAt(addendum.getCreatedAt())
-//                .build();
-//    }
 
     @Override
     @Transactional
@@ -887,7 +858,7 @@ public class AddendumService implements IAddendumService{
                         }
                 ));
         Partner partnerA = partnerRepository.findById(1L)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A mặc định"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bên A"));
         Optional<ContractPartner> contractPartners = contractPartnerRepository.findByContractIdAndPartnerType(addendum.getContract().getId(), PartnerType.PARTNER_B);
 
 
@@ -967,14 +938,14 @@ public class AddendumService implements IAddendumService{
     public void assignApprovalWorkflowOfContractToAddendum(Long addendumId) throws DataNotFoundException {
         // Lấy phụ lục hợp đồng và hợp đồng gốc
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Phụ lục hợp đồng không tìm thấy với id: " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Phụ lục hợp đồng không tìm thấy"));
 
         Contract contract = contractRepository.findById(addendum.getContract().getId())
                 .orElseThrow(() -> new DataNotFoundException("Hợp đồng không tìm thấy"));
 
         ApprovalWorkflow contractApprovalWorkflow = contract.getApprovalWorkflow();
         if (contractApprovalWorkflow == null) {
-            throw new DataNotFoundException("Contract approval workflow not found");
+            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt hợp đồng");
         }
 
         // Tạo một quy trình duyệt cho phụ lục hợp đồng bằng cách sao chép thông tin từ hợp đồng
@@ -1022,7 +993,7 @@ public class AddendumService implements IAddendumService{
     public void assignWorkflowToAddendum(Long addendumId, Long workflowId) throws DataNotFoundException {
         // Tìm phụ lục cần gán workflow
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Phụ lục hợp đồng không tìm thấy với id " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Phụ lục hợp đồng không tìm thấy"));
 
         // Tìm workflow gốc theo workflowId
         ApprovalWorkflow originalWorkflow = approvalWorkflowRepository.findById(workflowId)
@@ -1089,11 +1060,11 @@ public class AddendumService implements IAddendumService{
     public void approvedStageForAddendum(Long addendumId, Long stageId) throws DataNotFoundException {
         // Lấy phụ lục theo addendumId
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         // Tìm ApprovalStage theo stageId
         ApprovalStage stage = approvalStageRepository.findById(stageId)
-                .orElseThrow(() -> new DataNotFoundException("Approval stage not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy giai đoạn phê duyệt"));
 
         // Lấy người dùng hiện tại từ SecurityContext
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -1173,11 +1144,11 @@ public class AddendumService implements IAddendumService{
     public void rejectStageForAddendum(Long addendumId, Long stageId, WorkflowDTO workflowDTO) throws DataNotFoundException {
         // Lấy phụ lục theo addendumId
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         // Tìm ApprovalStage theo stageId
         ApprovalStage stage = approvalStageRepository.findById(stageId)
-                .orElseThrow(() -> new DataNotFoundException("Approval stage not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy giai đoạn phê duyệt"));
 
         // Lấy người dùng hiện tại từ SecurityContext
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -1554,7 +1525,7 @@ public class AddendumService implements IAddendumService{
                 User director = userRepository.findAll().stream()
                         .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
 
                 ApprovalStage directorStage = ApprovalStage.builder()
                         .stageOrder(workflow.getStages().size() + 1)
@@ -1633,12 +1604,12 @@ public class AddendumService implements IAddendumService{
     public List<CommentResponse> getApprovalStageCommentDetailsByAddendumId(Long addendumId) throws DataNotFoundException {
         // Tìm hợp đồng theo contractId
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         // Lấy quy trình phê duyệt của hợp đồng
         ApprovalWorkflow workflow = addendum.getApprovalWorkflow();
         if (workflow == null) {
-            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho phụ lục với id : " + addendumId);
+            throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho phụ lục");
         }
 
         // Lấy danh sách thông tin comment từ các bước duyệt
@@ -1662,7 +1633,7 @@ public class AddendumService implements IAddendumService{
 
         // Tìm hợp đồng
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         // Kiểm tra trạng thái hợp đồng
         if (contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.EXPIRED) {
@@ -1671,7 +1642,7 @@ public class AddendumService implements IAddendumService{
 
         // Tìm phụ lục gốc
         Addendum originAddendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id: " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         // Kiểm tra trùng lặp tiêu đề
         String newTitle = originAddendum.getTitle() + " (Copy)";
@@ -1823,7 +1794,7 @@ public class AddendumService implements IAddendumService{
     @Transactional
     public void uploadSignedAddendum(Long addendumId, List<MultipartFile> files) throws DataNotFoundException {
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục với id : " + addendumId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         try {
             //  Xoá file cũ khỏi Cloudinary (nếu có)
@@ -1907,7 +1878,7 @@ public class AddendumService implements IAddendumService{
         List<String> billUrls = addendumRepository.findSignedAddendumUrls(addendumId);
 
         if (billUrls == null || billUrls.isEmpty()) {
-            throw new DataNotFoundException("Không tìm thấy URLs với phụ lục ID: " + addendumId);
+            throw new DataNotFoundException("Không tìm thấy URLs");
         }
 
         return billUrls;
@@ -1916,7 +1887,7 @@ public class AddendumService implements IAddendumService{
     @Override
     public void uploadFileBase64(Long addendumId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException {
         Addendum addendum = addendumRepository.findById(addendumId)
-                .orElseThrow(() -> new DataNotFoundException("Addendum not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
         byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
