@@ -901,7 +901,7 @@
 
         @Override
         public Page<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId, Pageable pageable) {
-            Page<ContractTemplate> templates = templateRepository.findByContractTypeId(contractTypeId, pageable);
+            Page<ContractTemplate> templates = templateRepository.findByContractTypeIdAndStatusNot(contractTypeId, ContractTemplateStatus.DELETED, pageable);
             return templates.map(this::mapToDTO);
         }
 
