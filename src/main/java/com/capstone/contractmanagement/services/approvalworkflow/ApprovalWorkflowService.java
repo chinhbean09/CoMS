@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.approvalworkflow;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
+import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalStageDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.AuditTrail;
@@ -198,6 +199,11 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Nếu muốn thay thế hoàn toàn các stage cũ, xóa sạch collection hiện có
         workflow.getStages().clear();
 
+        List<ApprovalStageDTO> dtoStages = approvalWorkflowDTO.getStages();
+        if (dtoStages == null || dtoStages.size() < 2) {
+            throw new RuntimeException("Quy trình phải có ít nhất 2 người duyệt.");
+        }
+
         // Nếu có danh sách stage trong DTO, kiểm tra duplicate approver
         if (approvalWorkflowDTO.getStages() != null) {
             // Sử dụng Set để kiểm tra duplicate
@@ -222,6 +228,27 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                         .build();
                 workflow.getStages().add(stage);
             });
+        }
+
+        // 5. Kiểm tra bước cuối có phải DIRECTOR không
+        ApprovalStage lastStage = workflow.getStages().stream()
+                .max(Comparator.comparingInt(ApprovalStage::getStageOrder))
+                .get();
+        if (lastStage.getApprover().getRole().getRoleName() != Role.DIRECTOR) {
+            // 5a. Tìm một director bất kỳ (hoặc theo quy tắc riêng của bạn)
+            User director = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò DIRECTOR"));
+            // 5b. Tạo bước mới với order = maxOrder + 1
+            int nextOrder = lastStage.getStageOrder() + 1;
+            ApprovalStage directorStage = ApprovalStage.builder()
+                    .stageOrder(nextOrder)
+                    .approver(director)
+                    .status(ApprovalStatus.NOT_STARTED)
+                    .approvalWorkflow(workflow)
+                    .build();
+            workflow.getStages().add(directorStage);
         }
 
         // Cập nhật lại customStagesCount dựa trên số lượng stage hiện có
@@ -467,16 +494,18 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 contract.setStatus(ContractStatus.APPROVED);
                 contractRepository.save(contract);
 
+                User finalApprover = stage.getApprover();
+
                 // Tạo payload thông báo
                 Map<String, Object> payload = new HashMap<>();
-                String notificationMessage = "Hợp đồng " + contract.getTitle() + " đã được phê duyệt xong, hãy bắt đầu gửi ký";
+                String notificationMessage = "Hợp đồng " + contract.getTitle() + " đã được phê duyệt xong, hãy bắt đầu ký";
                 payload.put("message", notificationMessage);
                 payload.put("contractId", contractId);
 
                 // Gửi thông báo cho người duyệt tiếp theo
-                mailService.sendEmailApprovalSuccessForContract(contract, contract.getUser());
-                notificationService.saveNotification(contract.getUser(), notificationMessage, contract);
-                messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
+                mailService.sendEmailApprovalSuccessForContract(contract, finalApprover);
+                notificationService.saveNotification(finalApprover, notificationMessage, contract);
+                messagingTemplate.convertAndSendToUser(finalApprover.getFullName(), "/queue/notifications", payload);
 
                 // Ghi audit trail
                 String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();
