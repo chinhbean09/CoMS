@@ -139,22 +139,6 @@ public class UserService implements IUserService {
         return departmentCode + randomDigits;
     }
 
-//    private void sendAccountPassword(String email, String password) {
-//        try {
-//            DataMailDTO dataMailDTO = new DataMailDTO();
-//            dataMailDTO.setTo(email);
-//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("password", password);
-//            dataMailDTO.setProps(props); // Set props to dataMailDTO
-//
-//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
-//        } catch (MessagingException e) {
-//            logger.error("Failed to send OTP email", e);
-//        }
-//    }
-
     /**
      * Generates a random 8-character password that includes at least one uppercase letter,
      * one lowercase letter, one digit, and one special character.
@@ -217,48 +201,6 @@ public class UserService implements IUserService {
             return new DataNotFoundException("User not found");
         });
     }
-
-//    @Override
-//    public void sendMailForRegisterSuccess(String fullName, String email, String password) {
-//        try {
-//            DataMailDTO dataMail = new DataMailDTO();
-//            dataMail.setTo(email);
-//            dataMail.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("fulName", fullName);
-//            props.put("email", email);
-//            props.put("password", password);
-//
-//            dataMail.setProps(props);
-//
-//            mailService.sendHtmlMail(dataMail, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
-//        } catch (MessagingException exp) {
-//            logger.error("Failed to send registration success email", exp);
-//        }
-//    }
-
-//    @Override
-//    public void changePassword(Long id, ChangePasswordDTO changePasswordDTO) throws DataNotFoundException {
-//        User exsistingUser = UserRepository.findById(id)
-//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
-//        if (!passwordEncoder.matches(changePasswordDTO.getOldPassword(), exsistingUser.getPassword())) {
-//            throw new DataNotFoundException(MessageKeys.OLD_PASSWORD_WRONG);
-//        }
-//        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
-//            throw new DataNotFoundException(MessageKeys.CONFIRM_PASSWORD_NOT_MATCH);
-//        }
-//        exsistingUser.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
-//        UserRepository.save(exsistingUser);
-//    }
-//
-//    @Override
-//    public void updatePassword(String email, String password) throws DataNotFoundException {
-//        User user = UserRepository.findByEmail(email)
-//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
-//        user.setPassword(passwordEncoder.encode(password));
-//        UserRepository.save(user);
-//    }
 
     @Override
     public String login(UserLoginDTO userLoginDTO) throws Exception {

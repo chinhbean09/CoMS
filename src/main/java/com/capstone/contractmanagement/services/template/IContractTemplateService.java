@@ -34,7 +34,7 @@ public interface IContractTemplateService {
 
     boolean softDelete(Long id);
 
-    ContractTemplateStatus updateContractStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException;
+    ContractTemplateStatus updateContractTemplateStatus(Long id, ContractTemplateStatus status) throws DataNotFoundException;
 
      Page<ContractTemplateIdDTO> getTemplatesByContractType(Long contractTypeId, Pageable pageable);
 
