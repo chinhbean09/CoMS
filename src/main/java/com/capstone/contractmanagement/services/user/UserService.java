@@ -68,36 +68,36 @@ public class UserService implements IUserService {
         String phoneNumber = userDTO.getPhoneNumber();
         if (phoneNumber != null && UserRepository.existsByPhoneNumber(phoneNumber)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+                    (MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         String email = userDTO.getEmail();
         if (UserRepository.existsByEmail(email)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+                    (MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
         // Use the default roleId = 2 if none is provided
         Long roleId = userDTO.getRoleId();
         Role role = RoleRepository.findById(roleId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        localizationUtils.getLocalizedMessage(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+                        (MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
         // Prevent registration of an Admin account
         if (role.getRoleName().equalsIgnoreCase("ADMIN")) {
-            throw new PermissionDenyException("Not allowed to register for an Admin account");
+            throw new PermissionDenyException("Khoon");
         }
 
         // **MỚI**: Không cho tạo thêm Director nếu đã có sẵn
         if (Role.DIRECTOR.equalsIgnoreCase(role.getRoleName())
                 && UserRepository.existsByRole_RoleName(Role.DIRECTOR)) {
             throw new PermissionDenyException(
-                    localizationUtils.getLocalizedMessage("Đã có Giám đốc trong hệ thống."));
+                    ("Đã có Giám đốc trong hệ thống."));
         }
 
         Department department = departmentRepository.findById(userDTO.getDepartmentId())
                 .orElseThrow(() -> new DataNotFoundException(
-                        localizationUtils.getLocalizedMessage(MessageKeys.DEPARTMENT_NOT_FOUND)));
+                        (MessageKeys.DEPARTMENT_NOT_FOUND)));
 
         // Create a new user instance
         User newUser = User.builder()
