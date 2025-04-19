@@ -122,7 +122,7 @@ public class PartnerContractService implements IPartnerContractService {
 
         // Kiểm tra định dạng file hợp lệ: PDF hoặc Word
         if (!isSupportedFileType(contentType)) {
-            throw new IllegalArgumentException("Only PDF or Word files are allowed.");
+            throw new IllegalArgumentException("Chỉ cho phép các tập tin PDF hoặc Word.");
         }
 
         // Upload file lên Cloudinary vào thư mục "contract_partner"
@@ -296,7 +296,7 @@ public class PartnerContractService implements IPartnerContractService {
     @Transactional
     public void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException {
         PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
-                .orElseThrow(() -> new DataNotFoundException("Payment schedule not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy lịch thanh toán"));
 
 //        // Nếu thuộc Contract, kiểm tra điều kiện
 //        if (paymentSchedule.getContract() != null) {
@@ -357,7 +357,7 @@ public class PartnerContractService implements IPartnerContractService {
             paymentScheduleRepository.save(paymentSchedule);
 
         } catch (IOException e) {
-            logger.error("Failed to upload bill urls for payment schedule with ID {}", paymentScheduleId, e);
+            logger.error("Không tải được url hóa đơn cho lịch thanh toán. Lỗi:", e);
         }
     }
 

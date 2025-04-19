@@ -13,7 +13,6 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponse;
 import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessField;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.term.ITermService;
-import com.capstone.contractmanagement.services.translation.TranslationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 public class TermController {
 
     private final ITermService termService;
-    private final TranslationService translationService;
     private final ITermRepository termRepository;
     private final ITypeTermRepository typeTermRepository;
 
