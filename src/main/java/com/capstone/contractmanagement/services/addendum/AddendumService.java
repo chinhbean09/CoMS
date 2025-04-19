@@ -1924,7 +1924,8 @@ public class AddendumService implements IAddendumService{
                 "resource_type", "raw",      // Cho phép upload file dạng raw
                 "folder", "signed_addenda",
                 "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", true
+                "unique_filename", true,
+                "format", "pdf"
         ));
 
         // Lấy public ID của file đã upload
