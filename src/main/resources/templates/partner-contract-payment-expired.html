@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Hết hạn thanh toán</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #f4f7f9;
+          font-family: 'Roboto', sans-serif;
+          color: #333;
+        }
+        .email-wrapper {
+          width: 100%;
+          table-layout: fixed;
+          background-color: #f4f7f9;
+          padding: 40px 0;
+        }
+        .email-content {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+        }
+        .header {
+          background-color: #ff5c5c;
+          padding: 20px;
+          text-align: center;
+          color: #fff;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 22px;
+        }
+        .body {
+          padding: 30px;
+        }
+        .body p {
+          font-size: 16px;
+          margin: 16px 0;
+        }
+        .highlight-box {
+          background-color: #fff5f5;
+          border-left: 4px solid #ff5c5c;
+          padding: 16px;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .highlight-box p {
+          margin: 8px 0;
+          font-size: 18px;
+          color: #e03131;
+          font-weight: 500;
+        }
+        .footer {
+          text-align: center;
+          padding: 20px;
+          font-size: 14px;
+          color: #888;
+          border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 600px) {
+          .body, .header, .footer {
+            padding: 20px;
+          }
+        }
+    </style>
+</head>
+<body>
+<table class="email-wrapper">
+    <tr>
+        <td>
+            <div class="email-content">
+                <div class="header">
+                    <h1>Hợp Đồng Đối Tác Hết Hạn Thanh Toán</h1>
+                </div>
+                <div class="body">
+                    <p>Xin chào,</p>
+                    <p>Chúng tôi xin thông báo rằng hợp đồng sau đã quá hạn thanh toán:</p>
+
+                    <div class="highlight-box">
+                        <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
+                        <p th:text="'Số Hợp đồng: ' + ${contractNumber}"></p>
+                        <p th:text="'Thanh toán đợt: ' + ${stage}"></p>
+                        <p th:text="'Ngày hết hạn: ' + ${paymentDate}"></p>
+                    </div>
+
+                    <p>Nếu bạn đã thanh toán, vui lòng bỏ qua thông báo này.</p>
+
+                    <p>Trân trọng,</p>
+
+                </div>
+                <div class="footer">
+                    <p>Đây là email tự động. Vui lòng không trả lời.</p>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

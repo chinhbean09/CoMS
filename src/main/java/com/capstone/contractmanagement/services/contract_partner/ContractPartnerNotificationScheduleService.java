@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.repositories.IPartnerContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.services.notification.INotificationService;
+import com.capstone.contractmanagement.services.sendmails.IMailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
 
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
+    private final IMailService mailService;
 
     // Số ngày trước khi hiệu lực hoặc hết hạn để gửi thông báo
     private static final int EFFECTIVE_NOTIFY_DAYS = 5;
@@ -50,6 +52,8 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         for (PartnerContract cp : partnersToEffectiveNotify) {
             String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate();
             sendNotification(cp, message, true);
+            // send mail here
+            mailService.sendEmailPartnerContractEffectiveReminder(cp);
         }
 
         // Tìm đối tác hợp đồng sắp hết hạn
@@ -65,6 +69,8 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         for (PartnerContract cp : partnersToExpiryNotify) {
             String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate();
             sendNotification(cp, message, false);
+            // send mail here
+            mailService.sendEmailPartnerContractExpiryReminder(cp);
         }
     }
 
@@ -150,7 +156,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
             );
 
             // (Tuỳ chọn) gửi email
-            // sendEmailReminder(ps);
+            mailService.sendEmailPartnerContractPaymentReminder(ps);
         }
 
         List<PaymentSchedule> overDueNotifiedPaymentSchedules =
@@ -170,6 +176,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         for (PaymentSchedule ps : overDueNotifiedPaymentSchedules) {
             // Đánh dấu đã gửi
             ps.setOverdueEmailSent(true);
+            ps.setStatus(PaymentStatus.OVERDUE);
             paymentScheduleRepository.save(ps);
 
             // Tạo message
@@ -194,7 +201,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
             );
 
             // (Tuỳ chọn) gửi email
-            // sendEmailReminder(ps);
+            mailService.sendEmailPartnerContractPaymentExpired(ps);
         }
     }
 }

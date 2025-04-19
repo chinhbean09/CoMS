@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.sendmails;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
+import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
@@ -432,6 +433,109 @@ public class MailService implements IMailService{
 
             // Log thông báo gửi email thành công
             System.out.println("Đã gửi email nhắc nhở cho: " + addendum.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailPartnerContractEffectiveReminder(PartnerContract contract) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("effectiveDate", contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            props.put("expiryDate", contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + contract.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailPartnerContractExpiryReminder(PartnerContract contract) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("expiryDate", contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + contract.getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailPartnerContractPaymentReminder(PaymentSchedule payment) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(payment.getPartnerContract().getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_REMINDER);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", payment.getPartnerContract().getContractNumber());
+            props.put("contractTitle", payment.getPartnerContract().getTitle());
+            props.put("stage", payment.getPaymentOrder());
+            props.put("paymentDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.PARTNER_CONTRACT_PAYMENT_REMINDER);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + payment.getPartnerContract().getUser().getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(payment.getPartnerContract().getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_EXPIRED);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", payment.getPartnerContract().getContractNumber());
+            props.put("contractTitle", payment.getPartnerContract().getTitle());
+            props.put("stage", payment.getPaymentOrder());
+            props.put("paymentDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.PARTNER_CONTRACT_PAYMENT_EXPIRED);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + payment.getPartnerContract().getUser().getEmail());
         } catch (Exception e) {
             // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
             e.printStackTrace();
