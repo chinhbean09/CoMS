@@ -446,6 +446,15 @@
                     );
                 }
 
+                if (optionalContract.get().getStatus() == ContractStatus.SIGNED) {
+                    return ResponseEntity.badRequest().body(
+                            ResponseObject.builder()
+                                    .status(HttpStatus.BAD_REQUEST)
+                                    .message("Hợp đồng trên đã kí")
+                                    .build()
+                    );
+                }
+
                 SecurityUtils securityUtils = new SecurityUtils();
                 User currentUser = securityUtils.getLoggedInUser();
                 if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {

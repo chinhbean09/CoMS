@@ -267,6 +267,16 @@ public class AddendumController {
                 );
             }
 
+            if (optionalAddendum.get().getStatus() == AddendumStatus.SIGNED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Phụ lục trên đã được kí")
+                                .data(null)
+                                .build()
+                );
+            }
+
             SecurityUtils securityUtils = new SecurityUtils();
             User currentUser = securityUtils.getLoggedInUser();
             if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {

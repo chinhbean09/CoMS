@@ -26,6 +26,10 @@ public class MailTemplate {
         public final static String ADDENDUM_SIGNED_SUCCESS = "PHỤ LỤC ĐÃ ĐƯỢC KÍ";
         public final static String CONTRACT_EXTENDED_REMINDER = "HỢP ĐỒNG ĐÃ ĐƯỢC GIA HẠN";
         public final static String CONTRACT_EXTENDED_END_REMINDER = "HỢP ĐỒNG ĐÃ HẾT HIỆU LỰC GIA HẠN";
+        public final static String PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER = "HỢP ĐỒNG VỚI ĐỐI TÁC CÓ HIỆU LỰC";
+        public final static String PARTNER_CONTRACT_EXPIRY_DATE_REMINDER = "HỢP ĐỒNG VỚI ĐỐI TÁC SẮP HẾT HẠN";
+        public final static String PARTNER_CONTRACT_PAYMENT_REMINDER = "NHẮC NHỞ THANH TOÁN HỢP ĐỒNG ĐỐI TÁC";
+        public final static String PARTNER_CONTRACT_PAYMENT_EXPIRED = "ĐÃ QUÁ HẠN THANH TOÁN HỢP ĐỒNG ĐỐI TÁC";
 //        public final static String BOOKING_PAYMENT_SUCCESS = "BOOKING PAYMENT SUCCESSFUL!";
 //
 //        public final static String PACKAGE_PAYMENT_SUCCESS = "PACKAGE PAYMENT SUCCESSFUL!";
@@ -57,6 +61,10 @@ public class MailTemplate {
         public final static String ADDENDUM_SIGNED_SUCCESS = "addendum-signed-success";
         public final static String CONTRACT_EXTENDED_REMINDER = "contract-extended-reminder";
         public final static String CONTRACT_EXTENDED_END_REMINDER = "contract-extended-end-reminder";
+        public final static String PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER = "partner-contract-effective-date-reminder";
+        public final static String PARTNER_CONTRACT_EXPIRY_DATE_REMINDER = "partner-contract-expiry-date-reminder";
+        public final static String PARTNER_CONTRACT_PAYMENT_REMINDER = "partner-contract-payment-reminder";
+        public final static String PARTNER_CONTRACT_PAYMENT_EXPIRED = "partner-contract-payment-expired";
 
 
 //        public final static String NEW_PASSWORD = "new-password";

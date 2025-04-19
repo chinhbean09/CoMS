@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.sendmails;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
+import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
@@ -32,4 +33,9 @@ public interface IMailService {
     void sendEmailAddendumSignedSuccess(Addendum addendum);
     void sendEmailAddendumExtendedDate(Addendum addendum);
     void sendEmailAddendumEndExtendedDate(Addendum addendum);
+    void sendEmailPartnerContractEffectiveReminder(PartnerContract contract);
+    void sendEmailPartnerContractExpiryReminder(PartnerContract contract);
+    //void sendEmailPartnerContractOverdue(PartnerContract contract);
+    void sendEmailPartnerContractPaymentReminder(PaymentSchedule payment);
+    void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment);
 }

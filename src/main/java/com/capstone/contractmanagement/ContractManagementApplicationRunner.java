@@ -111,16 +111,16 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             return;
         }
         Partner partner = Partner.builder()
-                .address("Khu công nghệ cao")
-                .email("fsoftd1@gmail.com")
+                .address("26 Nguyễn Đình Khơi, Phường 4, Quận Tân Bình, HCM")
+                .email("hisoft@gmail.com")
                 .isDeleted(false)
                 .note(null)
                 .partnerCode("P40076")
-                .partnerName("FPT software HCM")
+                .partnerName("Hisoft Company HCM")
                 .partnerType(PartnerType.PARTNER_A)
                 .phone("0922343454")
-                .abbreviation("FPT")
-                .spokesmanName("Đặng Nam Tiến")
+                .abbreviation("HISOFT")
+                .spokesmanName("Ngô Đăng Hà An")
                 .taxCode("93245244534467")
                 .position("Giám đốc")
                 .user(userRepository.findById(1L).orElse(null))
@@ -261,6 +261,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         // Khởi tạo các tài khoản
         initializeUser(email, phoneNumber, fullName, address, password, "ADMIN", 1L);
         initializeUser(managerEmail, managerPhoneNumber, managerFullName, managerAddress, password, "MANAGER", 3L);
+        initializeUser("AnNDH22@fe.edu.vn", "0874534458", "Ngô Đăng Hà An", "Hồ Chí Minh", password, "MANAGER", 3L);
         initializeUser(staffEmail, staffPhoneNumber, staffFullName, staffAddress, password, "STAFF", 4L);
         initializeParty();
         // Khởi tạo Approval Workflow
