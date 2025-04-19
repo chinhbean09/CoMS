@@ -327,14 +327,14 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Khong tìm thấy hợp đồng với id " + contractId));
 
-//        LocalDateTime now = LocalDateTime.now();
-//        // CHỈ CHO ÁP DỤNG KHI HÔM NAY ≤ ngày hiệu lực
-//        if (contract.getEffectiveDate().isBefore(now)) {
-//            throw new DataNotFoundException(
-//                    "Không thể gán quy trình duyệt: hợp đồng đã có hiệu lực từ ngày "
-//                            + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-//            );
-//        }
+        LocalDateTime now = LocalDateTime.now();
+        // CHỈ CHO ÁP DỤNG KHI HÔM NAY ≤ ngày hiệu lực
+        if (contract.getEffectiveDate().isBefore(now)) {
+            throw new DataNotFoundException(
+                    "Không thể gán quy trình duyệt: hợp đồng đã có hiệu lực từ ngày "
+                            + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            );
+        }
         // Tìm workflow gốc theo workflowId
         ApprovalWorkflow originalWorkflow = approvalWorkflowRepository.findById(workflowId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.WORKFLOW_NOT_FOUND));
