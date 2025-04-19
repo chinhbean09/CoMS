@@ -1151,6 +1151,7 @@ public class AddendumService implements IAddendumService{
                 // Nếu không còn bước tiếp theo, cập nhật trạng thái phụ lục thành APPROVED
                 addendum.setStatus(AddendumStatus.APPROVED);
                 addendumRepository.save(addendum);
+                User finalApprover = stage.getApprover();
 
                 String changedBy = currentUser.getUsername();
                 logAuditTrailForAddendum(addendum, "UPDATE", "status", oldStatus, AddendumStatus.APPROVED.name(), changedBy);
@@ -1160,9 +1161,9 @@ public class AddendumService implements IAddendumService{
                 payload.put("addendumId", addendumId);
 
                 // Gửi thông báo cho người duyệt tiếp theo
-                mailService.sendEmailApprovalSuccessForAddendum(addendum, addendum.getUser());
-                notificationService.saveNotification(addendum.getUser(), notificationMessage, addendum.getContract());
-                messagingTemplate.convertAndSendToUser(addendum.getUser().getFullName(), "/queue/notifications", payload);
+                mailService.sendEmailApprovalSuccessForAddendum(addendum, finalApprover);
+                notificationService.saveNotification(finalApprover, notificationMessage, addendum.getContract());
+                messagingTemplate.convertAndSendToUser(finalApprover.getFullName(), "/queue/notifications", payload);
             }
         }
     }
