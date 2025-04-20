@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -154,12 +155,19 @@ public class ApprovalWorkflowController {
     }
     @GetMapping("/get-contract-for-approver/{approverId}")
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
-    public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId,
-                                                                 @RequestParam(value = "keyword", required = false) String keyword,
-                                                                 @RequestParam(value = "contractTypeId", required = false) Long contractTypeId,
-                                                                 @RequestParam(value = "page", defaultValue = "0") int page,
-                                                                 @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
-        Page<GetContractForApproverResponse> contracts = approvalWorkflowService.getContractsForApprover(approverId, keyword, contractTypeId, page, size);
+    public ResponseEntity<ResponseObject> getContractForApprover(
+            @PathVariable Long approverId,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "contractTypeId", required = false) Long contractTypeId,
+            @RequestParam(value = "status", required = false) ContractStatus status,  // <-- mới
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size)
+            throws DataNotFoundException {
+
+        Page<GetContractForApproverResponse> contracts =
+                approvalWorkflowService.getContractsForApprover(
+                        approverId, keyword, contractTypeId, status, page, size);
+
         return ResponseEntity.ok(ResponseObject.builder()
                 .message(MessageKeys.GET_APPROVAL_WORKFLOW_SUCCESSFULLY)
                 .status(HttpStatus.OK)
