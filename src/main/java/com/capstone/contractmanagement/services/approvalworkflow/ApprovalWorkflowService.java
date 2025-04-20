@@ -664,7 +664,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
     @Override
     @Transactional
-    public Page<GetContractForApproverResponse> getContractsForApprover(Long approverId, String keyword, Long contractTypeId, int page, int size) {
+    public Page<GetContractForApproverResponse> getContractsForApprover(Long approverId, String keyword, Long contractTypeId, ContractStatus status, int page, int size) {
         // Cấu hình phân trang
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -717,6 +717,11 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                                 && contract.getContractType().getId().equals(contractTypeId);
                     }
                     return true;
+                })
+                .filter(contract -> {
+                    // nếu statusFilter null thì không lọc, ngược lại chỉ giữ contract có status khớp
+                    return status == null
+                            || contract.getStatus() == status;
                 })
                 .collect(Collectors.toList());
 
