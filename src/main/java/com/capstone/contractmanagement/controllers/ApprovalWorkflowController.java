@@ -54,7 +54,7 @@ public class ApprovalWorkflowController {
 
     // api update approval workflow
     @PutMapping("/update/{id}")
-    //@PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateApprovalWorkflow(@PathVariable Long id, @RequestBody ApprovalWorkflowDTO approvalWorkflowDTO) throws DataNotFoundException {
         approvalWorkflowService.updateWorkflow(id, approvalWorkflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
