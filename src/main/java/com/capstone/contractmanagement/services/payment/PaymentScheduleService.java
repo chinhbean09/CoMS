@@ -135,24 +135,26 @@
                 sendReminderNotification(aps, contract);
                 aps.setReminderEmailSent(true);
                 addendumPaymentScheduleRepository.save(aps);
+
             }
             if (aps.getPaymentDate() != null && now.isAfter(aps.getPaymentDate()) && !aps.isOverdueEmailSent()) {
                 sendOverdueNotification(aps, contract);
                 aps.setOverdueEmailSent(true);
                 aps.setStatus(PaymentStatus.OVERDUE);
                 addendumPaymentScheduleRepository.save(aps);
+
             }
         }
 
         // Các phương thức gửi thông báo
         private void sendReminderNotification(Object payment, Contract contract) {
             String message = "Nhắc nhở thanh toán cho hợp đồng " + contract.getTitle();
-            // Gửi thông báo qua WebSocket, email, v.v.
+            mailService.sendEmailPaymentReminder((PaymentSchedule) payment, null);
         }
 
         private void sendOverdueNotification(Object payment, Contract contract) {
             String message = "Thanh toán quá hạn cho hợp đồng " + contract.getTitle();
-            // Gửi thông báo qua WebSocket, email, v.v.
+            mailService.sendEmailPaymentExpired((PaymentSchedule) payment, null);
         }
 
         // Giả định phương thức lấy danh sách đợt thanh toán từ phụ lục
