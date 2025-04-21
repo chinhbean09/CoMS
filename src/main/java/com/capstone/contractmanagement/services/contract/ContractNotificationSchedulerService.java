@@ -58,7 +58,6 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(contract, message, true);
             mailService.sendEmailContractEffectiveDate(contract);
-            contract.setStatus(ContractStatus.ACTIVE);
             contractRepository.save(contract);
         }
 
