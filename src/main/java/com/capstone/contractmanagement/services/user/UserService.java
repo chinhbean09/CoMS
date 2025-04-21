@@ -285,14 +285,14 @@ public class UserService implements IUserService {
         String phoneNumber = userDTO.getPhoneNumber();
         if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber()) && UserRepository.existsByPhoneNumber(phoneNumber)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+                    (MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         // Kiểm tra email: chỉ khi email mới khác với email hiện tại mới thực hiện kiểm tra trùng lặp
         String email = userDTO.getEmail();
         if (email != null && !email.equals(user.getEmail()) && UserRepository.existsByEmail(email)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+                    (MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
         // Nếu có departmentId thì kiểm tra và cập nhật
