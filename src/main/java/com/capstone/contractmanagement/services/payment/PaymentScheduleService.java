@@ -157,11 +157,11 @@
             if (payment instanceof PaymentSchedule) {
                 PaymentSchedule ps = (PaymentSchedule) payment;
                 logger.info("Sending reminder email for PaymentSchedule ID: {}", ps.getId());
-                mailService.sendEmailPaymentReminder(ps, null);
+                mailService.sendEmailPaymentReminder(ps);
             } else if (payment instanceof AddendumPaymentSchedule) {
                 AddendumPaymentSchedule aps = (AddendumPaymentSchedule) payment;
                 logger.info("Sending reminder email for AddendumPaymentSchedule ID: {}", aps.getId());
-                mailService.sendEmailPaymentReminder(null, aps);
+                mailService.sendEmailPaymentReminderForAddendum(aps);
             } else {
                 logger.warn("Unknown payment type: {}", payment.getClass().getName());
             }
