@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 .collect(Collectors.toList());
 
         for (PartnerContract cp : partnersToEffectiveNotify) {
-            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate();
+            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(cp, message, true);
             // send mail here
             mailService.sendEmailPartnerContractEffectiveReminder(cp);
@@ -67,7 +68,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 .collect(Collectors.toList());
 
         for (PartnerContract cp : partnersToExpiryNotify) {
-            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate();
+            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(cp, message, false);
             // send mail here
             mailService.sendEmailPartnerContractExpiryReminder(cp);
@@ -140,7 +141,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
             String reminderMessage = String.format(
                     "Nhắc nhở: Hợp đồng đối tác '%s' sẽ đến hạn thanh toán vào ngày %s. Vui lòng chuẩn bị thanh toán.",
                     title,
-                    due.toLocalDate()
+                    due.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
             );
 
             // Gửi notification real‐time qua WebSocket/STOMP
@@ -185,7 +186,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
             String reminderMessage = String.format(
                     "Quá hạn: Hợp đồng đối tác '%s' đã quá hạn thanh toán vào ngày %s.",
                     title,
-                    due.toLocalDate()
+                    due.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
             );
 
             // Gửi notification real‐time qua WebSocket/STOMP
