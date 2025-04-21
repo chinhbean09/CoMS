@@ -15,7 +15,8 @@ public interface IMailService {
     void sendEmailReminder(Contract contract, User user, ApprovalStage stage);
     void sendUpdateContractReminder(Contract contract, User user);
     void sendAccountPassword(String email, String password);
-    void sendEmailPaymentReminder(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment);
+    void sendEmailPaymentReminder(PaymentSchedule payment);
+    void sendEmailPaymentReminderForAddendum(AddendumPaymentSchedule addendumPaymentSchedule);
     void sendEmailPaymentExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment);
 
     void sendUpdateAddendumReminder(Addendum addendum, User user);
