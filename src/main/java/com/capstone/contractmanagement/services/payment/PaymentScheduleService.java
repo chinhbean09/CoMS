@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                         String message = "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
                                 "' sẽ đến hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
-                                " vào ngày " + addendumPayment.getPaymentDate();
+                                " vào ngày " + addendumPayment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         sendPaymentNotification(contract, message);
                         mailService.sendEmailPaymentReminder(null, addendumPayment); // Gửi email nhắc nhở cho phụ lục
@@ -114,7 +115,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                         String message = "Nhắc nhở: Hợp đồng '" + contract.getTitle() +
                                 "' sẽ đến hạn thanh toán đợt " + payment.getPaymentOrder() +
-                                " vào ngày " + payment.getPaymentDate();
+                                " vào ngày " + payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         sendPaymentNotification(contract, message);
                         mailService.sendEmailPaymentReminder(payment, null);
@@ -147,7 +148,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
                                 "' đã quá hạn thanh toán đợt " + addendumPayment.getPaymentOrder() +
-                                " vào ngày " + addendumPayment.getPaymentDate();
+                                " vào ngày " + addendumPayment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         addendumPayment.setStatus(PaymentStatus.OVERDUE);
                         addendumPayment.setOverdueEmailSent(true);
@@ -166,7 +167,7 @@ public class PaymentScheduleService implements IPaymentScheduleService {
 
                         String overdueMessage = "Quá hạn: Hợp đồng '" + contract.getTitle() +
                                 "' đã quá hạn thanh toán đợt " + payment.getPaymentOrder() +
-                                " vào ngày " + payment.getPaymentDate();
+                                " vào ngày " + payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         payment.setStatus(PaymentStatus.OVERDUE);
                         payment.setOverdueEmailSent(true);
