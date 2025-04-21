@@ -114,7 +114,7 @@ public class MailService implements IMailService{
     @Override
     @Async("taskExecutor")
     @Transactional
-    public void sendEmailPaymentReminder(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment) {
+    public void sendEmailPaymentReminder(PaymentSchedule payment) {
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
@@ -122,15 +122,32 @@ public class MailService implements IMailService{
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
-            if (addendumPayment != null) {
-                props.put("contractTitle", addendumPayment.getAddendum().getContract().getTitle());
-                props.put("dueDate", addendumPayment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-                props.put("stage", addendumPayment.getPaymentOrder());
-            }
             if (payment != null){
                 props.put("contractTitle", payment.getContract().getTitle());
                 props.put("dueDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", payment.getPaymentOrder());
+            }
+
+            dataMailDTO.setProps(props);
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_PAYMENT_NOTIFICATION);
+        } catch (Exception e) {
+            // Xu ly loi
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendEmailPaymentReminderForAddendum(AddendumPaymentSchedule addendumPaymentSchedule) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            dataMailDTO.setTo(addendumPaymentSchedule.getAddendum().getUser().getEmail());
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
+
+            Map<String, Object> props = new HashMap<>();
+            if (addendumPaymentSchedule != null){
+                props.put("contractTitle", addendumPaymentSchedule.getAddendum().getContract().getTitle());
+                props.put("dueDate", addendumPaymentSchedule.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                props.put("stage", addendumPaymentSchedule.getPaymentOrder());
             }
 
             dataMailDTO.setProps(props);
