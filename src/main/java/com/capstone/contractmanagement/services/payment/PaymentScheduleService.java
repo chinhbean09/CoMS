@@ -168,8 +168,23 @@
         }
 
         private void sendOverdueNotification(Object payment, Contract contract) {
+            if (payment == null) {
+                logger.error("Payment object is null for contract {}", contract.getTitle());
+                return; // Bỏ qua nếu payment là null
+            }
+
             String message = "Thanh toán quá hạn cho hợp đồng " + contract.getTitle();
-            mailService.sendEmailPaymentExpired((PaymentSchedule) payment, null);
+            if (payment instanceof PaymentSchedule) {
+                PaymentSchedule ps = (PaymentSchedule) payment;
+                logger.info("Sending reminder email for PaymentSchedule ID: {}", ps.getId());
+                mailService.sendEmailPaymentExpired(ps);
+            } else if (payment instanceof AddendumPaymentSchedule) {
+                AddendumPaymentSchedule aps = (AddendumPaymentSchedule) payment;
+                logger.info("Sending reminder email for AddendumPaymentSchedule ID: {}", aps.getId());
+                mailService.sendEmailPaymentExpiredForAddendum(aps);
+            } else {
+                logger.warn("Unknown payment type: {}", payment.getClass().getName());
+            }
         }
 
         // Giả định phương thức lấy danh sách đợt thanh toán từ phụ lục
