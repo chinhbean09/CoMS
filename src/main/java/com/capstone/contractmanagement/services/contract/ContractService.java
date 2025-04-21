@@ -1047,6 +1047,7 @@ public class ContractService implements IContractService{
                 .generalTerms(generalTerms)
                 .contractTypeId(contract.getContractType().getId())
                 .otherTerms(otherTerms)
+                .signedFilePath(contract.getSignedFilePath())
                 .maxDateLate(contract.getMaxDateLate())
                 .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)

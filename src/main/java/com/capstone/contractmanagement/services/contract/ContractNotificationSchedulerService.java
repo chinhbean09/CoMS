@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToEffectiveNotify) {
-            String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate();
+            String message = "Hợp đồng '" + contract.getTitle() + "' sẽ có hiệu lực vào ngày " + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(contract, message, true);
             mailService.sendEmailContractEffectiveDate(contract);
             contract.setStatus(ContractStatus.ACTIVE);
@@ -72,7 +73,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsToExpiryNotify) {
-            String message = "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate();
+            String message = "Hợp đồng '" + contract.getTitle() + "' sắp hết hạn vào ngày " + contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(contract, message, false);
             mailService.sendEmailContractExpiryDate(contract);
         }
@@ -87,7 +88,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .collect(Collectors.toList());
 
         for (Contract contract : contractsEffectiveOverdue) {
-            String message = "Hợp đồng '" + contract.getTitle() + "' đã quá hạn hiệu lực từ ngày " + contract.getExpiryDate();
+            String message = "Hợp đồng '" + contract.getTitle() + "' đã quá hạn hiệu lực từ ngày " + contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendOverdueNotification(contract, message);
             mailService.sendEmailContractOverdue(contract);
             contract.setStatus(ContractStatus.EXPIRED);
