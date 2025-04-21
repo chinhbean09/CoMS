@@ -17,7 +17,8 @@ public interface IMailService {
     void sendAccountPassword(String email, String password);
     void sendEmailPaymentReminder(PaymentSchedule payment);
     void sendEmailPaymentReminderForAddendum(AddendumPaymentSchedule addendumPaymentSchedule);
-    void sendEmailPaymentExpired(PaymentSchedule payment, AddendumPaymentSchedule addendumPayment);
+    void sendEmailPaymentExpired(PaymentSchedule payment);
+    void sendEmailPaymentExpiredForAddendum(AddendumPaymentSchedule addendumPayment);
 
     void sendUpdateAddendumReminder(Addendum addendum, User user);
 
