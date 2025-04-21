@@ -115,6 +115,7 @@ public class ContractTemplateController {
 
 
     @GetMapping("/titles")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllTemplateTitles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -143,6 +144,7 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/{id}/ids")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getTemplateIdsById(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponseIds> templateOpt = templateService.getTemplateIdsById(id);
@@ -172,6 +174,7 @@ public class ContractTemplateController {
 
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteTemplate(@PathVariable Long id) {
         try {
             templateService.deleteTemplate(id);
@@ -184,6 +187,7 @@ public class ContractTemplateController {
     }
 
     @PostMapping("/{id}/duplicate")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> duplicateTemplate(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponse> duplicateTemplateOpt = templateService.duplicateTemplate(id);
@@ -212,6 +216,7 @@ public class ContractTemplateController {
     }
 
     @PutMapping("/update/{templateId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long templateId, @RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.updateTemplate(templateId, dto);
@@ -232,6 +237,7 @@ public class ContractTemplateController {
     }
 
     @DeleteMapping("/soft-delete/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> softDeleteContractTemplate(@PathVariable Long id) {
         try {
             boolean deleted = templateService.softDelete(id);
