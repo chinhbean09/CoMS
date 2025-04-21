@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.entities.contract_template.ContractTempla
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.*;
+import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
@@ -916,7 +917,7 @@ public class ContractService implements IContractService{
         return contractRepository.findById(id)
                 .map(contract -> {
                     if (!contract.getUser().getId().equals(currentUser.getId())) {
-                        throw new AccessDeniedException("Không có quyền xem hợp đồng này");
+                        throw new ContractAccessDeniedException("Không có quyền xem hợp đồng này");
                     }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
@@ -1017,9 +1018,9 @@ public class ContractService implements IContractService{
             }
         }
 
-        if (partnerA == null || partnerB == null) {
-            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
-        }
+//        if (partnerA == null || partnerB == null) {
+//            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+//        }
 
         return ContractResponse.builder()
                 .id(contract.getId())
