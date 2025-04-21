@@ -340,6 +340,11 @@ public class AddendumController {
                     .data(null)
                     .build());
 
+            //Xóa thông báo cũ của hợp đồng
+
+
+
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()

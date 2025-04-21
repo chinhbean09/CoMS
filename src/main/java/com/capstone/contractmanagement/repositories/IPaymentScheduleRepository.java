@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.repositories;
 
 import com.capstone.contractmanagement.entities.PaymentSchedule;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,7 @@ public interface IPaymentScheduleRepository extends JpaRepository<PaymentSchedul
     @Query("SELECT ps.billUrls FROM PaymentSchedule ps WHERE ps.id = :paymentId")
     List<String> findBillUrlsByPaymentId(@Param("paymentId") Long paymentId);
     List<PaymentSchedule> findByStatus(PaymentStatus status);
+
+    List<PaymentSchedule> findByContractAndStatus(Contract contract, PaymentStatus status);
+
 }
