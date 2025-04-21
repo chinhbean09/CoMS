@@ -148,6 +148,11 @@
 
         // Các phương thức gửi thông báo
         private void sendReminderNotification(Object payment, Contract contract) {
+            if (payment == null) {
+                logger.error("Payment object is null for contract {}", contract.getTitle());
+                return; // Bỏ qua nếu payment là null
+            }
+
             String message = "Nhắc nhở thanh toán cho hợp đồng " + contract.getTitle();
             if (payment instanceof PaymentSchedule) {
                 PaymentSchedule ps = (PaymentSchedule) payment;
@@ -156,10 +161,6 @@
             } else if (payment instanceof AddendumPaymentSchedule) {
                 AddendumPaymentSchedule aps = (AddendumPaymentSchedule) payment;
                 logger.info("Sending reminder email for AddendumPaymentSchedule ID: {}", aps.getId());
-                // Xử lý thông báo cho AddendumPaymentSchedule
-                // Nếu mailService.sendEmailPaymentReminder không hỗ trợ AddendumPaymentSchedule,
-                // bạn cần một phương thức riêng hoặc điều chỉnh logic
-                // Ví dụ: mailService.sendEmailPaymentReminderForAddendum(aps, null);
                 mailService.sendEmailPaymentReminder(null, aps);
             } else {
                 logger.warn("Unknown payment type: {}", payment.getClass().getName());
