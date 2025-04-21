@@ -44,24 +44,7 @@
         @Transactional
         @Override
         public CreatePartnerResponse createPartner(CreatePartnerDTO createPartnerDTO) {
-            // Kiểm tra trùng mã số thuế
-//            if (createPartnerDTO.getTaxCode() != null &&
-//                    partyRepository.existsByTaxCodeAndPartnerType(
-//                            createPartnerDTO.getTaxCode(),
-//                            createPartnerDTO.getPartnerType())
-//            ) {
-//                throw new RuntimeException("Mã số thuế đã tồn tại cho cùng loại đối tác: "
-//                        + createPartnerDTO.getTaxCode() + " - " + createPartnerDTO.getPartnerType());
-//            }
-//
-//            // Kiểm tra trùng số tài khoản ngân hàng
-//            if (createPartnerDTO.getBanking() != null && !createPartnerDTO.getBanking().isEmpty()) {
-//                for (CreateBankDTO bankDTO : createPartnerDTO.getBanking()) {
-//                    if (bankRepository.existsByBackAccountNumber(bankDTO.getBackAccountNumber())) {
-//                        throw new RuntimeException("Số tài khoản ngân hàng đã tồn tại: " + bankDTO.getBackAccountNumber());
-//                    }
-//                }
-//            }
+
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             User currentUser = (User) authentication.getPrincipal();
             // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
