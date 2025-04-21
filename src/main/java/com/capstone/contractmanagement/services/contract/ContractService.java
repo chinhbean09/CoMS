@@ -34,6 +34,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -907,8 +910,14 @@ public class ContractService implements IContractService{
     @Override
     @Transactional(readOnly = true)
     public Optional<ContractResponse> getContractById(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
         return contractRepository.findById(id)
                 .map(contract -> {
+                    if (!contract.getUser().getId().equals(currentUser.getId())) {
+                        throw new AccessDeniedException("Không có quyền xem hợp đồng này");
+                    }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
