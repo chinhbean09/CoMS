@@ -26,6 +26,8 @@
     import java.util.List;
     import java.util.Map;
     import java.util.Optional;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
     import java.util.stream.Collectors;
 
     @Service
@@ -39,7 +41,7 @@
         private final INotificationService notificationService;
         private final IAppConfigService appConfigService;
         private final IAddendumPaymentScheduleRepository addendumPaymentScheduleRepository;
-
+        private static final Logger logger = LoggerFactory.getLogger(PaymentScheduleService.class);
         @Override
         public String createPaymentSchedule(Long contractId, CreatePaymentScheduleDTO createPaymentScheduleDTO) throws DataNotFoundException {
             // check if contract exists
@@ -69,12 +71,15 @@
         @Transactional
         @Scheduled(fixedDelay = 60000)
         public void checkPaymentDue() {
+            logger.info("Starting checkPaymentDue at {}", LocalDateTime.now());
             LocalDateTime now = LocalDateTime.now();
 
             // Lấy tất cả các hợp đồng có phiên bản mới nhất
             List<Contract> contracts = contractRepository.findAll().stream()
                     .filter(Contract::getIsLatestVersion)
                     .collect(Collectors.toList());
+
+            logger.info("Found {} contracts to process", contracts.size());
 
             for (Contract contract : contracts) {
                 // Kiểm tra xem hợp đồng có phụ lục được duyệt không
@@ -84,13 +89,16 @@
                 if (hasApprovedAddendum) {
                     // Nếu có phụ lục được duyệt, chỉ xử lý các đợt thanh toán từ phụ lục
                     List<AddendumPaymentSchedule> addendumPayments = getAddendumPaymentSchedules(contract);
+                    logger.info("Processing {} addendum payment schedules for contract {}", addendumPayments.size(), contract.getId());
                     processPaymentSchedules(addendumPayments, contract, now);
                 } else {
                     // Nếu không có phụ lục được duyệt, xử lý các đợt thanh toán của hợp đồng chính
                     List<PaymentSchedule> paymentSchedules = paymentScheduleRepository.findByContractAndStatus(contract, PaymentStatus.UNPAID);
+                    logger.info("Processing {} payment schedules for contract {}", paymentSchedules.size(), contract.getId());
                     processPaymentSchedules(paymentSchedules, contract, now);
                 }
             }
+            logger.info("Finished checkPaymentDue at {}", LocalDateTime.now());
         }
 
         // Phương thức xử lý chung cho cả PaymentSchedule và AddendumPaymentSchedule
