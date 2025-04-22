@@ -94,4 +94,5 @@ public interface IUserRepository extends JpaRepository<User, Long> {
                                                                @Param("roleId") Long roleId,
                                                                @Param("search") String search,
                                                                Pageable pageable);
+    //List<User> findByRole(String role);
 }

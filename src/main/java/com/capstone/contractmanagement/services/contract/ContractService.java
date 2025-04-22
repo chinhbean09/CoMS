@@ -7,6 +7,7 @@ import com.capstone.contractmanagement.dtos.contract.*;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentScheduleDTO;
 import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
@@ -22,6 +23,7 @@ import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
@@ -35,6 +37,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -73,6 +76,8 @@ public class ContractService implements IContractService{
     private final Cloudinary cloudinary;
     private final LocalizationUtils localizationUtils;
     private static final Logger logger = LoggerFactory.getLogger(ContractService.class);
+    private final SimpMessagingTemplate messagingTemplate;
+    private final INotificationService notificationService;
 
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
@@ -1570,6 +1575,47 @@ public class ContractService implements IContractService{
         contract.setSignedFilePath(secureUrl);
         contract.setStatus(ContractStatus.SIGNED);
         contractRepository.save(contract);
+    }
+
+    @Override
+    @Transactional
+    public void notifyNextApprover(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        ApprovalWorkflow wf = contract.getApprovalWorkflow();
+        if (wf == null) return;  // chưa có workflow thì không làm gì
+
+        // Tìm bước duyệt tiếp theo đang PENDING
+        ApprovalStage nextStage = wf.getStages().stream()
+                .filter(stage -> ApprovalStatus.APPROVING.equals(stage.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (nextStage == null) return; // đã duyệt hết hoặc không có bước PENDING
+
+        User approver = nextStage.getApprover();
+        String message = String.format(
+                "Bạn có hợp đồng: \\\"%s\\\" cần được duyệt gấp!",
+                contract.getTitle(),
+                nextStage.getStageOrder()
+        );
+
+        // Chuẩn bị payload
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("message", message);
+        payload.put("contractId", contract.getId());
+
+        // Gửi in-app qua WebSocket
+        messagingTemplate.convertAndSendToUser(
+                approver.getFullName(),    // hoặc approver.getUsername() tuỳ setup
+                "/queue/notifications",
+                payload
+        );
+
+        // Lưu vào hệ thống notification
+        notificationService.saveNotification(approver, message, contract);
+
+        // (Tuỳ chọn) Gửi email nhắc nhở
     }
 
     private String normalizeFilename(String filename) {
