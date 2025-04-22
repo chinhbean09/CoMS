@@ -6,6 +6,7 @@ import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.Token;
 import com.capstone.contractmanagement.entities.User;
+import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
@@ -238,10 +239,10 @@ public class UserController {
         }
     }
 
-    @GetMapping("/get-user")
-    public ResponseEntity<UserResponse> getUser() {
+    @GetMapping("/get-user/{id}")
+    public ResponseEntity<UserResponse> getUser(@Valid @PathVariable Long id) {
         try {
-            User user = userService.getUser();
+            User user = userService.getUser(id);
             return ResponseEntity.ok(UserResponse.fromUser(user));
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
