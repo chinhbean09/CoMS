@@ -1223,6 +1223,8 @@ public class ContractService implements IContractService{
                         .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
                         .paymentOrder(originalPayment.getPaymentOrder())
                         .status(PaymentStatus.UNPAID)
+                        .reminderEmailSent(false)
+                        .overdueEmailSent(false)
                         .paymentMethod(originalPayment.getPaymentMethod())
                         .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
                         .contract(duplicateContract)
@@ -2369,7 +2371,7 @@ public class ContractService implements IContractService{
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent() != null ? paymentDTO.getNotifyPaymentContent() : oldPayment.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
-
+                    newPayment.setStatus(oldPayment.getStatus());
                     // Kiểm tra thay đổi
                     boolean hasChanges = !Objects.equals(oldPayment.getPaymentOrder(), newPayment.getPaymentOrder()) ||
                             !Objects.equals(oldPayment.getAmount(), newPayment.getAmount()) ||
@@ -2411,6 +2413,7 @@ public class ContractService implements IContractService{
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
+                    newPayment.setStatus(oldPayment.getStatus());
                     updatedPayments.add(newPayment);
 
                     String newValue = serializePaymentSchedule(newPayment);
@@ -2462,6 +2465,7 @@ public class ContractService implements IContractService{
                 newPayment.setNotifyPaymentContent(oldPayment.getNotifyPaymentContent());
                 newPayment.setReminderEmailSent(oldPayment.isReminderEmailSent());
                 newPayment.setOverdueEmailSent(oldPayment.isOverdueEmailSent());
+                newPayment.setStatus(oldPayment.getStatus());
                 updatedPayments.add(newPayment);
             }
         }

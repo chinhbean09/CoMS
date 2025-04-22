@@ -62,7 +62,7 @@ public class TermController {
     }
 
     @PutMapping("/update/{termId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR','ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateTerm(@PathVariable Long termId, @RequestBody UpdateTermDTO termRequest) throws DataNotFoundException {
         CreateTermResponse termResponse = termService.updateTerm(termId, termRequest);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
