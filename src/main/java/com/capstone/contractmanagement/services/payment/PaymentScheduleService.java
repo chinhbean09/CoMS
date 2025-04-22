@@ -68,14 +68,13 @@
         }
 
         @Override
-        //@Scheduled(cron = "0 0 8 * * ?")
         @Transactional
         @Scheduled(fixedDelay = 60000)
         public void checkPaymentDue() {
             logger.info("Starting checkPaymentDue at {}", LocalDateTime.now());
             LocalDateTime now = LocalDateTime.now();
 
-            // Lấy tất cả các hợp đồng có phiên bản mới nhất
+            // Lấy tất cả các hợp đồng có phiên bản mới nhất và đang hoạt động
             List<Contract> contracts = contractRepository.findAll().stream()
                     .filter(Contract::getIsLatestVersion)
                     .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
@@ -84,23 +83,20 @@
             logger.info("Found {} contracts to process", contracts.size());
 
             for (Contract contract : contracts) {
+                // Luôn xử lý các đợt thanh toán của hợp đồng chính
+                List<PaymentSchedule> paymentSchedules = paymentScheduleRepository.findByContractAndStatus(contract, PaymentStatus.UNPAID);
+                logger.info("Processing {} payment schedules for contract {}", paymentSchedules.size(), contract.getId());
+                processPaymentSchedules(paymentSchedules, contract, now);
+
                 // Kiểm tra xem hợp đồng có phụ lục được duyệt không
                 boolean hasApprovedAddendum = contract.getAddenda().stream()
                         .anyMatch(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED);
 
-                logger.info("Contract {} has approved addendum: {}", contract.getId(), hasApprovedAddendum);
-
-
                 if (hasApprovedAddendum) {
-                    // Nếu có phụ lục được duyệt, chỉ xử lý các đợt thanh toán từ phụ lục
+                    // Nếu có phụ lục được duyệt, xử lý thêm các đợt thanh toán của phụ lục
                     List<AddendumPaymentSchedule> addendumPayments = getAddendumPaymentSchedules(contract);
                     logger.info("Processing {} addendum payment schedules for contract {}", addendumPayments.size(), contract.getId());
                     processPaymentSchedules(addendumPayments, contract, now);
-                } else {
-                    // Nếu không có phụ lục được duyệt, xử lý các đợt thanh toán của hợp đồng chính
-                    List<PaymentSchedule> paymentSchedules = paymentScheduleRepository.findByContractAndStatus(contract, PaymentStatus.UNPAID);
-                    logger.info("Processing {} payment schedules for contract {}", paymentSchedules.size(), contract.getId());
-                    processPaymentSchedules(paymentSchedules, contract, now);
                 }
             }
             logger.info("Finished checkPaymentDue at {}", LocalDateTime.now());
