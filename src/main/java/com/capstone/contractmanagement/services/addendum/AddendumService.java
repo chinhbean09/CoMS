@@ -1849,11 +1849,6 @@ public class AddendumService implements IAddendumService{
                     String originalFilename = file.getOriginalFilename();
                     String customFilename = normalizeFilename(originalFilename);
 
-                    // Ensure filename has the .pdf extension
-//                    if (!customFilename.endsWith(".pdf")) {
-//                        customFilename += ".pdf";
-//                    }
-
                     // Encode the filename for URL safety
                     String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
 
