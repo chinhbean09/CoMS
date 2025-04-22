@@ -9,6 +9,7 @@
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.enums.PartnerType;
+    import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
     import com.capstone.contractmanagement.repositories.IBankRepository;
@@ -271,8 +272,16 @@
         @Override
         @Transactional
         public ListPartnerResponse getPartnerById(Long id) throws DataNotFoundException {
+            // Lấy user hiện tại từ token
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = (User) authentication.getPrincipal();
             // get partner by id
             Partner partner = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
+
+            // Kiểm tra quyền sở hữu
+            if (!partner.getUser().getId().equals(currentUser.getId())) {
+                throw new ContractAccessDeniedException("Không có quyền xem thông tin Partner này");
+            }
             // convert to response
             return ListPartnerResponse.builder()
                     .partyId(partner.getId())
