@@ -102,6 +102,7 @@ public class AddendumService implements IAddendumService{
 //        AddendumType addendumType = addendumTypeRepository.findById(addendumDTO.getAddendumTypeId())
 //                .orElseThrow(() -> new DataNotFoundException("Loại phụ lục không tìm thấy với id : " + addendumDTO.getAddendumTypeId()));
 
+        Addendum savedAddendum = null;
         if (contract.getStatus() == ContractStatus.ACTIVE
                 || contract.getStatus() == ContractStatus.EXPIRED) {
             // Tạo phụ lục mới
@@ -343,7 +344,7 @@ public class AddendumService implements IAddendumService{
                             .paymentOrder(order++)
                             .status(PaymentStatus.UNPAID)
                             .paymentMethod(paymentDTO.getPaymentMethod())
-                            .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+//                            .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
                             .reminderEmailSent(false)
                             .overdueEmailSent(false)
                             .addendum(addendum)
@@ -353,9 +354,9 @@ public class AddendumService implements IAddendumService{
             }
             addendum.setPaymentSchedules(paymentSchedules);
 
-            Addendum savedAddendum = addendumRepository.save(addendum);
+            savedAddendum = addendumRepository.save(addendum);
 
-//            logAuditTrailForAddendum(addendum, "CREATE", "status", null, AddendumStatus.CREATED.name(), currentUser.getUsername());
+            logAuditTrailForAddendum(addendum, "CREATE", "status", null, AddendumStatus.CREATED.name(), currentUser.getUsername());
             // Trả về thông tin phụ lục đã tạo
             return AddendumResponse.builder()
                     .addendumId(savedAddendum.getId())
@@ -380,7 +381,12 @@ public class AddendumService implements IAddendumService{
                     .createdAt(savedAddendum.getCreatedAt())
                     .updatedAt(savedAddendum.getUpdatedAt())
                     .build();
+
+
         }
+
+
+
 
         throw new DataNotFoundException("Không thể tạo phụ lục: Hợp đồng không HOẠT ĐỘNG");
     }
@@ -740,7 +746,7 @@ public class AddendumService implements IAddendumService{
                         .paymentOrder(order++)
                         .status(PaymentStatus.UNPAID)
                         .paymentMethod(paymentDTO.getPaymentMethod())
-                        .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+//                        .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
                         .reminderEmailSent(false)
                         .overdueEmailSent(false)
                         .addendum(addendum)
@@ -925,7 +931,7 @@ public class AddendumService implements IAddendumService{
                         .paymentDate(schedule.getPaymentDate())
                         .status(schedule.getStatus())
                         .paymentMethod(schedule.getPaymentMethod())
-                        .notifyPaymentContent(schedule.getNotifyPaymentContent())
+//                        .notifyPaymentContent(schedule.getNotifyPaymentContent())
                         .reminderEmailSent(schedule.isReminderEmailSent())
                         .overdueEmailSent(schedule.isOverdueEmailSent())
                         .build())
@@ -1758,7 +1764,7 @@ public class AddendumService implements IAddendumService{
                     .status(PaymentStatus.UNPAID) // Đặt trạng thái mới
                     .paymentMethod(originalPayment.getPaymentMethod())
                     .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
-                    .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
+//                    .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
                     .reminderEmailSent(false)
                     .overdueEmailSent(false)
                     .addendum(newAddendum)
@@ -1996,8 +2002,17 @@ public class AddendumService implements IAddendumService{
         String oldStatusVi = oldValue != null ? translateAddendumStatusToVietnamese(oldValue) : null;
         String newStatusVi = newValue != null ? translateAddendumStatusToVietnamese(newValue) : null;
 
+        String changeSummary;
+        if ("CREATE".equalsIgnoreCase(newValue)) {
+            changeSummary = "Đã tạo mới phụ lục với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+        } else {
+            changeSummary = String.format("Đã cập nhật trạng thái phụ lục từ '%s' sang '%s'",
+                    oldStatusVi != null ? oldStatusVi : "Không có",
+                    newStatusVi != null ? newStatusVi : "Không có");
+        }
+
         AuditTrail auditTrail = AuditTrail.builder()
-                .contract(addendum.getContract()) // Liên kết với hợp đồng của phụ lục
+                .contract(addendum.getContract())
                 .entityName("Addendum")
                 .entityId(addendum.getId())
                 .action(action)
@@ -2006,12 +2021,9 @@ public class AddendumService implements IAddendumService{
                 .newValue(newStatusVi)
                 .changedBy(changedBy)
                 .changedAt(LocalDateTime.now())
-                .changeSummary(String.format("Đã cập nhật trạng thái phụ lục từ '%s' sang '%s'",
-                        oldStatusVi != null ? oldStatusVi : "Không có",
-                        newStatusVi != null ? newStatusVi : "Không có"))
+                .changeSummary(changeSummary)
                 .build();
         auditTrailRepository.save(auditTrail);
     }
-
 
 }
