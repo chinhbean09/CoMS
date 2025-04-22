@@ -1509,10 +1509,16 @@ public class ContractService implements IContractService{
             contract.getSignedContractUrls().addAll(uploadedUrls);
 
             // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
+            ContractStatus oldStatus = contract.getStatus();
             contract.setStatus(ContractStatus.ACTIVE);
             contractRepository.save(contract);
+            if (oldStatus != ContractStatus.ACTIVE) {
+                logAuditTrailForContract(contract, "UPDATE", "status", oldStatus != null ? oldStatus.name() : null, ContractStatus.ACTIVE.name(), "System");
+            }
+
         } catch (IOException e) {
             logger.error("Không tải lên được url hóa đơn cho hợp đồng", e);
+            throw new RuntimeException("Lỗi khi tải lên file", e);
         }
     }
 
@@ -3244,6 +3250,35 @@ public class ContractService implements IContractService{
 
         return true;
     }
+
+    private void logAuditTrailForContract(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = oldValue != null ? translateContractStatusToVietnamese(oldValue) : null;
+        String newStatusVi = newValue != null ? translateContractStatusToVietnamese(newValue) : null;
+
+        String changeSummary;
+        if ("CREATED".equalsIgnoreCase(newValue)) {
+            changeSummary = "Đã tạo mới hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+        } else {
+            changeSummary = String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'",
+                    oldStatusVi != null ? oldStatusVi : "Không có",
+                    newStatusVi != null ? newStatusVi : "Không có");
+        }
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract)
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(changeSummary)
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+
     private String translateContractStatusToVietnamese(String status) {
         switch (status) {
             case "DRAFT": return "Bản nháp";

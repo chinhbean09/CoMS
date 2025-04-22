@@ -2,10 +2,12 @@ package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
+import com.capstone.contractmanagement.entities.AuditTrail;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.repositories.IContractRepository;
+import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.services.sendmails.IMailService;
 import lombok.RequiredArgsConstructor;
@@ -29,22 +31,15 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
     private final IMailService mailService;
-
-    // Số ngày trước khi hiệu lực hoặc hết hạn để gửi thông báo
-//    private static final int EFFECTIVE_NOTIFY_DAYS = 5;
-//    private static final int EXPIRY_NOTIFY_DAYS = 5;
+    private final IAuditTrailRepository auditTrailRepository;
 
     @Override
     @Transactional
     @Scheduled(fixedDelay = 60000)
-    //@Scheduled(cron = "0 0 8 * * ?") // Chạy hàng ngày lúc 8h sáng
     public void checkContractDates() {
         LocalDateTime now = LocalDateTime.now();
 
-        // Bước 1: Cập nhật trạng thái hợp đồng nếu có phụ lục gia hạn được duyệt
-        //updateContractStatusBasedOnAddendum();
-
-        // Bước 2: Thông báo sắp hiệu lực
+        // Bước 1: Thông báo sắp hiệu lực
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getEffectiveDate() != null)
                 .filter(contract -> contract.getNotifyEffectiveDate() != null)
@@ -61,7 +56,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             contractRepository.save(contract);
         }
 
-        // Bước 3: Thông báo sắp hết hạn
+        // Bước 2: Thông báo sắp hết hạn
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)
                 .filter(contract -> contract.getNotifyExpiryDate() != null)
@@ -77,7 +72,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             mailService.sendEmailContractExpiryDate(contract);
         }
 
-        // Bước 4: Thông báo quá hạn hiệu lực
+        // Bước 3: Thông báo quá hạn hiệu lực
         List<Contract> contractsEffectiveOverdue = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)
                 .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
@@ -90,8 +85,12 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             String message = "Hợp đồng '" + contract.getTitle() + "' đã quá hạn hiệu lực từ ngày " + contract.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendOverdueNotification(contract, message);
             mailService.sendEmailContractOverdue(contract);
+
+            // Ghi audit trail cho thay đổi trạng thái hợp đồng
+            ContractStatus oldStatus = contract.getStatus();
             contract.setStatus(ContractStatus.EXPIRED);
             contractRepository.save(contract);
+            logAuditTrailForContract(contract, "UPDATE", "status", oldStatus != null ? oldStatus.name() : null, ContractStatus.EXPIRED.name(), "System");
         }
     }
 
@@ -114,7 +113,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     }
 
     /**
-     * Gửi thông báo quá hạn
+     * Gửi thông báo tả
      */
     private void sendOverdueNotification(Contract contract, String message) {
         User user = contract.getUser();
@@ -125,6 +124,57 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         notificationService.saveNotification(user, message, contract);
         contract.setIsEffectiveOverdueNotified(true);
         contractRepository.save(contract);
+    }
+
+    /**
+     * Ghi audit trail cho thay đổi trạng thái hợp đồng
+     */
+    private void logAuditTrailForContract(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = oldValue != null ? translateContractStatusToVietnamese(oldValue) : null;
+        String newStatusVi = newValue != null ? translateContractStatusToVietnamese(newValue) : null;
+
+        String changeSummary;
+        if ("CREATED".equalsIgnoreCase(newValue)) {
+            changeSummary = "Đã tạo mới hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+        } else {
+            changeSummary = String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'",
+                    oldStatusVi != null ? oldStatusVi : "Không có",
+                    newStatusVi != null ? newStatusVi : "Không có");
+        }
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract)
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(changeSummary)
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+
+    /**
+     * Dịch trạng thái hợp đồng sang tiếng Việt
+     */
+    private String translateContractStatusToVietnamese(String status) {
+        switch (status) {
+            case "CREATED":
+                return "Tạo mới";
+            case "SIGNED":
+                return "Đã ký";
+            case "APPROVED":
+                return "Đã phê duyệt";
+            case "ACTIVE":
+                return "Đang hoạt động";
+            case "EXPIRED":
+                return "Hết hạn";
+            default:
+                return status;
+        }
     }
 
     /**
