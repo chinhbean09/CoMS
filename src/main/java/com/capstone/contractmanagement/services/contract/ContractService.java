@@ -916,9 +916,9 @@ public class ContractService implements IContractService{
 
         return contractRepository.findById(id)
                 .map(contract -> {
-                    if (!contract.getUser().getId().equals(currentUser.getId())) {
-                        throw new ContractAccessDeniedException("Không có quyền xem hợp đồng này");
-                    }
+//                    if (!contract.getUser().getId().equals(currentUser.getId())) {
+//                        throw new ContractAccessDeniedException("Không có quyền xem hợp đồng này");
+//                    }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
