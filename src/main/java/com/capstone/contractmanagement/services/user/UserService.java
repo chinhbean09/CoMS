@@ -272,6 +272,11 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public User getUserById(Long userId) throws DataNotFoundException {
+        return UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException("Không tìm thấy người dùng"));
+    }
+
+    @Override
     public void deleteUser(Long userId) {
         Optional<User> optionalUser = UserRepository.findById(userId);
         List<Token> tokens = TokenRepository.findByUserId(userId);
