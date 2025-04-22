@@ -6,6 +6,7 @@
     import com.capstone.contractmanagement.entities.PaymentSchedule;
     import com.capstone.contractmanagement.entities.User;
     import com.capstone.contractmanagement.enums.AddendumStatus;
+    import com.capstone.contractmanagement.enums.ContractStatus;
     import com.capstone.contractmanagement.enums.PaymentStatus;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
     import com.capstone.contractmanagement.repositories.IAddendumPaymentScheduleRepository;
@@ -77,6 +78,7 @@
             // Lấy tất cả các hợp đồng có phiên bản mới nhất
             List<Contract> contracts = contractRepository.findAll().stream()
                     .filter(Contract::getIsLatestVersion)
+                    .filter(contract -> contract.getStatus() == ContractStatus.ACTIVE)
                     .collect(Collectors.toList());
 
             logger.info("Found {} contracts to process", contracts.size());
@@ -85,6 +87,9 @@
                 // Kiểm tra xem hợp đồng có phụ lục được duyệt không
                 boolean hasApprovedAddendum = contract.getAddenda().stream()
                         .anyMatch(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED);
+
+                logger.info("Contract {} has approved addendum: {}", contract.getId(), hasApprovedAddendum);
+
 
                 if (hasApprovedAddendum) {
                     // Nếu có phụ lục được duyệt, chỉ xử lý các đợt thanh toán từ phụ lục
