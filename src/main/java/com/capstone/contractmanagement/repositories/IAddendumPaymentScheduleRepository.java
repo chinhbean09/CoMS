@@ -20,5 +20,8 @@ public interface IAddendumPaymentScheduleRepository extends JpaRepository<Addend
     @Query("SELECT aps FROM AddendumPaymentSchedule aps WHERE aps.addendum.contract = :contract AND aps.status = :status")
     List<AddendumPaymentSchedule> findByContractAndStatus(@Param("contract") Contract contract, @Param("status") PaymentStatus status);
 
+    @Query("SELECT ps.billUrls FROM AddendumPaymentSchedule ps WHERE ps.id = :paymentId")
+    List<String> findBillUrlsByPaymentId(@Param("paymentId") Long paymentId);
+
 
 }

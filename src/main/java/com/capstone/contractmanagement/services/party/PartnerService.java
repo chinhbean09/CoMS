@@ -287,11 +287,13 @@
             // get partner by id
             Partner partner = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
 
-            boolean isDirector = authentication.getAuthorities().stream()
-                    .anyMatch(a -> "ROLE_DIRECTOR".equals(a.getAuthority()));
-            // Kiểm tra quyền sở hữu
-            if (!isDirector  && !partner.getUser().getId().equals(currentUser.getId())) {
-                throw new ContractAccessDeniedException("Không có quyền xem thông tin Partner này");
+            if (!(partner.getId() == 1L)) {
+                boolean isDirector = authentication.getAuthorities().stream()
+                        .anyMatch(a -> "ROLE_DIRECTOR".equals(a.getAuthority()));
+                // Kiểm tra quyền sở hữu
+                if (!isDirector  && !partner.getUser().getId().equals(currentUser.getId())) {
+                    throw new ContractAccessDeniedException("Không có quyền xem thông tin Partner này");
+                }
             }
             // convert to response
             return ListPartnerResponse.builder()
