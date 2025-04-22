@@ -248,6 +248,16 @@ public class UserController {
         }
     }
 
+    @GetMapping("/get-user-by-id/{id}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(UserResponse.fromUser(user));
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
 
     public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
         try {
