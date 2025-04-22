@@ -37,15 +37,15 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     // Các truy vấn hỗ trợ search
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier <> 'LEGAL_BASIS' AND t.status = 'NEW' " +
-            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.value) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findAllExcludingLegalBasicWithSearch(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT t FROM Term t WHERE t.typeTerm.id IN :ids AND t.status = 'NEW' " +
-            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.value) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findByTypeTermIdInWithSearch(@Param("ids") List<Long> ids, @Param("search") String search, Pageable pageable);
 
     @Query("SELECT t FROM Term t WHERE (t.typeTerm.identifier = 'LEGAL_BASIS' OR t.typeTerm.id IN :ids)  AND t.status = 'NEW' " +
-            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.value) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> findByLegalBasisOrTypeTermIdInWithSearch(@Param("ids") List<Long> ids, @Param("search") String search, Pageable pageable);
 
     @Query("SELECT t FROM Term t WHERE t.typeTerm.identifier = 'LEGAL_BASIS' AND t.status = 'NEW'")
@@ -53,7 +53,8 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
 
     @Query("SELECT t FROM Term t WHERE t.typeTerm = :typeTerm " +
             "AND (LOWER(t.label) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "OR LOWER(t.clauseCode) LIKE LOWER(CONCAT('%', :search, '%'))" +
+            "OR LOWER(t.value) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Term> searchByTypeTermAndLabelOrClauseCode(@Param("typeTerm") TypeTerm typeTerm,
                                                     @Param("search") String search,
                                                     Pageable pageable);
@@ -83,5 +84,7 @@ public interface ITermRepository extends JpaRepository<Term, Long> {
     @Query("SELECT t FROM Term t WHERE LOWER(t.label) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(t.value) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Term> searchByLabelOrValue(String keyword);
+
+    boolean existsByLabelAndTypeTerm(String label, TypeTerm typeTerm);
 
 }
