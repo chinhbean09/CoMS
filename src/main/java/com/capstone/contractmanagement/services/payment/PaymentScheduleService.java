@@ -158,10 +158,12 @@
                 PaymentSchedule ps = (PaymentSchedule) payment;
                 logger.info("Sending reminder email for PaymentSchedule ID: {}", ps.getId());
                 mailService.sendEmailPaymentReminder(ps);
+                sendPaymentNotification(contract, message);
             } else if (payment instanceof AddendumPaymentSchedule) {
                 AddendumPaymentSchedule aps = (AddendumPaymentSchedule) payment;
                 logger.info("Sending reminder email for AddendumPaymentSchedule ID: {}", aps.getId());
                 mailService.sendEmailPaymentReminderForAddendum(aps);
+                sendPaymentNotification(contract, message);
             } else {
                 logger.warn("Unknown payment type: {}", payment.getClass().getName());
             }
@@ -177,10 +179,12 @@
             if (payment instanceof PaymentSchedule) {
                 PaymentSchedule ps = (PaymentSchedule) payment;
                 logger.info("Sending reminder email for PaymentSchedule ID: {}", ps.getId());
+                sendPaymentNotification(contract, message);
                 mailService.sendEmailPaymentExpired(ps);
             } else if (payment instanceof AddendumPaymentSchedule) {
                 AddendumPaymentSchedule aps = (AddendumPaymentSchedule) payment;
                 logger.info("Sending reminder email for AddendumPaymentSchedule ID: {}", aps.getId());
+                sendPaymentNotification(contract, message);
                 mailService.sendEmailPaymentExpiredForAddendum(aps);
             } else {
                 logger.warn("Unknown payment type: {}", payment.getClass().getName());

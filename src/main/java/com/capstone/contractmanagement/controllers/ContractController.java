@@ -706,6 +706,7 @@
         }
 
         @PostMapping("/upload-file-base64")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long contractId,
                                                                @RequestBody FileBase64DTO fileBase64,
                                                                @RequestParam String fileName) throws DataNotFoundException, IOException {
@@ -718,6 +719,7 @@
         }
 
         @PostMapping("/upload-file-base64get-count")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> uploadFileBase64GetCount(
                                                                @RequestBody FileBase64DTO fileBase64
                                                                ) throws IOException {
