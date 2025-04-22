@@ -279,9 +279,9 @@
             Partner partner = partyRepository.findById(id).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
 
             // Kiểm tra quyền sở hữu
-            if (!partner.getUser().getId().equals(currentUser.getId())) {
-                throw new ContractAccessDeniedException("Không có quyền xem thông tin Partner này");
-            }
+//            if (!partner.getUser().getId().equals(currentUser.getId())) {
+//                throw new ContractAccessDeniedException("Không có quyền xem thông tin Partner này");
+//            }
             // convert to response
             return ListPartnerResponse.builder()
                     .partyId(partner.getId())
