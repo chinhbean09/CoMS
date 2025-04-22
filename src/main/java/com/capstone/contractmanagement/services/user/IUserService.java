@@ -20,7 +20,7 @@ public interface IUserService {
 
     void blockOrEnable(Long userId, Boolean active) throws Exception;
 
-    User getUser(Long id) throws DataNotFoundException;
+    User getUser() throws DataNotFoundException;
 
     void deleteUser(Long userId);
 

@@ -20,7 +20,7 @@ public class Term {
     @Column(name = "term_id")
     private Long id;
 
-    @Column(name = "label", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "label", nullable = false, columnDefinition = "TEXT", unique = true)
     private String label;
 
     @Column(name = "value", nullable = false, columnDefinition = "TEXT")

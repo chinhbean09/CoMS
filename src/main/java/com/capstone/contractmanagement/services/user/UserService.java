@@ -35,7 +35,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+ import org.springframework.security.core.Authentication;
  import org.springframework.security.core.AuthenticationException;
+ import org.springframework.security.core.context.SecurityContextHolder;
  import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -263,8 +265,10 @@ public class UserService implements IUserService {
         }
 
     @Override
-    public User getUser(Long id) throws DataNotFoundException {
-        return UserRepository.findById(id).orElseThrow(() -> new DataNotFoundException("User not found"));
+    public User getUser() throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        return UserRepository.findById(currentUser.getId()).orElseThrow(() -> new DataNotFoundException("User not found"));
     }
 
     @Override
