@@ -45,7 +45,51 @@ public interface IPartnerRepository extends JpaRepository<Partner, Long> {
             "LOWER(p.partnerCode) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Partner> searchByFieldsAndPartnerTypeAndUser(@Param("search") String search, @Param("partnerType") PartnerType partnerType, @Param("user") User user, Pageable pageable);
 
-    Page<Partner> findByIsDeletedFalseAndUserAndIdNot(User user, Long excludedId, Pageable pageable);
+    Page<Partner> findByIsDeletedFalseAndUser(User user, Pageable pageable);
 
-    Page<Partner> findByIsDeletedFalseAndPartnerTypeAndUserAndIdNot(PartnerType partnerType, User user, Long excludedId, Pageable pageable);
+    Page<Partner> findByIsDeletedFalseAndPartnerTypeAndUser(PartnerType partnerType, User user, Pageable pageable);
+
+    // CASE A: non-director, không search, không filter partnerType
+    @Query("SELECT p FROM Partner p " +
+            " WHERE p.isDeleted = false " +
+            "   AND (p.user = :user OR p.id = :globalId)")
+    Page<Partner> findAllowedForUser(@Param("user") User user,
+                                     @Param("globalId") Long globalId,
+                                     Pageable pageable);
+
+    // CASE B: non-director, có search
+    @Query("SELECT p FROM Partner p " +
+            " WHERE p.isDeleted = false " +
+            "   AND (p.user = :user OR p.id = :globalId) " +
+            "   AND (LOWER(p.partnerCode)   LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "     OR LOWER(p.partnerName)   LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "     OR LOWER(p.email)         LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Partner> searchAllowedForUser(@Param("search")   String search,
+                                       @Param("user")     User user,
+                                       @Param("globalId") Long globalId,
+                                       Pageable pageable);
+
+    // CASE C: non-director, có partnerType
+    @Query("SELECT p FROM Partner p " +
+            " WHERE p.isDeleted = false " +
+            "   AND p.partnerType = :partnerType " +
+            "   AND (p.user = :user OR p.id = :globalId)")
+    Page<Partner> findByTypeAllowedForUser(@Param("partnerType") PartnerType partnerType,
+                                           @Param("user")        User user,
+                                           @Param("globalId")    Long globalId,
+                                           Pageable pageable);
+
+    // CASE D: non-director, có cả search + partnerType
+    @Query("SELECT p FROM Partner p " +
+            " WHERE p.isDeleted = false " +
+            "   AND p.partnerType = :partnerType " +
+            "   AND (p.user = :user OR p.id = :globalId) " +
+            "   AND (LOWER(p.partnerName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "     OR LOWER(p.taxCode)     LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "     OR LOWER(p.partnerCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Partner> searchByTypeAllowedForUser(@Param("search")      String search,
+                                             @Param("partnerType") PartnerType partnerType,
+                                             @Param("user")        User user,
+                                             @Param("globalId")    Long globalId,
+                                             Pageable pageable);
 }

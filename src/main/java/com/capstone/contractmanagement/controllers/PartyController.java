@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +26,7 @@ public class PartyController {
     private final IPartnerService partyService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> createParty(@RequestBody CreatePartnerDTO createPartnerDTO) {
         CreatePartnerResponse response = partyService.createPartner(createPartnerDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -35,6 +37,7 @@ public class PartyController {
     }
 
     @PutMapping("/update/{partyId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> updateParty(@PathVariable Long partyId, @RequestBody UpdatePartnerDTO updatePartnerDTO) {
         try {
             CreatePartnerResponse response = partyService.updatePartner(partyId, updatePartnerDTO);
@@ -62,6 +65,7 @@ public class PartyController {
     }
 
     @GetMapping("/get-all")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllParties(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0", required = false) int page,
@@ -79,6 +83,7 @@ public class PartyController {
     }
 
     @GetMapping("/get-by-id/{partyId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getPartyById(@PathVariable Long partyId) throws DataNotFoundException {
         ListPartnerResponse response = partyService.getPartnerById(partyId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -89,6 +94,7 @@ public class PartyController {
     }
 
     @DeleteMapping("/delete/{partyId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> deleteParty(@PathVariable Long partyId) throws DataNotFoundException {
         partyService.deleteParty(partyId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -99,6 +105,7 @@ public class PartyController {
 
     // update partner status
     @PutMapping("/update-status/{partyId}/{isDeleted}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<String> updatePartyStatus(@PathVariable Long partyId, @PathVariable Boolean isDeleted) {
         try {
             partyService.updatePartnerStatus(partyId, isDeleted);

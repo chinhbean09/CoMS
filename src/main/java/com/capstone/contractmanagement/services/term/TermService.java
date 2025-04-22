@@ -47,22 +47,23 @@ public class TermService implements ITermService{
     private final IContractTemplateAdditionalTermDetailRepository contractTemplateAdditionalTermDetailRepository;
 
     @Override
+    @Transactional
     public CreateTermResponse createTerm(Long typeTermId, CreateTermDTO request) {
-        // Lấy TypeTerm theo typeTermId
         TypeTerm typeTerm = typeTermRepository.findById(typeTermId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại điều khoản"));
 
-        if (termRepository.existsByLabel(request.getLabel())) {
-            throw new IllegalArgumentException("Label đã tồn tại, vui lòng chọn tên khác!");
+        String newLabel = request.getLabel().trim();
+        if (termRepository.existsByLabelAndTypeTerm(newLabel, typeTerm)) {
+            throw new IllegalArgumentException(
+                    "Tên điều khoản '" + newLabel + "' đã tồn tại trong loại '"
+                            + typeTerm.getName() + "'. Vui lòng chọn tên khác!"
+            );
         }
 
-        // Sinh clauseCode tự động dựa trên tên của typeTerm và số thứ tự (logic của bạn)
         String clauseCode = generateClauseCode(typeTerm);
-
-        // Tạo Term mới với status = NEW và version = 1
         Term term = Term.builder()
                 .clauseCode(clauseCode)
-                .label(request.getLabel())
+                .label(newLabel)
                 .value(request.getValue())
                 .createdAt(LocalDateTime.now())
                 .typeTerm(typeTerm)
@@ -77,9 +78,9 @@ public class TermService implements ITermService{
                 .label(term.getLabel())
                 .value(term.getValue())
                 .createdAt(term.getCreatedAt())
-                .type(term.getTypeTerm().getName())
-                .status(TermStatus.NEW)
-                .identifier(String.valueOf(term.getTypeTerm().getIdentifier()))
+                .type(typeTerm.getName())
+                .status(term.getStatus())
+                .identifier(String.valueOf(typeTerm.getIdentifier()))
                 .build();
     }
 
@@ -135,7 +136,16 @@ public class TermService implements ITermService{
         Term oldTerm = termRepository.findById(termId)
                 .orElseThrow(() -> new DataNotFoundException("Điều khoản không tìm thấy"));
 
-        oldTerm.setLabel(termRequest.getLabel());
+        String newLabel = termRequest.getLabel().trim();
+        if (!oldTerm.getLabel().equals(newLabel)
+                && termRepository.existsByLabelAndTypeTerm(newLabel, oldTerm.getTypeTerm())) {
+            throw new IllegalArgumentException(
+                    "Tên điều khoản '" + newLabel + "' đã tồn tại trong loại '"
+                            + oldTerm.getTypeTerm().getName() + "'."
+            );
+        }
+
+        oldTerm.setLabel(newLabel);
         oldTerm.setValue(termRequest.getValue());
         oldTerm.setStatus(TermStatus.NEW);
         oldTerm.setVersion(oldTerm.getVersion() + 1);
