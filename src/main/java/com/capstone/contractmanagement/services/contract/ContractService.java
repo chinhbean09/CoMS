@@ -916,16 +916,8 @@ public class ContractService implements IContractService{
 
         return contractRepository.findById(id)
                 .map(contract -> {
-                    boolean isOwner = contract.getUser().getId().equals(currentUser.getId());
 
-                    // Lấy workflow (có thể null nếu chưa gán)
-                    ApprovalWorkflow wf = contract.getApprovalWorkflow();
-
-                    // Kiểm tra xem currentUser có phải là 1 approver trong các stage của workflow không
-                    boolean isApprover = wf != null && wf.getStages().stream()
-                            .anyMatch(stage -> stage.getApprover().getId().equals(currentUser.getId()));
-
-                    if (!isOwner && !isApprover) {
+                    if (!hasAccessToContract(contract, currentUser)) {
                         throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
                     }
                     // Force lazy loading của các collection khi session còn mở.
@@ -939,6 +931,18 @@ public class ContractService implements IContractService{
                     });
                     return convertContractToResponse(contract);
                 });
+    }
+
+    private boolean hasAccessToContract(Contract contract, User currentUser) {
+        boolean isOwner = contract.getUser() != null && contract.getUser().getId().equals(currentUser.getId());
+
+        ApprovalWorkflow wf = contract.getApprovalWorkflow();
+        boolean isApprover = wf != null && wf.getStages().stream()
+                .anyMatch(stage -> stage.getApprover() != null && stage.getApprover().getId().equals(currentUser.getId()));
+
+        boolean isDirector = currentUser.getRole() != null && currentUser.getRole().equals(Role.DIRECTOR);
+
+        return isOwner || isApprover || isDirector;
     }
 
     private ContractResponse convertContractToResponse(Contract contract) {
@@ -960,6 +964,7 @@ public class ContractService implements IContractService{
                         .value(term.getTermValue())
                         .build())
                 .collect(Collectors.toList());
+
 
         List<TermResponse> otherTerms = contract.getContractTerms().stream()
                 .filter(term -> term.getTermType() == TypeTermIdentifier.OTHER_TERMS)
@@ -1438,16 +1443,6 @@ public class ContractService implements IContractService{
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
 
         try {
-            //  Xoá file cũ khỏi Cloudinary (nếu có)
-//            for (String oldUrl : contract.getSignedContractUrls()) {
-//                String publicId = extractPublicIdFromUrl(oldUrl);
-//                if (publicId != null) {
-//                    // Xác định resource_type là raw (pdf) hay image
-//                    String resourceType = publicId.endsWith(".pdf") ? "raw" : "image";
-//                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
-//                }
-//            }
-            // Xóa tất cả các hình ảnh cũ (nếu cần) nếu bạn muốn thay thế hoàn toàn
             contract.getSignedContractUrls().clear();
 
             List<String> uploadedUrls = new ArrayList<>();
@@ -1483,11 +1478,6 @@ public class ContractService implements IContractService{
                 if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
                     String originalFilename = file.getOriginalFilename();
                     String customFilename = normalizeFilename(originalFilename);
-
-                    // Ensure filename has the .pdf extension
-//                    if (!customFilename.endsWith(".pdf")) {
-//                        customFilename += ".pdf";
-//                    }
 
                     // Encode the filename for URL safety
                     String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
