@@ -730,5 +730,15 @@
                     .build());
         }
 
+        @PostMapping("/send-approve-reminder/{contractId}")
+        public ResponseEntity<ResponseObject> sendApproveReminder( @PathVariable Long contractId
+        ) throws DataNotFoundException {
+            contractService.notifyNextApprover(contractId);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Gửi thông báo nhắc nhở thành công")
+                    .status(HttpStatus.OK)
+                    .build());
+        }
+
     }
 
