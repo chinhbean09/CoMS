@@ -49,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -73,6 +74,7 @@ public class AddendumService implements IAddendumService{
     private final LocalizationUtils localizationUtils;
     private final ITermRepository termRepository;
     private final ITypeTermRepository typeTermRepository;
+    private final IAddendumPaymentScheduleRepository addendumPaymentScheduleRepository;
 
 
     private static final Logger logger = LoggerFactory.getLogger(AddendumService.class);
@@ -1922,6 +1924,102 @@ public class AddendumService implements IAddendumService{
         addendum.setSignedFilePath(secureUrl);
         addendum.setStatus(AddendumStatus.SIGNED);
         addendumRepository.save(addendum);
+    }
+
+    @Override
+    public void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException {
+        AddendumPaymentSchedule addendumPaymentSchedule = addendumPaymentScheduleRepository.findById(paymentScheduleId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy lịch thanh toán"));
+
+//        // Nếu thuộc Contract, kiểm tra điều kiện
+//        if (paymentSchedule.getContract() != null) {
+//            Contract contract = paymentSchedule.getContract();
+//
+//            // Kiểm tra status SIGNED + ACTIVE (dựa vào ngày)
+//            boolean isActive = contract.getEffectiveDate() != null &&
+//                    contract.getExpiryDate() != null &&
+//                    !contract.getEffectiveDate().isAfter(LocalDateTime.now()) &&
+//                    !contract.getExpiryDate().isBefore(LocalDateTime.now());
+//
+//            if (!ContractStatus.SIGNED.equals(contract.getStatus()) || !isActive) {
+//                throw new InvalidParamException("Chỉ cho upload bằng chứng thanh toán khi hợp đồng đã ký hoặc đang hoạt động");
+//            }
+//        }
+
+        try {
+            // 🔥 Xoá các file cũ trên Cloudinary nếu có
+            for (String oldUrl : addendumPaymentSchedule.getBillUrls()) {
+                String publicId = extractPublicIdFromUrl(oldUrl);
+                if (publicId != null) {
+                    cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
+                }
+            }
+
+            // Xoá danh sách URL cũ trong DB
+            addendumPaymentSchedule.getBillUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hình ảnh
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
+                        !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
+                    throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+                }
+
+                // Upload lên Cloudinary
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "payment_bill/" + paymentScheduleId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", "image"
+                        )
+                );
+
+                // Lấy URL ảnh đã upload
+                String billUrl = uploadResult.get("secure_url").toString();
+                uploadedUrls.add(billUrl);
+            }
+
+            // Lưu danh sách URL mới
+            addendumPaymentSchedule.getBillUrls().addAll(uploadedUrls);
+            addendumPaymentSchedule.setStatus(PaymentStatus.PAID);
+            addendumPaymentScheduleRepository.save(addendumPaymentSchedule);
+
+        } catch (IOException e) {
+            logger.error("Không tải được url hóa đơn cho lịch thanh toán. Lỗi:", e);
+        }
+    }
+
+    @Override
+    public List<String> getBillUrlsByAddendumPaymentId(Long paymentId) throws DataNotFoundException {
+        return List.of();
+    }
+
+    private String extractPublicIdFromUrl(String url) {
+        try {
+            // Ví dụ URL:
+            // https://res.cloudinary.com/your_cloud_name/image/upload/v1234567890/payment_bill/12/filename_xyz.png
+            // Cần tách phần sau: payment_bill/12/filename_xyz
+
+            URI uri = new URI(url);
+            String path = uri.getPath(); // /your_cloud_name/image/upload/v1234567890/payment_bill/12/file.png
+            int versionIndex = path.indexOf("/v"); // tìm vị trí bắt đầu version
+
+            if (versionIndex != -1) {
+                String publicPath = path.substring(versionIndex + 2); // bỏ "/v" và version
+                int slashIndex = publicPath.indexOf('/');
+                if (slashIndex != -1) {
+                    return publicPath.substring(slashIndex + 1, publicPath.lastIndexOf('.')); // bỏ phần mở rộng .jpg/.png
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to extract publicId from URL: {}", url);
+        }
+        return null;
     }
 
     private String normalizeFilename(String filename) {
