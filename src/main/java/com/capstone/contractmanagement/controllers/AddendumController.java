@@ -168,7 +168,7 @@ public class AddendumController {
 
 
     @GetMapping("/get-all")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getFilteredAddenda(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<AddendumStatus> statuses,
@@ -512,7 +512,7 @@ public class AddendumController {
     }
 
     @PostMapping("/upload-file-base64")
-    @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_MANAGER'), 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_MANAGER', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long addendumId,
                                                            @RequestBody FileBase64DTO fileBase64DTO,
                                                            @RequestParam String fileName) throws DataNotFoundException, IOException {
