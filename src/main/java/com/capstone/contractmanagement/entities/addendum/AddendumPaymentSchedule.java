@@ -40,8 +40,8 @@ public class AddendumPaymentSchedule {
     @Column(name = "notified_payment_date")
     private LocalDateTime notifyPaymentDate;
 
-    @Column(name = "notify_payment_content", columnDefinition = "TEXT")
-    private String notifyPaymentContent;
+//    @Column(name = "notify_payment_content", columnDefinition = "TEXT")
+//    private String notifyPaymentContent;
 
     // Liên kết với Addendum
     @ManyToOne
