@@ -68,4 +68,6 @@ public interface IContractService {
     List<String> getSignedContractUrl(Long contractId) throws DataNotFoundException;
 
     void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
+
+    void notifyNextApprover(Long contractId) throws DataNotFoundException;
     }
