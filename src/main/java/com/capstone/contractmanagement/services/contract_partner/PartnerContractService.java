@@ -332,7 +332,7 @@ public class PartnerContractService implements IPartnerContractService {
                 MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
                         !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
-                    throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+                    throw new InvalidParamException(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE);
                 }
 
                 // Upload lên Cloudinary

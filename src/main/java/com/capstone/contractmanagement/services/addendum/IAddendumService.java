@@ -61,4 +61,6 @@ public interface IAddendumService {
     List<String> getSignedAddendumUrl(Long addendumId) throws DataNotFoundException;
 
     void uploadFileBase64(Long addendumId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
+    void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException;
+    List<String> getBillUrlsByAddendumPaymentId(Long paymentId) throws DataNotFoundException;
 }
