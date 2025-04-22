@@ -13,6 +13,7 @@ import com.capstone.contractmanagement.entities.contract_template.ContractTempla
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.*;
+import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
@@ -34,6 +35,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -907,8 +911,23 @@ public class ContractService implements IContractService{
     @Override
     @Transactional(readOnly = true)
     public Optional<ContractResponse> getContractById(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
         return contractRepository.findById(id)
                 .map(contract -> {
+                    boolean isOwner = contract.getUser().getId().equals(currentUser.getId());
+
+                    // Lấy workflow (có thể null nếu chưa gán)
+                    ApprovalWorkflow wf = contract.getApprovalWorkflow();
+
+                    // Kiểm tra xem currentUser có phải là 1 approver trong các stage của workflow không
+                    boolean isApprover = wf != null && wf.getStages().stream()
+                            .anyMatch(stage -> stage.getApprover().getId().equals(currentUser.getId()));
+
+                    if (!isOwner && !isApprover) {
+                        throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
+                    }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
@@ -1008,9 +1027,9 @@ public class ContractService implements IContractService{
             }
         }
 
-        if (partnerA == null || partnerB == null) {
-            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
-        }
+//        if (partnerA == null || partnerB == null) {
+//            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+//        }
 
         return ContractResponse.builder()
                 .id(contract.getId())

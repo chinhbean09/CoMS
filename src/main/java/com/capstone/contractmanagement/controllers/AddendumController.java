@@ -29,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -53,6 +54,7 @@ public class AddendumController {
 
     // api create addendum
     @PostMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> createAddendum(@RequestBody AddendumDTO addendumDTO) throws DataNotFoundException {
         AddendumResponse addendumResponse = addendumService.createAddendum(addendumDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -63,6 +65,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-by-contract-id/{contractId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllByContract(@PathVariable Long contractId) throws DataNotFoundException {
         List<AddendumResponse> addendumResponseList = addendumService.getAllByContractId(contractId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -83,12 +86,14 @@ public class AddendumController {
 //    }
 
     @PutMapping("/update/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<String> updateAddendum(@PathVariable Long addendumId,
                                                  @RequestBody AddendumDTO addendumDTO) throws DataNotFoundException {
         return ResponseEntity.ok(addendumService.updateAddendum(addendumId, addendumDTO));
     }
 
     @DeleteMapping("/delete/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteAddendum(@PathVariable Long addendumId) throws DataNotFoundException {
         addendumService.deleteAddendum(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -99,6 +104,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-by-id/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAddendumById(@PathVariable Long addendumId) throws DataNotFoundException {
         Optional<AddendumResponse> addendumResponse = addendumService.getAddendumById(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -110,6 +116,7 @@ public class AddendumController {
 
     // assign approval workflow to contract
     @PutMapping("/assign-old-workflow-of-contract/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> assignWorkflowToContract(@PathVariable Long addendumId) throws DataNotFoundException {
         addendumService.assignApprovalWorkflowOfContractToAddendum(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -120,6 +127,7 @@ public class AddendumController {
 
     // assign approval workflow to contract
     @PutMapping("/assign-new-workflow/{addendumId}/{workflowId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> assignNewWorkflow(@PathVariable Long addendumId, @PathVariable Long workflowId) throws DataNotFoundException {
         addendumService.assignWorkflowToAddendum(addendumId, workflowId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -129,6 +137,7 @@ public class AddendumController {
     }
 
     @PutMapping("/approve/{addendumId}/{stageId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> approveStage(@PathVariable Long addendumId, @PathVariable Long stageId) throws DataNotFoundException {
         addendumService.approvedStageForAddendum(addendumId, stageId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -138,6 +147,7 @@ public class AddendumController {
     }
 
     @PutMapping("/reject/{addendumId}/{stageId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> rejectStage(@PathVariable Long addendumId, @PathVariable Long stageId, @RequestBody WorkflowDTO workflowDTO) throws DataNotFoundException {
         addendumService.rejectStageForAddendum(addendumId, stageId, workflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -147,6 +157,7 @@ public class AddendumController {
     }
 
     @PostMapping("/resubmit/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> resubmitContract(@PathVariable Long addendumId) throws DataNotFoundException {
         addendumService.resubmitAddendumForApproval(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -157,6 +168,7 @@ public class AddendumController {
 
 
     @GetMapping("/get-all")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getFilteredAddenda(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<AddendumStatus> statuses,
@@ -176,6 +188,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-addendum-for-approver/{approverId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getContractForApprover(@PathVariable Long approverId,
                                                                  @RequestParam(value = "keyword", required = false) String keyword,
                                                                  @RequestParam(value = "page", defaultValue = "0") int page,
@@ -189,6 +202,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-addendum-for-manager/{managerId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAddendaForManager(@PathVariable Long managerId,
                                                                @RequestParam(value = "keyword", required = false) String keyword,
                                                                @RequestParam(value = "page", defaultValue = "0") int page,
@@ -202,6 +216,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-workflow-by-addendum/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getApprovalWorkflowByContractId(@PathVariable Long addendumId) throws DataNotFoundException {
         ApprovalWorkflowResponse approvalWorkflowResponse = addendumService.getWorkflowByAddendumId(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -212,6 +227,7 @@ public class AddendumController {
     }
 
     @PostMapping("/create-workflow")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> createApprovalWorkflow(@RequestBody AddendumApprovalWorkflowDTO approvalWorkflowDTO) {
         ApprovalWorkflowResponse response = addendumService.createWorkflowForAddendum(approvalWorkflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -223,6 +239,7 @@ public class AddendumController {
 
     // api get approval workflow by contract type id
     @GetMapping("/get-workflow-by-addendum-type")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getApprovalWorkflowByAddendumTypeId() {
         List<ApprovalWorkflowResponse> approvalWorkflowResponse = addendumService.getWorkflowByAddendumTypeId();
         return ResponseEntity.ok(ResponseObject.builder()
@@ -233,6 +250,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-addendum-comments/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> getApprovalComments(@PathVariable Long addendumId) throws DataNotFoundException {
         List<CommentResponse> comments = addendumService.getApprovalStageCommentDetailsByAddendumId(addendumId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -243,6 +261,7 @@ public class AddendumController {
     }
 
     @PostMapping("/duplicate/{addendumId}/{contractId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> duplicateAddendum(@PathVariable Long addendumId, @PathVariable Long contractId) throws DataNotFoundException {
         AddendumResponse addendumResponse = addendumService.duplicateAddendum(addendumId, contractId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -253,6 +272,7 @@ public class AddendumController {
     }
 
     @PostMapping("/sign")
+    @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> signAddenda(@RequestBody @Valid SignAddendumRequest request) {
         try {
             // Fetch contract by ID from the repository
@@ -410,6 +430,7 @@ public class AddendumController {
     }
 
     @PutMapping(value = "/upload-signed-addenda-file/{addendumId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long addendumId,
                                                                 @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
         addendumService.uploadSignedAddendum(addendumId, files);
@@ -421,6 +442,7 @@ public class AddendumController {
     }
 
     @GetMapping("/signed-addenda-urls/{addendumId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getBillUrls(@PathVariable Long addendumId) throws DataNotFoundException {
         return ResponseEntity.ok(ResponseObject.builder()
                 .message("Lấy link phụ lục đã ký")
@@ -490,6 +512,7 @@ public class AddendumController {
     }
 
     @PostMapping("/upload-file-base64")
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_MANAGER', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> uploadFileBase64(@RequestParam Long addendumId,
                                                            @RequestBody FileBase64DTO fileBase64DTO,
                                                            @RequestParam String fileName) throws DataNotFoundException, IOException {
