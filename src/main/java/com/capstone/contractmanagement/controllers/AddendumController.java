@@ -431,8 +431,8 @@ public class AddendumController {
 
     @PutMapping(value = "/upload-signed-addenda-file/{addendumId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
-    public ResponseEntity<ResponseObject> uploadPaymentBillUrls(@PathVariable long addendumId,
-                                                                @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
+    public ResponseEntity<ResponseObject> uploadSignedAddendum(@PathVariable long addendumId,
+                                                               @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
         addendumService.uploadSignedAddendum(addendumId, files);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
@@ -521,6 +521,18 @@ public class AddendumController {
                 .message("Tải lên thành công")
                 .status(HttpStatus.OK)
                 .data(null)
+                .build());
+    }
+
+    @PutMapping(value = "/upload-bills/{paymentScheduleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseObject> uploadAddendumPaymentBillUrls(@PathVariable long paymentScheduleId,
+                                                                @RequestParam("files") List<MultipartFile> files) throws DataNotFoundException {
+        addendumService.uploadPaymentBillUrls(paymentScheduleId, files);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(null)
+                .message("Cập nhật các hóa đơn thanh toán thành công")
                 .build());
     }
 

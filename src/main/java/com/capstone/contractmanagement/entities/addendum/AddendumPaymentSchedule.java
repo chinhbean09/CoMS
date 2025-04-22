@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "addendum_payment_schedules")
@@ -39,7 +40,7 @@ public class AddendumPaymentSchedule {
 
     @Column(name = "notified_payment_date")
     private LocalDateTime notifyPaymentDate;
-
+// Lưu nhiều URL trong một trường
 //    @Column(name = "notify_payment_content", columnDefinition = "TEXT")
 //    private String notifyPaymentContent;
 
@@ -55,4 +56,9 @@ public class AddendumPaymentSchedule {
     // Flag gửi email quá hạn
     @Column(name = "overdue_email_sent")
     private boolean overdueEmailSent;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "addendum_payment_schedule_evidences", joinColumns = @JoinColumn(name = "addendum_payment_id"))
+    @Column(name = "bill_url")
+    private List<String> billUrls;
 }
