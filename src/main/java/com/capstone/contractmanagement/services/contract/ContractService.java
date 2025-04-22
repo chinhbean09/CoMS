@@ -916,8 +916,17 @@ public class ContractService implements IContractService{
 
         return contractRepository.findById(id)
                 .map(contract -> {
-                    if (!contract.getUser().getId().equals(currentUser.getId())) {
-                        throw new ContractAccessDeniedException("Không có quyền xem hợp đồng này");
+                    boolean isOwner = contract.getUser().getId().equals(currentUser.getId());
+
+                    // Lấy workflow (có thể null nếu chưa gán)
+                    ApprovalWorkflow wf = contract.getApprovalWorkflow();
+
+                    // Kiểm tra xem currentUser có phải là 1 approver trong các stage của workflow không
+                    boolean isApprover = wf != null && wf.getStages().stream()
+                            .anyMatch(stage -> stage.getApprover().getId().equals(currentUser.getId()));
+
+                    if (!isOwner && !isApprover) {
+                        throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
                     }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
