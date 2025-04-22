@@ -22,6 +22,8 @@ public interface IUserService {
 
     User getUser() throws DataNotFoundException;
 
+    User getUserById(Long userId) throws DataNotFoundException;
+
     void deleteUser(Long userId);
 
     void updateUser(Long userId, UpdateUserDTO userDTO) throws Exception;
