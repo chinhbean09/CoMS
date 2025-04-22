@@ -83,7 +83,7 @@ public class PartyController {
     }
 
     @GetMapping("/get-by-id/{partyId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getPartyById(@PathVariable Long partyId) throws DataNotFoundException {
         ListPartnerResponse response = partyService.getPartnerById(partyId);
         return ResponseEntity.ok(ResponseObject.builder()
