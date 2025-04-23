@@ -164,18 +164,24 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         auditTrailRepository.save(auditTrail);
     }
 
-    @Scheduled(cron = "0 0 8 * * ?")
+    //@Scheduled(fixedDelay = 30 * 60 * 1000)
+    @Scheduled(cron = "0 0 0,12 * * *")
     protected void notificationForContractExpired() {
         LocalDateTime now = LocalDateTime.now();
         List<Contract> contracts = contractRepository.findAll().stream()
-                .filter(contract -> contract.getStatus() == ContractStatus.APPROVAL_PENDING)
+                .filter(contract -> contract.getStatus() == ContractStatus.APPROVAL_PENDING
+                        || contract.getStatus() == ContractStatus.CREATED
+                        || contract.getStatus() == ContractStatus.UPDATED)
                 .filter(contract -> contract.getIsLatestVersion() == true)
                 .filter(c -> {
                     long days = ChronoUnit.DAYS.between(
                             now.toLocalDate(),
                             c.getSigningDate().toLocalDate()
                     );
-                    return days == appConfigService.getApprovalDeadlineValue();
+                    if (appConfigService.getApprovalDeadlineValue() == 0) {
+                        return days <= 2;
+                    }
+                    return days <= appConfigService.getApprovalDeadlineValue();
                 })
                 .collect(Collectors.toList());
 
@@ -183,13 +189,13 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         User director = userRepository.findAll().stream()
                 .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người có vai trò giám đốc"));
         for (Contract notiContract: contracts) {
             String dateStr = notiContract.getSigningDate()
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             String message = String.format(
-                    "Hợp đồng \"%s\" dự kiến ký vào ngày %s. Vui lòng duyệt kịp thời!",
-                    notiContract.getTitle(), dateStr
+                    "Hợp đồng số \"%s\" dự kiến ký vào ngày %s. Vui lòng nhắc nhở duyệt kịp thời!",
+                    notiContract.getContractNumber(), dateStr
             );
 
             // gửi in‑app + lưu notification
@@ -207,6 +213,47 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 // mailService.sendEmailContractSigningReminder(user, contract);
 
         }
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    protected void markContractsEnded() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+
+        // Tìm những hợp đồng cần end
+        List<Contract> toEnd = contractRepository.findExpiredBefore(cutoff);
+
+        if (toEnd.isEmpty()) return;
+
+        // Đánh dấu và gửi notification
+        toEnd.forEach(c -> {
+            c.setStatus(ContractStatus.ENDED);
+            //c.setUpdatedAt(LocalDateTime.now());
+
+            // --- phần mới: gửi thông báo ---
+            User owner = c.getUser();
+            String message = String.format(
+                    "Hợp đồng \"%s\" đã kết thúc sau 30 ngày hết hạn.",
+                    c.getTitle(), c.getId()
+            );
+            Map<String,Object> payload = Map.of(
+                    "message", message,
+                    "contractId", c.getId()
+            );
+
+            // 1) Gửi WebSocket
+            messagingTemplate.convertAndSendToUser(
+                    owner.getFullName(),
+                    "/queue/notifications",
+                    payload
+            );
+            // 2) Lưu vào hệ thống notification
+            notificationService.saveNotification(owner, message, c);
+            // 3) (Tuỳ) gửi email
+            //mailService.sendEmailContractEnded(owner, c);
+        });
+
+        // Lưu tất cả thay đổi
+        contractRepository.saveAll(toEnd);
     }
     /**
      * Dịch trạng thái hợp đồng sang tiếng Việt
