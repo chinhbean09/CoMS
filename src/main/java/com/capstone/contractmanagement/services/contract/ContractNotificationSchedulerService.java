@@ -224,18 +224,28 @@ public class ContractNotificationSchedulerService implements IContractNotificati
 
         if (toEnd.isEmpty()) return;
 
-        // Đánh dấu và gửi notification
+        // Đánh dấu, gửi thông báo và ghi audit trail
         toEnd.forEach(c -> {
+            ContractStatus oldStatus = c.getStatus(); // Lưu trạng thái cũ
             c.setStatus(ContractStatus.ENDED);
-            //c.setUpdatedAt(LocalDateTime.now());
 
-            // --- phần mới: gửi thông báo ---
+            // --- Ghi audit trail cho thay đổi trạng thái ---
+            logAuditTrailForContract(
+                    c,
+                    "UPDATE",
+                    "status",
+                    oldStatus != null ? oldStatus.name() : null,
+                    ContractStatus.ENDED.name(),
+                    "System"
+            );
+
+            // --- Gửi thông báo ---
             User owner = c.getUser();
             String message = String.format(
                     "Hợp đồng \"%s\" đã kết thúc sau 30 ngày hết hạn.",
-                    c.getTitle(), c.getId()
+                    c.getTitle()
             );
-            Map<String,Object> payload = Map.of(
+            Map<String, Object> payload = Map.of(
                     "message", message,
                     "contractId", c.getId()
             );
@@ -248,8 +258,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             );
             // 2) Lưu vào hệ thống notification
             notificationService.saveNotification(owner, message, c);
-            // 3) (Tuỳ) gửi email
-            //mailService.sendEmailContractEnded(owner, c);
+            // 3) (Tùy chọn) Gửi email
+            // mailService.sendEmailContractEnded(owner, c);
         });
 
         // Lưu tất cả thay đổi
@@ -270,6 +280,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 return "Đang hoạt động";
             case "EXPIRED":
                 return "Hết hạn";
+            case "ENDED":
+                return "Kết thúc";
             default:
                 return status;
         }
