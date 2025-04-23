@@ -53,7 +53,7 @@
             //    Nếu bạn chỉ muốn unique trong cùng PartnerType thì dùng existsByTaxCodeAndPartnerType(...)
             String taxCode = createPartnerDTO.getTaxCode().trim();
             if (partyRepository.existsByTaxCode(taxCode)) {
-                throw new InvalidParamException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
+                throw new RuntimeException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
             }
 
             // 2. Sinh partnerCode
@@ -138,7 +138,7 @@
             String newTaxCode = updatePartnerDTO.getTaxCode().trim();
             if (!newTaxCode.equals(existingPartner.getTaxCode())
                     && partyRepository.existsByTaxCode(newTaxCode)) {
-                throw new InvalidParamException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
+                throw new RuntimeException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
             }
             // 2) Cập nhật mã số thuế
             existingPartner.setTaxCode(newTaxCode);
