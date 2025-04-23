@@ -1996,7 +1996,13 @@ public class AddendumService implements IAddendumService{
 
     @Override
     public List<String> getBillUrlsByAddendumPaymentId(Long paymentId) throws DataNotFoundException {
-        return List.of();
+        List<String> billUrls = addendumPaymentScheduleRepository.findBillUrlsByPaymentId(paymentId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy bill url với đợt thanh toán");
+        }
+
+        return billUrls;
     }
 
     private String extractPublicIdFromUrl(String url) {
