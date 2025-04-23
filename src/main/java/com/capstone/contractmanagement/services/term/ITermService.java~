@@ -49,7 +49,7 @@ public interface ITermService {
     // search
     Page<CreateTermResponse> searchTerm(String keyword, int page, int size);
 
-    Page<GetAllTermsResponse> getAllTermsByUser(
+    Page<GetAllTermsResponse> getAllTermsByUser(User currentUser,
                                                 List<Long> typeTermIds,
                                                 boolean includeLegalBasis,
                                                 String search,
