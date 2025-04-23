@@ -751,7 +751,7 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeIdAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusInAndContractTypeIdAndUser(
                                 keyword, statuses, contractTypeId, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusInAndContractTypeIdAndUser(
@@ -760,7 +760,7 @@ public class ContractService implements IContractService{
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusInAndUser(
                                 keyword, statuses, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusInAndUser(
@@ -771,7 +771,7 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeIdAndUser(
+                        contracts = contractRepository.findLatestByTitleOrNumberAndStatusNotAndContractTypeIdAndUser(
                                 keyword, ContractStatus.DELETED, contractTypeId, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusNotAndContractTypeIdAndUser(
@@ -780,7 +780,7 @@ public class ContractService implements IContractService{
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusNotAndUser(
                                 keyword, ContractStatus.DELETED, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusNotAndUser(
