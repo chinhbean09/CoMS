@@ -325,11 +325,11 @@ public class UserService implements IUserService {
         UserRepository.save(user);
     }
 
-    @Override
-    public User getUserDetailsFromRefreshToken(String refreshToken) throws Exception {
-        Token existingToken = TokenRepository.findByRefreshToken(refreshToken);
-        return getUserDetailsFromToken(existingToken.getToken());
-    }
+//    @Override
+//    public User getUserDetailsFromRefreshToken(String refreshToken) throws Exception {
+//        Token existingToken = TokenRepository.findByRefreshToken(refreshToken);
+//        return getUserDetailsFromToken(existingToken.getToken());
+//    }
 
     @Override
     public Page<UserResponse> getAllUsers(int page, int size, Long departmentId, Long roleId, String search) {

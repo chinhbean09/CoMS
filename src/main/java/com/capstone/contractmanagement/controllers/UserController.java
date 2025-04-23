@@ -147,7 +147,6 @@ public class UserController {
                     .message(MessageKeys.LOGIN_SUCCESSFULLY)
                     .token(jwtToken.getToken())
                     .tokenType(jwtToken.getTokenType())
-                    .refreshToken(jwtToken.getRefreshToken())
                     .fullName(userDetail.getFullName())
                     .email(userDetail.getEmail())
                     .phoneNumber(userDetail.getPhoneNumber())
@@ -289,35 +288,34 @@ public class UserController {
         }
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(
-            @Valid @RequestBody RefreshTokenDTO refreshTokenDTO
-    ) {
-        try {
-            User userDetail = userService.getUserDetailsFromRefreshToken(refreshTokenDTO.getRefreshToken());
-            Token jwtToken = tokenService.refreshToken(refreshTokenDTO.getRefreshToken(), userDetail);
-            return ResponseEntity.ok(LoginResponse.builder()
-                    .message(MessageKeys.LOGIN_SUCCESSFULLY)
-                    .token(jwtToken.getToken())
-                    .tokenType(jwtToken.getTokenType())
-                    .refreshToken(jwtToken.getRefreshToken())
-                    .fullName(userDetail.getFullName())
-                    .email(userDetail.getEmail())
-                    .gender(userDetail.getGender())
-                    .phoneNumber(userDetail.getPhoneNumber())
-                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
-                    .id(userDetail.getId())
-                    .build());
-
-        } catch (Exception e) {
-            String errorMessage = "Error occurred during token refresh: " + e.getMessage();
-            LoginResponse errorResponse = LoginResponse.builder()
-                    .message(errorMessage)
-                    .build();
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
-
-    }
+//    @PostMapping("/refresh-token")
+//    public ResponseEntity<LoginResponse> refreshToken(
+//            @Valid @RequestBody RefreshTokenDTO refreshTokenDTO
+//    ) {
+//        try {
+//            User userDetail = userService.getUserDetailsFromRefreshToken(refreshTokenDTO.getRefreshToken());
+//            Token jwtToken = tokenService.refreshToken(refreshTokenDTO.getRefreshToken(), userDetail);
+//            return ResponseEntity.ok(LoginResponse.builder()
+//                    .message(MessageKeys.LOGIN_SUCCESSFULLY)
+//                    .token(jwtToken.getToken())
+//                    .tokenType(jwtToken.getTokenType())
+//                    .fullName(userDetail.getFullName())
+//                    .email(userDetail.getEmail())
+//                    .gender(userDetail.getGender())
+//                    .phoneNumber(userDetail.getPhoneNumber())
+//                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+//                    .id(userDetail.getId())
+//                    .build());
+//
+//        } catch (Exception e) {
+//            String errorMessage = "Error occurred during token refresh: " + e.getMessage();
+//            LoginResponse errorResponse = LoginResponse.builder()
+//                    .message(errorMessage)
+//                    .build();
+//            return ResponseEntity.badRequest().body(errorResponse);
+//        }
+//
+//    }
 
     @GetMapping("/get-all-users")
     public ResponseEntity<?> getUsers(
