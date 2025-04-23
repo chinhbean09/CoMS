@@ -268,13 +268,8 @@
                 template.setOtherTerms(otherTerms);
             }
             template.setAdditionalTermConfigs(additionalTermConfigs);
-            ContractTemplate finalTemplate = template;
-            additionalTermConfigs.forEach(config -> config.setContractTemplate(finalTemplate));
+            additionalTermConfigs.forEach(config -> config.setContractTemplate(template));
 
-            template = templateRepository.save(template);
-
-// if you still need the originalTemplateId:
-            template.setOriginalTemplateId(template.getId());
             return templateRepository.save(template);
         }
 
