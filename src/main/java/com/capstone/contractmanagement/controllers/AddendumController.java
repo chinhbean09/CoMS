@@ -536,4 +536,13 @@ public class AddendumController {
                 .build());
     }
 
+    @GetMapping("/get-bill-urls/{paymentId}")
+    public ResponseEntity<ResponseObject> getAddendumBillUrls(@PathVariable Long paymentId) throws DataNotFoundException {
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Lấy link hóa đơn thanh toán")
+                .status(HttpStatus.OK)
+                .data(addendumService.getBillUrlsByAddendumPaymentId(paymentId))
+                .build());
+    }
+
 }
