@@ -164,7 +164,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         auditTrailRepository.save(auditTrail);
     }
 
-    @Scheduled(fixedDelay = 30 * 60 * 1000)
+    //@Scheduled(fixedDelay = 30 * 60 * 1000)
+    @Scheduled(cron = "0 0 0,12 * * *")
     protected void notificationForContractExpired() {
         LocalDateTime now = LocalDateTime.now();
         List<Contract> contracts = contractRepository.findAll().stream()
