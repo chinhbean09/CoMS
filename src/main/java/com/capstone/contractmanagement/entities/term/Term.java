@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities.term;
 
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.TermStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,10 @@ public class Term {
     // Số phiên bản của điều khoản, update +=1
     @Column(name = "version", nullable = false)
     private Integer version = 1;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
 }
