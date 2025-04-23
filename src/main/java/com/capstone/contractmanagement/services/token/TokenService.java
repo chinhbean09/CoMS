@@ -58,32 +58,30 @@ public class TokenService implements ITokenService {
                 .expirationDate(expirationDateTime)
                 .isMobile(isMobileDevice)
                 .build();
-        newToken.setRefreshToken(UUID.randomUUID().toString());
-        newToken.setRefreshExpirationDate(LocalDateTime.now().plusSeconds(expirationRefreshToken));
         ITokenRepository.save(newToken);
         return newToken;
 
     }
 
-    @Override
-    public Token refreshToken(String refreshToken, User user) throws Exception {
-        Token existingToken = ITokenRepository.findByRefreshToken(refreshToken);
-        if (existingToken == null) {
-            throw new DataNotFoundException("Không tìm thấy refresh token");
-        }
-        if (existingToken.getRefreshExpirationDate().isBefore(LocalDateTime.now())) {
-            ITokenRepository.delete(existingToken);
-            throw new ExpiredTokenException("refresh token hết hạn");
-        }
-        String token = jwtTokenUtils.generateToken(user);
-        LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expiration);
-        existingToken.setExpirationDate(expirationDateTime);
-        existingToken.setToken(token);
-        existingToken.setRefreshToken(UUID.randomUUID().toString());
-        existingToken.setRefreshExpirationDate(LocalDateTime.now().plusSeconds(expirationRefreshToken));
-        existingToken = ITokenRepository.save(existingToken);
-        return existingToken;
-    }
+//    @Override
+//    public Token refreshToken(String refreshToken, User user) throws Exception {
+//        Token existingToken = ITokenRepository.findByRefreshToken(refreshToken);
+//        if (existingToken == null) {
+//            throw new DataNotFoundException("Không tìm thấy refresh token");
+//        }
+//        if (existingToken.getRefreshExpirationDate().isBefore(LocalDateTime.now())) {
+//            ITokenRepository.delete(existingToken);
+//            throw new ExpiredTokenException("refresh token hết hạn");
+//        }
+//        String token = jwtTokenUtils.generateToken(user);
+//        LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expiration);
+//        existingToken.setExpirationDate(expirationDateTime);
+//        existingToken.setToken(token);
+//        existingToken.setRefreshToken(UUID.randomUUID().toString());
+//        existingToken.setRefreshExpirationDate(LocalDateTime.now().plusSeconds(expirationRefreshToken));
+//        existingToken = ITokenRepository.save(existingToken);
+//        return existingToken;
+//    }
 
     @Override
     public void deleteToken(String token) {

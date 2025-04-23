@@ -28,7 +28,7 @@ public interface IUserService {
 
     void updateUser(Long userId, UpdateUserDTO userDTO) throws Exception;
 
-    User getUserDetailsFromRefreshToken(String refreshToken) throws Exception;
+//    User getUserDetailsFromRefreshToken(String refreshToken) throws Exception;
 
     Page<UserResponse> getAllUsers(int page, int size, Long departmentId, Long roleId, String search);
 
