@@ -282,5 +282,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     @Query("SELECT ps.signedContractUrls FROM Contract ps WHERE ps.id = :contractId")
     List<String> findSignedContractUrls(@Param("contractId") Long contractId);
 
-    List<Contract> findByStatus(ContractStatus status);
+    @Query("SELECT c FROM Contract c WHERE c.expiryDate <= :cutoff "
+            + "AND c.status = 'EXPIRED'")
+    List<Contract> findExpiredBefore(@Param("cutoff") LocalDateTime cutoff);
 }
