@@ -11,6 +11,7 @@
     import com.capstone.contractmanagement.enums.PartnerType;
     import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
     import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+    import com.capstone.contractmanagement.exceptions.InvalidParamException;
     import com.capstone.contractmanagement.exceptions.OperationNotPermittedException;
     import com.capstone.contractmanagement.repositories.IBankRepository;
     import com.capstone.contractmanagement.repositories.IContractRepository;
@@ -45,20 +46,27 @@
         @Transactional
         @Override
         public CreatePartnerResponse createPartner(CreatePartnerDTO createPartnerDTO) {
-
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             User currentUser = (User) authentication.getPrincipal();
-            // Tự động tạo partnerCode theo định dạng: P + 5 số (ví dụ: P12345)
+
+            // 1. Kiểm tra trùng taxCode (toàn hệ thống).
+            //    Nếu bạn chỉ muốn unique trong cùng PartnerType thì dùng existsByTaxCodeAndPartnerType(...)
+            String taxCode = createPartnerDTO.getTaxCode().trim();
+            if (partyRepository.existsByTaxCode(taxCode)) {
+                throw new InvalidParamException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
+            }
+
+            // 2. Sinh partnerCode
             String partnerCode = "P" + String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
 
-            // Tạo Partner mới với thông tin từ DTO và partnerCode tự tạo
+            // 3. Build và lưu Partner
             Partner partner = Partner.builder()
                     .partnerCode(partnerCode)
                     .partnerType(createPartnerDTO.getPartnerType())
-                    .partnerName(createPartnerDTO.getPartnerName())
+                    .partnerName(createPartnerDTO.getPartnerName().trim())
                     .spokesmanName(createPartnerDTO.getSpokesmanName())
                     .address(createPartnerDTO.getAddress())
-                    .taxCode(createPartnerDTO.getTaxCode())
+                    .taxCode(taxCode)
                     .phone(createPartnerDTO.getPhone())
                     .email(createPartnerDTO.getEmail())
                     .note(createPartnerDTO.getNote())
@@ -67,32 +75,25 @@
                     .isDeleted(false)
                     .abbreviation(createPartnerDTO.getAbbreviation())
                     .build();
-
-            // Lưu Partner để lấy được ID
             partner = partyRepository.save(partner);
 
-            // Khởi tạo danh sách Bank từ danh sách DTO
+            // 4. Xử lý ngân hàng như cũ...
+            //    (không đổi)
             List<Bank> banks = new ArrayList<>();
-            if (createPartnerDTO.getBanking() != null && !createPartnerDTO.getBanking().isEmpty()) {
-                for (CreateBankDTO bankDTO : createPartnerDTO.getBanking()) {
-                    Bank bank = Bank.builder()
-                            .bankName(bankDTO.getBankName())
-                            .backAccountNumber(bankDTO.getBackAccountNumber())
+            if (createPartnerDTO.getBanking() != null) {
+                for (CreateBankDTO b : createPartnerDTO.getBanking()) {
+                    banks.add(Bank.builder()
+                            .bankName(b.getBankName())
+                            .backAccountNumber(b.getBackAccountNumber())
                             .partner(partner)
-                            .build();
-                    banks.add(bank);
+                            .build());
                 }
-            }
-
-            // Lưu tất cả các Bank và cập nhật lại danh sách ngân hàng cho Partner
-            if (!banks.isEmpty()) {
                 bankRepository.saveAll(banks);
                 partner.setBanking(banks);
-                // Nếu muốn cập nhật lại Partner với danh sách ngân hàng mới (cascade có thể tự động xử lý)
                 partner = partyRepository.save(partner);
             }
 
-            // Chuyển đổi danh sách Bank thành danh sách BankResponse
+            // 5. Build response
             List<BankResponse> bankResponses = banks.stream()
                     .map(bank -> BankResponse.builder()
                             .bankName(bank.getBankName())
@@ -112,8 +113,8 @@
                     .email(partner.getEmail())
                     .note(partner.getNote())
                     .createdBy(CreatedByResponse.builder()
-                            .userId(partner.getUser().getId())
-                            .username(partner.getUser().getUsername())
+                            .userId(currentUser.getId())
+                            .username(currentUser.getUsername())
                             .build())
                     .position(partner.getPosition())
                     .isDeleted(partner.getIsDeleted())
@@ -134,6 +135,13 @@
 //                        "Không thể xóa đối tác vì đang trong hợp đồng đang hoạt động. Vui lòng tạo phụ lục thay thế."
 //                );
 //            }
+            String newTaxCode = updatePartnerDTO.getTaxCode().trim();
+            if (!newTaxCode.equals(existingPartner.getTaxCode())
+                    && partyRepository.existsByTaxCode(newTaxCode)) {
+                throw new InvalidParamException("Mã số thuế này đã tồn tại, vui lòng nhập mã khác!");
+            }
+            // 2) Cập nhật mã số thuế
+            existingPartner.setTaxCode(newTaxCode);
 
             // Cập nhật thông tin Partner
             existingPartner.setPartnerType(updatePartnerDTO.getPartnerType());
