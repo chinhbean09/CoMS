@@ -89,21 +89,11 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
                                                 @Param("user") User user,
                                                 Pageable pageable);
 
-    @Query("""
-    SELECT c
-      FROM Contract c
-     WHERE (LOWER(c.title)          LIKE LOWER(CONCAT('%', :kw, '%'))
-         OR LOWER(c.contractNumber) LIKE LOWER(CONCAT('%', :kw, '%')))
-       AND c.status          != :status
-       AND c.user            =  :user
-       AND c.isLatestVersion =  true
-""")
-    Page<Contract> findLatestByKeywordAndStatusNotAndUser(
-            @Param("kw")     String keyword,
-            @Param("status") ContractStatus status,
-            @Param("user")   User user,
-            Pageable pageable
-    );
+    @Query("SELECT c FROM Contract c WHERE c.title LIKE %:title% AND c.status != :status AND c.user = :user AND c.isLatestVersion = true")
+    Page<Contract> findLatestByTitleContainingIgnoreCaseAndStatusNotAndUser(@Param("title") String title,
+                                                                            @Param("status") ContractStatus status,
+                                                                            @Param("user") User user,
+                                                                            Pageable pageable);
 
     @Query("SELECT c FROM Contract c WHERE c.status = :status AND c.contractType.id = :contractTypeId AND c.user = :user AND c.isLatestVersion = true")
     Page<Contract> findLatestByStatusAndContractTypeIdAndUser(@Param("status") ContractStatus status,
