@@ -20,6 +20,7 @@ public class GetAllTermsResponse {
     private String identifier;
     private LocalDateTime createdAt;
     private TermStatus status;
+    private TermCreatorResponse createdBy;
     private Integer version;
     // Số lượng contract_template sử dụng term này
     private int contractTemplateCount;
