@@ -1587,7 +1587,7 @@ public class ContractService implements IContractService{
 
         User approver = nextStage.getApprover();
         String message = String.format(
-                "Bạn có hợp đồng: \\\"%s\\\" cần được duyệt gấp!",
+                "Bạn có hợp đồng: \"%s\" cần được duyệt gấp!",
                 contract.getTitle(),
                 nextStage.getStageOrder()
         );
