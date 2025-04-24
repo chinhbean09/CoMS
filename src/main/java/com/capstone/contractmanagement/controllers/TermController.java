@@ -353,4 +353,35 @@ public class TermController {
                 .data(termsPage)
                 .status(HttpStatus.OK).build());
     }
+
+    @GetMapping("/get-all-by-user")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject> getAllTermsByUser(
+            @RequestParam(required = false) List<Long> typeTermIds,
+            @RequestParam(defaultValue = "false") boolean includeLegalBasis,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int size,
+            @RequestParam(defaultValue = "id", required = false) String sortBy,
+            @RequestParam(defaultValue = "asc", required = false) String order) {
+        try {
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<GetAllTermsResponse> termResponses = termService.getAllTermsByUser(typeTermIds, includeLegalBasis,keyword, pageable);
+            return ResponseEntity.status(HttpStatus.OK).body(ResponseObject.builder()
+                    .message(MessageKeys.GET_ALL_TERMS_SUCCESSFULLY)
+                    .data(termResponses)
+                    .status(HttpStatus.OK)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message(e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .data(null)
+                            .build());
+        }
+    }
 }

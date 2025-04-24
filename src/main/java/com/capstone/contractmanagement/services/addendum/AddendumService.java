@@ -1892,6 +1892,9 @@ public class AddendumService implements IAddendumService{
         Addendum addendum = addendumRepository.findById(addendumId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phụ lục"));
 
+        if (addendum.getStatus() == AddendumStatus.SIGNED) {
+            throw new RuntimeException("Phụ lục này đã được kí trước đó");
+        }
         byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
         // Upload as a raw file to Cloudinary
