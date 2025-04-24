@@ -1535,10 +1535,6 @@ public class ContractService implements IContractService{
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy lịch trình thanh toán cho hợp đồng"));
 
-        if (contract.getStatus() == ContractStatus.SIGNED) {
-            throw new RuntimeException("Hợp đồng này đã được ký trước đó");
-        }
-
         byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
 
         // Upload as a raw file to Cloudinary
