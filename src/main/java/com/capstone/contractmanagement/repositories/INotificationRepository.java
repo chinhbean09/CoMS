@@ -14,5 +14,7 @@ public interface INotificationRepository extends JpaRepository<Notification, Lon
     // tìm notification theo người dùng và isRead = false
     List<Notification> findByUser(User user);
 
-    Page<Notification> findByUser(User user, Pageable pageable); // tìm notification theo người dùng
+    Page<Notification> findByUser(User user, Pageable pageable);
+
+    long countByUserAndIsReadFalse(User user);// tìm notification theo người dùng
 }
