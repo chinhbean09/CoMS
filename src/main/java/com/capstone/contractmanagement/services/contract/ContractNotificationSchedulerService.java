@@ -23,10 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -216,11 +213,22 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     }
 
     @Scheduled(fixedDelay = 60000)
+    @Transactional
     protected void markContractsEnded() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
 
-        // Tìm những hợp đồng cần end
-        List<Contract> toEnd = contractRepository.findExpiredBefore(cutoff);
+        // Lấy tất cả hợp đồng latest version đã EXPIRED
+        List<Contract> all = contractRepository.findByStatusAndIsLatestVersion(
+                ContractStatus.EXPIRED, true
+        );
+
+        List<Contract> toEnd = new ArrayList<>();
+        for (Contract c : all) {
+            LocalDateTime actualExpiry = getActualExpiryDateFromAddendum(c);
+            if (actualExpiry.isBefore(cutoff)) {
+                toEnd.add(c);
+            }
+        }
 
         if (toEnd.isEmpty()) return;
 
@@ -264,6 +272,18 @@ public class ContractNotificationSchedulerService implements IContractNotificati
 
         // Lưu tất cả thay đổi
         contractRepository.saveAll(toEnd);
+    }
+
+    /**
+     * Lấy ngày hết hạn thực tế (xét phụ lục nếu có)
+     */
+    private LocalDateTime getActualExpiryDateFromAddendum(Contract contract) {
+        return contract.getAddenda().stream()
+                .filter(a -> a.getStatus() == AddendumStatus.SIGNED)
+                .map(Addendum::getContractExpirationDate)
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(contract.getExpiryDate());
     }
     /**
      * Dịch trạng thái hợp đồng sang tiếng Việt
