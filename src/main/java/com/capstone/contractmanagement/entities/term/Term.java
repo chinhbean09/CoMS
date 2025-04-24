@@ -46,5 +46,4 @@ public class Term {
     @Column(name = "version", nullable = false)
     private Integer version = 1;
 
-
 }
