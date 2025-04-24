@@ -3,6 +3,7 @@ package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
+import com.capstone.contractmanagement.responses.notification.NotificationPageResponse;
 import com.capstone.contractmanagement.responses.notification.NotificationResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
 import com.capstone.contractmanagement.utils.MessageKeys;
@@ -24,7 +25,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<NotificationResponse> notificationsPage = notificationService.getAllNotifications(page, size);
+        NotificationPageResponse notificationsPage = notificationService.getAllNotifications(page, size);
 
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
