@@ -283,7 +283,7 @@ public class UserService implements IUserService {
         TokenRepository.deleteAll(tokens);
         optionalUser.ifPresent(UserRepository::delete);
     }
-    @org.springframework.transaction.annotation.Transactional(rollbackFor = {DataNotFoundException.class, DataIntegrityViolationException.class})
+
     @Override
     public void updateUser(Long userId, UpdateUserDTO userDTO) throws DataNotFoundException {
         // Kiểm tra xem user có tồn tại không
@@ -293,14 +293,14 @@ public class UserService implements IUserService {
         // Kiểm tra số điện thoại: chỉ khi số điện thoại mới khác với số hiện tại mới thực hiện kiểm tra trùng lặp
         String phoneNumber = userDTO.getPhoneNumber();
         if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber()) && UserRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new DataIntegrityViolationException(
+            throw new RuntimeException(
                     (MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         // Kiểm tra email: chỉ khi email mới khác với email hiện tại mới thực hiện kiểm tra trùng lặp
         String email = userDTO.getEmail();
         if (email != null && !email.equals(user.getEmail()) && UserRepository.existsByEmail(email)) {
-            throw new DataIntegrityViolationException(
+            throw new RuntimeException(
                     (MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
@@ -318,8 +318,20 @@ public class UserService implements IUserService {
         user.setGender(userDTO.getGender());
         user.setAddress(userDTO.getAddress());
         user.setDateOfBirth(userDTO.getDateOfBirth());
-        user.setRole(RoleRepository.findById(userDTO.getRoleId())
-                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+//        user.setRole(RoleRepository.findById(userDTO.getRoleId())
+//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+        // Fetch the Role entity the client wants:
+        Role newRole = RoleRepository.findById(userDTO.getRoleId())
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS));
+
+// If they’re trying to become DIRECTOR...
+        if (Role.DIRECTOR.equalsIgnoreCase(newRole.getRoleName())) {
+            // (a) Using existsByRoleAndIdNot:
+            if (UserRepository.existsByRoleAndIdNot(newRole, userId)) {
+                throw new RuntimeException("Giám đốc đã tồn tại trong hệ thống");
+            }
+        }
+        user.setRole(newRole);
 
         // Lưu thông tin cập nhật của user
         UserRepository.save(user);
