@@ -7,13 +7,11 @@ package com.capstone.contractmanagement.services.user;
  import com.capstone.contractmanagement.entities.Role;
  import com.capstone.contractmanagement.entities.Token;
  import com.capstone.contractmanagement.entities.User;
+ import com.capstone.contractmanagement.enums.ApprovalStatus;
  import com.capstone.contractmanagement.exceptions.DataNotFoundException;
  import com.capstone.contractmanagement.exceptions.InvalidParamException;
  import com.capstone.contractmanagement.exceptions.PermissionDenyException;
- import com.capstone.contractmanagement.repositories.IDepartmentRepository;
- import com.capstone.contractmanagement.repositories.IRoleRepository;
- import com.capstone.contractmanagement.repositories.ITokenRepository;
- import com.capstone.contractmanagement.repositories.IUserRepository;
+ import com.capstone.contractmanagement.repositories.*;
  import com.capstone.contractmanagement.responses.User.UserListCustom;
  import com.capstone.contractmanagement.responses.User.UserResponse;
  import com.capstone.contractmanagement.services.sendmails.IMailService;
@@ -63,6 +61,7 @@ public class UserService implements IUserService {
     private final Cloudinary cloudinary;
     private final IMailService mailService;
     private final IDepartmentRepository departmentRepository;
+    private final IApprovalStageRepository approvalStageRepository;
 
     @Override
     @Transactional
@@ -255,14 +254,29 @@ public class UserService implements IUserService {
     public void blockOrEnable(Long userId, Boolean active) throws DataNotFoundException, PermissionDenyException {
         User existingUser = UserRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
+
+
+        if(existingUser.getRole().getRoleName().equals(Role.ADMIN)) {
+            throw new RuntimeException("Không thể khóa người dùng là quản trị viên.");
+        }
+
+        // Nếu đang block (active = false), kiểm tra xem user có đang có bước duyệt nào chưa hoàn thành
+        if (Boolean.FALSE.equals(active)) {
+            long pending = approvalStageRepository.countByApproverAndStatusIn(
+                    existingUser,
+                    List.of(ApprovalStatus.NOT_STARTED, ApprovalStatus.APPROVING, ApprovalStatus.REJECTED)
+            );
+            if (pending > 0) {
+                throw new RuntimeException(
+                        "Không thể khóa người dùng này vì đang trong quy trình duyệt."
+                );
+            }
+        }
         existingUser.setActive(active);
         existingUser.setFailedLoginAttempts(0);
 
-        if(existingUser.getRole().getRoleName().equals(Role.ADMIN)) {
-            throw new PermissionDenyException("Not allowed to block Admin account");
-        }
         UserRepository.save(existingUser);
-        }
+    }
 
     @Override
     public User getUser() throws DataNotFoundException {
