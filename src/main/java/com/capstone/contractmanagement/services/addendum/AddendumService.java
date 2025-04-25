@@ -1585,10 +1585,21 @@ public class AddendumService implements IAddendumService{
     public List<ApprovalWorkflowResponse> getWorkflowByAddendumTypeId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(currentUser.getId());
+        // 1) Lấy toàn bộ workflows có addendum, sắp xếp theo createdAt desc
+        List<ApprovalWorkflow> allWorkflows = approvalWorkflowRepository
+                .findByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(currentUser.getId());
+
+        // 2) Lọc bỏ những workflow có bất kỳ approver nào inactive, rồi chỉ lấy 3
+        List<ApprovalWorkflow> validWorkflows = allWorkflows.stream()
+                .filter(wf -> wf.getStages().stream()
+                        .map(ApprovalStage::getApprover)
+                        .allMatch(User::isActive)
+                )
+                .limit(3)
+                .toList();
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
-        return workflow.stream()
+        return validWorkflows.stream()
                 .map(workflows -> ApprovalWorkflowResponse.builder()
                         .id(workflows.getId())
                         .name(workflows.getName())
