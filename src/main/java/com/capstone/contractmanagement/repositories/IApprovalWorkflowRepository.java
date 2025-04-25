@@ -18,4 +18,5 @@ public interface IApprovalWorkflowRepository extends JpaRepository<ApprovalWorkf
     );
     List<ApprovalWorkflow> findTop3ByOrderByCreatedAtDesc();
     List<ApprovalWorkflow> findTop3ByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(Long userId);
+    List<ApprovalWorkflow> findByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(Long userId);
 }
