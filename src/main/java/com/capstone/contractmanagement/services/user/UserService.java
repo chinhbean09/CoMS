@@ -87,13 +87,13 @@ public class UserService implements IUserService {
 
         // Prevent registration of an Admin account
         if (role.getRoleName().equalsIgnoreCase("ADMIN")) {
-            throw new PermissionDenyException("Khoon");
+            throw new BadCredentialsException("Khoon");
         }
 
         // **MỚI**: Không cho tạo thêm Director nếu đã có sẵn
         if (Role.DIRECTOR.equalsIgnoreCase(role.getRoleName())
                 && UserRepository.existsByRole_RoleName(Role.DIRECTOR)) {
-            throw new PermissionDenyException(
+            throw new BadCredentialsException(
                     ("Đã có Giám đốc trong hệ thống."));
         }
 
