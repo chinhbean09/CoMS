@@ -55,7 +55,7 @@ public class MailService implements IMailService{
     public void sendEmailReminder(Contract contract, User user, ApprovalStage stage) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_APPROVAL_NOTIFICATION);
 
             // Thiết lập các thuộc tính cho email
@@ -80,7 +80,7 @@ public class MailService implements IMailService{
     public void sendUpdateContractReminder(Contract contract, User user) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_CONTRACT_REQUEST);
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", contract.getContractNumber());
@@ -97,7 +97,7 @@ public class MailService implements IMailService{
     public void sendAccountPassword(String email, String password) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(email);
+            dataMailDTO.setTo(new String[]{email}); // Set email to dataMailDTO (email);
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
 
             Map<String, Object> props = new HashMap<>();
@@ -118,7 +118,7 @@ public class MailService implements IMailService{
         // Gửi email nhắc nhỏ
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getUser().getEmail());
+            dataMailDTO.setTo(new String[]{payment.getContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
@@ -140,7 +140,7 @@ public class MailService implements IMailService{
     public void sendEmailPaymentReminderForAddendum(AddendumPaymentSchedule addendumPaymentSchedule) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(addendumPaymentSchedule.getAddendum().getUser().getEmail());
+            dataMailDTO.setTo(new String[] {addendumPaymentSchedule.getAddendum().getContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_NOTIFICATION);
 
             Map<String, Object> props = new HashMap<>();
@@ -163,7 +163,7 @@ public class MailService implements IMailService{
     public void sendEmailPaymentExpired(PaymentSchedule payment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getContract().getUser().getEmail());
+            dataMailDTO.setTo(new String[]{payment.getContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
@@ -186,7 +186,7 @@ public class MailService implements IMailService{
     public void sendEmailPaymentExpiredForAddendum(AddendumPaymentSchedule addendumPayment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(addendumPayment.getAddendum().getUser().getEmail());
+            dataMailDTO.setTo(new String[]{addendumPayment.getAddendum().getContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
@@ -209,7 +209,7 @@ public class MailService implements IMailService{
     public void sendUpdateAddendumReminder(Addendum addendum, User user) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.UPDATE_ADDENDUM_REQUEST);
             Map<String, Object> props = new HashMap<>();
             props.put("contractNumber", addendum.getContractNumber());
@@ -226,7 +226,7 @@ public class MailService implements IMailService{
     public void sendEmailAddendumReminder(Addendum addendum, User user, ApprovalStage approvalStage) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()}); // Gửi email cho người dùng user.getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.ADDENDUM_APPROVAL_NOTIFICATION);
 
             // Thiết lập các thuộc tính cho email
@@ -251,7 +251,7 @@ public class MailService implements IMailService{
     public void sendEmailApprovalSuccessForContract(Contract contract, User user) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.APPROVAL_CONTRACT_SUCCESS);
 
             // Thiết lập các thuộc tính cho email
@@ -276,7 +276,7 @@ public class MailService implements IMailService{
     public void sendEmailApprovalSuccessForAddendum(Addendum addendum, User user) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(user.getEmail());
+            dataMailDTO.setTo(new String[]{user.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.ADDENDUM_APPROVAL_SUCCESS);
 
             // Thiết lập các thuộc tính cho email
@@ -300,7 +300,7 @@ public class MailService implements IMailService{
     public void sendEmailContractOverdue(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_OVERDUE_NOTIFICATION);
 
             // Thiết lập các thuộc tính cho email
@@ -325,7 +325,7 @@ public class MailService implements IMailService{
     public void sendEmailContractEffectiveDate(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -350,7 +350,7 @@ public class MailService implements IMailService{
     public void sendEmailContractExpiryDate(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXPIRY_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -376,7 +376,7 @@ public class MailService implements IMailService{
     public void sendEmailContractSignedSuccess(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_SIGNED_SUCCESS);
 
             // Thiết lập các thuộc tính cho email
@@ -402,7 +402,7 @@ public class MailService implements IMailService{
     public void sendEmailAddendumSignedSuccess(Addendum addendum) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(addendum.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{addendum.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.ADDENDUM_SIGNED_SUCCESS);
 
             // Thiết lập các thuộc tính cho email
@@ -428,7 +428,7 @@ public class MailService implements IMailService{
     public void sendEmailAddendumExtendedDate(Addendum addendum) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(addendum.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -455,7 +455,9 @@ public class MailService implements IMailService{
     public void sendEmailAddendumEndExtendedDate(Addendum addendum) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(addendum.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{
+                    addendum.getContract().getPartner().getEmail()
+            }); // Gửi email cho người dùng addendum.getUser().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_END_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -481,7 +483,7 @@ public class MailService implements IMailService{
     public void sendEmailPartnerContractEffectiveReminder(PartnerContract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -507,7 +509,7 @@ public class MailService implements IMailService{
     public void sendEmailPartnerContractExpiryReminder(PartnerContract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(contract.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -532,7 +534,7 @@ public class MailService implements IMailService{
     public void sendEmailPartnerContractPaymentReminder(PaymentSchedule payment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getPartnerContract().getUser().getEmail());
+            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -558,7 +560,7 @@ public class MailService implements IMailService{
     public void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(payment.getPartnerContract().getUser().getEmail());
+            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_EXPIRED);
 
             // Thiết lập các thuộc tính cho email
