@@ -45,7 +45,7 @@ public class ForgotPasswordService implements IForgotPasswordService {
     private void sendOtpMail(ForgotPassword forgotPassword) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(forgotPassword.getUser().getEmail());
+            dataMailDTO.setTo(new String[]{forgotPassword.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.OTP_SEND);
 
             Map<String, Object> props = new HashMap<>();
