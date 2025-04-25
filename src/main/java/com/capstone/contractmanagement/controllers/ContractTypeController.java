@@ -44,19 +44,21 @@ public class ContractTypeController {
 
 
     @PostMapping
-    @Transactional
-    public ResponseEntity<?> createContractType(@RequestBody ContractTypeDTO contractTypeDTO) {
+    public ResponseEntity<ResponseObject> createContractType(@RequestBody ContractTypeDTO contractTypeDTO) {
         try {
-            if (contractTypeRepository.existsByName(contractTypeDTO.getName())) {
-                throw new IllegalArgumentException("Tên loại hợp đồng đã tồn tại, vui lòng chọn tên khác!");
-            }
+//            if (contractTypeRepository.existsByName(contractTypeDTO.getName())) {
+//                throw new IllegalArgumentException("Tên loại hợp đồng đã tồn tại, vui lòng chọn tên khác!");
+//            }
             ContractType contractType = convertToEntity(contractTypeDTO);
             ContractType savedType = contractTypeService.save(contractType);
-            return ResponseEntity.ok(convertToDTO(savedType));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Tạo loại hợp đồng thanh cong")
+                    .status(HttpStatus.OK)
+                    .data(convertToDTO(savedType))
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseObject(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null));
         }
     }
 
@@ -104,7 +106,7 @@ public class ContractTypeController {
             @RequestParam Boolean isDeleted) {
         try {
             contractTypeService.updateDeleteStatus(id, isDeleted);
-            String message = isDeleted ? "Contract type soft deleted successfully." : "Contract type restored successfully.";
+            String message = isDeleted ? "Xóa loại hợp đồng thành công!." : "Khôi phục loại hợp đồng thành công.";
             return ResponseEntity.status(HttpStatus.OK)
                     .body(ResponseObject.builder()
                             .message(message)
@@ -121,7 +123,7 @@ public class ContractTypeController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()
-                            .message("Internal server error: " + e.getMessage())
+                            .message(e.getMessage())
                             .status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .data(null)
                             .build());
