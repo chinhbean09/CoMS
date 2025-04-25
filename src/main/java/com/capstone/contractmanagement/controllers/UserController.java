@@ -273,7 +273,7 @@ public class UserController {
 
     @Transactional
     @PutMapping("/update-user/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
+    public ResponseEntity<ResponseObject> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
         try {
             userService.updateUser(userId, userDTO);
             return ResponseEntity.ok(ResponseObject.builder()
@@ -282,9 +282,14 @@ public class UserController {
                     .message(MessageKeys.UPDATE_USER_SUCCESSFULLY)
                     .build());
         } catch (DataNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseObject.builder()
+                    .status(HttpStatus.NOT_FOUND)
+                    .message(e.getMessage())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to update user: " + e.getMessage());
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message(e.getMessage()).build());
         }
     }
 
