@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.repositories;
 
+import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import org.springframework.data.domain.Page;
@@ -94,5 +95,6 @@ public interface IUserRepository extends JpaRepository<User, Long> {
                                                                @Param("roleId") Long roleId,
                                                                @Param("search") String search,
                                                                Pageable pageable);
+    boolean existsByRoleAndIdNot(Role role, Long id);
     //List<User> findByRole(String role);
 }
