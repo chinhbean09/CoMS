@@ -28,6 +28,7 @@ public class ContractTypeService implements IContractTypeService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy loại hợp đồng")));
     }
     @Override
+    @Transactional
     public ContractType save(ContractType contractType) {
 //        boolean exists = contractTypeRepository.existsByNqame(contractType.getName());
 
