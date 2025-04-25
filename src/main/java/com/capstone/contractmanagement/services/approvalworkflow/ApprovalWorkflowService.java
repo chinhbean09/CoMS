@@ -615,10 +615,22 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         // Tìm ApprovalWorkflow theo contractTypeId (bạn cần định nghĩa phương thức này trong IApprovalWorkflowRepository)
-        List<ApprovalWorkflow> workflow = approvalWorkflowRepository.findTop3ByContractType_IdAndUser_IdOrderByCreatedAtDesc(contractTypeId, currentUser.getId());
+        // 1) Lấy toàn bộ workflows, sắp xếp theo createdAt desc
+        List<ApprovalWorkflow> allWorkflows = approvalWorkflowRepository
+                .findByContractType_IdAndUser_IdOrderByCreatedAtDesc(
+                        contractTypeId, currentUser.getId());
+
+        // 2) Lọc bỏ những workflow có bất kỳ approver nào inactive
+        List<ApprovalWorkflow> validWorkflows = allWorkflows.stream()
+                .filter(wf -> wf.getStages().stream()
+                        .map(ApprovalStage::getApprover)
+                        .allMatch(User::isActive)
+                )
+                .limit(3)
+                .toList();
 
         // Chuyển đổi ApprovalWorkflow thành ApprovalWorkflowResponse
-        return workflow.stream()
+        return validWorkflows.stream()
                 .map(workflows -> ApprovalWorkflowResponse.builder()
                         .id(workflows.getId())
                         .name(workflows.getName())

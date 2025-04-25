@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
@@ -90,6 +91,10 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ApprovalWorkflow> approvalWorkflows = new ArrayList<>();
+
+    @OneToMany(mappedBy = "approver", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ApprovalStage> approvalStages = new ArrayList<>();
 
     @Override
     public Map<String, Object> getAttributes() {
