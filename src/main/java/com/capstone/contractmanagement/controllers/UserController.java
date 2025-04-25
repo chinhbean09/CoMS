@@ -188,11 +188,11 @@ public class UserController {
     }
 
     @PutMapping("/block-or-enable/{userId}/{active}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<?> blockOrEnable(
+    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject> blockOrEnable(
             @Valid @PathVariable long userId,
-            @Valid @PathVariable int active) {
-        try {
+            @Valid @PathVariable int active) throws Exception {
+
             userService.blockOrEnable(userId, active > 0);
             String message = active > 0 ? MessageKeys.ENABLE_USER_SUCCESSFULLY : MessageKeys.BLOCK_USER_SUCCESSFULLY;
 
@@ -201,11 +201,7 @@ public class UserController {
                     .data(null)
                     .message(message)
                     .build());
-        } catch (DataNotFoundException e) {
-            return ResponseEntity.badRequest().body(MessageKeys.USER_NOT_FOUND);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
     }
 
     @PostMapping("/logout")
