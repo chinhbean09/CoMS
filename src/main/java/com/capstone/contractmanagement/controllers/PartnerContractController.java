@@ -36,10 +36,10 @@ public class PartnerContractController {
     @PostMapping("/create")
     @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<ResponseObject> createContractPartner(@RequestBody PartnerContractDTO contractDTO) throws Exception {
-        contractPartnerService.createContractPartner(contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message(MessageKeys.CREATE_CONTRACT_PARTNER_SUCCESSFULLY)
+                .data(contractPartnerService.createContractPartner(contractDTO))
                 .build());
     }
 
