@@ -21,7 +21,7 @@ public class PartnerContract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "contract_number", unique = true, length = 255)
+    @Column(name = "contract_number", length = 255)
     private String contractNumber;
 
     @Column(name = "amount")

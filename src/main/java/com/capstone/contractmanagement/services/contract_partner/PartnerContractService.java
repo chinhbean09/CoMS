@@ -59,11 +59,14 @@ public class PartnerContractService implements IPartnerContractService {
 
     @Override
     @Transactional
-    public void createContractPartner(PartnerContractDTO contractDTO) {
+    public PartnerContractResponse createContractPartner(PartnerContractDTO contractDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         // Convert DTO to entity
         PartnerContract partnerContract = new PartnerContract();
+        if (contractPartnerRepository.existsByContractNumberAndUser(contractDTO.getContractNumber(), currentUser)) {
+            throw new RuntimeException("Số hợp đồng đã tồn tại!");
+        }
         partnerContract.setContractNumber(contractDTO.getContractNumber());
         partnerContract.setAmount(contractDTO.getTotalValue());
         partnerContract.setPartnerName(contractDTO.getPartnerName());
@@ -115,6 +118,18 @@ public class PartnerContractService implements IPartnerContractService {
 
             paymentScheduleRepository.saveAll(paymentSchedules);
         }
+
+        return PartnerContractResponse.builder()
+                .partnerContractId(partnerContract.getId())
+                .contractNumber(partnerContract.getContractNumber())
+                .totalValue(partnerContract.getAmount())
+                .partnerName(partnerContract.getPartnerName())
+                .title(partnerContract.getTitle())
+                .signingDate(partnerContract.getSigningDate())
+                .effectiveDate(partnerContract.getEffectiveDate())
+                .fileUrl(partnerContract.getFileUrl())
+                .expiryDate(partnerContract.getExpiryDate())
+                .build();
     }
 
     @Override
@@ -284,8 +299,13 @@ public class PartnerContractService implements IPartnerContractService {
 
     @Override
     public void updateContractPartner(Long contractPartnerId, PartnerContractDTO contractDTO) throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
         PartnerContract partnerContract = contractPartnerRepository.findById(contractPartnerId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
+        if (contractPartnerRepository.existsByContractNumberAndUser(contractDTO.getContractNumber(), currentUser)) {
+            throw new RuntimeException("Số hợp đồng đã tồn tại!");
+        }
         partnerContract.setContractNumber(contractDTO.getContractNumber());
         partnerContract.setAmount(contractDTO.getTotalValue());
         partnerContract.setPartnerName(contractDTO.getPartnerName());

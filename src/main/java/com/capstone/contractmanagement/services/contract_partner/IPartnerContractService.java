@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IPartnerContractService {
-    void createContractPartner(PartnerContractDTO contractDTO);
+    PartnerContractResponse createContractPartner(PartnerContractDTO contractDTO);
 
     List<String> uploadPdfToCloudinary(List<MultipartFile> file) throws IOException;
 
