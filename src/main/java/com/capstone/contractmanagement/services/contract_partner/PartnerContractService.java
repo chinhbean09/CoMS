@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.contract_partner;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.contract_partner.PartnerContractDTO;
+import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
@@ -11,6 +12,7 @@ import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.IContractItemRepository;
 import com.capstone.contractmanagement.repositories.IPartnerContractRepository;
+import com.capstone.contractmanagement.repositories.IPartnerRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.responses.contract_partner.PartnerContractItemResponse;
 import com.capstone.contractmanagement.responses.contract_partner.PartnerContractResponse;
@@ -52,6 +54,7 @@ public class PartnerContractService implements IPartnerContractService {
     private final Cloudinary cloudinary;
     private final IContractItemRepository contractItemRepository;
     private final LocalizationUtils localizationUtils;
+    private final IPartnerRepository partnerRepository;
     private static final Logger logger = LoggerFactory.getLogger(PartnerContractService.class);
 
     @Override
@@ -361,6 +364,16 @@ public class PartnerContractService implements IPartnerContractService {
         } catch (IOException e) {
             logger.error("Không tải được url hóa đơn cho lịch thanh toán. Lỗi:", e);
         }
+    }
+
+    @Override
+    @Transactional
+    public void setPartnerContractToPartner(Long contractPartnerId, Long partnerId) throws DataNotFoundException {
+        PartnerContract partnerContract = contractPartnerRepository.findById(contractPartnerId)
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.CONTRACT_PARTNER_NOT_FOUND));
+        Partner partner = partnerRepository.findById(partnerId).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
+        partnerContract.setPartner(partner);
+        contractPartnerRepository.save(partnerContract);
     }
 
     private String extractPublicIdFromUrl(String url) {
