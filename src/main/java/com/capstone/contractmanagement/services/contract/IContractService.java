@@ -71,5 +71,10 @@ public interface IContractService {
 
     void notifyNextApprover(Long contractId) throws DataNotFoundException;
 
-    List<GetAllContractReponse> getAllContractsNearLyExpiryDate(int days);
+    Page<GetAllContractReponse> getAllContractsNearlyExpiryDate(
+            int days,
+            String keyword,
+            int page,
+            int size
+    );
     }

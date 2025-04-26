@@ -33,9 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -1616,13 +1614,29 @@ public class ContractService implements IContractService{
 
     @Override
     @Transactional
-    public List<GetAllContractReponse> getAllContractsNearLyExpiryDate(int days) {
+    public Page<GetAllContractReponse> getAllContractsNearlyExpiryDate(
+            int days,
+            String keyword,
+            int page,
+            int size
+    ) {
         LocalDateTime now       = LocalDateTime.now();
         LocalDateTime threshold = now.plusDays(days);
-        List<Contract> contracts = contractRepository.findByExpiryDateBetweenAndIsLatestVersionTrue(now, threshold);
-        return contracts.stream()
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("expiryDate").ascending());
+
+        Page<Contract> contractPage = contractRepository
+                .findExpiringWithinAndSearch(now, threshold, keyword, pageable);
+
+        List<GetAllContractReponse> dtoList = contractPage.getContent().stream()
                 .map(this::convertToGetAllContractResponse)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(
+                dtoList,
+                pageable,
+                contractPage.getTotalElements()
+        );
     }
 
     private String normalizeFilename(String filename) {
