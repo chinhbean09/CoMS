@@ -70,4 +70,6 @@ public interface IContractService {
     void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
 
     void notifyNextApprover(Long contractId) throws DataNotFoundException;
+
+    List<GetAllContractReponse> getAllContractsNearLyExpiryDate(int days);
     }

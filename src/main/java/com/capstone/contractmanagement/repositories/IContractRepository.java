@@ -386,4 +386,9 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("from")       LocalDateTime from,
             @Param("to")         LocalDateTime to
     );
+
+    List<Contract> findByExpiryDateBetweenAndIsLatestVersionTrue(
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }
