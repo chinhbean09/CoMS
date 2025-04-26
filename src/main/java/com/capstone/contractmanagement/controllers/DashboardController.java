@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -59,15 +58,6 @@ public class DashboardController {
             logger.info("Bắt đầu tạo báo cáo thời gian từ {} đến {} theo nhóm {}", from, to, groupBy);
             Workbook wb = dashBoardService.generateTimeReportExcel(from, to, groupBy);
             String fn = String.format("time-report_%s_%s_%s.xlsx", groupBy.toLowerCase(), from.toLocalDate(), to.toLocalDate());
-
-            // Lưu tệp trên server
-            String serverPath = "/tmp/" + fn;
-            try (FileOutputStream fileOut = new FileOutputStream(serverPath)) {
-                wb.write(fileOut);
-            }
-            logger.info("Đã lưu tệp trên server: {}", serverPath);
-
-            // Gửi tệp đến client
             resp.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             resp.setHeader("Content-Disposition", "attachment; filename=\"" + fn + "\"");
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -83,6 +73,7 @@ public class DashboardController {
             logger.error("Lỗi khi tạo báo cáo Excel thời gian từ {} đến {} theo nhóm {}: {}",
                     from, to, groupBy, e.getMessage(), e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.setContentType("text/plain");
             resp.getWriter().write("Không thể tạo báo cáo thời gian: " + e.getMessage());
         }
     }
@@ -112,6 +103,7 @@ public class DashboardController {
             logger.error("Lỗi khi tạo báo cáo Excel khách hàng từ {} đến {}: {}",
                     from, to, e.getMessage(), e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.setContentType("text/plain");
             resp.getWriter().write("Không thể tạo báo cáo khách hàng: " + e.getMessage());
         }
     }
@@ -141,6 +133,7 @@ public class DashboardController {
             logger.error("Lỗi khi tạo báo cáo Excel trạng thái từ {} đến {}: {}",
                     from, to, e.getMessage(), e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.setContentType("text/plain");
             resp.getWriter().write("Không thể tạo báo cáo trạng thái: " + e.getMessage());
         }
     }
