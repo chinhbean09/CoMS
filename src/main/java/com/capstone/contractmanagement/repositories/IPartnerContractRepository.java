@@ -21,4 +21,5 @@ public interface IPartnerContractRepository extends JpaRepository<PartnerContrac
     Page<PartnerContract> searchByUserAndKeyword(@Param("user") User user,
                                                  @Param("search") String search,
                                                  Pageable pageable);
+    boolean existsByContractNumberAndUser(String contractNumber, User user);
 }
