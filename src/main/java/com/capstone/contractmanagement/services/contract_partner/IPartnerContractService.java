@@ -12,7 +12,7 @@ import java.util.List;
 public interface IPartnerContractService {
     void createContractPartner(PartnerContractDTO contractDTO);
 
-    String uploadPdfToCloudinary(MultipartFile file) throws IOException;
+    List<String> uploadPdfToCloudinary(List<MultipartFile> file) throws IOException;
 
     Page<PartnerContractResponse> getAllContractPartners(String search, int page, int size);
 

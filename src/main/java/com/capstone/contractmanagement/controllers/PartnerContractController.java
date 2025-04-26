@@ -24,9 +24,13 @@ public class PartnerContractController {
 
     @PostMapping("/upload-contract-file")
     @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_DIRECTOR')")
-    public ResponseEntity<String> uploadCourseImage(@RequestParam("file") MultipartFile file) throws IOException {
-        String result = contractPartnerService.uploadPdfToCloudinary(file);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ResponseObject> uploadCourseImage(@RequestParam("file") List<MultipartFile> file) throws IOException {
+        List<String> result = contractPartnerService.uploadPdfToCloudinary(file);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(result)
+                .message("Tải file thành công")
+                .build());
     }
 
     @PostMapping("/create")

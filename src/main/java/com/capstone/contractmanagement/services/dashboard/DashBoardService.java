@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -117,7 +118,7 @@ public class DashBoardService implements IDashBoardService {
                         .and(Sort.by("signingDate").ascending())
         );
 
-        Workbook wb = new XSSFWorkbook();
+        Workbook wb = new SXSSFWorkbook();
         Sheet sheet = wb.createSheet("Customer Report");
 
         // Header
