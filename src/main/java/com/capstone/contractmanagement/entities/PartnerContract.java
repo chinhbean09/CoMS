@@ -61,4 +61,8 @@ public class PartnerContract {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "partner_id")
+    private Partner partner;
 }
