@@ -387,8 +387,25 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("to")         LocalDateTime to
     );
 
-    List<Contract> findByExpiryDateBetweenAndIsLatestVersionTrue(
-            LocalDateTime start,
-            LocalDateTime end
+    /**
+     * Lấy page các hợp đồng isLatestVersion = true, expiryDate trong [start, end]
+     * và nếu keyword không null/empty thì tìm thêm trong title hoặc contractNumber.
+     */
+    @Query("""
+        SELECT c FROM Contract c
+        WHERE c.isLatestVersion = true
+          AND c.expiryDate BETWEEN :start AND :end
+          AND (
+            :keyword IS NULL
+            OR :keyword = ''
+            OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(c.contractNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
+          )
+        """)
+    Page<Contract> findExpiringWithinAndSearch(
+            @Param("start") LocalDateTime start,
+            @Param("end")   LocalDateTime end,
+            @Param("keyword") String keyword,
+            Pageable pageable
     );
 }
