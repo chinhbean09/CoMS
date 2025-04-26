@@ -69,7 +69,7 @@ public class PartnerContractService implements IPartnerContractService {
         // Convert date list [year, month, day, hour, minute, second] to LocalDateTime
         partnerContract.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
         partnerContract.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
-        partnerContract.setFileUrl(String.valueOf(contractDTO.getFileUrl()));
+        partnerContract.setFileUrl(contractDTO.getFileUrl());
         partnerContract.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
         partnerContract.setUser(currentUser);
 
@@ -290,7 +290,7 @@ public class PartnerContractService implements IPartnerContractService {
         partnerContract.setSigningDate(convertToLocalDateTime(contractDTO.getSigningDate()));
         partnerContract.setEffectiveDate(convertToLocalDateTime(contractDTO.getEffectiveDate()));
         partnerContract.setExpiryDate(convertToLocalDateTime(contractDTO.getExpiryDate()));
-        partnerContract.setFileUrl(String.valueOf(contractDTO.getFileUrl()));
+        partnerContract.setFileUrl(contractDTO.getFileUrl());
         contractPartnerRepository.save(partnerContract);
     }
 
