@@ -5,9 +5,7 @@ import com.capstone.contractmanagement.dtos.contract_partner.PartnerContractDTO;
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract.ContractItem;
-import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.enums.PaymentStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
@@ -117,51 +115,55 @@ public class PartnerContractService implements IPartnerContractService {
     }
 
     @Override
-    public String uploadPdfToCloudinary(MultipartFile file) throws IOException {
-        String contentType = file.getContentType();
+    public List<String> uploadPdfToCloudinary(List<MultipartFile> files) throws IOException {
+        List<String> resultUrls = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String contentType = file.getContentType();
 
-        // Kiểm tra định dạng file hợp lệ: PDF hoặc Word
-        if (!isSupportedFileType(contentType)) {
-            throw new IllegalArgumentException("Chỉ cho phép các tập tin PDF hoặc Word.");
-        }
+            // Kiểm tra định dạng file hợp lệ: PDF hoặc Word
+            if (!isSupportedFileType(contentType)) {
+                throw new IllegalArgumentException("Chỉ cho phép các tập tin PDF hoặc Word.");
+            }
 
-        // Upload file lên Cloudinary vào thư mục "contract_partner"
-        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "resource_type", "raw",      // Cho phép upload file dạng raw
-                "folder", "contract_partner",
-                "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", true,     // Không thêm ký tự ngẫu nhiên
-                "format", getFileExtension(contentType)  // Đảm bảo file được upload với đúng định dạng
-        ));
+            // Upload file lên Cloudinary vào thư mục "contract_partner"
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "resource_type", "raw",      // Cho phép upload file dạng raw
+                    "folder", "contract_partner",
+                    "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                    "unique_filename", true,     // Không thêm ký tự ngẫu nhiên
+                    "format", getFileExtension(contentType)  // Đảm bảo file được upload với đúng định dạng
+            ));
 
-        // Lấy public ID của file đã upload
-        String publicId = (String) uploadResult.get("public_id");
+            // Lấy public ID của file đã upload
+            String publicId = (String) uploadResult.get("public_id");
 
-        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
-        String originalFilename = file.getOriginalFilename();
+            // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+            String originalFilename = file.getOriginalFilename();
 
-        // Normalize the filename (remove diacritics and replace spaces with underscores)
-        String customFilename = normalizeFilename(originalFilename);
+            // Normalize the filename (remove diacritics and replace spaces with underscores)
+            String customFilename = normalizeFilename(originalFilename);
 
-        // Ensure there’s only one extension (e.g., "file_okl9cf.pdf" instead of "file_okl9cf.pdf.pdf")
-        String fileExtension = getFileExtension(contentType);
+            // Ensure there’s only one extension (e.g., "file_okl9cf.pdf" instead of "file_okl9cf.pdf.pdf")
+            String fileExtension = getFileExtension(contentType);
 //        if (!customFilename.endsWith("." + fileExtension)) {
 //            customFilename += "." + fileExtension;
 //        }
 
-        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
-        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+            // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+            String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
 
-        // Tạo URL bảo mật với transformation flag attachment:<encoded_filename>
-        // Khi tải file về, trình duyệt sẽ đặt tên file theo custom filename
-        String secureUrl = cloudinary.url()
-                .resourceType("raw")
-                .publicId(publicId)
-                .secure(true)
-                .transformation(new Transformation().flags("attachment:" + customFilename))
-                .generate();
+            // Tạo URL bảo mật với transformation flag attachment:<encoded_filename>
+            // Khi tải file về, trình duyệt sẽ đặt tên file theo custom filename
+            String secureUrl = cloudinary.url()
+                    .resourceType("raw")
+                    .publicId(publicId)
+                    .secure(true)
+                    .transformation(new Transformation().flags("attachment:" + customFilename))
+                    .generate();
 
-        return secureUrl;
+            resultUrls.add(secureUrl);
+        }
+        return resultUrls;
     }
 
     // Hàm kiểm tra định dạng file hỗ trợ (PDF, Word 2003, Word 2007+)
