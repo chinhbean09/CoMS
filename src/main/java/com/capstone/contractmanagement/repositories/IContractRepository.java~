@@ -311,55 +311,18 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
     List<Contract> findByStatusAndIsLatestVersion(ContractStatus status, Boolean isLatestVersion);
 
     // 1. Time report (YEAR/MONTH/QUARTER)
-    // 1) Group by YEAR
-    @Query(value = """
-    SELECT to_char(c.signing_date, 'YYYY')       AS period,
-           COUNT(*)                              AS cnt,
-           SUM(c.amount)                         AS total
-    FROM contracts c
-    WHERE c.is_latest_version = true
-      AND c.signing_date BETWEEN :from AND :to
-    GROUP BY to_char(c.signing_date, 'YYYY')
-    ORDER BY period
-    """,
-            nativeQuery = true)
-    List<Object[]> reportByYear(
-            @Param("from") LocalDateTime from,
-            @Param("to")   LocalDateTime to
-    );
-
-    // 2) Group by MONTH (YYYY-MM)
-    @Query(value = """
-    SELECT to_char(c.signing_date, 'YYYY-MM')    AS period,
-           COUNT(*), SUM(c.amount)
-    FROM contracts c
-    WHERE c.is_latest_version = true
-      AND c.signing_date BETWEEN :from AND :to
-    GROUP BY to_char(c.signing_date, 'YYYY-MM')
-    ORDER BY period
-    """,
-            nativeQuery = true)
-    List<Object[]> reportByMonth(
-            @Param("from") LocalDateTime from,
-            @Param("to")   LocalDateTime to
-    );
-
-    // 3) Group by QUARTER (e.g. 2025-Q1)
-    @Query(value = """
-    SELECT
-      concat(
-        to_char(c.signing_date, 'YYYY'),
-        '-Q', extract(quarter FROM c.signing_date)
-      )                                          AS period,
-      COUNT(*), SUM(c.amount)
-    FROM contracts c
-    WHERE c.is_latest_version = true
-      AND c.signing_date BETWEEN :from AND :to
-    GROUP BY 1
-    ORDER BY 1
-    """,
-            nativeQuery = true)
-    List<Object[]> reportByQuarter(
+    @Query("""
+      SELECT\s
+        FUNCTION(:group, c.signingDate) AS period,\s
+        COUNT(c), SUM(c.amount)
+      FROM Contract c
+      WHERE c.isLatestVersion = true
+        AND c.signingDate BETWEEN :from AND :to
+      GROUP BY FUNCTION(:group, c.signingDate)
+      ORDER BY FUNCTION(:group, c.signingDate)
+   \s""")
+    List<Object[]> reportByTimeGeneric(
+            @Param("group") String groupFn,              // "YEAR", "MONTH", "QUARTER"
             @Param("from") LocalDateTime from,
             @Param("to")   LocalDateTime to
     );
