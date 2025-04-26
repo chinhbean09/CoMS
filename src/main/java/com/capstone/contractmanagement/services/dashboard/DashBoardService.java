@@ -10,8 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DashBoardService implements IDashBoardService {
+    private static final Logger logger = LoggerFactory.getLogger(DashBoardService.class);
     private final IContractRepository contractRepository;
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -34,7 +36,6 @@ public class DashBoardService implements IDashBoardService {
             statusCounts.put(status, count);
         }
 
-        // pie chart
         List<ContractStatus> pieStatuses = Arrays.asList(
                 ContractStatus.APPROVAL_PENDING,
                 ContractStatus.COMPLETED,
@@ -54,11 +55,10 @@ public class DashBoardService implements IDashBoardService {
         if (totalPieContracts > 0) {
             for (ContractStatus status : pieStatuses) {
                 long count = statusCounts.get(status);
-                double percentage = (count * 100.0) / totalPieContracts; // Tính phần trăm
+                double percentage = (count * 100.0) / totalPieContracts;
                 pieChartData.add(new PieChartData(status.name(), percentage));
             }
         } else {
-            // Nếu không có hợp đồng nào trong các trạng thái này, trả về 0% cho tất cả
             for (ContractStatus status : pieStatuses) {
                 pieChartData.add(new PieChartData(status.name(), 0.0));
             }
@@ -67,8 +67,8 @@ public class DashBoardService implements IDashBoardService {
         List<Object[]> monthCountsRaw = contractRepository.countLatestContractsByMonth(year);
         List<MonthlyContractCount> monthlyCounts = monthCountsRaw.stream()
                 .map(row -> {
-                    String monthAbbr = (String) row[0]; // Ví dụ: "Jan"
-                    long count = ((Number) row[1]).longValue(); // Chuyển đổi số lượng hợp đồng
+                    String monthAbbr = (String) row[0];
+                    long count = ((Number) row[1]).longValue();
                     return new MonthlyContractCount(monthAbbr, count);
                 })
                 .collect(Collectors.toList());
@@ -78,60 +78,144 @@ public class DashBoardService implements IDashBoardService {
 
     @Override
     public Workbook generateTimeReportExcel(LocalDateTime from, LocalDateTime to, String groupBy) {
-        List<Object[]> rows;
-        switch(groupBy.toUpperCase()) {
+        logger.info("Tạo báo cáo thời gian từ {} đến {} theo nhóm {}", from, to, groupBy);
+        List<ContractStatus> statuses = List.of(
+                ContractStatus.ACTIVE,
+                ContractStatus.EXPIRED,
+                ContractStatus.ENDED,
+                ContractStatus.CANCELLED
+        );
+
+        List<Object[]> currentPeriodData;
+        List<Object[]> previousPeriodData;
+        String periodLabel;
+
+        switch (groupBy.toUpperCase()) {
             case "YEAR":
-                rows = contractRepository.reportByYear(from, to);
-                break;
-            case "QUARTER":
-                rows = contractRepository.reportByQuarter(from, to);
+                currentPeriodData = contractRepository.reportByYearWithStatuses(from, to, statuses);
+                previousPeriodData = contractRepository.reportByYearWithStatuses(
+                        from.minusYears(1), to.minusYears(1), statuses);
+                periodLabel = "Year";
                 break;
             case "MONTH":
             default:
-                rows = contractRepository.reportByMonth(from, to);
+                currentPeriodData = contractRepository.reportByMonthWithStatuses(from, to, statuses);
+                previousPeriodData = contractRepository.reportByMonthWithStatuses(
+                        from.minusMonths(1), to.minusMonths(1), statuses);
+                periodLabel = "Month";
                 break;
         }
 
         Workbook wb = new XSSFWorkbook();
         Sheet sheet = wb.createSheet("Time Report");
-        Row h = sheet.createRow(0);
-        h.createCell(0).setCellValue("Period");
-        h.createCell(1).setCellValue("Contract Count");
-        h.createCell(2).setCellValue("Total Value");
 
-        int r = 1;
-        for (Object[] o : rows) {
-            Row row = sheet.createRow(r++);
-            row.createCell(0).setCellValue(o[0].toString());
-            row.createCell(1).setCellValue(((Number)o[1]).longValue());
-            row.createCell(2).setCellValue(((Number)o[2]).doubleValue());
+        // Header
+        Row header = sheet.createRow(0);
+        String[] cols = {
+                periodLabel, "Contract Count", "Total Value",
+                "% Change Count (vs Previous)", "% Change Value (vs Previous)"
+        };
+        for (int i = 0; i < cols.length; i++) {
+            header.createCell(i).setCellValue(cols[i]);
         }
-        for(int c=0;c<3;c++) sheet.autoSizeColumn(c);
+
+        // Data
+        int rowNum = 1;
+        Map<String, Object[]> previousMap = previousPeriodData.stream()
+                .collect(Collectors.toMap(row -> row[0].toString(), row -> row));
+
+        for (Object[] rowData : currentPeriodData) {
+            Row row = sheet.createRow(rowNum++);
+            String period = rowData[0].toString();
+            long contractCount = ((Number) rowData[1]).longValue();
+            double totalValue = ((Number) rowData[2]).doubleValue();
+
+            row.createCell(0).setCellValue(period);
+            row.createCell(1).setCellValue(contractCount);
+            row.createCell(2).setCellValue(totalValue);
+
+            // Tính % thay đổi
+            Object[] prevData = previousMap.get(period);
+            double countChangePercent = 0.0;
+            double valueChangePercent = 0.0;
+
+            if (prevData != null) {
+                long prevCount = ((Number) prevData[1]).longValue();
+                double prevValue = ((Number) prevData[2]).doubleValue();
+
+                if (prevCount > 0) {
+                    countChangePercent = ((double) (contractCount - prevCount) / prevCount) * 100;
+                }
+                if (prevValue > 0) {
+                    valueChangePercent = ((double) (totalValue - prevValue) / prevValue) * 100;
+                }
+            }
+
+            row.createCell(3).setCellValue(String.format("%.2f%%", countChangePercent));
+            row.createCell(4).setCellValue(String.format("%.2f%%", valueChangePercent));
+        }
+
+        // Autosize columns
+        for (int i = 0; i < cols.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        logger.info("Hoàn thành tạo Workbook thời gian với {} hàng", rowNum - 1);
         return wb;
     }
 
     @Override
     public Workbook generateCustomerReportExcel(LocalDateTime from, LocalDateTime to) {
+        logger.info("Tạo báo cáo khách hàng từ {} đến {}", from, to);
         List<Contract> contracts = contractRepository.findByIsLatestVersionTrueAndSigningDateBetween(
                 from, to,
                 Sort.by("partner.partnerName").ascending()
                         .and(Sort.by("signingDate").ascending())
         );
 
-        Workbook wb = new SXSSFWorkbook();
-        Sheet sheet = wb.createSheet("Customer Report");
+        Workbook wb = new XSSFWorkbook();
+        Sheet summarySheet = wb.createSheet("Summary");
+        Sheet detailsSheet = wb.createSheet("Contract Details");
 
-        // Header
-        Row h = sheet.createRow(0);
-        String[] cols = { "Customer ID", "Customer Name", "Contract #", "Signing Date", "Amount", "Status" };
-        for (int i = 0; i < cols.length; i++) {
-            h.createCell(i).setCellValue(cols[i]);
+        // Summary Sheet
+        Row summaryHeader = summarySheet.createRow(0);
+        String[] summaryCols = { "Customer ID", "Customer Name", "Total Contracts", "Total Value" };
+        for (int i = 0; i < summaryCols.length; i++) {
+            summaryHeader.createCell(i).setCellValue(summaryCols[i]);
         }
 
-        // Data
-        int r = 1;
+        // Group contracts by customer
+        Map<String, List<Contract>> contractsByCustomer = contracts.stream()
+                .collect(Collectors.groupingBy(c -> c.getPartner().getPartnerName()));
+
+        int summaryRowNum = 1;
+        for (Map.Entry<String, List<Contract>> entry : contractsByCustomer.entrySet()) {
+            String customerName = entry.getKey();
+            List<Contract> customerContracts = entry.getValue();
+            long totalContracts = customerContracts.size();
+            double totalValue = customerContracts.stream()
+                    .mapToDouble(c -> c.getAmount() != null ? c.getAmount() : 0)
+                    .sum();
+
+            Row row = summarySheet.createRow(summaryRowNum++);
+            row.createCell(0).setCellValue(customerContracts.get(0).getPartner().getId());
+            row.createCell(1).setCellValue(customerName);
+            row.createCell(2).setCellValue(totalContracts);
+            row.createCell(3).setCellValue(totalValue);
+        }
+
+        // Details Sheet
+        Row detailsHeader = detailsSheet.createRow(0);
+        String[] detailsCols = {
+                "Customer ID", "Customer Name", "Contract #", "Signing Date", "Amount", "Status"
+        };
+        for (int i = 0; i < detailsCols.length; i++) {
+            detailsHeader.createCell(i).setCellValue(detailsCols[i]);
+        }
+
+        int detailsRowNum = 1;
         for (Contract c : contracts) {
-            Row row = sheet.createRow(r++);
+            Row row = detailsSheet.createRow(detailsRowNum++);
             row.createCell(0).setCellValue(c.getPartner().getId());
             row.createCell(1).setCellValue(c.getPartner().getPartnerName());
             row.createCell(2).setCellValue(c.getContractNumber());
@@ -140,39 +224,51 @@ public class DashBoardService implements IDashBoardService {
             row.createCell(5).setCellValue(c.getStatus().name());
         }
 
-        for (int i = 0; i < cols.length; i++) sheet.autoSizeColumn(i);
+        // Autosize columns
+        for (int i = 0; i < summaryCols.length; i++) {
+            summarySheet.autoSizeColumn(i);
+        }
+        for (int i = 0; i < detailsCols.length; i++) {
+            detailsSheet.autoSizeColumn(i);
+        }
+
+        logger.info("Hoàn thành tạo Workbook khách hàng với {} khách hàng và {} hợp đồng",
+                summaryRowNum - 1, detailsRowNum - 1);
         return wb;
     }
 
     @Override
     public Workbook generateStatusReportExcel(LocalDateTime from, LocalDateTime to) {
+        logger.info("Tạo báo cáo trạng thái từ {} đến {}", from, to);
         List<ContractStatus> statuses = List.of(
-                ContractStatus.APPROVAL_PENDING,
-                ContractStatus.SIGNED,
-                ContractStatus.EXPIRED
+                ContractStatus.ACTIVE,
+                ContractStatus.EXPIRED,
+                ContractStatus.ENDED,
+                ContractStatus.CANCELLED
         );
         List<Object[]> raw = contractRepository.countByStatusesBetween(statuses, from, to);
 
-        // map init = 0
         Map<ContractStatus, Long> map = new EnumMap<>(ContractStatus.class);
         statuses.forEach(s -> map.put(s, 0L));
-        raw.forEach(o -> map.put((ContractStatus)o[0], ((Number)o[1]).longValue()));
+        raw.forEach(o -> map.put((ContractStatus) o[0], ((Number) o[1]).longValue()));
 
         Workbook wb = new XSSFWorkbook();
         Sheet sheet = wb.createSheet("Status Report");
-        Row h = sheet.createRow(0);
-        h.createCell(0).setCellValue("Status");
-        h.createCell(1).setCellValue("Count");
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("Status");
+        header.createCell(1).setCellValue("Count");
 
-        int r = 1;
+        int rowNum = 1;
         for (ContractStatus s : statuses) {
-            Row row = sheet.createRow(r++);
+            Row row = sheet.createRow(rowNum++);
             row.createCell(0).setCellValue(s.name());
             row.createCell(1).setCellValue(map.get(s));
         }
 
         sheet.autoSizeColumn(0);
         sheet.autoSizeColumn(1);
+
+        logger.info("Hoàn thành tạo Workbook trạng thái với {} trạng thái", rowNum - 1);
         return wb;
     }
 }

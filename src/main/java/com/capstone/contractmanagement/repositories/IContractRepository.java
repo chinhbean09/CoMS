@@ -411,4 +411,18 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("keyword")     String keyword,
             Pageable pageable
     );
+
+    @Query("SELECT FUNCTION('DATE_FORMAT', c.signingDate, '%Y') as period, COUNT(c) as count, SUM(c.amount) as totalValue " +
+            "FROM Contract c WHERE c.isLatestVersion = true AND c.status IN :statuses " +
+            "AND c.signingDate BETWEEN :from AND :to GROUP BY period")
+    List<Object[]> reportByYearWithStatuses(@Param("from") LocalDateTime from,
+                                            @Param("to") LocalDateTime to,
+                                            @Param("statuses") List<ContractStatus> statuses);
+
+    @Query("SELECT FUNCTION('DATE_FORMAT', c.signingDate, '%Y-%m') as period, COUNT(c) as count, SUM(c.amount) as totalValue " +
+            "FROM Contract c WHERE c.isLatestVersion = true AND c.status IN :statuses " +
+            "AND c.signingDate BETWEEN :from AND :to GROUP BY period")
+    List<Object[]> reportByMonthWithStatuses(@Param("from") LocalDateTime from,
+                                             @Param("to") LocalDateTime to,
+                                             @Param("statuses") List<ContractStatus> statuses);
 }
