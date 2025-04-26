@@ -1505,9 +1505,9 @@ public class ContractService implements IContractService{
 
             // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
             ContractStatus oldStatus = contract.getStatus();
-            contract.setStatus(ContractStatus.ACTIVE);
+            contract.setStatus(ContractStatus.SIGNED);
             contractRepository.save(contract);
-            if (oldStatus != ContractStatus.ACTIVE) {
+            if (oldStatus != ContractStatus.SIGNED) {
                 logAuditTrailForContract(contract, "UPDATE", "status", oldStatus != null ? oldStatus.name() : null, ContractStatus.ACTIVE.name(), "System");
             }
 
@@ -3327,7 +3327,9 @@ public class ContractService implements IContractService{
         String changeSummary;
         if ("CREATED".equalsIgnoreCase(newValue)) {
             changeSummary = "Đã tạo mới hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
-        } else {
+        } else if (oldStatusVi.equalsIgnoreCase(newStatusVi)) {
+            changeSummary = "Đối tác đã ký hợp đồng, chờ ngày hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+    } else {
             changeSummary = String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'",
                     oldStatusVi != null ? oldStatusVi : "Không có",
                     newStatusVi != null ? newStatusVi : "Không có");
