@@ -740,5 +740,16 @@
                     .build());
         }
 
+        @GetMapping("/get-contracts-nearly-expired")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+        public ResponseEntity<ResponseObject> sendContractToSign(@RequestParam int days) throws DataNotFoundException {
+            contractService.getAllContractsNearLyExpiryDate(days);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Lấy danh sách hợp đồng sắp hết hạn!")
+                    .status(HttpStatus.OK)
+                    .data(contractService.getAllContractsNearLyExpiryDate(days))
+                    .build());
+        }
+
     }
 

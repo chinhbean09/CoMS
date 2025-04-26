@@ -872,9 +872,9 @@ public class ContractService implements IContractService{
         }
 
         // Kiểm tra hợp lệ (bắt buộc có cả A và B)
-        if (partnerA == null || partnerB == null) {
-            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
-        }
+//        if (partnerA == null || partnerB == null) {
+//            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+//        }
 
         return GetAllContractReponse.builder()
                 .id(contract.getId())
@@ -889,8 +889,8 @@ public class ContractService implements IContractService{
                 .originalContractId(contract.getOriginalContractId())
                 .approvalWorkflowId(contract.getApprovalWorkflow() != null ? contract.getApprovalWorkflow().getId() : null)
                 .user(convertUserToUserContractResponse(contract.getUser()))
-                .partnerA(partnerA) // Thêm partnerA
-                .partnerB(partnerB) // Thêm partnerB
+//                .partnerA(partnerA) // Thêm partnerA
+//                .partnerB(partnerB) // Thêm partnerB
                 .daysDeleted(contract.getDaysDeleted())
                 .signingDate(contract.getSigningDate())
                 .effectiveDate(contract.getEffectiveDate())
@@ -1612,6 +1612,17 @@ public class ContractService implements IContractService{
         notificationService.saveNotification(approver, message, contract);
 
         // (Tuỳ chọn) Gửi email nhắc nhở
+    }
+
+    @Override
+    @Transactional
+    public List<GetAllContractReponse> getAllContractsNearLyExpiryDate(int days) {
+        LocalDateTime now       = LocalDateTime.now();
+        LocalDateTime threshold = now.plusDays(days);
+        List<Contract> contracts = contractRepository.findByExpiryDateBetweenAndIsLatestVersionTrue(now, threshold);
+        return contracts.stream()
+                .map(this::convertToGetAllContractResponse)
+                .collect(Collectors.toList());
     }
 
     private String normalizeFilename(String filename) {
