@@ -60,6 +60,23 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             contractRepository.save(contract);
         }
 
+        List<Contract> contractsEffectiveNotify = contractRepository.findAll().stream()
+                .filter(contract -> contract.getEffectiveDate() != null)
+                .filter(contract -> contract.getNotifyEffectiveDate() != null)
+                .filter(contract -> contract.getStatus() == ContractStatus.SIGNED || contract.getStatus() == ContractStatus.APPROVED)
+                //.filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveNotified()))
+                .filter(Contract::getIsLatestVersion)
+                .filter(contract -> !now.isBefore(contract.getEffectiveDate()))
+                .collect(Collectors.toList());
+
+        for (Contract contract : contractsToEffectiveNotify) {
+            String message = "Hợp đồng '" + contract.getTitle() + "'bắt đầu có hiệu lực vào ngày " + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            sendNotification(contract, message, true);
+            //mailService.sendEmailContractEffectiveDate(contract);
+            contract.setStatus(ContractStatus.ACTIVE);
+            contractRepository.save(contract);
+        }
+
         // Bước 2: Thông báo sắp hết hạn
         List<Contract> contractsToExpiryNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getExpiryDate() != null)

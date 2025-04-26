@@ -95,7 +95,7 @@ public class PartnerContractController {
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(null)
-                .message("Cập nhật thành công")
+                .message("Cập nhật các hóa đơn thanh toán thành công")
                 .build());
     }
 
