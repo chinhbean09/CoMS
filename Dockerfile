@@ -14,6 +14,8 @@
             ln -snf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime && \
             echo "Asia/Ho_Chi_Minh" > /etc/timezone
 
+        RUN apk add --no-cache freetype fontconfig ttf-dejavu
+
         RUN adduser -D coms-chinhbean
 
         WORKDIR /run
@@ -23,6 +25,8 @@
         RUN chown -R coms-chinhbean:coms-chinhbean /run
 
         USER coms-chinhbean
+
+        ENV JAVA_OPTS="-Djava.awt.headless=true"
 
         EXPOSE 8088
 
