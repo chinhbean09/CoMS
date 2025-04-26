@@ -42,7 +42,7 @@ public class PartnerContract {
     @Column(name = "title", length = 255)
     private String title;
 
-    @Column(name = "file_url", length = 255)
+    @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 
     @OneToMany(mappedBy = "partnerContract", cascade = CascadeType.ALL, orphanRemoval = true)
