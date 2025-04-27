@@ -441,4 +441,12 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("to") LocalDateTime to,
             @Param("statuses") List<ContractStatus> statuses
     );
+    @Query("SELECT c FROM Contract c WHERE c.isLatestVersion = true AND c.effectiveDate BETWEEN :from AND :to AND c.status IN :statuses")
+    List<Contract> findByIsLatestVersionTrueAndEffectiveDateBetweenAndStatusIn(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("statuses") List<ContractStatus> statuses,
+            Sort sort
+    );
+
 }
