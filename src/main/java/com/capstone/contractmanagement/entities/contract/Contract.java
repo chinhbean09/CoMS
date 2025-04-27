@@ -215,5 +215,16 @@
         @CollectionTable(name = "contract_signed_url", joinColumns = @JoinColumn(name = "contract_id"))
         @Column(name = "signed_contract_url")
         private List<String> signedContractUrls; // Lưu nhiều URL trong một trường
+        // Nội dung lý do hủy
+        @Column(name = "cancel_content", columnDefinition = "TEXT")
+        private String cancelContent;
+
+        @Column(name = "cancel_date")
+        private LocalDateTime cancelDate;
+
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_cancellation_files", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "cancellation_file_url")
+        private List<String> cancellationFileUrls = new ArrayList<>();
 
     }
