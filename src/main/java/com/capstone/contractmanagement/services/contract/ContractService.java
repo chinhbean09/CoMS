@@ -1459,7 +1459,7 @@ public class ContractService implements IContractService{
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
                         && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
                         && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
-                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
+                    throw new RuntimeException(("File tải lên phải là file hình ảnh hoặc PDF"));
                 }
 
                 // Xác định resource_type
@@ -1661,7 +1661,7 @@ public class ContractService implements IContractService{
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
                         && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
                         && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
-                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
+                    throw new RuntimeException("File tải lên phải là file hình ảnh hoặc PDF");
                 }
 
                 // Xác định resource_type
