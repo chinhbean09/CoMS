@@ -42,7 +42,7 @@ public class ApprovalWorkflowController {
 
     // api create approval workflow
     @PostMapping("/create")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<ResponseObject> createApprovalWorkflow(@RequestBody ApprovalWorkflowDTO approvalWorkflowDTO) {
         ApprovalWorkflowResponse response = approvalWorkflowService.createWorkflow(approvalWorkflowDTO);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -65,7 +65,7 @@ public class ApprovalWorkflowController {
 
     // api delete approval workflow
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteApprovalWorkflow(@PathVariable Long id) throws DataNotFoundException {
         approvalWorkflowService.deleteWorkflow(id);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -88,7 +88,7 @@ public class ApprovalWorkflowController {
 
     // assign approval workflow to contract
     @PutMapping("/assign/{contractId}/{workflowId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<ResponseObject> assignWorkflowToContract(@PathVariable Long contractId, @PathVariable Long workflowId) throws DataNotFoundException {
         approvalWorkflowService.assignWorkflowToContract(contractId, workflowId);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -175,8 +175,8 @@ public class ApprovalWorkflowController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     @PostMapping("/resubmit/{contractId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<String> resubmitContract(@PathVariable Long contractId) {
         try {
             approvalWorkflowService.resubmitContractForApproval(contractId);

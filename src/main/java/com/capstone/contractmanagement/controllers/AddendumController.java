@@ -75,16 +75,6 @@ public class AddendumController {
                 .build());
     }
 
-//    @GetMapping("/get-by-type/{addendumTypeId}")
-//    public ResponseEntity<ResponseObject> getAllByAddendumType(@PathVariable Long addendumTypeId) throws DataNotFoundException {
-//        List<AddendumResponse> addendumResponseList = addendumService.getAllByAddendumType(addendumTypeId);
-//        return ResponseEntity.ok(ResponseObject.builder()
-//                .status(HttpStatus.OK)
-//                .message("Lấy danh sách phụ lục thành công")
-//                .data(addendumResponseList)
-//                .build());
-//    }
-
     @PutMapping("/update/{addendumId}")
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<String> updateAddendum(@PathVariable Long addendumId,
@@ -451,29 +441,6 @@ public class AddendumController {
                 .build());
     }
 
-//    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
-//        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
-//        String newStatusVi = translateContractStatusToVietnamese(newValue);
-//
-//        AuditTrail auditTrail = AuditTrail.builder()
-//                .contract(contract) // Liên kết với hợp đồng
-//                .entityName("Addenda")
-//                .entityId(contract.getId())
-//                .action(action)
-//                .fieldName(fieldName)
-//                .oldValue(oldStatusVi)
-//                .newValue(newStatusVi)
-//                .changedBy(changedBy)
-//                .changedAt(LocalDateTime.now())
-//                .changeSummary(String.format("Phụ lục được ký bởi %s vào lúc %s. Trạng thái thay đổi từ '%s' sang '%s'",
-//                        changedBy,
-//                        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now()),
-//                        oldStatusVi,
-//                        newStatusVi))
-//                .build();
-//        auditTrailRepository.save(auditTrail);
-//    }
-
     private String translateContractStatusToVietnamese(String status) {
         switch (status) {
             case "DRAFT":
@@ -537,6 +504,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-bill-urls/{paymentId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
     public ResponseEntity<ResponseObject> getAddendumBillUrls(@PathVariable Long paymentId) throws DataNotFoundException {
         return ResponseEntity.ok(ResponseObject.builder()
                 .message("Lấy link hóa đơn thanh toán")
