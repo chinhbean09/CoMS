@@ -731,6 +731,7 @@
         }
 
         @PostMapping("/send-approve-reminder/{contractId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> sendApproveReminder( @PathVariable Long contractId
         ) throws DataNotFoundException {
             contractService.notifyNextApprover(contractId);
