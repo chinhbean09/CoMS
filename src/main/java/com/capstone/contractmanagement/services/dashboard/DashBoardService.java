@@ -32,8 +32,7 @@ public class DashBoardService implements IDashBoardService {
             ContractStatus.ACTIVE,
             ContractStatus.EXPIRED,
             ContractStatus.ENDED,
-            ContractStatus.CANCELLED,
-            ContractStatus.CREATED
+            ContractStatus.CANCELLED
     );
 
     @Override
@@ -46,7 +45,6 @@ public class DashBoardService implements IDashBoardService {
 
         List<ContractStatus> pieStatuses = Arrays.asList(
                 ContractStatus.APPROVAL_PENDING,
-                ContractStatus.COMPLETED,
                 ContractStatus.EXPIRED,
                 ContractStatus.ENDED,
                 ContractStatus.CANCELLED,
