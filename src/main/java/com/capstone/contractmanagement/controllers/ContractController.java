@@ -764,8 +764,8 @@
 
         @PutMapping("/cancel-contract/{contractId}")
         @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_MANAGER')")
-        public ResponseEntity<ResponseObject> cancelContract(@PathVariable Long contractId, @RequestParam List<MultipartFile> files, @RequestParam String cancelReason) throws DataNotFoundException {
-            contractService.cancelContract(contractId, files, cancelReason);
+        public ResponseEntity<ResponseObject> cancelContract(@PathVariable Long contractId, @RequestParam List<MultipartFile> files, @RequestBody ContractCancelDTO contractCancelDTO) throws DataNotFoundException {
+            contractService.cancelContract(contractId, files, contractCancelDTO);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message("Hủy hợp đồng thành công")
                     .status(HttpStatus.OK)
