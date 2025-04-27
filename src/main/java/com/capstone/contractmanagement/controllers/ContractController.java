@@ -16,6 +16,7 @@
     import com.capstone.contractmanagement.repositories.IAuditTrailRepository;
     import com.capstone.contractmanagement.repositories.IContractRepository;
     import com.capstone.contractmanagement.responses.ResponseObject;
+    import com.capstone.contractmanagement.responses.contract.CancelContractResponse;
     import com.capstone.contractmanagement.responses.contract.ContractResponse;
     import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
     import com.capstone.contractmanagement.services.contract.IContractService;
@@ -760,5 +761,25 @@
             );
         }
 
+        @PutMapping("/cancel-contract/{contractId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_MANAGER')")
+        public ResponseEntity<ResponseObject> cancelContract(@PathVariable Long contractId, @RequestParam List<MultipartFile> files, @RequestParam String cancelReason) throws DataNotFoundException {
+            contractService.cancelContract(contractId, files, cancelReason);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Hủy hợp đồng thành công")
+                    .status(HttpStatus.OK)
+                    .build());
+        }
+
+        @GetMapping("/get-cancel-reason/{contractId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+        public ResponseEntity<ResponseObject> getContractVersions(@PathVariable Long contractId) throws DataNotFoundException {
+            CancelContractResponse responses = contractService.getContractCancelReason(contractId);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("lấy lí do hủy thành công")
+                    .status(HttpStatus.OK)
+                    .data(responses)
+                    .build());
+        }
     }
 

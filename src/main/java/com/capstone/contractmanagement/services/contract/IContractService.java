@@ -8,6 +8,7 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.contract.CancelContractResponse;
 import com.capstone.contractmanagement.responses.contract.ContractComparisonResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
@@ -77,4 +78,8 @@ public interface IContractService {
             int page,
             int size
     );
+
+    void cancelContract(Long contractId, List<MultipartFile> files, String cancelReason) throws DataNotFoundException;
+
+    CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException;
     }
