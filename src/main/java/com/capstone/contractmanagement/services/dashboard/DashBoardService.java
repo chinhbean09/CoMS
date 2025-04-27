@@ -128,7 +128,7 @@ public class DashBoardService implements IDashBoardService {
 
             // Tạo header cho sheet chi tiết
             Row detailsHeader = detailsSheet.createRow(0);
-            String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signing Date", "Amount", "Status"};
+            String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signed At", "Effective Date", "Expiry Date", "Amount", "Status"};
             for (int i = 0; i < detailsCols.length; i++) {
                 detailsHeader.createCell(i).setCellValue(detailsCols[i]);
             }
@@ -140,9 +140,11 @@ public class DashBoardService implements IDashBoardService {
                 row.createCell(1).setCellValue(c.getPartner().getId());
                 row.createCell(2).setCellValue(c.getPartner().getPartnerName());
                 row.createCell(3).setCellValue(c.getContractNumber());
-                row.createCell(4).setCellValue(c.getSigningDate().format(dtf));
-                row.createCell(5).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
-                row.createCell(6).setCellValue(c.getStatus().name());
+                row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
+                row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
+                row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
+                row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
+                row.createCell(8).setCellValue(c.getStatus().name());
             }
 
             // Tự động điều chỉnh kích thước cột
@@ -321,7 +323,7 @@ public class DashBoardService implements IDashBoardService {
 
         // Tạo header cho sheet chi tiết
         Row detailsHeader = detailsSheet.createRow(0);
-        String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signing Date", "Amount", "Status"};
+        String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signed At", "Effective Date", "Expiry Date", "Amount", "Status"};
         for (int i = 0; i < detailsCols.length; i++) {
             detailsHeader.createCell(i).setCellValue(detailsCols[i]);
         }
@@ -333,9 +335,11 @@ public class DashBoardService implements IDashBoardService {
             row.createCell(1).setCellValue(c.getPartner().getId());
             row.createCell(2).setCellValue(c.getPartner().getPartnerName());
             row.createCell(3).setCellValue(c.getContractNumber());
-            row.createCell(4).setCellValue(c.getSigningDate().format(dtf));
-            row.createCell(5).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
-            row.createCell(6).setCellValue(c.getStatus().name());
+            row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
+            row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
+            row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
+            row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
+            row.createCell(8).setCellValue(c.getStatus().name());
         }
 
         // Tự động điều chỉnh kích thước cột
