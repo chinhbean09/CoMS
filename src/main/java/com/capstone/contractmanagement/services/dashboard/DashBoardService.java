@@ -83,27 +83,65 @@ public class DashBoardService implements IDashBoardService {
                 ContractStatus.ACTIVE,
                 ContractStatus.EXPIRED,
                 ContractStatus.ENDED,
-                ContractStatus.CANCELLED
+                ContractStatus.CANCELLED,
+                ContractStatus.CREATED
         );
 
+        // Lấy dữ liệu cho khoảng thời gian hiện tại
         List<Object[]> currentPeriodData;
-        List<Object[]> previousPeriodData;
         String periodLabel;
 
         switch (groupBy.toUpperCase()) {
             case "YEAR":
                 currentPeriodData = contractRepository.reportByYearWithStatuses(from, to, statuses);
-                previousPeriodData = contractRepository.reportByYearWithStatuses(
-                        from.minusYears(1), to.minusYears(1), statuses);
                 periodLabel = "Year";
                 break;
             case "MONTH":
             default:
                 currentPeriodData = contractRepository.reportByMonthWithStatuses(from, to, statuses);
-                previousPeriodData = contractRepository.reportByMonthWithStatuses(
-                        from.minusMonths(1), to.minusMonths(1), statuses);
                 periodLabel = "Month";
                 break;
+        }
+
+        logger.info("Tìm thấy {} hàng dữ liệu cho khoảng thời gian hiện tại từ {} đến {}",
+                currentPeriodData.size(), from, to);
+
+        // Lấy dữ liệu cho khoảng thời gian trước đó
+        List<Object[]> previousPeriodData = new ArrayList<>();
+        if (!currentPeriodData.isEmpty()) {
+            // Tìm năm/tháng nhỏ nhất và lớn nhất trong currentPeriodData
+            String earliestPeriod = currentPeriodData.stream()
+                    .map(row -> row[0].toString())
+                    .min(String::compareTo)
+                    .orElse(null);
+            String latestPeriod = currentPeriodData.stream()
+                    .map(row -> row[0].toString())
+                    .max(String::compareTo)
+                    .orElse(null);
+
+            if (earliestPeriod != null && latestPeriod != null) {
+                LocalDateTime previousFrom;
+                LocalDateTime previousTo;
+
+                if (groupBy.toUpperCase().equals("YEAR")) {
+                    int earliestYear = Integer.parseInt(earliestPeriod);
+                    int latestYear = Integer.parseInt(latestPeriod);
+                    int previousEarliestYear = earliestYear - 1;
+                    // Lấy dữ liệu từ năm trước của năm nhỏ nhất đến năm trước của năm lớn nhất
+                    previousFrom = LocalDateTime.of(previousEarliestYear, 1, 1, 0, 0);
+                    previousTo = LocalDateTime.of(latestYear - 1, 12, 31, 23, 59, 59);
+                    previousPeriodData = contractRepository.reportByYearWithStatuses(previousFrom, previousTo, statuses);
+                } else {
+                    // MONTH logic
+                    int earliestYear = Integer.parseInt(earliestPeriod.substring(0, 4));
+                    int earliestMonth = Integer.parseInt(earliestPeriod.substring(5, 7));
+                    LocalDateTime earliestDate = LocalDateTime.of(earliestYear, earliestMonth, 1, 0, 0);
+                    LocalDateTime previousEarliestDate = earliestDate.minusMonths(1);
+                    previousFrom = previousEarliestDate.withDayOfMonth(1);
+                    previousTo = previousEarliestDate.withDayOfMonth(previousEarliestDate.getMonth().length(previousEarliestDate.toLocalDate().isLeapYear()));
+                    previousPeriodData = contractRepository.reportByMonthWithStatuses(previousFrom, previousTo, statuses);
+                }
+            }
         }
 
         Workbook wb = new XSSFWorkbook();
@@ -121,38 +159,55 @@ public class DashBoardService implements IDashBoardService {
 
         // Data
         int rowNum = 1;
-        Map<String, Object[]> previousMap = previousPeriodData.stream()
-                .collect(Collectors.toMap(row -> row[0].toString(), row -> row));
-
-        for (Object[] rowData : currentPeriodData) {
+        if (currentPeriodData.isEmpty()) {
             Row row = sheet.createRow(rowNum++);
-            String period = rowData[0].toString();
-            long contractCount = ((Number) rowData[1]).longValue();
-            double totalValue = ((Number) rowData[2]).doubleValue();
+            row.createCell(0).setCellValue("No data available for the specified period and statuses.");
+        } else {
+            Map<String, Object[]> previousMap = previousPeriodData.stream()
+                    .collect(Collectors.toMap(row -> row[0].toString(), row -> row));
 
-            row.createCell(0).setCellValue(period);
-            row.createCell(1).setCellValue(contractCount);
-            row.createCell(2).setCellValue(totalValue);
+            for (Object[] rowData : currentPeriodData) {
+                Row row = sheet.createRow(rowNum++);
+                String period = rowData[0].toString();
+                long contractCount = ((Number) rowData[1]).longValue();
+                double totalValue = ((Number) rowData[2]).doubleValue();
 
-            // Tính % thay đổi
-            Object[] prevData = previousMap.get(period);
-            double countChangePercent = 0.0;
-            double valueChangePercent = 0.0;
+                row.createCell(0).setCellValue(period);
+                row.createCell(1).setCellValue(contractCount);
+                row.createCell(2).setCellValue(totalValue);
 
-            if (prevData != null) {
-                long prevCount = ((Number) prevData[1]).longValue();
-                double prevValue = ((Number) prevData[2]).doubleValue();
+                // Tính % thay đổi
+                double countChangePercent = 0.0;
+                double valueChangePercent = 0.0;
+                String previousPeriod;
 
-                if (prevCount > 0) {
-                    countChangePercent = ((double) (contractCount - prevCount) / prevCount) * 100;
+                if (groupBy.toUpperCase().equals("YEAR")) {
+                    int currentYear = Integer.parseInt(period);
+                    previousPeriod = String.valueOf(currentYear - 1);
+                } else {
+                    int year = Integer.parseInt(period.substring(0, 4));
+                    int month = Integer.parseInt(period.substring(5, 7));
+                    LocalDateTime currentDate = LocalDateTime.of(year, month, 1, 0, 0);
+                    LocalDateTime previousDate = currentDate.minusMonths(1);
+                    previousPeriod = previousDate.getYear() + "-" + String.format("%02d", previousDate.getMonthValue());
                 }
-                if (prevValue > 0) {
-                    valueChangePercent = ((double) (totalValue - prevValue) / prevValue) * 100;
+
+                Object[] prevData = previousMap.get(previousPeriod);
+                if (prevData != null) {
+                    long prevCount = ((Number) prevData[1]).longValue();
+                    double prevValue = ((Number) prevData[2]).doubleValue();
+
+                    if (prevCount > 0) {
+                        countChangePercent = ((double) (contractCount - prevCount) / prevCount) * 100;
+                    }
+                    if (prevValue > 0) {
+                        valueChangePercent = ((double) (totalValue - prevValue) / prevValue) * 100;
+                    }
                 }
+
+                row.createCell(3).setCellValue(String.format("%.2f%%", countChangePercent));
+                row.createCell(4).setCellValue(String.format("%.2f%%", valueChangePercent));
             }
-
-            row.createCell(3).setCellValue(String.format("%.2f%%", countChangePercent));
-            row.createCell(4).setCellValue(String.format("%.2f%%", valueChangePercent));
         }
 
         // Autosize columns

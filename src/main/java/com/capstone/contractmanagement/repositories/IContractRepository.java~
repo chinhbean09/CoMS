@@ -422,9 +422,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     @Query("SELECT TO_CHAR(c.effectiveDate, 'YYYY-MM') AS period, COUNT(c) AS count, COALESCE(SUM(c.amount), 0) AS totalValue " +
             "FROM Contract c WHERE c.isLatestVersion = true AND c.status IN :statuses " +
-            "AND c.effectiveDate BETWEEN :from AND :to " +
-            "GROUP BY TO_CHAR(c.effectiveDate, 'YYYY-MM') " +
-            "ORDER BY TO_CHAR(c.effectiveDate, 'YYYY-MM')")
+            "AND c.effectiveDate BETWEEN :from AND :to GROUP BY TO_CHAR(c.effectiveDate, 'YYYY-MM')")
     List<Object[]> reportByMonthWithStatuses(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
@@ -433,9 +431,7 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
 
     @Query("SELECT EXTRACT(YEAR FROM c.effectiveDate) AS period, COUNT(c) AS count, COALESCE(SUM(c.amount), 0) AS totalValue " +
             "FROM Contract c WHERE c.isLatestVersion = true AND c.status IN :statuses " +
-            "AND c.effectiveDate BETWEEN :from AND :to " +
-            "GROUP BY EXTRACT(YEAR FROM c.effectiveDate) " +
-            "ORDER BY EXTRACT(YEAR FROM c.effectiveDate)")
+            "AND c.effectiveDate BETWEEN :from AND :to GROUP BY EXTRACT(YEAR FROM c.effectiveDate)")
     List<Object[]> reportByYearWithStatuses(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
