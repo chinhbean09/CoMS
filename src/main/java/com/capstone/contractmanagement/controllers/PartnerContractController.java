@@ -36,10 +36,10 @@ public class PartnerContractController {
     @PostMapping("/create")
     @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
     public ResponseEntity<ResponseObject> createContractPartner(@RequestBody PartnerContractDTO contractDTO) throws Exception {
-        contractPartnerService.createContractPartner(contractDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
                 .message(MessageKeys.CREATE_CONTRACT_PARTNER_SUCCESSFULLY)
+                .data(contractPartnerService.createContractPartner(contractDTO))
                 .build());
     }
 
@@ -84,6 +84,18 @@ public class PartnerContractController {
                 .status(HttpStatus.OK)
                 .data(null)
                 .message("Cập nhật các hóa đơn thanh toán thành công")
+                .build());
+    }
+
+    @PutMapping("/set-to-partner/{partnerContractId}/{partnerId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseObject> setPartnerToContract(@PathVariable long partnerContractId,
+                                                               @PathVariable long partnerId) throws DataNotFoundException {
+        contractPartnerService.setPartnerContractToPartner(partnerContractId, partnerId);
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .data(null)
+                .message("Cập nhật thành công")
                 .build());
     }
 

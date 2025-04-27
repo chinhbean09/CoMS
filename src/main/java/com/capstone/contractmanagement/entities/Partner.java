@@ -71,4 +71,8 @@ public class Partner {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<PartnerContract> partnerContracts = new ArrayList<>();
+
 }
