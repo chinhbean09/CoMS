@@ -147,17 +147,17 @@
             existingPartner.setTaxCode(newTaxCode);
 
             // Cập nhật thông tin Partner
-            existingPartner.setPartnerType(updatePartnerDTO.getPartnerType());
-            existingPartner.setPartnerName(updatePartnerDTO.getPartnerName());
-            existingPartner.setSpokesmanName(updatePartnerDTO.getSpokesmanName());
-            existingPartner.setAddress(updatePartnerDTO.getAddress());
+            if(updatePartnerDTO.getPartnerType() != null) existingPartner.setPartnerType(updatePartnerDTO.getPartnerType());
+            if(updatePartnerDTO.getPartnerName() != null) existingPartner.setPartnerName(updatePartnerDTO.getPartnerName());
+            if(updatePartnerDTO.getSpokesmanName() != null) existingPartner.setSpokesmanName(updatePartnerDTO.getSpokesmanName());
+            if(updatePartnerDTO.getAddress() != null)  existingPartner.setAddress(updatePartnerDTO.getAddress());
 
             //không cho update taxCode
             //partner.setTaxCode(updatePartnerDTO.getTaxCode());
-            existingPartner.setPhone(updatePartnerDTO.getPhone());
-            existingPartner.setEmail(updatePartnerDTO.getEmail());
-            existingPartner.setPosition(updatePartnerDTO.getPosition());
-            existingPartner.setAbbreviation(updatePartnerDTO.getAbbreviation());
+            if(updatePartnerDTO.getPhone() != null) existingPartner.setPhone(updatePartnerDTO.getPhone());
+            if(updatePartnerDTO.getEmail() != null) existingPartner.setEmail(updatePartnerDTO.getEmail());
+            if(updatePartnerDTO.getPosition() != null) existingPartner.setPosition(updatePartnerDTO.getPosition());
+            if(updatePartnerDTO.getAbbreviation() != null) existingPartner.setAbbreviation(updatePartnerDTO.getAbbreviation());
             partyRepository.save(existingPartner);
 
             // Lấy danh sách ngân hàng hiện có của Partner
