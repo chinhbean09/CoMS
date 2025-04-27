@@ -1642,13 +1642,13 @@ public class ContractService implements IContractService{
 
     @Override
     @Transactional
-    public void cancelContract(Long contractId, List<MultipartFile> files, String cancelReason) throws DataNotFoundException {
+    public void cancelContract(Long contractId, List<MultipartFile> files, ContractCancelDTO contractCancelDTO) throws DataNotFoundException {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
         if (contract.getStatus() == ContractStatus.CANCELLED) {
             throw new RuntimeException("Hợp đồng đã hủy trước đó");
         }
-        contract.setCancelContent(cancelReason);
+        contract.setCancelContent(contractCancelDTO.getCancelReason());
         contract.setCancelDate(LocalDateTime.now());
         try {
             contract.getCancellationFileUrls().clear();
