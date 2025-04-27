@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +31,7 @@ public class DashboardController {
     private final IDashBoardService dashBoardService;
 
     @GetMapping("/statistics")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> getDashboardStatistics(@RequestParam("year") int year) {
         try {
             DashboardStatisticsResponse response = dashBoardService.getDashboardData(year);
@@ -48,6 +50,7 @@ public class DashboardController {
     }
 
     @GetMapping("/time/export")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public void exportTime(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
@@ -79,6 +82,7 @@ public class DashboardController {
     }
 
     @GetMapping("/customer/export")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public void exportCustomer(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
@@ -109,6 +113,7 @@ public class DashboardController {
     }
 
     @GetMapping("/status/export")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public void exportStatus(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
