@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.FileBase64DTO;
+import com.capstone.contractmanagement.dtos.contract.ContractCancelDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractComparisonDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
@@ -79,7 +80,7 @@ public interface IContractService {
             int size
     );
 
-    void cancelContract(Long contractId, List<MultipartFile> files, String cancelReason) throws DataNotFoundException;
+    void cancelContract(Long contractId, List<MultipartFile> files, ContractCancelDTO contractCancelDTO) throws DataNotFoundException;
 
     CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException;
     }
