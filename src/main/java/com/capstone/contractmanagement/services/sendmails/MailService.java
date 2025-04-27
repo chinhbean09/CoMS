@@ -206,6 +206,7 @@ public class MailService implements IMailService{
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendUpdateAddendumReminder(Addendum addendum, User user) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
