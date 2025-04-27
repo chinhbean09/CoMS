@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IPartnerContractService {
-    void createContractPartner(PartnerContractDTO contractDTO);
+    PartnerContractResponse createContractPartner(PartnerContractDTO contractDTO);
 
     List<String> uploadPdfToCloudinary(List<MultipartFile> file) throws IOException;
 
@@ -21,4 +21,6 @@ public interface IPartnerContractService {
     void updateContractPartner(Long contractPartnerId, PartnerContractDTO contractDTO) throws DataNotFoundException;
 
     void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException;
+
+    void setPartnerContractToPartner(Long contractPartnerId, Long partnerId) throws DataNotFoundException;
 }

@@ -92,4 +92,7 @@ public interface IPartnerRepository extends JpaRepository<Partner, Long> {
                                              @Param("user")        User user,
                                              @Param("globalId")    Long globalId,
                                              Pageable pageable);
+
+    // Cách 1: truyền nguyên entity User
+    boolean existsByTaxCodeAndUser(String taxCode, User user);
 }

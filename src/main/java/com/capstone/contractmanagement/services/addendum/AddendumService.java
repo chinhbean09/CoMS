@@ -766,7 +766,7 @@ public class AddendumService implements IAddendumService{
 
         // Chỉ lưu nếu có thay đổi
         if (isChanged) {
-            addendum.setStatus(AddendumStatus.UPDATED);
+            addendum.setStatus(addendum.getStatus() == AddendumStatus.CREATED ? AddendumStatus.UPDATED : AddendumStatus.FIXED);
             addendum.setUpdatedAt(LocalDateTime.now());
             Addendum updatedAddendum = addendumRepository.save(addendum);
 

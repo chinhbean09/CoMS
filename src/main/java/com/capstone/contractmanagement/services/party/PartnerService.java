@@ -52,8 +52,8 @@
             // 1. Kiểm tra trùng taxCode (toàn hệ thống).
             //    Nếu bạn chỉ muốn unique trong cùng PartnerType thì dùng existsByTaxCodeAndPartnerType(...)
             String taxCode = createPartnerDTO.getTaxCode().trim();
-            if (partyRepository.existsByTaxCode(taxCode)) {
-                throw new RuntimeException("Mã số thuế này đã tồn tại, vui lòng nhập lại!");
+            if (partyRepository.existsByTaxCodeAndUser(taxCode, currentUser)) {
+                throw new RuntimeException("Mã số thuế đã tồn tại, vui lòng nhập mã khác!");
             }
 
             // 2. Sinh partnerCode
@@ -126,7 +126,10 @@
         @Override
         @Transactional
         public CreatePartnerResponse updatePartner(Long id, UpdatePartnerDTO updatePartnerDTO)
-                throws DataNotFoundException, OperationNotPermittedException {            // Lấy partner hiện tại, nếu không có thì ném exception
+                throws DataNotFoundException, OperationNotPermittedException {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = (User) authentication.getPrincipal();
+            // Lấy partner hiện tại, nếu không có thì ném exception
             Partner existingPartner = partyRepository.findById(id)
                     .orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
 
@@ -137,7 +140,7 @@
 //            }
             String newTaxCode = updatePartnerDTO.getTaxCode().trim();
             if (!newTaxCode.equals(existingPartner.getTaxCode())
-                    && partyRepository.existsByTaxCode(newTaxCode)) {
+                    && partyRepository.existsByTaxCodeAndUser(newTaxCode, currentUser)) {
                 throw new RuntimeException("Mã số thuế này đã tồn tại, vui lòng nhập lại!");
             }
             // 2) Cập nhật mã số thuế
