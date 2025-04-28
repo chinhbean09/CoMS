@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -926,9 +927,9 @@ public class ContractService implements IContractService{
         return contractRepository.findById(id)
                 .map(contract -> {
 
-                    if (!hasAccessToContract(contract, currentUser)) {
-                        throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
-                    }
+//                    if (!hasAccessToContract(contract, currentUser)) {
+//                        throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
+//                    }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
@@ -1464,7 +1465,7 @@ public class ContractService implements IContractService{
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
                         && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
                         && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
-                    throw new InvalidParamException(localizationUtils.getLocalizedMessage("File tải lên phải là file hình ảnh hoặc PDF"));
+                    throw new RuntimeException(("File tải lên phải là file hình ảnh hoặc PDF"));
                 }
 
                 // Xác định resource_type
@@ -1643,6 +1644,93 @@ public class ContractService implements IContractService{
                 pageable,
                 contractPage.getTotalElements()
         );
+    }
+
+    @Override
+    @Transactional
+    public void cancelContract(Long contractId, List<MultipartFile> files, ContractCancelDTO contractCancelDTO) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        if (contract.getStatus() == ContractStatus.CANCELLED) {
+            throw new RuntimeException("Hợp đồng đã hủy trước đó");
+        }
+        contract.setCancelContent(contractCancelDTO.getCancelReason());
+        contract.setCancelDate(LocalDateTime.now());
+        try {
+            contract.getCancellationFileUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new RuntimeException("File tải lên phải là file hình ảnh hoặc PDF");
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "cancelled_contract_files/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
+                uploadedUrls.add(signedUrl);
+            }
+
+            // Ghi lại danh sách URL mới
+            contract.getCancellationFileUrls().addAll(uploadedUrls);
+
+            contract.setStatus(ContractStatus.CANCELLED);
+            contractRepository.save(contract);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        return CancelContractResponse.builder()
+                .contractId(contract.getId())
+                .cancelContent(contract.getCancelContent())
+                .cancelAt(contract.getCancelDate())
+                .urls(contract.getCancellationFileUrls())
+                .build();
     }
 
     private String normalizeFilename(String filename) {
