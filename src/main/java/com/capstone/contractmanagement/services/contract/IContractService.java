@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.FileBase64DTO;
+import com.capstone.contractmanagement.dtos.contract.ContractCancelDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractComparisonDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
@@ -10,6 +11,7 @@ import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
+import com.capstone.contractmanagement.responses.contract.CancelContractResponse;
 import com.capstone.contractmanagement.responses.contract.ContractComparisonResponse;
 import com.capstone.contractmanagement.responses.contract.ContractResponse;
 import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
@@ -80,6 +82,10 @@ public interface IContractService {
             int page,
             int size
     );
+
+    void cancelContract(Long contractId, List<MultipartFile> files, ContractCancelDTO contractCancelDTO) throws DataNotFoundException;
+
+    CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException;
 
     ResponseEntity<ResponseObject> signContract(SignContractRequest request);
 
