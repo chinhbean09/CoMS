@@ -18,12 +18,14 @@ import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import com.capstone.contractmanagement.services.notification.INotificationService;
+import com.capstone.contractmanagement.services.sendmails.MailService;
 import com.capstone.contractmanagement.utils.MessageKeys;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
@@ -34,7 +36,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -48,6 +52,7 @@ import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
@@ -76,6 +81,7 @@ public class ContractService implements IContractService{
     private static final Logger logger = LoggerFactory.getLogger(ContractService.class);
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
+    private final MailService mailService;
 
     @Override
     public Contract createContractFromTemplate(ContractDTO dto) {
@@ -3876,4 +3882,165 @@ public class ContractService implements IContractService{
 
         return filteredPage.map(this::convertToGetAllContractResponse);
     }
+    @Override
+    public ResponseEntity<ResponseObject> signContract(SignContractRequest request) {
+        try {
+            // Validate contract existence
+            Optional<Contract> optionalContract = contractRepository.findById(request.getContractId());
+            if (optionalContract.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Không tìm thấy hợp đồng")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Contract contract = optionalContract.get();
+
+            // Check if contract is already signed
+            if (contract.getStatus() == ContractStatus.SIGNED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Hợp đồng trên đã kí")
+                                .build()
+                );
+            }
+
+            // Verify user authorization
+            User currentUser = securityUtils.getLoggedInUser();
+            if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.UNAUTHORIZED)
+                                .message("Chỉ có giám đốc mới được quyền ký hợp đồng")
+                                .data(null)
+                                .build());
+            }
+
+            // Verify contract status
+            if (contract.getStatus() != ContractStatus.APPROVED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Chỉ được ký hợp đồng ở trạng thái 'Đã phê duyệt'")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Save signed file
+            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+
+            // Update contract details
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
+            contract.setSignedFilePath(filePath);
+            contract.setSignedBy(currentUser.getFullName());
+
+            // Parse and set signedAt
+            try {
+                LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                contract.setSignedAt(signedAt);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Invalid signedAt format. Use ISO-8601 format.")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Update contract status
+            contract.setStatus(ContractStatus.SIGNED);
+
+            // Save contract
+            contractRepository.save(contract);
+
+            // Send email notification
+            mailService.sendEmailContractSignedSuccess(contract);
+
+            // Log audit trail
+            logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName());
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Hợp đồng đã được ký và sao lưu thành công.")
+                    .data(null)
+                    .build());
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi xảy ra khi ký file: " + e.getMessage())
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi hệ thống: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+
+    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+        String newStatusVi = translateContractStatusToVietnamese(newValue);
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract) // Liên kết với hợp đồng
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(String.format("Hợp đồng được ký bởi %s vào lúc %s. Trạng thái thay đổi từ '%s' sang '%s'",
+                        changedBy,
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now()),
+                        oldStatusVi,
+                        newStatusVi))
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+    private String saveSignedFile(String fileName, String fileBase64) throws IOException {
+
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "signed_contracts",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", true,     // Tạo tên file duy nhất
+                "format", "pdf"              // Force the file to be uploaded as a PDF
+        ));
+
+        // Lấy public ID của file đã upload
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Normalize filename (remove diacritics, replace spaces with underscores)
+        String customFilename = normalizeFilename(fileName);
+        // URL-encode the normalized filename (only encoding ASCII characters)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + customFilename))
+                .generate();
+
+        return secureUrl;
+    }
+
 }

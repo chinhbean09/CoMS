@@ -2,15 +2,18 @@ package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
+import com.capstone.contractmanagement.dtos.addendum.SignAddendumRequest;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.AddendumStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.CommentResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -63,4 +66,6 @@ public interface IAddendumService {
     void uploadFileBase64(Long addendumId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException;
     void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException;
     List<String> getBillUrlsByAddendumPaymentId(Long paymentId) throws DataNotFoundException;
+
+    ResponseEntity<ResponseObject> signAddendum(SignAddendumRequest request);
 }
