@@ -222,7 +222,7 @@ public class TermController {
             termService.updateTermStatus(termId, true);
             return ResponseEntity.ok(
                     ResponseObject.builder()
-                            .message("Xóa mềm điều khoản thành công")
+                            .message("Xóa điều khoản thành công")
                             .status(HttpStatus.OK)
                             .data(null)
                             .build());
