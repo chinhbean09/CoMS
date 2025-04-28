@@ -265,96 +265,7 @@ public class AddendumController {
     @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> signAddenda(@RequestBody @Valid SignAddendumRequest request) {
         try {
-            // Fetch contract by ID from the repository
-            Optional<Addendum> optionalAddendum = addendumRepository.findById(request.getAddendumId());
-            if (optionalAddendum.isEmpty()) {
-                return ResponseEntity.badRequest().body(
-                        ResponseObject.builder()
-                                .status(HttpStatus.BAD_REQUEST)
-                                .message("Addendum not found")
-                                .data(null)
-                                .build()
-                );
-            }
-
-            if (optionalAddendum.get().getStatus() == AddendumStatus.SIGNED) {
-                return ResponseEntity.badRequest().body(
-                        ResponseObject.builder()
-                                .status(HttpStatus.BAD_REQUEST)
-                                .message("Phụ lục trên đã được kí")
-                                .data(null)
-                                .build()
-                );
-            }
-
-            SecurityUtils securityUtils = new SecurityUtils();
-            User currentUser = securityUtils.getLoggedInUser();
-            if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ResponseObject.builder()
-                                .status(HttpStatus.UNAUTHORIZED)
-                                .message("Chỉ có giám đốc mới được quyền ký")
-                                .data(null)
-                                .build());
-            }
-
-            Addendum addendum = optionalAddendum.get();
-
-            if (addendum.getStatus() != AddendumStatus.APPROVED) {
-                return ResponseEntity.badRequest().body(
-                        ResponseObject.builder()
-                                .status(HttpStatus.BAD_REQUEST)
-                                .message("Chỉ được ký phụ lục ở trạng thái 'Đã phê duyệt'")
-                                .data(null)
-                                .build()
-                );
-            }
-
-            // Save signed file (can throw IOException)
-            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
-
-            // Update contract details
-            String oldStatus = addendum.getStatus() != null ? addendum.getStatus().name() : "UNKNOWN";
-            //addendum.setSignedFilePath(filePath);
-            addendum.setSignedBy(currentUser.getFullName());
-
-            // Parse signedAt with error handling
-            try {
-                LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
-                addendum.setSignedAt(signedAt);
-            } catch (DateTimeParseException e) {
-                return ResponseEntity.badRequest().body(
-                        ResponseObject.builder()
-                                .status(HttpStatus.BAD_REQUEST)
-                                .message("Invalid signedAt format. Use ISO-8601 format.")
-                                .data(null)
-                                .build()
-                );
-            }
-
-            // Update contract status
-            addendum.setStatus(AddendumStatus.SIGNED);
-            addendum.setSignedFilePath(filePath);
-
-            // Save the contract changes
-            addendumRepository.save(addendum);
-            // send mail
-            mailService.sendEmailAddendumSignedSuccess(addendum);
-
-            // Ghi audit trail
-            //logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName() );
-
-            return ResponseEntity.ok(ResponseObject.builder()
-                    .status(HttpStatus.OK)
-                    .message("Phụ lục đã được ký và sao lưu thành công.")
-                    .data(null)
-                    .build());
-
-            //Xóa thông báo cũ của hợp đồng
-
-
-
-
+            return addendumService.signAddendum(request);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseObject.builder()
@@ -365,59 +276,7 @@ public class AddendumController {
         }
     }
 
-    private String saveSignedFile(String fileName, String fileBase64) throws IOException {
 
-        byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
-
-        // Upload as a raw file to Cloudinary
-        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
-                "resource_type", "raw",      // Cho phép upload file dạng raw
-                "folder", "signed_addenda",
-                "use_filename", true,        // Sử dụng tên file gốc làm public_id
-                "unique_filename", true,
-                "format", "pdf"
-        ));
-
-        // Lấy public ID của file đã upload
-        String publicId = (String) uploadResult.get("public_id");
-
-        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
-        String customFilename = normalizeFilename(fileName);
-
-        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
-        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
-
-        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
-        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
-        String secureUrl = cloudinary.url()
-                .resourceType("raw")
-                .publicId(publicId)
-                .secure(true)
-                .transformation(new Transformation().flags("attachment:" + customFilename))
-                .generate();
-
-        return secureUrl;
-    }
-
-    private String normalizeFilename(String filename) {
-        if (filename == null || filename.isEmpty()) {
-            return "file";
-        }
-        // Loại bỏ extension nếu có
-        int dotIndex = filename.lastIndexOf('.');
-        if (dotIndex != -1) {
-            filename = filename.substring(0, dotIndex);
-        }
-        // Chuẩn hóa Unicode: tách dấu
-        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
-        // Loại bỏ dấu (diacritics)
-        normalized = normalized.replaceAll("\\p{M}", "");
-        // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
-        normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
-        // Chuyển khoảng trắng thành dấu gạch dưới và trim
-        normalized = normalized.trim().replaceAll("\\s+", "_");
-        return normalized;
-    }
 
     @PutMapping(value = "/upload-signed-addenda-file/{addendumId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_STAFF')")
@@ -439,43 +298,6 @@ public class AddendumController {
                 .status(HttpStatus.OK)
                 .data(addendumService.getSignedAddendumUrl(addendumId))
                 .build());
-    }
-
-    private String translateContractStatusToVietnamese(String status) {
-        switch (status) {
-            case "DRAFT":
-                return "Bản nháp";
-            case "CREATED":
-                return "Đã tạo";
-            case "UPDATED":
-                return "Đã cập nhật";
-            case "APPROVAL_PENDING":
-                return "Chờ phê duyệt";
-            case "APPROVED":
-                return "Đã phê duyệt";
-            case "PENDING":
-                return "Chưa ký";
-            case "REJECTED":
-                return "Bị từ chối";
-            case "FIXED":
-                return "Đã chỉnh sửa";
-            case "SIGNED":
-                return "Đã ký";
-            case "ACTIVE":
-                return "Đang có hiệu lực";
-            case "COMPLETED":
-                return "Hoàn thành";
-            case "EXPIRED":
-                return "Hết hạn";
-            case "CANCELLED":
-                return "Đã hủy";
-            case "ENDED":
-                return "Kết thúc";
-            case "DELETED":
-                return "Đã xóa";
-            default:
-                return status;
-        }
     }
 
     @PostMapping("/upload-file-base64")

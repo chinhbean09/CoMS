@@ -1,9 +1,11 @@
 package com.capstone.contractmanagement.services.addendum;
 
 import com.capstone.contractmanagement.components.LocalizationUtils;
+import com.capstone.contractmanagement.components.SecurityUtils;
 import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumDTO;
 import com.capstone.contractmanagement.dtos.addendum.AddendumTermSnapshotDTO;
+import com.capstone.contractmanagement.dtos.addendum.SignAddendumRequest;
 import com.capstone.contractmanagement.dtos.approvalworkflow.AddendumApprovalWorkflowDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.dtos.contract.ContractItemDTO;
@@ -20,6 +22,7 @@ import com.capstone.contractmanagement.enums.*;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.addendum.AddendumResponse;
 import com.capstone.contractmanagement.responses.addendum.AddendumTypeResponse;
 import com.capstone.contractmanagement.responses.addendum.UserAddendumResponse;
@@ -40,7 +43,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,6 +58,8 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,6 +85,7 @@ public class AddendumService implements IAddendumService{
 
 
     private static final Logger logger = LoggerFactory.getLogger(AddendumService.class);
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -2138,5 +2146,139 @@ public class AddendumService implements IAddendumService{
                 .build();
         auditTrailRepository.save(auditTrail);
     }
+
+    @Override
+    public ResponseEntity<ResponseObject> signAddendum(SignAddendumRequest request) {
+        try {
+            // Validate addendum existence
+            Optional<Addendum> optionalAddendum = addendumRepository.findById(request.getAddendumId());
+            if (optionalAddendum.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Addendum not found")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Addendum addendum = optionalAddendum.get();
+
+            // Check if addendum is already signed
+            if (addendum.getStatus() == AddendumStatus.SIGNED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Phụ lục trên đã được kí")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Verify user authorization
+            User currentUser = securityUtils.getLoggedInUser();
+            if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.UNAUTHORIZED)
+                                .message("Chỉ có giám đốc mới được quyền ký")
+                                .data(null)
+                                .build());
+            }
+
+            // Verify addendum status
+            if (addendum.getStatus() != AddendumStatus.APPROVED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Chỉ được ký phụ lục ở trạng thái 'Đã phê duyệt'")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Save signed file
+            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+
+            // Update addendum details
+            String oldStatus = addendum.getStatus() != null ? addendum.getStatus().name() : "UNKNOWN";
+            addendum.setSignedFilePath(filePath);
+            addendum.setSignedBy(currentUser.getFullName());
+
+            // Parse and set signedAt
+            try {
+                LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                addendum.setSignedAt(signedAt);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Invalid signedAt format. Use ISO-8601 format.")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Update addendum status
+            addendum.setStatus(AddendumStatus.SIGNED);
+
+            // Save addendum
+            addendumRepository.save(addendum);
+
+            // Send email notification
+            mailService.sendEmailAddendumSignedSuccess(addendum);
+
+            // TODO: Implement audit trail logging
+            // logAuditTrail(addendum, "UPDATE", "status", oldStatus, AddendumStatus.SIGNED.name(), currentUser.getFullName());
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Phụ lục đã được ký và sao lưu thành công.")
+                    .data(null)
+                    .build());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi hệ thống: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+    private String saveSignedFile(String fileName, String fileBase64) throws IOException {
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",
+                "folder", "signed_addenda",
+                "use_filename", true,
+                "unique_filename", true,
+                "format", "pdf"
+        ));
+
+        // Get public ID of uploaded file
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Normalize filename
+        String customFilename = normalizeFilename(fileName);
+
+        // URL-encode filename
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Generate secure URL with attachment transformation
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + customFilename))
+                .generate();
+
+        return secureUrl;
+    }
+
+
+
 
 }
