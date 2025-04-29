@@ -1,6 +1,4 @@
 package com.capstone.contractmanagement.controllers;
-
-import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.dashboard.DashboardStatisticsResponse;
 import com.capstone.contractmanagement.services.dashboard.IDashBoardService;
@@ -31,7 +29,7 @@ public class DashboardController {
     private final IDashBoardService dashBoardService;
 
     @GetMapping("/statistics")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getDashboardStatistics(@RequestParam("year") int year) {
         try {
             DashboardStatisticsResponse response = dashBoardService.getDashboardData(year);
@@ -50,7 +48,7 @@ public class DashboardController {
     }
 
     @GetMapping("/time/export")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public void exportTime(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
@@ -82,7 +80,7 @@ public class DashboardController {
     }
 
     @GetMapping("/customer/export")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public void exportCustomer(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
@@ -113,7 +111,7 @@ public class DashboardController {
     }
 
     @GetMapping("/status/export")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR')")
     public void exportStatus(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
