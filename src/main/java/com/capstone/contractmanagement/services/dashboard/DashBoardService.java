@@ -130,7 +130,7 @@ public class DashBoardService implements IDashBoardService {
 
             // Tạo header cho sheet chi tiết với tiêu đề tiếng Việt
             Row detailsHeader = detailsSheet.createRow(0);
-            String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày ký", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
+            String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
             for (int i = 0; i < detailsCols.length; i++) {
                 Cell cell = detailsHeader.createCell(i);
                 cell.setCellValue(detailsCols[i]);
@@ -144,7 +144,6 @@ public class DashBoardService implements IDashBoardService {
                 row.createCell(1).setCellValue(c.getPartner().getPartnerCode());
                 row.createCell(2).setCellValue(c.getPartner().getPartnerName());
                 row.createCell(3).setCellValue(c.getContractNumber());
-                row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
                 row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
                 row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
                 row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
@@ -325,7 +324,7 @@ public class DashBoardService implements IDashBoardService {
         }
 
         Row detailsHeader = detailsSheet.createRow(0);
-        String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày ký", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
+        String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
         for (int i = 0; i < detailsCols.length; i++) {
             Cell cell = detailsHeader.createCell(i);
             cell.setCellValue(detailsCols[i]);
@@ -339,7 +338,6 @@ public class DashBoardService implements IDashBoardService {
             row.createCell(1).setCellValue(c.getPartner().getPartnerCode());
             row.createCell(2).setCellValue(c.getPartner().getPartnerName());
             row.createCell(3).setCellValue(c.getContractNumber());
-            row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
             row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
             row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
             row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
