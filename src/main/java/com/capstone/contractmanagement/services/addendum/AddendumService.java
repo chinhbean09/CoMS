@@ -1350,9 +1350,9 @@ public class AddendumService implements IAddendumService{
                                     stage.getStatus() == ApprovalStatus.APPROVED);
 
                     // Nếu người duyệt đã duyệt xong ít nhất 1 bước, không cho hiển thị phụ lục đó nữa
-//                    if (approverHasCompletedStep) {
-//                        return false;
-//                    }
+                    if (approverHasCompletedStep) {
+                        return false;
+                    }
 
                     // Nếu phụ lục đang trong quá trình duyệt
                     if (addendum.getStatus() == AddendumStatus.APPROVAL_PENDING) {
