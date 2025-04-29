@@ -244,6 +244,7 @@ public class UserController {
     }
 
     @GetMapping("/get-user-by-id/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         try {
             User user = userService.getUserById(id);
