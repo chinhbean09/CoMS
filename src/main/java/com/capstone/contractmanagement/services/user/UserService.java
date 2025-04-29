@@ -293,8 +293,8 @@ public class UserService implements IUserService {
     @Override
     public void deleteUser(Long userId) {
         Optional<User> optionalUser = UserRepository.findById(userId);
-        List<Token> tokens = TokenRepository.findByUserId(userId);
-        TokenRepository.deleteAll(tokens);
+        Optional<Token> tokens = TokenRepository.findByUserId(userId);
+        TokenRepository.deleteByUser(optionalUser.get());
         optionalUser.ifPresent(UserRepository::delete);
     }
 

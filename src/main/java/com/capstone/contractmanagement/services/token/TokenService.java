@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -32,20 +33,11 @@ public class TokenService implements ITokenService {
     @Transactional
     @Override
     public Token addToken(User user, String token, boolean isMobileDevice) {
-        List<Token> userTokens = ITokenRepository.findByUser(user);
-        int tokenCount = userTokens.size();
-        if (tokenCount >= MAX_TOKENS) {
-            boolean hasNonMobileToken = !userTokens.stream().allMatch(Token::isMobile);
-            Token tokenToDelete;
-            if (hasNonMobileToken) {
-                tokenToDelete = userTokens.stream()
-                        .filter(userToken -> !userToken.isMobile())
-                        .findFirst()
-                        .orElse(userTokens.get(0));
-            } else {
-                tokenToDelete = userTokens.get(0);
-            }
-            ITokenRepository.delete(tokenToDelete);
+        ITokenRepository.deleteByUser(user);
+
+        Optional<Token> existingToken = ITokenRepository.findByUser(user);
+        if (existingToken.isPresent()) {
+            throw new IllegalStateException("Token cũ chưa được xóa cho user_id: " + user.getId());
         }
         long expirationInSeconds = expiration;
         LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expirationInSeconds);
@@ -63,31 +55,11 @@ public class TokenService implements ITokenService {
 
     }
 
-//    @Override
-//    public Token refreshToken(String refreshToken, User user) throws Exception {
-//        Token existingToken = ITokenRepository.findByRefreshToken(refreshToken);
-//        if (existingToken == null) {
-//            throw new DataNotFoundException("Không tìm thấy refresh token");
-//        }
-//        if (existingToken.getRefreshExpirationDate().isBefore(LocalDateTime.now())) {
-//            ITokenRepository.delete(existingToken);
-//            throw new ExpiredTokenException("refresh token hết hạn");
-//        }
-//        String token = jwtTokenUtils.generateToken(user);
-//        LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expiration);
-//        existingToken.setExpirationDate(expirationDateTime);
-//        existingToken.setToken(token);
-//        existingToken.setRefreshToken(UUID.randomUUID().toString());
-//        existingToken.setRefreshExpirationDate(LocalDateTime.now().plusSeconds(expirationRefreshToken));
-//        existingToken = ITokenRepository.save(existingToken);
-//        return existingToken;
-//    }
-
     @Override
     public void deleteToken(String token) {
-        Token tokenEntity = ITokenRepository.findByToken(token);
-        if (tokenEntity != null) {
-            ITokenRepository.delete(tokenEntity);
+        Optional<Token> tokenEntity = ITokenRepository.findByToken(token);
+        if (tokenEntity.isPresent()) {
+            ITokenRepository.delete(tokenEntity.get());
         } else {
             throw new RuntimeException("Không tìm thấy token.");
         }
