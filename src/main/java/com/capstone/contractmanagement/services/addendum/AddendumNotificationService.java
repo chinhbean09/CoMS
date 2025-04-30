@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class AddendumNotificationService implements IAddendumNotificationService
 
         for (Addendum addendum : addendaToNotifyExtendContract) {
             Contract contract = addendum.getContract();
-            String message = "Hợp đồng số '" + addendum.getContractNumber() + "' đã được gia hạn thêm từ ngày '" + addendum.getEffectiveDate() + "' đến ngày '" + addendum.getExtendContractDate() + "'";
+            String message = "Hợp đồng số '" + addendum.getContractNumber() + "' đã được gia hạn thêm từ ngày '" + addendum.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "' đến ngày '" + addendum.getExtendContractDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "'";
             sendNotification(addendum, message, true);
             mailService.sendEmailAddendumExtendedDate(addendum);
             addendum.setIsEffectiveNotified(true);
@@ -74,7 +75,7 @@ public class AddendumNotificationService implements IAddendumNotificationService
 
         for (Addendum addendum : addendaToNotifyExpiryContract) {
             Contract contract = addendum.getContract();
-            String message = "Hợp đồng số '" + addendum.getContractNumber() + "' đã hết hạn ngày '" + addendum.getContractExpirationDate() + "'";
+            String message = "Hợp đồng số '" + addendum.getContractNumber() + "' đã hết hạn ngày '" + addendum.getContractExpirationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "'";
             sendNotification(addendum, message, false);
             mailService.sendEmailAddendumEndExtendedDate(addendum);
             addendum.setIsExpiryNotified(true);
