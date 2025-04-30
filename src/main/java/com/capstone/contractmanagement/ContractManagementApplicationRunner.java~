@@ -208,13 +208,6 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                     .approvalWorkflow(workflow)
                     .build();
 
-            ApprovalStage stage3 = ApprovalStage.builder()
-                    .stageOrder(2)
-                    .approver(approver3)
-                    .status(ApprovalStatus.NOT_STARTED)
-                    .approvalWorkflow(workflow)
-                    .build();
-
             List<ApprovalStage> stages = new ArrayList<>();
             stages.add(stage1);
             stages.add(stage2);
