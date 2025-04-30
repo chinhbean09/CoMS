@@ -74,7 +74,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.manager.address}")
     private String managerAddress;
 
-    @Value("${contract.staff.address}")
+    @Value("${contract.staff.address}") // Sửa từ manager.address thành staff.address
     private String staffAddress;
 
     @Value("${contract.admin.phoneNumber}")
@@ -241,8 +241,9 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             return;
         }
         try {
-            User approver1 = userRepository.findById(2L).orElse(null);
+            User approver1 = userRepository.findById(2L).orElse(null); // Manager
             User approver2 = userRepository.findById(3L).orElse(null);
+            User approver3 = userRepository.findById(4L).orElse(null); // Staff (có thể sửa thành Admin nếu cần)
 
             if (approver1 == null || approver2 == null) {
                 System.err.println("Approvers not found, skipping approval workflow initialization.");
@@ -264,6 +265,13 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
             ApprovalStage stage2 = ApprovalStage.builder()
                     .stageOrder(2)
                     .approver(approver2)
+                    .status(ApprovalStatus.NOT_STARTED)
+                    .approvalWorkflow(workflow)
+                    .build();
+
+            ApprovalStage stage3 = ApprovalStage.builder()
+                    .stageOrder(2)
+                    .approver(approver3)
                     .status(ApprovalStatus.NOT_STARTED)
                     .approvalWorkflow(workflow)
                     .build();
@@ -293,6 +301,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                 .build();
         appConfigRepository.save(appConfig1);
 
+
         AppConfig appConfig2 = AppConfig.builder()
                 .key("PAYMENT_DEADLINE")
                 .value("5")
@@ -314,6 +323,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         // Khởi tạo Type Terms
         initializeTypeTerms();
 
+
         // Khởi tạo các tài khoản
         initializeUser(email, phoneNumber, "Đỗ Minh Chính", "Hồ Chí Minh", password, "ADMIN", 1L, null);
         initializeUser(managerEmail, managerPhoneNumber, "Lâm Quốc Vinh", "Hồ Chí Minh", password, "MANAGER", 3L, 1L);
@@ -323,6 +333,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
 
         // Khởi tạo các dữ liệu khác
         initializeParty();
+        // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
         initializeAppConfig();
 

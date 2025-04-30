@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface IDepartmentService {
 
-    DepartmentResponse createDepartment(DepartmentDTO departmentDTO);
+    DepartmentResponse createDepartment(DepartmentDTO departmentDTO) throws DataNotFoundException;
 
     DepartmentResponse updateDepartment(Long departmentId, DepartmentDTO departmentDTO) throws DataNotFoundException;
 
