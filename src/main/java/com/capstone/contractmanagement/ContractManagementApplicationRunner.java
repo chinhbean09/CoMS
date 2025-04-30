@@ -182,7 +182,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         try {
             User approver1 = userRepository.findById(2L).orElse(null); // Manager
             User approver2 = userRepository.findById(3L).orElse(null);
-            User approver3 = userRepository.findById(4L).orElse(null); // Staff (có thể sửa thành Admin nếu cần)
+            User approver3 = userRepository.findById(5L).orElse(null); // Staff (có thể sửa thành Admin nếu cần)
 
             if (approver1 == null || approver2 == null) {
                 System.err.println("Approvers not found, skipping approval workflow initialization.");
@@ -209,7 +209,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
                     .build();
 
             ApprovalStage stage3 = ApprovalStage.builder()
-                    .stageOrder(2)
+                    .stageOrder(3)
                     .approver(approver3)
                     .status(ApprovalStatus.NOT_STARTED)
                     .approvalWorkflow(workflow)
