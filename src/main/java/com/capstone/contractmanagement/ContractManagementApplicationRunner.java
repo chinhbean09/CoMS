@@ -311,7 +311,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         // Khởi tạo các tài khoản
         initializeUser(email, phoneNumber, "Đỗ Minh Chính", "Hồ Chí Minh", password, "ADMIN", 1L, null);
         initializeUser(managerEmail, managerPhoneNumber, "Lâm Quốc Vinh", "Hồ Chí Minh", password, "MANAGER", 3L, 1L);
-        initializeUser("AnNDH22@fe.edu.vn", "0874534458", "Ngô Đăng Hà An", "Hồ Chí Minh", password, "MANAGER", 3L, 2L);
+        initializeUser("lamquocvinh940@gmail.com", "0874534458", "Nguyễn Thúy Vy", "Hồ Chí Minh", password, "MANAGER", 3L, 2L);
         initializeUser(staffEmail, staffPhoneNumber, "Hoàng Tuấn Khang", "Hồ Chí Minh", password, "STAFF", 4L, 4L);
         initializeUser("nguyenthiencammc@gmail.com", "0974534458", "Ngô Đăng Hà An", "Hồ Chí Minh", password, "DIRECTOR", 2L, 5L);
 
@@ -320,7 +320,6 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
         // Khởi tạo Approval Workflow
         initializeApprovalWorkflow();
         initializeAppConfig();
-
         System.out.println("Hello, I'm System Manager!");
     }
 }
