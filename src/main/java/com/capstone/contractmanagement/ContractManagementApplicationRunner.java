@@ -59,23 +59,7 @@ public class ContractManagementApplicationRunner implements ApplicationRunner {
     @Value("${contract.staff.email}")
     private String staffEmail;
 
-    @Value("${contract.admin.fullName}")
-    private String fullName;
 
-    @Value("${contract.manager.fullName}")
-    private String managerFullName;
-
-    @Value("${contract.staff.fullName}")
-    private String staffFullName;
-
-    @Value("${contract.admin.address}")
-    private String address;
-
-    @Value("${contract.manager.address}")
-    private String managerAddress;
-
-    @Value("${contract.staff.address}") // Sửa từ manager.address thành staff.address
-    private String staffAddress;
 
     @Value("${contract.admin.phoneNumber}")
     private String phoneNumber;
