@@ -8,6 +8,7 @@ import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.addendum.AddendumPaymentSchedule;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.contract.Contract;
+import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.utils.MailTemplate;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -31,6 +32,7 @@ import java.util.Map;
 public class MailService implements IMailService{
     private final JavaMailSender mailSender;
 
+    private final IUserRepository userRepository;
     private final SpringTemplateEngine templateEngine;
     @Override
     public void sendHtmlMail(DataMailDTO dataMail, String templateName) throws MessagingException {
@@ -162,8 +164,10 @@ public class MailService implements IMailService{
     @Async("taskExecutor")
     public void sendEmailPaymentExpired(PaymentSchedule payment) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{payment.getContract().getPartner().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{payment.getContract().getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
@@ -300,8 +304,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractOverdue(Contract contract) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_OVERDUE_NOTIFICATION);
 
             // Thiết lập các thuộc tính cho email
@@ -325,8 +331,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractEffectiveDate(Contract contract) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -350,8 +358,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractExpiryDate(Contract contract) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXPIRY_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -428,8 +438,10 @@ public class MailService implements IMailService{
     @Async("taskExecutor")
     public void sendEmailAddendumExtendedDate(Addendum addendum) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail(),director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -454,10 +466,13 @@ public class MailService implements IMailService{
     @Override
     @Async("taskExecutor")
     public void sendEmailAddendumEndExtendedDate(Addendum addendum) {
+        User director = userRepository.findById(5L).orElse(null);
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
+            assert director != null;
             dataMailDTO.setTo(new String[]{
-                    addendum.getContract().getPartner().getEmail()
+                    addendum.getContract().getPartner().getEmail(),
+                    director.getEmail()
             }); // Gửi email cho người dùng addendum.getUser().getEmail());
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_END_REMINDER);
 
@@ -483,8 +498,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractEffectiveReminder(PartnerContract contract) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getUser().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -509,8 +526,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractExpiryReminder(PartnerContract contract) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getUser().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -560,8 +579,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment) {
         try {
+            User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail()});
+            assert director != null;
+            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_EXPIRED);
 
             // Thiết lập các thuộc tính cho email

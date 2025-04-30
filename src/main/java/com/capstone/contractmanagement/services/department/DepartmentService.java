@@ -17,7 +17,10 @@ public class DepartmentService implements IDepartmentService {
     private final IDepartmentRepository departmentRepository;
 
     @Override
-    public DepartmentResponse createDepartment(DepartmentDTO departmentDTO) {
+    public DepartmentResponse createDepartment(DepartmentDTO departmentDTO) throws DataNotFoundException {
+        if (departmentRepository.existsByDepartmentName(departmentDTO.getDepartmentName())) {
+            throw new DataNotFoundException("Phòng ban đã tồn tại.");
+        }
         Department department = Department.builder()
                 .departmentName(departmentDTO.getDepartmentName())
                 .build();
@@ -33,6 +36,9 @@ public class DepartmentService implements IDepartmentService {
 
         Department department = departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.DEPARTMENT_NOT_FOUND));
+        if (departmentRepository.existsByDepartmentName(departmentDTO.getDepartmentName())) {
+            throw new DataNotFoundException("Phòng ban đã tồn tại.");
+        }
 
         department.setDepartmentName(departmentDTO.getDepartmentName());
 
