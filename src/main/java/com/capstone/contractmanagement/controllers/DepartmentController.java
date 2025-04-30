@@ -22,7 +22,7 @@ public class DepartmentController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseObject> createDepartment(@RequestBody DepartmentDTO departmentDTO) {
+    public ResponseEntity<ResponseObject> createDepartment(@RequestBody DepartmentDTO departmentDTO) throws DataNotFoundException {
         DepartmentResponse response = departmentService.createDepartment(departmentDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
