@@ -350,10 +350,10 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         LocalDateTime now = LocalDateTime.now();
         // CHỈ CHO ÁP DỤNG KHI HÔM NAY ≤ ngày hiệu lực
-        if (contract.getEffectiveDate().isBefore(now)) {
+        if (contract.getSigningDate().isBefore(now)) {
             throw new DataNotFoundException(
-                    "Không thể gán quy trình duyệt: hợp đồng đã có hiệu lực từ ngày "
-                            + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    "Không thể gán quy trình duyệt vì đã quá hạn ký:  "
+                            + contract.getSigningDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
             );
         }
         // Tìm workflow gốc theo workflowId
@@ -687,7 +687,10 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 ContractStatus.ACTIVE,
                 ContractStatus.SIGNED,
                 ContractStatus.REJECTED,
-                ContractStatus.PENDING));
+                ContractStatus.PENDING,
+                ContractStatus.LIQUIDATED,
+                ContractStatus.ENDED,
+                ContractStatus.CANCELLED));
 
         // Lọc các hợp đồng theo approverId, keyword và contractTypeId
         List<Contract> filteredContracts = pendingContracts.stream()
