@@ -357,6 +357,8 @@ public class ContractNotificationSchedulerService implements IContractNotificati
             // 2) Lưu vào hệ thống notification
             notificationService.saveNotification(owner, message, c);
             notificationService.saveNotification(director, message, c);
+            c.setApprovalWorkflow(null);
+            contractRepository.save(c);
         }
     }
     /**
