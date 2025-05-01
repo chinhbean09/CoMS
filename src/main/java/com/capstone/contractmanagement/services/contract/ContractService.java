@@ -4082,7 +4082,18 @@ public class ContractService implements IContractService{
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
         if (contract.getStatus() == ContractStatus.LIQUIDATED) {
-            throw new RuntimeException("Hợp đồng đã hủy trước đó");
+            throw new RuntimeException("Hợp đồng đã được thanh lý trước đó");
+        }
+
+        EnumSet<ContractStatus> allowed = EnumSet.of(
+                ContractStatus.SIGNED,
+                ContractStatus.ACTIVE,
+                ContractStatus.EXPIRED
+        );
+        if (!allowed.contains(contract.getStatus()) && !contract.getSignedContractUrls().isEmpty()) {
+            throw new RuntimeException(
+                    "Chỉ hợp đồng ở trạng thái SIGNED, ACTIVE hoặc EXPIRED mới được thanh lý"
+            );
         }
         contract.setLiquidateContent(liquidateDTO.getLiquidateReason());
         contract.setLiquidateDate(LocalDateTime.now());
