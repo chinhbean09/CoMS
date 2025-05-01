@@ -334,7 +334,9 @@ public class MailService implements IMailService{
             User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
-            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
+            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(),
+                    director.getEmail(),
+                    contract.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -387,7 +389,7 @@ public class MailService implements IMailService{
     public void sendEmailContractSignedSuccess(Contract contract) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{contract.getPartner().getEmail()});
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_SIGNED_SUCCESS);
 
             // Thiết lập các thuộc tính cho email
