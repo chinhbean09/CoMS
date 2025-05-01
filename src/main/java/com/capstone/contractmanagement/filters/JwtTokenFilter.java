@@ -1,6 +1,8 @@
 package com.capstone.contractmanagement.filters;
 
 import com.capstone.contractmanagement.components.JwtTokenUtils;
+import com.capstone.contractmanagement.entities.Token;
+import com.capstone.contractmanagement.repositories.ITokenRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private String apiPrefix;
     private final UserDetailsService userDetailsService;
     private final JwtTokenUtils jwtTokenUtils;
+    private final ITokenRepository tokenRepository;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -52,6 +56,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             final String token = authHeader.substring(7);
             if (token.isEmpty()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is empty.");
+                return;
+            }
+
+            Optional<Token> storedToken = tokenRepository.findByToken(token);
+            if (storedToken.isEmpty() || storedToken.get().isRevoked() || storedToken.get().isExpired()) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token.");
                 return;
             }
 

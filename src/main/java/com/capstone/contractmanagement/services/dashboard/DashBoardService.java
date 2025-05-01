@@ -7,9 +7,7 @@ import com.capstone.contractmanagement.responses.dashboard.DashboardStatisticsRe
 import com.capstone.contractmanagement.responses.dashboard.MonthlyContractCount;
 import com.capstone.contractmanagement.responses.dashboard.PieChartData;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,68 +83,73 @@ public class DashBoardService implements IDashBoardService {
 
     @Override
     public Workbook generateTimeReportExcel(LocalDateTime from, LocalDateTime to, String groupBy) {
-        logger.info("Tạo báo cáo thời gian từ {} đến {} theo nhóm {}", from, to, groupBy);
+
+        Workbook wb = new XSSFWorkbook();
+        CellStyle boldStyle = createBoldStyle(wb);
 
         if ("TAXCODE".equalsIgnoreCase(groupBy)) {
-            // Lấy danh sách hợp đồng theo trạng thái và thời gian
             List<Contract> contracts = contractRepository.findByIsLatestVersionTrueAndEffectiveDateBetweenAndStatusIn(
                     from, to, VALID_STATUSES,
                     Sort.by("partner.taxCode").ascending()
                             .and(Sort.by("effectiveDate").ascending())
             );
 
-            Workbook wb = new XSSFWorkbook();
-            Sheet summarySheet = wb.createSheet("Summary by Tax Code");
-            Sheet detailsSheet = wb.createSheet("Contract Details");
+            Sheet summarySheet = wb.createSheet("Tóm tắt");
+            Sheet detailsSheet = wb.createSheet("Chi tiết hợp đồng");
 
-            // Tạo header cho sheet tóm tắt
             Row summaryHeader = summarySheet.createRow(0);
-            String[] summaryCols = {"Tax Code", "Total Contracts", "Total Value"};
+            String[] summaryCols = {"Mã khách hàng", "Mã thuế", "Tên khách hàng", "Tổng số lượng hợp đồng", "Tổng giá trị"};
             for (int i = 0; i < summaryCols.length; i++) {
-                summaryHeader.createCell(i).setCellValue(summaryCols[i]);
+                Cell cell = summaryHeader.createCell(i);
+                cell.setCellValue(summaryCols[i]);
+                cell.setCellStyle(boldStyle);
             }
 
-            // Nhóm hợp đồng theo mã số thuế
-            Map<String, List<Contract>> contractsByTaxCode = contracts.stream()
-                    .collect(Collectors.groupingBy(c -> c.getPartner().getTaxCode()));
+            Map<Long, List<Contract>> contractsByPartner = contracts.stream()
+                    .collect(Collectors.groupingBy(c -> c.getPartner().getId()));
 
             int summaryRowNum = 1;
-            for (Map.Entry<String, List<Contract>> entry : contractsByTaxCode.entrySet()) {
-                String taxCode = entry.getKey();
-                List<Contract> taxCodeContracts = entry.getValue();
-                long totalContracts = taxCodeContracts.size();
-                double totalValue = taxCodeContracts.stream()
+            for (Map.Entry<Long, List<Contract>> entry : contractsByPartner.entrySet()) {
+                Long partnerId = entry.getKey();
+                List<Contract> partnerContracts = entry.getValue();
+                String PartnerCode = partnerContracts.get(0).getPartner().getPartnerCode();
+                String taxCode = partnerContracts.get(0).getPartner().getTaxCode();
+                String partnerName = partnerContracts.get(0).getPartner().getPartnerName();
+                long totalContracts = partnerContracts.size();
+                double totalValue = partnerContracts.stream()
                         .mapToDouble(c -> c.getAmount() != null ? c.getAmount() : 0)
                         .sum();
 
                 Row row = summarySheet.createRow(summaryRowNum++);
-                row.createCell(0).setCellValue(taxCode);
-                row.createCell(1).setCellValue(totalContracts);
-                row.createCell(2).setCellValue(totalValue);
+                row.createCell(0).setCellValue(PartnerCode);
+                row.createCell(1).setCellValue(taxCode);
+                row.createCell(2).setCellValue(partnerName);
+                row.createCell(3).setCellValue(totalContracts);
+                row.createCell(4).setCellValue(totalValue);
             }
 
-            // Tạo header cho sheet chi tiết
+            // Tạo header cho sheet chi tiết với tiêu đề tiếng Việt
             Row detailsHeader = detailsSheet.createRow(0);
-            String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signed At", "Effective Date", "Expiry Date", "Amount", "Status"};
+            String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
             for (int i = 0; i < detailsCols.length; i++) {
-                detailsHeader.createCell(i).setCellValue(detailsCols[i]);
+                Cell cell = detailsHeader.createCell(i);
+                cell.setCellValue(detailsCols[i]);
+                cell.setCellStyle(boldStyle);
             }
 
             int detailsRowNum = 1;
             for (Contract c : contracts) {
                 Row row = detailsSheet.createRow(detailsRowNum++);
                 row.createCell(0).setCellValue(c.getPartner().getTaxCode());
-                row.createCell(1).setCellValue(c.getPartner().getId());
+                row.createCell(1).setCellValue(c.getPartner().getPartnerCode());
                 row.createCell(2).setCellValue(c.getPartner().getPartnerName());
                 row.createCell(3).setCellValue(c.getContractNumber());
-                row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
                 row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
                 row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
                 row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
-                row.createCell(8).setCellValue(c.getStatus().name());
+                row.createCell(8).setCellValue(translateContractStatusToVietnamese(c.getStatus().name())); // Dịch trạng thái sang tiếng Việt
             }
 
-            // Tự động điều chỉnh kích thước cột
             for (int i = 0; i < summaryCols.length; i++) {
                 summarySheet.autoSizeColumn(i);
             }
@@ -154,27 +157,22 @@ public class DashBoardService implements IDashBoardService {
                 detailsSheet.autoSizeColumn(i);
             }
 
-            logger.info("Hoàn thành tạo Workbook thời gian với {} mã số thuế và {} hợp đồng", summaryRowNum - 1, detailsRowNum - 1);
             return wb;
         } else {
-            // Logic hiện tại cho MONTH hoặc YEAR
             List<Object[]> currentPeriodData;
             String periodLabel;
 
             switch (groupBy.toUpperCase()) {
                 case "YEAR":
                     currentPeriodData = contractRepository.reportByYearWithStatuses(from, to, VALID_STATUSES);
-                    periodLabel = "Year";
+                    periodLabel = "Năm";
                     break;
                 case "MONTH":
                 default:
                     currentPeriodData = contractRepository.reportByMonthWithStatuses(from, to, VALID_STATUSES);
-                    periodLabel = "Month";
+                    periodLabel = "Tháng";
                     break;
             }
-
-            logger.info("Tìm thấy {} hàng dữ liệu cho khoảng thời gian hiện tại từ {} đến {}",
-                    currentPeriodData.size(), from, to);
 
             List<Object[]> previousPeriodData = new ArrayList<>();
             if (!currentPeriodData.isEmpty()) {
@@ -210,19 +208,20 @@ public class DashBoardService implements IDashBoardService {
                 }
             }
 
-            Workbook wb = new XSSFWorkbook();
-            Sheet sheet = wb.createSheet("Time Report");
+            Sheet sheet = wb.createSheet("Báo cáo thời gian");
 
             Row header = sheet.createRow(0);
-            String[] cols = {periodLabel, "Contract Count", "Total Value", "% Change Count (vs Previous)", "% Change Value (vs Previous)"};
+            String[] cols = {periodLabel, "Tổng số lượng hợp đồng", "Tổng giá trị", "% Thay đổi số lượng (so với trước)", "% Thay đổi giá trị (so với trước)"};
             for (int i = 0; i < cols.length; i++) {
-                header.createCell(i).setCellValue(cols[i]);
+                Cell cell = header.createCell(i);
+                cell.setCellValue(cols[i]);
+                cell.setCellStyle(boldStyle);
             }
 
             int rowNum = 1;
             if (currentPeriodData.isEmpty()) {
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue("No data available for the specified period and statuses.");
+                row.createCell(0).setCellValue("Không có dữ liệu cho khoảng thời gian và trạng thái đã chỉ định.");
             } else {
                 Map<String, Object[]> previousMap = previousPeriodData.stream()
                         .collect(Collectors.toMap(row -> row[0].toString(), row -> row));
@@ -274,16 +273,13 @@ public class DashBoardService implements IDashBoardService {
                 sheet.autoSizeColumn(i);
             }
 
-            logger.info("Hoàn thành tạo Workbook thời gian với {} hàng", rowNum - 1);
             return wb;
         }
     }
 
     @Override
     public Workbook generateCustomerReportExcel(LocalDateTime from, LocalDateTime to) {
-        logger.info("Tạo báo cáo khách hàng từ {} đến {}", from, to);
 
-        // Lấy danh sách hợp đồng theo trạng thái và thời gian
         List<Contract> contracts = contractRepository.findByIsLatestVersionTrueAndEffectiveDateBetweenAndStatusIn(
                 from, to, VALID_STATUSES,
                 Sort.by("partner.taxCode").ascending()
@@ -291,66 +287,99 @@ public class DashBoardService implements IDashBoardService {
         );
 
         Workbook wb = new XSSFWorkbook();
-        Sheet summarySheet = wb.createSheet("Summary");
-        Sheet detailsSheet = wb.createSheet("Contract Details");
+        CellStyle boldStyle = createBoldStyle(wb);
 
-        // Tạo header cho sheet tóm tắt
+        Sheet summarySheet = wb.createSheet("Tóm tắt");
+        Sheet detailsSheet = wb.createSheet("Chi tiết hợp đồng");
+
         Row summaryHeader = summarySheet.createRow(0);
-        String[] summaryCols = {"Tax Code", "Total Contracts", "Total Value"};
+        String[] summaryCols = {"Mã khách hàng", "Mã thuế", "Tên khách hàng", "Tổng số lượng hợp đồng", "Tổng giá trị"};
         for (int i = 0; i < summaryCols.length; i++) {
-            summaryHeader.createCell(i).setCellValue(summaryCols[i]);
+            Cell cell = summaryHeader.createCell(i);
+            cell.setCellValue(summaryCols[i]);
+            cell.setCellStyle(boldStyle);
         }
 
-        // Nhóm hợp đồng theo mã số thuế
-        Map<String, List<Contract>> contractsByTaxCode = contracts.stream()
-                .collect(Collectors.groupingBy(c -> c.getPartner().getTaxCode()));
+        Map<Long, List<Contract>> contractsByPartner = contracts.stream()
+                .collect(Collectors.groupingBy(c -> c.getPartner().getId()));
 
         int summaryRowNum = 1;
-        for (Map.Entry<String, List<Contract>> entry : contractsByTaxCode.entrySet()) {
-            String taxCode = entry.getKey();
-            List<Contract> taxCodeContracts = entry.getValue();
-            long totalContracts = taxCodeContracts.size();
-            double totalValue = taxCodeContracts.stream()
+        for (Map.Entry<Long, List<Contract>> entry : contractsByPartner.entrySet()) {
+
+            List<Contract> partnerContracts = entry.getValue();
+            String partnerCode = partnerContracts.get(0).getPartner().getPartnerCode();
+            String taxCode = partnerContracts.get(0).getPartner().getTaxCode();
+            String partnerName = partnerContracts.get(0).getPartner().getPartnerName();
+            long totalContracts = partnerContracts.size();
+            double totalValue = partnerContracts.stream()
                     .mapToDouble(c -> c.getAmount() != null ? c.getAmount() : 0)
                     .sum();
 
             Row row = summarySheet.createRow(summaryRowNum++);
-            row.createCell(0).setCellValue(taxCode);
-            row.createCell(1).setCellValue(totalContracts);
-            row.createCell(2).setCellValue(totalValue);
+            row.createCell(0).setCellValue(partnerCode);
+            row.createCell(1).setCellValue(taxCode);
+            row.createCell(2).setCellValue(partnerName);
+            row.createCell(3).setCellValue(totalContracts);
+            row.createCell(4).setCellValue(totalValue);
         }
 
-        // Tạo header cho sheet chi tiết
         Row detailsHeader = detailsSheet.createRow(0);
-        String[] detailsCols = {"Tax Code", "Customer ID", "Customer Name", "Contract #", "Signed At", "Effective Date", "Expiry Date", "Amount", "Status"};
+        String[] detailsCols = {"Mã thuế", "Mã khách hàng", "Tên khách hàng", "Số hợp đồng", "Ngày hiệu lực", "Ngày hết hạn", "Số tiền", "Trạng thái"};
         for (int i = 0; i < detailsCols.length; i++) {
-            detailsHeader.createCell(i).setCellValue(detailsCols[i]);
+            Cell cell = detailsHeader.createCell(i);
+            cell.setCellValue(detailsCols[i]);
+            cell.setCellStyle(boldStyle);
         }
 
         int detailsRowNum = 1;
         for (Contract c : contracts) {
             Row row = detailsSheet.createRow(detailsRowNum++);
             row.createCell(0).setCellValue(c.getPartner().getTaxCode());
-            row.createCell(1).setCellValue(c.getPartner().getId());
+            row.createCell(1).setCellValue(c.getPartner().getPartnerCode());
             row.createCell(2).setCellValue(c.getPartner().getPartnerName());
             row.createCell(3).setCellValue(c.getContractNumber());
-            row.createCell(4).setCellValue(c.getSignedAt() != null ? c.getSignedAt().format(dtf) : "N/A");
             row.createCell(5).setCellValue(c.getEffectiveDate() != null ? c.getEffectiveDate().format(dtf) : "N/A");
             row.createCell(6).setCellValue(c.getExpiryDate() != null ? c.getExpiryDate().format(dtf) : "N/A");
             row.createCell(7).setCellValue(c.getAmount() != null ? c.getAmount() : 0);
-            row.createCell(8).setCellValue(c.getStatus().name());
+            row.createCell(8).setCellValue(translateContractStatusToVietnamese(c.getStatus().name()));
         }
 
-        // Tự động điều chỉnh kích thước cột
         for (int i = 0; i < summaryCols.length; i++) {
             summarySheet.autoSizeColumn(i);
         }
         for (int i = 0; i < detailsCols.length; i++) {
             detailsSheet.autoSizeColumn(i);
         }
-
-        logger.info("Hoàn thành tạo Workbook khách hàng với {} mã số thuế và {} hợp đồng", summaryRowNum - 1, detailsRowNum - 1);
         return wb;
+    }
+
+    private CellStyle createBoldStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        Font font = wb.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        return style;
+    }
+
+    private String translateContractStatusToVietnamese(String status) {
+        switch (status) {
+            case "DRAFT": return "Bản nháp";
+            case "CREATED": return "Đã tạo";
+            case "UPDATED": return "Đã cập nhật";
+            case "APPROVAL_PENDING": return "Chờ phê duyệt";
+            case "APPROVED": return "Đã phê duyệt";
+            case "PENDING": return "Chưa ký";
+            case "REJECTED": return "Bị từ chối";
+            case "FIXED": return "Đã chỉnh sửa";
+            case "SIGNED": return "Đã ký";
+            case "ACTIVE": return "Đang có hiệu lực";
+            case "COMPLETED": return "Hoàn thành";
+            case "EXPIRED": return "Hết hạn";
+            case "CANCELLED": return "Đã hủy";
+            case "ENDED": return "Kết thúc";
+            case "DELETED": return "Đã xóa";
+            default: return status;
+        }
     }
 
     @Override
@@ -380,11 +409,8 @@ public class DashBoardService implements IDashBoardService {
             row.createCell(0).setCellValue(s.name());
             row.createCell(1).setCellValue(map.get(s));
         }
-
         sheet.autoSizeColumn(0);
         sheet.autoSizeColumn(1);
-
-        logger.info("Hoàn thành tạo Workbook trạng thái với {} trạng thái", rowNum - 1);
         return wb;
     }
 }
