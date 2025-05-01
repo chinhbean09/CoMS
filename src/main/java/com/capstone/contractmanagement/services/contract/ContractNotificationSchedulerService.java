@@ -47,7 +47,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         List<Contract> contractsToEffectiveNotify = contractRepository.findAll().stream()
                 .filter(contract -> contract.getEffectiveDate() != null)
                 .filter(contract -> contract.getNotifyEffectiveDate() != null)
-                .filter(contract -> contract.getStatus() == ContractStatus.SIGNED || contract.getStatus() == ContractStatus.APPROVED || contract.getStatus() == ContractStatus.ACTIVE)
+                .filter(contract -> contract.getStatus() == ContractStatus.SIGNED || contract.getStatus() == ContractStatus.ACTIVE)
                 .filter(contract -> Boolean.FALSE.equals(contract.getIsEffectiveNotified()))
                 .filter(Contract::getIsLatestVersion)
                 .filter(contract -> !now.isBefore(contract.getNotifyEffectiveDate()))
