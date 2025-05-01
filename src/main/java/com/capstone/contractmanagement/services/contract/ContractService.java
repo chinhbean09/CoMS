@@ -4076,6 +4076,93 @@ public class ContractService implements IContractService{
         }
     }
 
+    @Override
+    @Transactional
+    public void liquidateContract(Long contractId, List<MultipartFile> files, ContractLiquidateDTO liquidateDTO) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        if (contract.getStatus() == ContractStatus.LIQUIDATED) {
+            throw new RuntimeException("Hợp đồng đã hủy trước đó");
+        }
+        contract.setLiquidateContent(liquidateDTO.getLiquidateReason());
+        contract.setLiquidateDate(LocalDateTime.now());
+        try {
+            contract.getLiquidateFileUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new RuntimeException("File tải lên phải là file hình ảnh hoặc PDF");
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "liquidated_contract_files/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
+                uploadedUrls.add(signedUrl);
+            }
+
+            // Ghi lại danh sách URL mới
+            contract.getLiquidateFileUrls().addAll(uploadedUrls);
+
+            contract.setStatus(ContractStatus.LIQUIDATED);
+            contractRepository.save(contract);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public ContractLiquidationResponse getContractLiquidateReason(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        return ContractLiquidationResponse.builder()
+                .contractId(contract.getId())
+                .liquidateContent(contract.getLiquidateContent())
+                .liquidateAt(contract.getLiquidateDate())
+                .urls(contract.getLiquidateFileUrls())
+                .build();
+    }
+
     private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
         String oldStatusVi = translateContractStatusToVietnamese(oldValue);
         String newStatusVi = translateContractStatusToVietnamese(newValue);
