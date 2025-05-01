@@ -81,15 +81,15 @@
         <td>
             <div class="email-content">
                 <div class="header">
-                    <h1>Hợp Đồng Đã Quá Ký</h1>
+                    <h1>Hợp Đồng Đã Quá Hạn Ký</h1>
                 </div>
                 <div class="body">
                     <p>Xin chào,</p>
                     <div class="contract-info">
                         <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
                         <p th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
-                        <p th:text="'Đã quá hạn ký ngày: ' + ${contractExpiryDate}"></p>
-                        <p th:text="'Do nhân viên ' + ${contractExpiryDate} + ' đã không phê duyệt trước lịch ký hẹn.'"></p>
+                        <p th:text="'Đã quá hạn ký ngày: ' + ${signingDate}"></p>
+                        <p th:text="'Do nhân viên ' + ${approver} + ' đã không phê duyệt trước lịch ký hẹn.'"></p>
                     </div>
                     <p>Trân trọng,</p>
                 </div>
