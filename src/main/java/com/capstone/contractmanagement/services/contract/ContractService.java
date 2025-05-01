@@ -2582,7 +2582,7 @@ public class ContractService implements IContractService{
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
-                    newPayment.setStatus(oldPayment.getStatus());
+                    newPayment.setStatus(PaymentStatus.UNPAID);
                     updatedPayments.add(newPayment);
 
                     String newValue = serializePaymentSchedule(newPayment);
