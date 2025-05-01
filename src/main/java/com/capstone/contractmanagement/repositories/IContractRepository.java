@@ -448,5 +448,6 @@ public interface IContractRepository extends JpaRepository<Contract, Long> {
             @Param("statuses") List<ContractStatus> statuses,
             Sort sort
     );
+    List<Contract> findByStatusAndSigningDateBefore(ContractStatus status, LocalDateTime dateTime);
 
 }

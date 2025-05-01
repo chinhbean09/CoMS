@@ -17,6 +17,7 @@
     import com.capstone.contractmanagement.repositories.IContractRepository;
     import com.capstone.contractmanagement.responses.ResponseObject;
     import com.capstone.contractmanagement.responses.contract.CancelContractResponse;
+    import com.capstone.contractmanagement.responses.contract.ContractLiquidationResponse;
     import com.capstone.contractmanagement.responses.contract.ContractResponse;
     import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
     import com.capstone.contractmanagement.services.contract.IContractService;
@@ -569,6 +570,27 @@
         @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
         public ResponseEntity<ResponseObject> getContractVersions(@PathVariable Long contractId) throws DataNotFoundException {
             CancelContractResponse responses = contractService.getContractCancelReason(contractId);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("lấy lí do hủy thành công")
+                    .status(HttpStatus.OK)
+                    .data(responses)
+                    .build());
+        }
+
+        @PutMapping(value = "/liquidate-contract/{contractId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PreAuthorize("hasAnyAuthority('ROLE_STAFF', 'ROLE_DIRECTOR', 'ROLE_MANAGER')")
+        public ResponseEntity<ResponseObject> liquidateContract(@PathVariable Long contractId, @RequestPart(name = "files") List<MultipartFile> files, @RequestPart(name = "contractLiquidateDTO") ContractLiquidateDTO contractLiquidateDTO) throws DataNotFoundException {
+            contractService.liquidateContract(contractId, files, contractLiquidateDTO);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Thanh lý hợp đồng thành công")
+                    .status(HttpStatus.OK)
+                    .build());
+        }
+
+        @GetMapping("/get-liquidate-reason/{contractId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
+        public ResponseEntity<ResponseObject> getLiquidateReason(@PathVariable Long contractId) throws DataNotFoundException {
+            ContractLiquidationResponse responses = contractService.getContractLiquidateReason(contractId);
             return ResponseEntity.ok(ResponseObject.builder()
                     .message("lấy lí do hủy thành công")
                     .status(HttpStatus.OK)
