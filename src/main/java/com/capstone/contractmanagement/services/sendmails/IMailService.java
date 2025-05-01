@@ -40,4 +40,5 @@ public interface IMailService {
     //void sendEmailPartnerContractOverdue(PartnerContract contract);
     void sendEmailPartnerContractPaymentReminder(PaymentSchedule payment);
     void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment);
+    void sendEmailContractSignedOverdue(Contract contract, User director, User approver);
 }
