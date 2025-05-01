@@ -154,7 +154,7 @@
                 return; // Bỏ qua nếu payment là null
             }
 
-            String message = "Nhắc nhở thanh toán cho hợp đồng " + contract.getTitle();
+            String message = "Nhắc nhở thanh toán cho hợp đồng " + contract.getTitle() + "ở đợt ";
             if (payment instanceof PaymentSchedule) {
                 PaymentSchedule ps = (PaymentSchedule) payment;
                 logger.info("Sending reminder email for PaymentSchedule ID: {}", ps.getId());
