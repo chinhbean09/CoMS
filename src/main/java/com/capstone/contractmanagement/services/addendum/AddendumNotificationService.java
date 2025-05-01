@@ -41,9 +41,9 @@ public class AddendumNotificationService implements IAddendumNotificationService
         List<Addendum> addendaToNotifyExtendContract = addendumRepository.findAll().stream()
                 .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
                 .filter(addendum -> !addendum.getIsEffectiveNotified())
+                .filter(addendum -> !(addendum.getContract().getStatus() == ContractStatus.CANCELLED))
                 .filter(addendum -> addendum.getExtendContractDate() != null)
                 .filter(addendum -> addendum.getContractExpirationDate() != null)
-                .filter(addendum -> addendum.getContract() != null)
                 .filter(addendum -> !now.isBefore(addendum.getExtendContractDate())) // Kiểm tra hiệu lực của phụ lục
                 .collect(Collectors.toList());
 
@@ -67,9 +67,9 @@ public class AddendumNotificationService implements IAddendumNotificationService
         List<Addendum> addendaToNotifyExpiryContract = addendumRepository.findAll().stream()
                 .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
                 .filter(addendum -> !addendum.getIsExpiryNotified())
+                .filter(addendum -> !(addendum.getContract().getStatus() == ContractStatus.CANCELLED))
                 .filter(addendum -> addendum.getExtendContractDate() != null)
                 .filter(addendum -> addendum.getContractExpirationDate() != null)
-                .filter(addendum -> addendum.getContract() != null)
                 .filter(addendum -> !now.isBefore(addendum.getContractExpirationDate())) // Kiểm tra hiệu lực của phụ lục
                 .collect(Collectors.toList());
 
