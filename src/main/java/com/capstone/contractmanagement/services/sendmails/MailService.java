@@ -605,4 +605,31 @@ public class MailService implements IMailService{
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void sendEmailContractSignedOverdue(Contract contract, User director, User approver) {
+        try {
+            DataMailDTO dataMailDTO = new DataMailDTO();
+            assert director != null;
+            dataMailDTO.setTo(new String[]{director.getEmail()});
+            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_SIGN_OVERDUE);
+
+            // Thiết lập các thuộc tính cho email
+            Map<String, Object> props = new HashMap<>();
+            props.put("contractNumber", contract.getContractNumber());
+            props.put("contractTitle", contract.getTitle());
+            props.put("signingDate", contract.getSigningDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            props.put("approver", approver.getFullName());
+            dataMailDTO.setProps(props);
+
+            // Gửi email HTML theo template już định nghĩa
+            sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.CONTRACT_SIGN_OVERDUE);
+
+            // Log thông báo gửi email thành công
+            System.out.println("Đã gửi email nhắc nhở cho: " + director.getEmail());
+        } catch (Exception e) {
+            // Xử lý lỗi, có thể dùng framework logging như Log4j hoặc SLF4J thay vì printStackTrace
+            e.printStackTrace();
+        }
+    }
 }

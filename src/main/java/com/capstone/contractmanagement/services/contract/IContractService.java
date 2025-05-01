@@ -1,20 +1,13 @@
 package com.capstone.contractmanagement.services.contract;
 
 import com.capstone.contractmanagement.dtos.FileBase64DTO;
-import com.capstone.contractmanagement.dtos.contract.ContractCancelDTO;
-import com.capstone.contractmanagement.dtos.contract.ContractComparisonDTO;
-import com.capstone.contractmanagement.dtos.contract.ContractDTO;
-import com.capstone.contractmanagement.dtos.contract.ContractUpdateDTO;
-import com.capstone.contractmanagement.dtos.contract.SignContractRequest;
+import com.capstone.contractmanagement.dtos.contract.*;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.ResponseObject;
-import com.capstone.contractmanagement.responses.contract.CancelContractResponse;
-import com.capstone.contractmanagement.responses.contract.ContractComparisonResponse;
-import com.capstone.contractmanagement.responses.contract.ContractResponse;
-import com.capstone.contractmanagement.responses.contract.GetAllContractReponse;
+import com.capstone.contractmanagement.responses.contract.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -88,5 +81,9 @@ public interface IContractService {
     CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException;
 
     ResponseEntity<ResponseObject> signContract(SignContractRequest request);
+
+    void liquidateContract(Long contractId, List<MultipartFile> files, ContractLiquidateDTO liquidateDTO) throws DataNotFoundException;
+
+    ContractLiquidationResponse getContractLiquidateReason(Long contractId) throws DataNotFoundException;
 
     }
