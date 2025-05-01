@@ -4,8 +4,10 @@ import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.AuditTrail;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.enums.AddendumStatus;
+import com.capstone.contractmanagement.enums.ApprovalStatus;
 import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.repositories.IAppConfigRepository;
 import com.capstone.contractmanagement.repositories.IContractRepository;
@@ -303,6 +305,60 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .max(LocalDateTime::compareTo)
                 .orElse(contract.getExpiryDate());
     }
+
+
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
+    protected void checkContractApproval() {
+        LocalDateTime now = LocalDateTime.now();
+        // 1. Lấy danh sách overdue
+        List<Contract> overdueContracts = contractRepository
+                .findByStatusAndSigningDateBefore(ContractStatus.APPROVAL_PENDING, now);
+        for (Contract c : overdueContracts) {
+            // 2. Cập nhật status
+            c.setStatus(ContractStatus.SIGN_OVERDUE);
+
+            // 3. Gửi notification cho người tạo (user)
+            User owner = c.getUser();
+            User director = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
+            String message = String.format(
+                    "Hợp đồng \"%s\" đã quá hạn ký. Vui lòng xử lí gấp",
+                    c.getTitle()
+            );
+            Map<String, Object> payload = Map.of(
+                    "message", message,
+                    "contractId", c.getId()
+            );
+
+
+            if (c.getApprovalWorkflow() != null) {
+                List<User> approvingUsers = c.getApprovalWorkflow().getStages().stream()
+                        .filter(stage -> stage.getStatus() == ApprovalStatus.APPROVING)
+                        .map(ApprovalStage::getApprover)
+                        .collect(Collectors.toList());
+                // send mail
+                mailService.sendEmailContractSignedOverdue(c, director, approvingUsers.get(0));
+            }
+
+            // 1) Gửi WebSocket
+            messagingTemplate.convertAndSendToUser(
+                    owner.getFullName(),
+                    "/queue/notifications",
+                    payload
+            );
+            messagingTemplate.convertAndSendToUser(
+                    director.getFullName(),
+                    "/queue/notifications",
+                    payload
+            );
+            // 2) Lưu vào hệ thống notification
+            notificationService.saveNotification(owner, message, c);
+            notificationService.saveNotification(director, message, c);
+        }
+    }
     /**
      * Dịch trạng thái hợp đồng sang tiếng Việt
      */
@@ -325,51 +381,4 @@ public class ContractNotificationSchedulerService implements IContractNotificati
         }
     }
 
-    /**
-     * Lấy ngày hiệu lực thực tế (từ phụ lục nếu có, nếu không thì từ hợp đồng gốc)
-     */
-    private LocalDateTime getActualEffectiveDate(Contract contract) {
-        return contract.getAddenda().stream()
-                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
-                .map(Addendum::getExtendContractDate)
-                .filter(Objects::nonNull)
-                .min(LocalDateTime::compareTo)
-                .orElse(contract.getEffectiveDate());
-    }
-
-    /**
-     * Lấy ngày hết hạn thực tế (từ phụ lục nếu có, nếu không thì từ hợp đồng gốc)
-     */
-    private LocalDateTime getActualExpiryDate(Contract contract) {
-        return contract.getAddenda().stream()
-                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
-                .map(Addendum::getContractExpirationDate)
-                .filter(Objects::nonNull)
-                .max(LocalDateTime::compareTo)
-                .orElse(contract.getExpiryDate());
-    }
-
-    /**
-     * Lấy ngày thông báo hiệu lực từ phụ lục (nếu có)
-     */
-    private LocalDateTime getNotifyEffectiveDateFromAddendum(Contract contract) {
-        return contract.getAddenda().stream()
-                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
-                .map(Addendum::getExtendContractDate)
-                .filter(Objects::nonNull)
-                .min(LocalDateTime::compareTo)
-                .orElse(contract.getNotifyEffectiveDate());
-    }
-
-    /**
-     * Lấy ngày thông báo hết hạn từ phụ lục (nếu có)
-     */
-    private LocalDateTime getNotifyExpiryDateFromAddendum(Contract contract) {
-        return contract.getAddenda().stream()
-                .filter(addendum -> addendum.getStatus() == AddendumStatus.APPROVED || addendum.getStatus() == AddendumStatus.SIGNED)
-                .map(Addendum::getContractExpirationDate)
-                .filter(Objects::nonNull)
-                .max(LocalDateTime::compareTo)
-                .orElse(contract.getNotifyExpiryDate());
-    }
 }

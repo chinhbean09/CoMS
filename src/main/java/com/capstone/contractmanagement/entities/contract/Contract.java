@@ -227,4 +227,14 @@
         @Column(name = "cancellation_file_url")
         private List<String> cancellationFileUrls = new ArrayList<>();
 
+        @Column(name = "liquidate_content", columnDefinition = "TEXT")
+        private String liquidateContent;
+
+        @Column(name = "liquidate_date")
+        private LocalDateTime liquidateDate;
+
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_liquidate_files", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "liquidate_file_url")
+        private List<String> liquidateFileUrls = new ArrayList<>();
     }
