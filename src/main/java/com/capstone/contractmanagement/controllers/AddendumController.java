@@ -326,7 +326,7 @@ public class AddendumController {
     }
 
     @GetMapping("/get-bill-urls/{paymentId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAddendumBillUrls(@PathVariable Long paymentId) throws DataNotFoundException {
         return ResponseEntity.ok(ResponseObject.builder()
                 .message("Lấy link hóa đơn thanh toán")
