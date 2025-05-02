@@ -3465,6 +3465,7 @@ public class ContractService implements IContractService{
             case "CANCELLED": return "Đã hủy";
             case "ENDED": return "Kết thúc";
             case "DELETED": return "Đã xóa";
+            case "LIQUIDATED": return "Đã thanh lý";
             default: return status;
         }
     }
