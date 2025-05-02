@@ -30,7 +30,8 @@ public class DashBoardService implements IDashBoardService {
             ContractStatus.ACTIVE,
             ContractStatus.EXPIRED,
             ContractStatus.ENDED,
-            ContractStatus.CANCELLED
+            ContractStatus.CANCELLED,
+            ContractStatus.LIQUIDATED
     );
 
     @Override
@@ -49,7 +50,8 @@ public class DashBoardService implements IDashBoardService {
                 ContractStatus.CANCELLED,
                 ContractStatus.ACTIVE,
                 ContractStatus.SIGNED,
-                ContractStatus.APPROVED
+                ContractStatus.APPROVED,
+                ContractStatus.LIQUIDATED
         );
 
         long totalPieContracts = pieStatuses.stream()
@@ -378,6 +380,7 @@ public class DashBoardService implements IDashBoardService {
             case "CANCELLED": return "Đã hủy";
             case "ENDED": return "Kết thúc";
             case "DELETED": return "Đã xóa";
+            case "LIQUIDATED": return "Đã thanh lý";
             default: return status;
         }
     }
@@ -389,7 +392,8 @@ public class DashBoardService implements IDashBoardService {
                 ContractStatus.ACTIVE,
                 ContractStatus.EXPIRED,
                 ContractStatus.ENDED,
-                ContractStatus.CANCELLED
+                ContractStatus.CANCELLED,
+                ContractStatus.LIQUIDATED
         );
         List<Object[]> raw = contractRepository.countByStatusesBetween(statuses, from, to);
 
