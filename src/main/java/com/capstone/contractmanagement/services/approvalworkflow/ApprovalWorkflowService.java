@@ -493,6 +493,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 // Tạo payload thông báo
                 Map<String, Object> payload = new HashMap<>();
                 String notificationMessage = "Hợp đồng " + contract.getTitle() + " đã được phê duyệt xong, hãy bắt đầu ký";
+                String notificationMessageForStaff = "Hợp đồng " + contract.getTitle() + " đã được phê duyệt xong, đang chờ ký";
                 payload.put("message", notificationMessage);
                 payload.put("contractId", contractId);
 
@@ -500,6 +501,10 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 mailService.sendEmailApprovalSuccessForContract(contract, finalApprover);
                 notificationService.saveNotification(finalApprover, notificationMessage, contract);
                 messagingTemplate.convertAndSendToUser(finalApprover.getFullName(), "/queue/notifications", payload);
+
+                notificationService.saveNotification(contract.getUser(), notificationMessageForStaff, contract);
+                messagingTemplate.convertAndSendToUser(contract.getUser().getFullName(), "/queue/notifications", payload);
+
 
                 // Ghi audit trail
                 String changedBy = SecurityContextHolder.getContext().getAuthentication().getName();

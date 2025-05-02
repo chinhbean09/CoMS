@@ -362,7 +362,7 @@ public class TermService implements ITermService{
                 String value = row.getCell(1).getStringCellValue();
 
                 // Kiểm tra nếu label đã tồn tại
-                if (termRepository.existsByLabel(label)) {
+                if (termRepository.existsByLabelAndTypeTermAndStatus(label, typeTerm, TermStatus.NEW)) {
                     continue; // Bỏ qua nếu label đã tồn tại
                 }
 
