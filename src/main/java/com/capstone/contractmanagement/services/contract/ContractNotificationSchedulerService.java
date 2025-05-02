@@ -311,9 +311,10 @@ public class ContractNotificationSchedulerService implements IContractNotificati
     @Transactional
     protected void checkContractApproval() {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threshold = now.minusDays(1);
         // 1. Lấy danh sách overdue
         List<Contract> overdueContracts = contractRepository
-                .findByStatusAndSigningDateBefore(ContractStatus.APPROVAL_PENDING, now);
+                .findByStatusAndSigningDateBefore(ContractStatus.APPROVAL_PENDING, threshold);
         for (Contract c : overdueContracts) {
             // 2. Cập nhật status
             c.setStatus(ContractStatus.SIGN_OVERDUE);
