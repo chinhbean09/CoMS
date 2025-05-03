@@ -350,7 +350,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
 
         LocalDateTime now = LocalDateTime.now();
         // CHỈ CHO ÁP DỤNG KHI HÔM NAY ≤ ngày hiệu lực
-        if (contract.getSigningDate().isBefore(now)) {
+        if (contract.getSigningDate().plusDays(1).isBefore(now)) {
             throw new DataNotFoundException(
                     "Không thể gán quy trình duyệt vì đã quá hạn ký:  "
                             + contract.getSigningDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
