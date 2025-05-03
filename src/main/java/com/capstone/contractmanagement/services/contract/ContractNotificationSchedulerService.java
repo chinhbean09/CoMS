@@ -72,7 +72,7 @@ public class ContractNotificationSchedulerService implements IContractNotificati
                 .filter(contract -> !now.isBefore(contract.getEffectiveDate()))
                 .collect(Collectors.toList());
 
-        for (Contract contract : contractsToEffectiveNotify) {
+        for (Contract contract : contractsEffectiveNotify) {
             String message = "Hợp đồng '" + contract.getTitle() + "'bắt đầu có hiệu lực vào ngày " + contract.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(contract, message, true);
             //mailService.sendEmailContractEffectiveDate(contract);
