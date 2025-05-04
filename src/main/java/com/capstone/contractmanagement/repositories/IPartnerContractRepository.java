@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.repositories;
 
+import com.capstone.contractmanagement.entities.Partner;
 import com.capstone.contractmanagement.entities.PartnerContract;
 import com.capstone.contractmanagement.entities.User;
 import org.springframework.data.domain.Page;
@@ -21,5 +22,21 @@ public interface IPartnerContractRepository extends JpaRepository<PartnerContrac
     Page<PartnerContract> searchByUserAndKeyword(@Param("user") User user,
                                                  @Param("search") String search,
                                                  Pageable pageable);
+    @Query("SELECT pc FROM PartnerContract pc " +
+            "WHERE LOWER(pc.contractNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "   OR LOWER(pc.partnerName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "   OR LOWER(pc.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<PartnerContract> searchByKeyword(@Param("keyword") String keyword,
+                                          Pageable pageable);
+
     boolean existsByContractNumberAndUser(String contractNumber, User user);
+
+    @Query("SELECT pc FROM PartnerContract pc " +
+            "WHERE pc.partner = :partner " +
+            "  AND (LOWER(pc.contractNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "    OR LOWER(pc.partnerName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "    OR LOWER(pc.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<PartnerContract> searchByPartnerAndKeyword(@Param("partner") Partner partner,
+                                                    @Param("keyword") String keyword,
+                                                    Pageable pageable);
 }
