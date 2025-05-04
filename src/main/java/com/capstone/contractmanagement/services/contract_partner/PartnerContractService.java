@@ -243,13 +243,21 @@ public class PartnerContractService implements IPartnerContractService {
 
         // Nếu tham số search là null thì chuyển về chuỗi rỗng
         String searchKeyword = search != null ? search : "";
+        // xác định director hay staff
+        boolean isDirector = currentUser.getRole() != null
+                && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
+        // gọi repository tương ứng
+        Page<PartnerContract> contractPage = isDirector
+                ? contractPartnerRepository.searchByKeyword(searchKeyword, pageable)
+                : contractPartnerRepository.searchByUserAndKeyword(currentUser, searchKeyword, pageable);
 
         // Gọi repository để lấy dữ liệu theo tiêu chí tìm kiếm và phân trang
-        Page<PartnerContract> contractPartnersPage = contractPartnerRepository
-                .searchByUserAndKeyword(currentUser, searchKeyword, pageable);
+//        Page<PartnerContract> contractPartnersPage = contractPartnerRepository
+//                .searchByUserAndKeyword(currentUser, searchKeyword, pageable);
 
         // Chuyển đổi entity sang DTO response
-        return contractPartnersPage.map(contractPartner -> {
+        return contractPage.map(contractPartner -> {
             // Lấy danh sách ContractItem của contractPartner hiện tại
             List<PartnerContractItemResponse> items = contractItemRepository.findByPartnerContract(contractPartner)
                     .stream()
@@ -394,6 +402,69 @@ public class PartnerContractService implements IPartnerContractService {
         Partner partner = partnerRepository.findById(partnerId).orElseThrow(() -> new DataNotFoundException(MessageKeys.PARTY_NOT_FOUND));
         partnerContract.setPartner(partner);
         contractPartnerRepository.save(partnerContract);
+    }
+
+    @Override
+    @Transactional
+    public Page<PartnerContractResponse> getAllPartnerContractsByPartner(String search, Long partnerId, int page, int size) throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        // phân trang
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Nếu search là null, chuyển về chuỗi rỗng
+        String keyword = (search != null ? search : "");
+
+        // Kiểm tra nếu partnerId không null thì lấy partner
+        Partner partner = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new DataNotFoundException("Đối tác không tìm thấy: " + partnerId));
+
+        // gọi repository tìm kiếm hợp đồng theo partner và keyword
+        Page<PartnerContract> contractPage = contractPartnerRepository
+                .searchByPartnerAndKeyword(partner, keyword, pageable);
+
+        // mapping sang DTO
+        return contractPage.map(pc -> {
+            List<PartnerContractItemResponse> items = contractItemRepository
+                    .findByPartnerContract(pc)
+                    .stream()
+                    .map(item -> PartnerContractItemResponse.builder()
+                            .id(item.getId())
+                            .amount(item.getAmount())
+                            .description(item.getDescription())
+                            .build())
+                    .collect(Collectors.toList());
+
+            List<PaymentScheduleResponse> payments = pc.getPaymentSchedules().stream()
+                    .map(ps -> PaymentScheduleResponse.builder()
+                            .id(ps.getId())
+                            .amount(ps.getAmount())
+                            .paymentMethod(ps.getPaymentMethod())
+                            .paymentDate(ps.getPaymentDate())
+                            .paymentOrder(ps.getPaymentOrder())
+                            .paymentPercentage(ps.getPaymentPercentage())
+                            .billUrls(ps.getBillUrls())
+                            .status(ps.getStatus())
+                            .overdueEmailSent(ps.isOverdueEmailSent())
+                            .reminderEmailSent(ps.isReminderEmailSent())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return PartnerContractResponse.builder()
+                    .partnerContractId(pc.getId())
+                    .contractNumber(pc.getContractNumber())
+                    .totalValue(pc.getAmount())
+                    .partnerName(pc.getPartnerName())
+                    .title(pc.getTitle())
+                    .fileUrl(pc.getFileUrl())
+                    .signingDate(pc.getSigningDate())
+                    .effectiveDate(pc.getEffectiveDate())
+                    .expiryDate(pc.getExpiryDate())
+                    .items(items)
+                    .paymentSchedules(payments)
+                    .build();
+        });
     }
 
     private String extractPublicIdFromUrl(String url) {
