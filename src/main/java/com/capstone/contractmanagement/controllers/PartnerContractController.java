@@ -99,4 +99,16 @@ public class PartnerContractController {
                 .build());
     }
 
+    @GetMapping("/get-all-by-partner/{partnerId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF','ROLE_DIRECTOR')")
+    public ResponseEntity<ResponseObject> getAllContractPartnersByPartner(@PathVariable long partnerId, @RequestParam(value = "search", required = false) String search,
+                                                                 @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                 @RequestParam(value = "size", defaultValue = "10") int size) throws DataNotFoundException {
+        return ResponseEntity.ok(ResponseObject.builder()
+                .status(HttpStatus.OK)
+                .message(MessageKeys.GET_ALL_CONTRACT_PARTNERS_SUCCESSFULLY)
+                .data(contractPartnerService.getAllPartnerContractsByPartner(search, partnerId, page, size))
+                .build());
+    }
+
 }

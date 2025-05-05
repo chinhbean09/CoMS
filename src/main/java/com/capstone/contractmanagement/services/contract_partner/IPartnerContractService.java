@@ -23,4 +23,5 @@ public interface IPartnerContractService {
     void uploadPaymentBillUrls(Long paymentScheduleId, List<MultipartFile> files) throws DataNotFoundException;
 
     void setPartnerContractToPartner(Long contractPartnerId, Long partnerId) throws DataNotFoundException;
+    Page<PartnerContractResponse> getAllPartnerContractsByPartner(String search, Long partnerId, int page, int size) throws DataNotFoundException;
 }
