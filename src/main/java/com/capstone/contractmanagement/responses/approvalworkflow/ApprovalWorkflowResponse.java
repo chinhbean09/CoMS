@@ -14,4 +14,5 @@ public class ApprovalWorkflowResponse {
     private int customStagesCount;
     private List<ApprovalStageResponse> stages;
     private LocalDateTime createdAt;
+    private int reSubmitVersion;
 }
