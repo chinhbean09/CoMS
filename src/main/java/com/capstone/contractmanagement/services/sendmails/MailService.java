@@ -443,7 +443,8 @@ public class MailService implements IMailService{
             User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
-            dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail(),director.getEmail()});
+            dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail(),director.getEmail(),
+                    addendum.getUser().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXTENDED_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -503,7 +504,8 @@ public class MailService implements IMailService{
             User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
-            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail()});
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(),
+                    director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -531,7 +533,8 @@ public class MailService implements IMailService{
             User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
-            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail()});
+            dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail(),
+                    contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -556,7 +559,8 @@ public class MailService implements IMailService{
     public void sendEmailPartnerContractPaymentReminder(PaymentSchedule payment) {
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail()});
+            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail(),
+                    payment.getPartnerContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_REMINDER);
 
             // Thiết lập các thuộc tính cho email
@@ -584,7 +588,8 @@ public class MailService implements IMailService{
             User director = userRepository.findById(5L).orElse(null);
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
-            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail(), director.getEmail()});
+            dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail(), director.getEmail(),
+                    payment.getPartnerContract().getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_PAYMENT_EXPIRED);
 
             // Thiết lập các thuộc tính cho email
