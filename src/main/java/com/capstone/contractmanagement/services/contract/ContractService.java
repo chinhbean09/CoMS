@@ -1708,11 +1708,15 @@ public class ContractService implements IContractService{
                 // Add the signed URL to the list
                 uploadedUrls.add(signedUrl);
             }
+            User currentUser = securityUtils.getLoggedInUser();
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
 
             // Ghi lại danh sách URL mới
             contract.getCancellationFileUrls().addAll(uploadedUrls);
 
             contract.setStatus(ContractStatus.CANCELLED);
+            logAuditTrail(contract, "CANCELLED", "status", oldStatus, ContractStatus.CANCELLED.name(), currentUser.getFullName());
+
             contractRepository.save(contract);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -3461,6 +3465,7 @@ public class ContractService implements IContractService{
             case "CANCELLED": return "Đã hủy";
             case "ENDED": return "Kết thúc";
             case "DELETED": return "Đã xóa";
+            case "LIQUIDATED": return "Đã thanh lý";
             default: return status;
         }
     }
@@ -4149,11 +4154,15 @@ public class ContractService implements IContractService{
                 // Add the signed URL to the list
                 uploadedUrls.add(signedUrl);
             }
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
 
             // Ghi lại danh sách URL mới
             contract.getLiquidateFileUrls().addAll(uploadedUrls);
+            User currentUser = securityUtils.getLoggedInUser();
 
             contract.setStatus(ContractStatus.LIQUIDATED);
+            logAuditTrail(contract, "LIQUIDATED", "status", oldStatus, ContractStatus.LIQUIDATED.name(), currentUser.getFullName());
+
             contractRepository.save(contract);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
