@@ -93,13 +93,11 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
             });
 
 
-                // ✅ Kiểm tra người duyệt cuối cùng có phải là DIRECTOR chưa
                 User lastApprover = workflow.getStages().get(workflow.getStages().size() - 1).getApprover();
                 boolean isDirector = lastApprover.getRole() != null &&
                         Role.DIRECTOR.equalsIgnoreCase(lastApprover.getRole().getRoleName());
 
                 if (!isDirector) {
-                //✅ Thêm bước duyệt cuối cùng là Director
                 User director = userRepository.findAll().stream()
                         .filter(user -> user.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user.getRole().getRoleName()))
                         .findFirst()
@@ -370,6 +368,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     .customStagesCount(originalWorkflow.getCustomStagesCount())
                     .createdAt(LocalDateTime.now())
                     .contractType(originalWorkflow.getContractType())
+                    .contractVersion(contract.getVersion())
                     .build();
 
             // Clone các bước duyệt (stages) và đặt trạng thái về PENDING
@@ -594,6 +593,7 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                 .name(workflow.getName())
                 .customStagesCount(workflow.getCustomStagesCount())
                 .createdAt(workflow.getCreatedAt())
+                .reSubmitVersion(workflow.getContractVersion())
                 .stages(
                         workflow.getStages() != null ? workflow.getStages().stream()
                                 .map(stage -> ApprovalStageResponse.builder()
@@ -770,16 +770,15 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         if (workflow == null || workflow.getStages().isEmpty()) {
             throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho hợp đồng");
         }
+        workflow.setContractVersion(contract.getVersion());
+        approvalWorkflowRepository.save(workflow);
 
-        // Reset lại tất cả các bước duyệt: đặt trạng thái về PENDING, xóa approvedAt và comment
         workflow.getStages().forEach(stage -> {
             stage.setStatus(ApprovalStatus.NOT_STARTED);
             stage.setApprovedAt(null);
             stage.setComment(null);
             approvalStageRepository.save(stage);
         });
-
-        // Cập nhật lại trạng thái của hợp đồng về APPROVAL_PENDING (để báo hiệu đang chờ duyệt lại)
 
         String oldStatus = contract.getStatus().name();
         contract.setStatus(ContractStatus.APPROVAL_PENDING);
