@@ -57,7 +57,7 @@ public class ApprovalWorkflow {
     @JoinColumn(name = "contract_type_id")
     private ContractType contractType;
 
-    @Column(name="contract_version")
+    @Column(name="contract_version", nullable = true)
     private int contractVersion;
 
     @ManyToOne
