@@ -368,7 +368,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
                     .customStagesCount(originalWorkflow.getCustomStagesCount())
                     .createdAt(LocalDateTime.now())
                     .contractType(originalWorkflow.getContractType())
-                    .contractVersion(contract.getVersion())
                     .build();
 
             // Clone các bước duyệt (stages) và đặt trạng thái về PENDING
@@ -522,7 +521,9 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         // Lấy hợp đồng theo contractId
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
-
+        ApprovalWorkflow workflow = contract.getApprovalWorkflow();
+        workflow.setContractVersion(contract.getVersion());
+        approvalWorkflowRepository.save(workflow);
         // Tìm ApprovalStage theo stageId
         ApprovalStage stage = approvalStageRepository.findById(stageId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy giai đoạn phê duyệt"));
@@ -770,8 +771,6 @@ public class ApprovalWorkflowService implements IApprovalWorkflowService {
         if (workflow == null || workflow.getStages().isEmpty()) {
             throw new DataNotFoundException("Không tìm thấy quy trình phê duyệt cho hợp đồng");
         }
-        workflow.setContractVersion(contract.getVersion());
-        approvalWorkflowRepository.save(workflow);
 
         workflow.getStages().forEach(stage -> {
             stage.setStatus(ApprovalStatus.NOT_STARTED);
