@@ -1,6 +1,7 @@
     package com.capstone.contractmanagement.services.payment;
 
     import com.capstone.contractmanagement.dtos.payment.CreatePaymentScheduleDTO;
+    import com.capstone.contractmanagement.entities.Role;
     import com.capstone.contractmanagement.entities.addendum.AddendumPaymentSchedule;
     import com.capstone.contractmanagement.entities.contract.Contract;
     import com.capstone.contractmanagement.entities.PaymentSchedule;
@@ -12,6 +13,7 @@
     import com.capstone.contractmanagement.repositories.IAddendumPaymentScheduleRepository;
     import com.capstone.contractmanagement.repositories.IContractRepository;
     import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
+    import com.capstone.contractmanagement.repositories.IUserRepository;
     import com.capstone.contractmanagement.services.app_config.IAppConfigService;
     import com.capstone.contractmanagement.services.notification.INotificationService;
     import com.capstone.contractmanagement.services.sendmails.IMailService;
@@ -40,7 +42,7 @@
         private final SimpMessagingTemplate messagingTemplate;
         private final IMailService mailService;
         private final INotificationService notificationService;
-        private final IAppConfigService appConfigService;
+        private final IUserRepository userRepository;
         private final IAddendumPaymentScheduleRepository addendumPaymentScheduleRepository;
         private static final Logger logger = LoggerFactory.getLogger(PaymentScheduleService.class);
         @Override

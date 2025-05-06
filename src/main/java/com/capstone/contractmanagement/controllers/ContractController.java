@@ -592,7 +592,7 @@
         public ResponseEntity<ResponseObject> getLiquidateReason(@PathVariable Long contractId) throws DataNotFoundException {
             ContractLiquidationResponse responses = contractService.getContractLiquidateReason(contractId);
             return ResponseEntity.ok(ResponseObject.builder()
-                    .message("lấy lí do hủy thành công")
+                    .message("lấy lí do thành công")
                     .status(HttpStatus.OK)
                     .data(responses)
                     .build());
