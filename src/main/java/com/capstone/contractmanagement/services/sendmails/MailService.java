@@ -2,6 +2,7 @@ package com.capstone.contractmanagement.services.sendmails;
 
 import com.capstone.contractmanagement.dtos.DataMailDTO;
 import com.capstone.contractmanagement.entities.PartnerContract;
+import com.capstone.contractmanagement.entities.Role;
 import com.capstone.contractmanagement.entities.addendum.Addendum;
 import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
@@ -128,6 +129,7 @@ public class MailService implements IMailService{
                 props.put("contractTitle", payment.getContract().getTitle());
                 props.put("dueDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", payment.getPaymentOrder());
+                props.put("amount", payment.getAmount());
             }
 
             dataMailDTO.setProps(props);
@@ -150,6 +152,7 @@ public class MailService implements IMailService{
                 props.put("contractTitle", addendumPaymentSchedule.getAddendum().getContract().getTitle());
                 props.put("dueDate", addendumPaymentSchedule.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", addendumPaymentSchedule.getPaymentOrder());
+                props.put("amount", addendumPaymentSchedule.getAmount());
             }
 
             dataMailDTO.setProps(props);
@@ -164,7 +167,10 @@ public class MailService implements IMailService{
     @Async("taskExecutor")
     public void sendEmailPaymentExpired(PaymentSchedule payment) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
             dataMailDTO.setTo(new String[]{payment.getContract().getPartner().getEmail(), director.getEmail()});
@@ -176,6 +182,7 @@ public class MailService implements IMailService{
                 props.put("contractTitle", payment.getContract().getTitle());
                 props.put("dueDate", payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 props.put("stage", payment.getPaymentOrder());
+                props.put("amount", payment.getAmount());
             }
 
             dataMailDTO.setProps(props);
@@ -189,8 +196,12 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPaymentExpiredForAddendum(AddendumPaymentSchedule addendumPayment) {
         try {
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
-            dataMailDTO.setTo(new String[]{addendumPayment.getAddendum().getContract().getPartner().getEmail()});
+            dataMailDTO.setTo(new String[]{addendumPayment.getAddendum().getContract().getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_PAYMENT_EXPIRED);
 
             Map<String, Object> props = new HashMap<>();
@@ -304,7 +315,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractOverdue(Contract contract) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
             dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
@@ -331,9 +345,11 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractEffectiveDate(Contract contract) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
-            assert director != null;
             dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(),
                     director.getEmail(),
                     contract.getUser().getEmail()});
@@ -360,9 +376,12 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailContractExpiryDate(Contract contract) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
-            assert director != null;
+
             dataMailDTO.setTo(new String[]{contract.getPartner().getEmail(), director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.CONTRACT_EXPIRY_DATE_REMINDER);
 
@@ -440,7 +459,10 @@ public class MailService implements IMailService{
     @Async("taskExecutor")
     public void sendEmailAddendumExtendedDate(Addendum addendum) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
             dataMailDTO.setTo(new String[]{addendum.getContract().getPartner().getEmail(),director.getEmail(),
@@ -469,10 +491,12 @@ public class MailService implements IMailService{
     @Override
     @Async("taskExecutor")
     public void sendEmailAddendumEndExtendedDate(Addendum addendum) {
-        User director = userRepository.findById(5L).orElse(null);
+        User director = userRepository.findAll().stream()
+                .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
         try {
             DataMailDTO dataMailDTO = new DataMailDTO();
-            assert director != null;
             dataMailDTO.setTo(new String[]{
                     addendum.getContract().getPartner().getEmail(),
                     director.getEmail()
@@ -501,9 +525,11 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractEffectiveReminder(PartnerContract contract) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
-            assert director != null;
             dataMailDTO.setTo(new String[]{contract.getUser().getEmail(),
                     director.getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EFFECTIVE_DATE_REMINDER);
@@ -530,9 +556,11 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractExpiryReminder(PartnerContract contract) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
-            assert director != null;
             dataMailDTO.setTo(new String[]{contract.getUser().getEmail(), director.getEmail(),
                     contract.getPartner().getEmail()});
             dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.PARTNER_CONTRACT_EXPIRY_DATE_REMINDER);
@@ -585,7 +613,10 @@ public class MailService implements IMailService{
     @Override
     public void sendEmailPartnerContractPaymentExpired(PaymentSchedule payment) {
         try {
-            User director = userRepository.findById(5L).orElse(null);
+            User director = userRepository.findAll().stream()
+                    .filter(user1 -> user1.getRole() != null && Role.DIRECTOR.equalsIgnoreCase(user1.getRole().getRoleName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người duyệt có vai trò giám đốc"));
             DataMailDTO dataMailDTO = new DataMailDTO();
             assert director != null;
             dataMailDTO.setTo(new String[]{payment.getPartnerContract().getUser().getEmail(), director.getEmail(),
