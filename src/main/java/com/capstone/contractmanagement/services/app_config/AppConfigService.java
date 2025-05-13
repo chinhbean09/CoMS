@@ -20,7 +20,7 @@ public class AppConfigService implements  IAppConfigService{
     @Override
     public void updateConfig(Long id, AppConfigDTO appConfigDTO) throws DataNotFoundException {
         AppConfig appConfig = appConfigRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Config not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy cấu hình"));
 
         appConfig.setValue(appConfigDTO.getValue());
         appConfig.setDescription(appConfigDTO.getDescription());
@@ -30,8 +30,10 @@ public class AppConfigService implements  IAppConfigService{
     @Override
     public void deleteConfig(Long id) throws DataNotFoundException {
         AppConfig appConfig = appConfigRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Config not found"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy cấu hình"));
         appConfigRepository.delete(appConfig);
+
+        
 
     }
 

@@ -47,15 +47,13 @@ public class WebSecurityConfig {
                             .requestMatchers("/api-docs/**", "swagger-ui/**", "/swagger-ui.html").permitAll()
 
                             .requestMatchers(
-                                    String.format("%s/users/register", apiPrefix),
+//                                    String.format("%s/users/register", apiPrefix),
                                     String.format("%s/users/login", apiPrefix),
                                     String.format("%s/users/generate-secret-key", apiPrefix),
                                     String.format("%s/users/block-or-enable/**", apiPrefix),
                                     String.format("%s/users/oauth2/facebook", apiPrefix),
                                     String.format("%s/users/oauth2/google", apiPrefix),
-                                    String.format("%s/forgot-password/**", apiPrefix)
-
-                            )
+                                    String.format("%s/forgot-password/**", apiPrefix))
                             .permitAll()
                             .anyRequest()
                             .authenticated();

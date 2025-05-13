@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Thông báo hợp đồng có hiệu lực</title>
+    <title>Hết hạn thanh toán</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
     <style>
         body {
@@ -23,77 +23,77 @@
           margin: auto;
           background-color: #ffffff;
           border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
           overflow: hidden;
         }
         .header {
-          background-color: #56caff;
+          background-color: #ff5c5c;
           padding: 20px;
           text-align: center;
-          color: #ffffff;
+          color: #fff;
         }
         .header h1 {
           margin: 0;
-          font-size: 24px;
-          font-weight: 500;
+          font-size: 22px;
         }
         .body {
           padding: 30px;
-          line-height: 1.6;
         }
         .body p {
-          margin: 15px 0;
           font-size: 16px;
+          margin: 16px 0;
         }
-        .contract-info {
-          background-color: #f9fbfd;
-          border-left: 4px solid #56caff;
-          padding: 15px 20px;
+        .highlight-box {
+          background-color: #fff5f5;
+          border-left: 4px solid #ff5c5c;
+          padding: 16px;
+          border-radius: 6px;
           margin: 20px 0;
-          border-radius: 4px;
         }
-        .contract-info p {
+        .highlight-box p {
           margin: 8px 0;
-          font-weight: 500;
-          color: #56caff;
           font-size: 18px;
+          color: #e03131;
+          font-weight: 500;
         }
         .footer {
-          padding: 20px;
           text-align: center;
+          padding: 20px;
           font-size: 14px;
-          color: #999;
-          border-top: 1px solid #eaeaea;
+          color: #888;
+          border-top: 1px solid #eee;
         }
+
         @media (max-width: 600px) {
           .body, .header, .footer {
             padding: 20px;
-          }
-          .contract-info {
-            margin: 15px 0;
           }
         }
     </style>
 </head>
 <body>
-<table class="email-wrapper" cellpadding="0" cellspacing="0">
+<table class="email-wrapper">
     <tr>
         <td>
             <div class="email-content">
                 <div class="header">
-                    <h1>Thông Báo Hợp Đồng</h1>
+                    <h1>Hợp Đồng Đối Tác Hết Hạn Thanh Toán</h1>
                 </div>
                 <div class="body">
                     <p>Xin chào,</p>
-                    <p>Chúng tôi xin thông báo rằng hợp đồng của bạn đã có hiệu lực với thông tin chi tiết như sau:</p>
-                    <div class="contract-info">
-                        <p th:text="'Hợp đồng: ' + ${contractTitle}">Hợp đồng: [Tiêu đề hợp đồng]</p>
-                        <p th:text="'Số hợp đồng: ' + ${contractNumber}">Số hợp đồng: [Số hợp đồng]</p>
-                        <p th:text="'Ngày bắt đầu hiệu lực: ' + ${contractEffectiveDate}">Ngày bắt đầu hiệu lực: [Ngày hiệu lực]</p>
+                    <p>Chúng tôi xin thông báo rằng hợp đồng sau đã quá hạn thanh toán:</p>
+
+                    <div class="highlight-box">
+                        <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
+                        <p th:text="'Số Hợp đồng: ' + ${contractNumber}"></p>
+                        <p th:text="'Thanh toán đợt: ' + ${stage}"></p>
+                        <p th:text="'Ngày hết hạn: ' + ${paymentDate}"></p>
                     </div>
-                    <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc số điện thoại hỗ trợ.</p>
+
+                    <p>Nếu bạn đã thanh toán, vui lòng bỏ qua thông báo này.</p>
+
                     <p>Trân trọng,</p>
-                    <p><strong>Phòng Hợp Đồng</strong></p>
+
                 </div>
                 <div class="footer">
                     <p>Đây là email tự động. Vui lòng không trả lời.</p>

@@ -52,6 +52,7 @@ public class ContractResponse {
     private Integer maxDateLate;
     private Boolean autoRenew;
     private Boolean violate;
+    private String signedFilePath;
     private Boolean suspend;
     private String suspendContent;
     private Integer version;

@@ -1,6 +1,7 @@
 package com.capstone.contractmanagement.services.term;
 
 import com.capstone.contractmanagement.dtos.term.*;
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.term.CreateTermResponse;
@@ -9,7 +10,9 @@ import com.capstone.contractmanagement.responses.term.GetAllTermsResponseLessFie
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ITermService {
@@ -40,4 +43,16 @@ public interface ITermService {
     Page<GetAllTermsResponseLessField> getAllTermsLessField(List<Long> typeTermIds, boolean includeLegalBasis, String search, Pageable pageable);
 
     List<CreateTermResponse> batchCreateTerms(List<BatchCreateTermDTO> dtos) throws DataNotFoundException;
+
+    List<CreateTermResponse> importTermsFromExcel(MultipartFile file, Long typeTermId) throws IOException;
+
+    // search
+    Page<CreateTermResponse> searchTerm(String keyword, int page, int size);
+
+    Page<GetAllTermsResponse> getAllTermsByUser(
+                                                List<Long> typeTermIds,
+                                                boolean includeLegalBasis,
+                                                String search,
+                                                Pageable pageable);
+
 }

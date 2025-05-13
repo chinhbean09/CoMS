@@ -73,11 +73,8 @@ public class UserResponse {
                 .dateOfBirth(user.getDateOfBirth())
                 .department(user.getDepartment())
                 .staffCode(user.getStaffCode())
-                .facebookAccountId(user.getFacebookAccountId())
-                .googleAccountId(user.getGoogleAccountId())
                 .gender(user.getGender())
                 .role(user.getRole())
-                .isCeo(user.getIsCeo())
                 .avatar(user.getAvatar())
                 .build();
     }
