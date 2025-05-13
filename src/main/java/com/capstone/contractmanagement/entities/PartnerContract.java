@@ -21,7 +21,7 @@ public class PartnerContract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "contract_number", unique = true, length = 255)
+    @Column(name = "contract_number", length = 255)
     private String contractNumber;
 
     @Column(name = "amount")
@@ -42,7 +42,7 @@ public class PartnerContract {
     @Column(name = "title", length = 255)
     private String title;
 
-    @Column(name = "file_url", length = 255)
+    @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 
     @OneToMany(mappedBy = "partnerContract", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -61,4 +61,8 @@ public class PartnerContract {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "partner_id")
+    private Partner partner;
 }

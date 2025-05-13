@@ -12,7 +12,9 @@ import java.util.List;
 @Repository
 public interface INotificationRepository extends JpaRepository<Notification, Long> {
     // tìm notification theo người dùng và isRead = false
-    List<Notification> findByUserAndIsReadFalse(User user);
+    List<Notification> findByUser(User user);
 
-    Page<Notification> findByUser(User user, Pageable pageable); // tìm notification theo người dùng
+    Page<Notification> findByUser(User user, Pageable pageable);
+
+    long countByUserAndIsReadFalse(User user);// tìm notification theo người dùng
 }

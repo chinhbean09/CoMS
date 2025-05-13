@@ -1,6 +1,7 @@
     package com.capstone.contractmanagement.entities.contract;
 
     import com.capstone.contractmanagement.entities.*;
+    import com.capstone.contractmanagement.entities.addendum.Addendum;
     import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
     import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
     import com.capstone.contractmanagement.enums.ContractStatus;
@@ -50,6 +51,9 @@
 
         @Column(name = "updated_at")
         private LocalDateTime updatedAt;
+
+        @Column(name = "day_deleted")
+        private LocalDateTime daysDeleted;
 
         // Relationship với PaymentSchedules
         @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -166,7 +170,6 @@
         @JsonIgnore
         private List<Addendum> addenda = new ArrayList<>();
 
-
         //Việc tăng số phiên bản (version) trong hệ thống giúp phản ánh rằng hợp đồng
         //đã được chỉnh sửa và cho phép bạn theo dõi trạng thái tổng thể của hợp đồng qua thời gian.
         @Column(name = "version", nullable = false)
@@ -199,4 +202,39 @@
         @JsonIgnore
         private List<ContractPartner> contractPartners = new ArrayList<>();
 
+        @Column(name = "signed_file_path")
+        private String signedFilePath;
+
+        @Column(name = "signed_by")
+        private String signedBy;
+
+        @Column(name = "signed_at")
+        private LocalDateTime signedAt;
+
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_signed_url", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "signed_contract_url")
+        private List<String> signedContractUrls; // Lưu nhiều URL trong một trường
+        // Nội dung lý do hủy
+        @Column(name = "cancel_content", columnDefinition = "TEXT")
+        private String cancelContent;
+
+        @Column(name = "cancel_date")
+        private LocalDateTime cancelDate;
+
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_cancellation_files", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "cancellation_file_url")
+        private List<String> cancellationFileUrls = new ArrayList<>();
+
+        @Column(name = "liquidate_content", columnDefinition = "TEXT")
+        private String liquidateContent;
+
+        @Column(name = "liquidate_date")
+        private LocalDateTime liquidateDate;
+
+        @ElementCollection(fetch = FetchType.EAGER)
+        @CollectionTable(name = "contract_liquidate_files", joinColumns = @JoinColumn(name = "contract_id"))
+        @Column(name = "liquidate_file_url")
+        private List<String> liquidateFileUrls = new ArrayList<>();
     }

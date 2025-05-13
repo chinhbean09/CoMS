@@ -19,7 +19,7 @@ public class UserActivityLogger {
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
     public void controllerMethods() {}
 
-    @Around("controllerMethods() && execution(* com.project.shopapp.controllers.UserController.*(..))")
+        @Around("controllerMethods() && execution(* com.capstone.contractmanagement.controllers.UserController.*(..))")
     public Object logUserActivity(ProceedingJoinPoint joinPoint) throws Throwable {
         // Ghi log trước khi thực hiện method
         String methodName = joinPoint.getSignature().getName();

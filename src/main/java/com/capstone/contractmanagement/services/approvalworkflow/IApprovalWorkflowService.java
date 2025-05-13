@@ -4,6 +4,7 @@ import com.capstone.contractmanagement.dtos.approvalworkflow.ApprovalWorkflowDTO
 import com.capstone.contractmanagement.dtos.approvalworkflow.UpdateApprovalStageDTO;
 import com.capstone.contractmanagement.dtos.approvalworkflow.WorkflowDTO;
 import com.capstone.contractmanagement.enums.ApprovalStatus;
+import com.capstone.contractmanagement.enums.ContractStatus;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalStageResponse;
 import com.capstone.contractmanagement.responses.approvalworkflow.ApprovalWorkflowResponse;
@@ -41,7 +42,7 @@ public interface IApprovalWorkflowService {
 
     List<CommentResponse> getApprovalStageCommentDetailsByContractId(Long contractId) throws DataNotFoundException;
 
-    Page<GetContractForApproverResponse> getContractsForApprover(Long approverId, String keyword, Long contractTypeId, int page, int size);
+    Page<GetContractForApproverResponse> getContractsForApprover(Long approverId, String keyword, Long contractTypeId, ContractStatus status, int page, int size);
     void resubmitContractForApproval(Long contractId) throws DataNotFoundException;
 
     Page<GetContractForApproverResponse> getContractsForManager(Long managerId, String keyword, Long contractTypeId, int page, int size);

@@ -25,9 +25,10 @@ public class ContractTypeService implements IContractTypeService {
     public Optional<ContractType> findById(Long id) {
         return Optional.ofNullable(contractTypeRepository.findById(id)
                 .filter(contractType -> !contractType.isDeleted())
-                .orElseThrow(() -> new EntityNotFoundException("ContractType not found")));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy loại hợp đồng")));
     }
     @Override
+    @Transactional
     public ContractType save(ContractType contractType) {
 //        boolean exists = contractTypeRepository.existsByNqame(contractType.getName());
 
@@ -35,7 +36,7 @@ public class ContractTypeService implements IContractTypeService {
 
         // Nếu tồn tại bản ghi chưa bị xóa với tên trùng, ném lỗi
         if (existingOpt.isPresent()) {
-            throw new IllegalArgumentException("Contract type with name '" + contractType.getName() + "' already exists.");
+            throw new IllegalArgumentException("Loại hợp đồng với tên '" + contractType.getName() + "' đã tồn tại.");
         }
 
         // Nếu không tìm thấy bản ghi trùng tên và chưa bị xóa, lưu bản ghi mới
@@ -54,7 +55,7 @@ public class ContractTypeService implements IContractTypeService {
                     existingType.setName(contractType.getName());
                     return contractTypeRepository.save(existingType);
                 })
-                .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy loại hợp đồng"));
     }
 
 
@@ -70,7 +71,15 @@ public class ContractTypeService implements IContractTypeService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateDeleteStatus(Long id, Boolean isDeleted) {
         ContractType contractType = contractTypeRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ContractType not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(" Không tìm thấy loại hợp đồng"));
+
+        if (isDeleted) {
+            // Check if any ContractTemplate is using this ContractType
+            if (!contractType.getTemplates().isEmpty() || !contractType.getContracts().isEmpty()) {
+                throw new IllegalStateException("Không thể xóa loại hợp đồng này vì nó đang được sử dụng trong hợp đồng/mẫu hợp đồng");
+            }
+        }
+
         contractType.setDeleted(isDeleted);
         contractTypeRepository.save(contractType);
     }

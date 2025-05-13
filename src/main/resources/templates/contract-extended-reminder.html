@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông Báo Ký Hợp Đồng</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #f4f7f9;
+          font-family: 'Roboto', sans-serif;
+          color: #333;
+        }
+        .email-wrapper {
+          width: 100%;
+          background-color: #f4f7f9;
+          padding: 40px 0;
+        }
+        .email-content {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+        }
+        .header {
+          background-color: #4caf50;
+          padding: 24px;
+          text-align: center;
+          color: #fff;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 20px;
+        }
+        .body {
+          padding: 30px;
+        }
+        .body p {
+          font-size: 16px;
+          margin: 12px 0;
+        }
+        .contract-info {
+          background-color: #f0f9ff;
+          padding: 16px;
+          border-left: 4px solid #4caf50;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .contract-info p {
+          font-size: 17px;
+          margin: 8px 0;
+          color: #1d77c2;
+        }
+        .footer {
+          padding: 20px;
+          font-size: 14px;
+          color: #888;
+          text-align: center;
+          border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 600px) {
+          .body, .header, .footer {
+            padding: 20px;
+          }
+        }
+    </style>
+</head>
+<body>
+<div class="email-wrapper">
+    <div class="email-content">
+        <div class="header">
+            <h1>Hợp Đồng Đã Được Gia Hạn</h1>
+        </div>
+        <div class="body">
+            <p>Xin chào,</p>
+            <p>Hợp đồng sau đã được gia hạn thành công</p>
+
+            <div class="contract-info">
+                <p th:text="'Tên phụ lục: ' + ${addendumTitle}"></p>
+                <p th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
+                <p th:text="'Ngày bắt đầu gia hạn ' + ${addendumExtendContractDate}"></p>
+                <p th:text="'Ngày kết thúc gia hạn ' + ${addendumContractExpirationDate}"></p>
+            </div>
+
+            <p>Mọi thông tin chi tiết vui lòng kiểm tra trên hệ thống.</p>
+
+            <p>Trân trọng,</p>
+        </div>
+        <div class="footer">
+            <p>Đây là email tự động. Vui lòng không trả lời.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

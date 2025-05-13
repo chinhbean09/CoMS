@@ -23,5 +23,6 @@ public class ListPartnerResponse {
     private String position;
     private Boolean isDeleted;
     private String abbreviation;
+    private CreatedByResponse createdBy;
     private List<BankResponse> banking;
 }

@@ -31,6 +31,12 @@ public class GetAllContractReponse {
     private Long originalContractId;
     private Long approvalWorkflowId;
 
+    private LocalDateTime daysDeleted;
     private ContractPartnerDTO partnerA;
     private ContractPartnerDTO partnerB;
+    private LocalDateTime expiryDate;
+    private LocalDateTime effectiveDate;
+    private LocalDateTime signingDate;
+    private String signedFilePath;
+
 }

@@ -1,5 +1,6 @@
 package com.capstone.contractmanagement.entities.term;
 
+import com.capstone.contractmanagement.entities.User;
 import com.capstone.contractmanagement.enums.TermStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,7 +21,7 @@ public class Term {
     @Column(name = "term_id")
     private Long id;
 
-    @Column(name = "label", nullable = false, columnDefinition = "TEXT", unique = true)
+    @Column(name = "label", nullable = false, columnDefinition = "TEXT")
     private String label;
 
     @Column(name = "value", nullable = false, columnDefinition = "TEXT")
@@ -45,6 +46,10 @@ public class Term {
     // Số phiên bản của điều khoản, update +=1
     @Column(name = "version", nullable = false)
     private Integer version = 1;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
 }

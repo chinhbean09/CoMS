@@ -7,6 +7,16 @@ import java.util.List;
 
 public interface IApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, Long> {
     List<ApprovalWorkflow> findByContractType_Id(Long contractTypeId);
-    List<ApprovalWorkflow> findTop3ByContractType_IdOrderByCreatedAtDesc(Long contractTypeId);
-    List<ApprovalWorkflow> findTop3ByAddendumType_IdOrderByCreatedAtDesc(Long addendumTypeId);
+    // Lấy 3 workflow mới nhất theo loại hợp đồng và theo người tạo
+    List<ApprovalWorkflow> findTop3ByContractType_IdAndUser_IdOrderByCreatedAtDesc(
+            Long contractTypeId,
+            Long userId
+    );
+    List<ApprovalWorkflow> findByContractType_IdAndUser_IdOrderByCreatedAtDesc(
+            Long contractTypeId,
+            Long userId
+    );
+    List<ApprovalWorkflow> findTop3ByOrderByCreatedAtDesc();
+    List<ApprovalWorkflow> findTop3ByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(Long userId);
+    List<ApprovalWorkflow> findByUser_IdAndAddendumNotNullOrderByCreatedAtDesc(Long userId);
 }
