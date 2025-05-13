@@ -1,39 +1,63 @@
 package com.capstone.contractmanagement.services.contract;
 
+import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.components.SecurityUtils;
+import com.capstone.contractmanagement.dtos.FileBase64DTO;
 import com.capstone.contractmanagement.dtos.contract.*;
 import com.capstone.contractmanagement.dtos.payment.PaymentDTO;
 import com.capstone.contractmanagement.dtos.payment.PaymentScheduleDTO;
 import com.capstone.contractmanagement.entities.*;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
 import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
 import com.capstone.contractmanagement.entities.contract.*;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.entities.term.Term;
 import com.capstone.contractmanagement.entities.term.TypeTerm;
 import com.capstone.contractmanagement.enums.*;
+import com.capstone.contractmanagement.exceptions.ContractAccessDeniedException;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
+import com.capstone.contractmanagement.exceptions.InvalidParamException;
 import com.capstone.contractmanagement.repositories.*;
+import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.User.UserContractResponse;
 import com.capstone.contractmanagement.responses.contract.*;
 import com.capstone.contractmanagement.responses.payment_schedule.PaymentScheduleResponse;
 import com.capstone.contractmanagement.responses.term.TermResponse;
 import com.capstone.contractmanagement.responses.term.TypeTermResponse;
+import com.capstone.contractmanagement.services.notification.INotificationService;
+import com.capstone.contractmanagement.services.sendmails.MailService;
+import com.capstone.contractmanagement.utils.MessageKeys;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class ContractService implements IContractService{
@@ -53,461 +77,509 @@ public class ContractService implements IContractService{
     private final IPaymentScheduleRepository paymentScheduleRepository;
     private final SecurityUtils securityUtils;
     private final IApprovalWorkflowRepository workflowRepository;
+    private final Cloudinary cloudinary;
+    private final LocalizationUtils localizationUtils;
+    private static final Logger logger = LoggerFactory.getLogger(ContractService.class);
+    private final SimpMessagingTemplate messagingTemplate;
+    private final INotificationService notificationService;
+    private final MailService mailService;
 
-        @Transactional
-        @Override
-        public Contract createContractFromTemplate(ContractDTO dto) {
-            // 1. Load các entity cần thiết
-            // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
-            ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
+    @Override
+    public Contract createContractFromTemplate(ContractDTO dto) {
+        // 1. Load các entity cần thiết
+        // Kiểm tra và ném lỗi nếu không tìm thấy mẫu hợp đồng hoặc đối tác
+        ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
 
-            //        Partner partner = partnerRepository.findById(dto.getPartnerId())
-            //                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+        //        Partner partner = partnerRepository.findById(dto.getPartnerId())
+        //                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
 
-            Partner partnerB = partnerRepository.findById(dto.getPartnerId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+        Partner partnerB = partnerRepository.findById(dto.getPartnerId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
 
-            User user = currentUser.getLoggedInUser();
+        User user = currentUser.getLoggedInUser();
 
-            Partner partnerA = partnerRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A mặc định"));
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác bên  A mặc định"));
 
-            if (user == null) {
-                throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
-            }
-
-            LocalDateTime createdAt = LocalDateTime.now();
-            String contractNumber = generateContractNumber(dto, createdAt);
-
-            // 2. Tạo hợp đồng mới
-            Contract contract = Contract.builder()
-                    .title(dto.getTemplateData().getContractTitle())
-                    .contractNumber(contractNumber)
-                    .partner(partnerB)
-                    .user(user)
-                    .template(template)
-                    .signingDate(dto.getSigningDate())
-                    .contractLocation(dto.getContractLocation())
-                    .amount(dto.getTotalValue())
-                    .effectiveDate(dto.getEffectiveDate())
-                    .expiryDate(dto.getExpiryDate())
-                    .notifyEffectiveDate(dto.getNotifyEffectiveDate())
-                    .notifyExpiryDate(dto.getNotifyExpiryDate())
-                    .notifyEffectiveContent(dto.getNotifyEffectiveContent())
-                    .notifyExpiryContent(dto.getNotifyExpiryContent())
-                    .title(dto.getContractTitle())
-                    .specialTermsA(dto.getTemplateData().getSpecialTermsA())
-                    .specialTermsB(dto.getTemplateData().getSpecialTermsB())
-                    .contractContent(dto.getTemplateData().getContractContent())
-                    .appendixEnabled(dto.getTemplateData().getAppendixEnabled())
-                    .transferEnabled(dto.getTemplateData().getTransferEnabled())
-                    .autoAddVAT(dto.getTemplateData().getAutoAddVAT())
-                    .vatPercentage(dto.getTemplateData().getVatPercentage())
-                    .isDateLateChecked(dto.getTemplateData().getIsDateLateChecked())
-                    .autoRenew(dto.getTemplateData().getAutoRenew())
-                    .violate(dto.getTemplateData().getViolate())
-                    .contractType(template.getContractType())
-                    .suspend(dto.getTemplateData().getSuspend())
-                    .suspendContent(dto.getTemplateData().getSuspendContent())
-                    .status(ContractStatus.CREATED)
-                    .maxDateLate(dto.getTemplateData().getMaxDateLate())
-                    .contractType(template.getContractType())
-                    .createdAt(LocalDateTime.now())
-                    .version(1)
-                    .isLatestVersion(true)
-                    .duplicateNumber(0)
-                    .build();
-
-            List<ContractPartner> contractPartners = new ArrayList<>();
-            contractPartners.add(ContractPartner.builder()
-                    .contract(contract)
-                    .partnerType(PartnerType.PARTNER_A)
-                    .partnerName(partnerA.getPartnerName())
-                    .partnerAddress(partnerA.getAddress())
-                    .partnerTaxCode(partnerA.getTaxCode())
-                    .partnerPhone(partnerA.getPhone())
-                    .partnerEmail(partnerA.getEmail())
-                    .spokesmanName(partnerA.getSpokesmanName())
-                    .position(partnerA.getPosition())
-                    .partner(partnerA)
-                    .build());
-
-            contractPartners.add(ContractPartner.builder()
-                    .contract(contract)
-                    .partnerType(PartnerType.PARTNER_B)
-                    .partnerName(partnerB.getPartnerName())
-                    .partnerAddress(partnerB.getAddress())
-                    .partnerTaxCode(partnerB.getTaxCode())
-                    .partnerPhone(partnerB.getPhone())
-                    .partnerEmail(partnerB.getEmail())
-                    .spokesmanName(partnerB.getSpokesmanName())
-                    .position(partnerB.getPosition())
-                    .partner(partnerB)
-                    .build());
-            contract.setContractPartners(contractPartners); // Gán danh sách vào hợp đồng
-
-            // 3. Map các điều khoản đơn giản sang ContractTerm
-            List<ContractTerm> contractTerms = new ArrayList<>();
-
-            if (dto.getContractItems() != null && !dto.getContractItems().isEmpty()) {
-                List<ContractItem> contractItems = new ArrayList<>();
-                int order = 1;
-                for (ContractItemDTO itemDTO : dto.getContractItems()) {
-                    if (itemDTO.getDescription() == null || itemDTO.getDescription().trim().isEmpty()) {
-                        throw new IllegalArgumentException("Mô tả hạng mục không được để trống.");
-                    }
-                    if (itemDTO.getAmount() == null || itemDTO.getAmount() <= 0.0) {
-                        throw new IllegalArgumentException("Số tiền hạng mục phải lớn hơn 0.");
-                    }
-
-                    ContractItem item = ContractItem.builder()
-                            .contract(contract)
-                            .description(itemDTO.getDescription())
-                            .amount(itemDTO.getAmount())
-                            .itemOrder(order++)
-                            .build();
-                    contractItems.add(item);
-                }
-                contract.setContractItems(contractItems);
-            }
-
-            // Căn cứ pháp lý
-            if (dto.getTemplateData().getLegalBasisTerms() != null) {
-                for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasisTerms()) {
-                    if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
-                    }
-                    Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
-                    }
-                    contractTerms.add(ContractTerm.builder()
-                            .originalTermId(term.getId())
-                            .termLabel(term.getLabel())
-                            .termValue(term.getValue())
-                            .termType(TypeTermIdentifier.LEGAL_BASIS)
-                            .contract(contract)
-                            .build());
-                }
-            }
-
-            // Các điều khoản chung
-            if (dto.getTemplateData().getGeneralTerms() != null) {
-                for (TermSnapshotDTO termDTO : dto.getTemplateData().getGeneralTerms()) {
-                    if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
-                    }
-                    Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
-                    }
-                    contractTerms.add(ContractTerm.builder()
-                            .originalTermId(term.getId())
-                            .termLabel(term.getLabel())
-                            .termValue(term.getValue())
-                            .termType(TypeTermIdentifier.GENERAL_TERMS)
-                            .contract(contract)
-                            .build());
-                }
-            }
-
-            // Các điều khoản khác
-            if (dto.getTemplateData().getOtherTerms() != null) {
-                for (TermSnapshotDTO termDTO : dto.getTemplateData().getOtherTerms()) {
-                    if (termDTO.getId() == null) {
-                        throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
-                    }
-                    Term term = termRepository.findById(termDTO.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                    if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
-                    }
-                    contractTerms.add(ContractTerm.builder()
-                            .originalTermId(term.getId())
-                            .termLabel(term.getLabel())
-                            .termValue(term.getValue())
-                            .termType(TypeTermIdentifier.OTHER_TERMS)
-                            .contract(contract)
-                            .build());
-                }
-            }
-
-            contract.setContractTerms(contractTerms);
-
-            // 4. Map additionalConfig sang ContractAdditionalTermDetail
-            List<ContractAdditionalTermDetail> additionalDetails = new ArrayList<>();
-            if (dto.getTemplateData().getAdditionalConfig() != null) {
-                Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getTemplateData().getAdditionalConfig();
-                for (Map.Entry<String, Map<String, List<TermSnapshotDTO>>> entry : configMap.entrySet()) {
-                    String key = entry.getKey();
-                    Long configTypeTermId;
-                    try {
-                        configTypeTermId = Long.parseLong(key);
-                    } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException("Key trong additionalConfig phải là số đại diện cho Id của loại điều khoản. Key không hợp lệ: " + key);
-                    }
-                    Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
-
-                    // Map nhóm Common
-                    List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
-                    if (groupConfig.containsKey("Common")) {
-                        for (TermSnapshotDTO termDTO : groupConfig.get("Common")) {
-                            if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm điều khoản chung không được để trống.");
-                            }
-                            Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                            commonSnapshots.add(AdditionalTermSnapshot.builder()
-                                    .termId(term.getId())
-                                    .termLabel(term.getLabel())
-                                    .termValue(term.getValue())
-                                    .build());
-                        }
-                    }
-
-                    // Map nhóm A
-                    List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
-                    if (groupConfig.containsKey("A")) {
-                        for (TermSnapshotDTO termDTO : groupConfig.get("A")) {
-                            if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm bên A không được để trống.");
-                            }
-                            Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                            aSnapshots.add(AdditionalTermSnapshot.builder()
-                                    .termId(term.getId())
-                                    .termLabel(term.getLabel())
-                                    .termValue(term.getValue())
-                                    .build());
-                        }
-                    }
-
-                    // Map nhóm B
-                    List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
-                    if (groupConfig.containsKey("B")) {
-                        for (TermSnapshotDTO termDTO : groupConfig.get("B")) {
-                            if (termDTO.getId() == null) {
-                                throw new IllegalArgumentException("ID của điều khoản trong nhóm bên B không được để trống.");
-                            }
-                            Term term = termRepository.findById(termDTO.getId())
-                                    .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
-                            bSnapshots.add(AdditionalTermSnapshot.builder()
-                                    .termId(term.getId())
-                                    .termLabel(term.getLabel())
-                                    .termValue(term.getValue())
-                                    .build());
-                        }
-                    }
-
-                    // Kiểm tra trùng lặp
-                    Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    if (!unionCommonA.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
-                    }
-                    Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    if (!unionCommonB.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
-                    }
-                    Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
-                    if (!unionAB.isEmpty()) {
-                        throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
-                    }
-
-                    // Kiểm tra type term
-                    for (AdditionalTermSnapshot snap : commonSnapshots) {
-                        Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
-                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
-                        }
-                    }
-                    for (AdditionalTermSnapshot snap : aSnapshots) {
-                        Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
-                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
-                        }
-                    }
-                    for (AdditionalTermSnapshot snap : bSnapshots) {
-                        Term term = termRepository.findById(snap.getTermId())
-                                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
-                        if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
-                            throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
-                        }
-                    }
-
-                    ContractAdditionalTermDetail configDetail = ContractAdditionalTermDetail.builder()
-                            .typeTermId(configTypeTermId)
-                            .commonTerms(commonSnapshots)
-                            .aTerms(aSnapshots)
-                            .bTerms(bSnapshots)
-                            .contract(contract)
-                            .build();
-                    additionalDetails.add(configDetail);
-                }
-            }
-            contract.setAdditionalTermDetails(additionalDetails);
-
-            // 5. Ánh xạ lịch thanh toán
-            List<PaymentSchedule> paymentSchedules = new ArrayList<>();
-            if (dto.getPayments() != null) {
-                int order = 1;
-                for (PaymentDTO paymentDTO : dto.getPayments()) {
-                    if (paymentDTO.getAmount() == null || paymentDTO.getAmount() <= 0.0) {
-                        throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0.");
-                    }
-                    if (paymentDTO.getPaymentDate() == null) {
-                        throw new IllegalArgumentException("Ngày thanh toán không được để trống.");
-                    }
-                    PaymentSchedule paymentSchedule = PaymentSchedule.builder()
-                            .amount(paymentDTO.getAmount())
-                            .paymentDate(paymentDTO.getPaymentDate())
-                            .notifyPaymentDate(paymentDTO.getNotifyPaymentDate())
-                            .paymentOrder(order++)
-                            .status(PaymentStatus.UNPAID)
-                            .paymentMethod(paymentDTO.getPaymentMethod())
-                            .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
-                            .contract(contract)
-                            .build();
-                    paymentSchedules.add(paymentSchedule);
-                }
-            }
-            contract.setPaymentSchedules(paymentSchedules);
-
-            // 6. Lưu hợp đồng
-            Contract savedContract = contractRepository.save(contract);
-            savedContract.setOriginalContractId(savedContract.getId());
-            savedContract.setSourceContractId(null); // Không có hợp đồng nguồn
-            contractRepository.save(savedContract);
-
-            // 7. Ghi audit trail cho các trường quan trọng
-            List<AuditTrail> auditTrails = new ArrayList<>();
-            LocalDateTime now = LocalDateTime.now();
-            String changedBy = user.getFullName();
-
-            // Ghi audit cho từng trường với change summary bằng tiếng Việt
-            auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy,
-                    "Tạo hợp đồng mới với tiêu đề: " + savedContract.getTitle()));
-            auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy,
-                    "Gán số hợp đồng: " + savedContract.getContractNumber()));
-            auditTrails.add(createAuditTrail(savedContract, "partner", null, savedContract.getPartner().getId().toString(), now, changedBy,
-                    "Liên kết với đối tác có ID: " + savedContract.getPartner().getId()));
-            auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy,
-                    "Gán cho người dùng có ID: " + savedContract.getUser().getId()));
-            auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy,
-                    "Sử dụng mẫu hợp đồng có ID: " + savedContract.getTemplate().getId()));
-            auditTrails.add(createAuditTrail(savedContract, "signingDate", null,
-                    savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : null, now, changedBy,
-                    "Đặt ngày ký hợp đồng: " + (savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : "không có")));
-            auditTrails.add(createAuditTrail(savedContract, "contractLocation", null, savedContract.getContractLocation(), now, changedBy,
-                    "Đặt địa điểm ký hợp đồng: " + savedContract.getContractLocation()));
-            auditTrails.add(createAuditTrail(savedContract, "amount", null,
-                    savedContract.getAmount() != null ? savedContract.getAmount().toString() : null, now, changedBy,
-                    "Đặt giá trị hợp đồng: " + (savedContract.getAmount() != null ? savedContract.getAmount().toString() : "không có")));
-            auditTrails.add(createAuditTrail(savedContract, "effectiveDate", null,
-                    savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : null, now, changedBy,
-                    "Đặt ngày hiệu lực: " + (savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : "không có")));
-            auditTrails.add(createAuditTrail(savedContract, "expiryDate", null,
-                    savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : null, now, changedBy,
-                    "Đặt ngày hết hạn: " + (savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : "không có")));
-            auditTrails.add(createAuditTrail(savedContract, "status", null, savedContract.getStatus().name(), now, changedBy,
-                    "Đặt trạng thái ban đầu: " + savedContract.getStatus().name()));
-            auditTrails.add(createAuditTrail(savedContract, "createdAt", null, savedContract.getCreatedAt().toString(), now, changedBy,
-                    "Hợp đồng được tạo vào: " + savedContract.getCreatedAt().toString()));
-
-            // Ghi audit cho ContractTerm
-            for (ContractTerm term : savedContract.getContractTerms()) {
-                String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
-                        term.getOriginalTermId(), term.getTermLabel(), term.getTermValue(), term.getTermType().name());
-                auditTrails.add(AuditTrail.builder()
-                        .contract(savedContract)
-                        .entityName("ContractTerm")
-                        .entityId(term.getId())
-                        .action("CREATE")
-                        .fieldName("contractTerms")
-                        .oldValue(null)
-                        .newValue(newValue)
-                        .changedAt(now)
-                        .changedBy(changedBy)
-                        .changeSummary("Tạo điều khoản hợp đồng: " + term.getTermLabel() + "cho hợp đồng " + savedContract.getTitle())
-                        .build());
-            }
-
-            // Ghi audit cho ContractAdditionalTermDetail
-            for (ContractAdditionalTermDetail detail : savedContract.getAdditionalTermDetails()) {
-                try {
-                    String newValue = objectMapper.writeValueAsString(detail);
-                    auditTrails.add(AuditTrail.builder()
-                            .contract(savedContract)
-                            .entityName("ContractAdditionalTermDetail")
-                            .entityId(detail.getId())
-                            .action("CREATE")
-                            .fieldName("additionalTermDetails")
-                            .oldValue(null)
-                            .newValue(newValue)
-                            .changedAt(now)
-                            .changedBy(changedBy)
-                            .changeSummary("Tạo chi tiết điều khoản bổ sung cho hợp đồng")
-                            .build());
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException("Không thể chuyển đổi ContractAdditionalTermDetail thành JSON: " + e.getMessage());
-                }
-            }
-
-            // Ghi audit cho ContractItem
-            if (savedContract.getContractItems() != null && !savedContract.getContractItems().isEmpty()) {
-                for (ContractItem item : savedContract.getContractItems()) {
-                    String newValue = String.format("Item ID: %d, Order: %d, Description: %s, Amount: %.2f",
-                            item.getId(), item.getItemOrder(), item.getDescription(), item.getAmount());
-                    auditTrails.add(AuditTrail.builder()
-                            .contract(savedContract)
-                            .entityName("ContractItem")
-                            .entityId(item.getId())
-                            .action("CREATE")
-                            .fieldName("contractItems")
-                            .oldValue(null)
-                            .newValue(newValue)
-                            .changedAt(now)
-                            .changedBy(changedBy)
-                            .changeSummary("Tạo hạng mục thanh toán: " + item.getDescription() + " cho hợp đồng " + savedContract.getTitle())
-                            .build());
-                }
-            }
-
-            for (ContractPartner contractPartner : savedContract.getContractPartners()) {
-                String newValue = String.format("Party Type: %s, Name: %s, Partner Address: %s, Partner Tax Code: %s, " +
-                                "Partner Phone: %s, Partner Email: %s, Spokesman Name: %s, Position: %s",
-                        contractPartner.getPartnerType(), contractPartner.getPartnerName(),
-                        contractPartner.getPartnerAddress(), contractPartner.getPartnerTaxCode(),
-                        contractPartner.getPartnerPhone(), contractPartner.getPartnerEmail(),
-                        contractPartner.getSpokesmanName(), contractPartner.getPosition());
-                auditTrails.add(AuditTrail.builder()
-                        .contract(savedContract)
-                        .entityName("ContractPartner")
-                        .entityId(contractPartner.getId()) // ID sẽ có sau khi save
-                        .action("CREATE")
-                        .fieldName("contractPartners")
-                        .oldValue(null)
-                        .newValue(newValue)
-                        .changedAt(now)
-                        .changedBy(changedBy)
-                        .changeSummary("Thêm thông tin " + contractPartner.getPartnerType() + " cho hợp đồng: " + savedContract.getTitle())
-                        .build());
-            }
-
-            // Lưu tất cả bản ghi audit trail
-            auditTrailRepository.saveAll(auditTrails);
-
-
-            return savedContract;
+        if (user == null) {
+            throw new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại.");
         }
 
+        LocalDateTime createdAt = LocalDateTime.now();
+        String contractNumber;
+
+        // Kiểm tra nếu contractNumber từ DTO có dữ liệu thì sử dụng, nếu không thì sinh tự động
+        if (dto.getContractNumber() != null && !dto.getContractNumber().trim().isEmpty()) {
+            contractNumber = dto.getContractNumber().trim();
+            // Kiểm tra tính duy nhất của contractNumber
+            if (contractRepository.existsByContractNumber(contractNumber)) {
+                throw new IllegalArgumentException("Số hợp đồng '" + contractNumber + "' đã tồn tại. Vui lòng chọn số khác.");
+            }
+        } else {
+            contractNumber = generateContractNumber(dto, createdAt);
+        }
+
+        // 2. Tạo hợp đồng mới
+        Contract contract = Contract.builder()
+                .title(dto.getTemplateData().getContractTitle())
+                .contractNumber(contractNumber)
+                .partner(partnerB)
+                .user(user)
+                .template(template)
+                .signingDate(dto.getSigningDate())
+                .contractLocation(dto.getContractLocation())
+                .amount(dto.getTotalValue())
+                .effectiveDate(dto.getEffectiveDate())
+                .expiryDate(dto.getExpiryDate())
+                .notifyEffectiveDate(dto.getNotifyEffectiveDate())
+                .notifyExpiryDate(dto.getNotifyExpiryDate())
+                .notifyEffectiveContent(dto.getNotifyEffectiveContent())
+                .notifyExpiryContent(dto.getNotifyExpiryContent())
+                .title(dto.getContractTitle())
+                .specialTermsA(dto.getTemplateData().getSpecialTermsA())
+                .specialTermsB(dto.getTemplateData().getSpecialTermsB())
+                .contractContent(dto.getTemplateData().getContractContent())
+                .appendixEnabled(dto.getTemplateData().getAppendixEnabled())
+                .transferEnabled(dto.getTemplateData().getTransferEnabled())
+                .autoAddVAT(dto.getTemplateData().getAutoAddVAT())
+                .vatPercentage(dto.getTemplateData().getVatPercentage())
+                .isDateLateChecked(dto.getTemplateData().getIsDateLateChecked())
+                .autoRenew(dto.getTemplateData().getAutoRenew())
+                .violate(dto.getTemplateData().getViolate())
+                .contractType(template.getContractType())
+                .suspend(dto.getTemplateData().getSuspend())
+                .suspendContent(dto.getTemplateData().getSuspendContent())
+                .status(ContractStatus.CREATED)
+                .maxDateLate(dto.getTemplateData().getMaxDateLate())
+                .contractType(template.getContractType())
+                .createdAt(LocalDateTime.now())
+                .version(1)
+                .isLatestVersion(true)
+                .duplicateNumber(0)
+                .isEffectiveNotified(false)
+                .isExpiryNotified(false)
+                .isEffectiveOverdueNotified(false)
+                .build();
+
+        List<ContractPartner> contractPartners = buildContractPartners(contract, partnerA, partnerB);
+        contract.setContractPartners(contractPartners);
+        // 3. Map các điều khoản đơn giản sang ContractTerm
+        List<ContractTerm> contractTerms = new ArrayList<>();
+
+        if (dto.getContractItems() != null && !dto.getContractItems().isEmpty()) {
+            List<ContractItem> contractItems = new ArrayList<>();
+            int order = 1;
+            for (ContractItemDTO itemDTO : dto.getContractItems()) {
+                if (itemDTO.getDescription() == null || itemDTO.getDescription().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Mô tả hạng mục không được để trống.");
+                }
+                if (itemDTO.getAmount() == null || itemDTO.getAmount() <= 0.0) {
+                    throw new IllegalArgumentException("Số tiền hạng mục phải lớn hơn 0.");
+                }
+
+                ContractItem item = ContractItem.builder()
+                        .contract(contract)
+                        .description(itemDTO.getDescription())
+                        .amount(itemDTO.getAmount())
+                        .itemOrder(order++)
+                        .build();
+                contractItems.add(item);
+            }
+            contract.setContractItems(contractItems);
+        }
+
+        // Căn cứ pháp lý
+        if (dto.getTemplateData().getLegalBasisTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getLegalBasisTerms()) {
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản Căn cứ pháp lý không được để trống.");
+                }
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Căn cứ pháp lý (LEGAL_BASIS).");
+                }
+                contractTerms.add(ContractTerm.builder()
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
+                        .termType(TypeTermIdentifier.LEGAL_BASIS)
+                        .contract(contract)
+                        .build());
+            }
+        }
+
+        // Các điều khoản chung
+        if (dto.getTemplateData().getGeneralTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getGeneralTerms()) {
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản chung không được để trống.");
+                }
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản chung (GENERAL_TERMS).");
+                }
+                contractTerms.add(ContractTerm.builder()
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
+                        .termType(TypeTermIdentifier.GENERAL_TERMS)
+                        .contract(contract)
+                        .build());
+            }
+        }
+
+        // Các điều khoản khác
+        if (dto.getTemplateData().getOtherTerms() != null) {
+            for (TermSnapshotDTO termDTO : dto.getTemplateData().getOtherTerms()) {
+                if (termDTO.getId() == null) {
+                    throw new IllegalArgumentException("ID của điều khoản khác không được để trống.");
+                }
+                Term term = termRepository.findById(termDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản với ID: " + termDTO.getId()));
+                if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại Điều khoản khác (OTHER_TERMS).");
+                }
+                contractTerms.add(ContractTerm.builder()
+                        .originalTermId(term.getId())
+                        .termLabel(term.getLabel())
+                        .termValue(term.getValue())
+                        .termType(TypeTermIdentifier.OTHER_TERMS)
+                        .contract(contract)
+                        .build());
+            }
+        }
+
+        contract.setContractTerms(contractTerms);
+
+        // 4. Map additionalConfig sang ContractAdditionalTermDetail
+        List<ContractAdditionalTermDetail> additionalDetails = new ArrayList<>();
+        if (dto.getTemplateData().getAdditionalConfig() != null) {
+            Map<String, Map<String, List<TermSnapshotDTO>>> configMap = dto.getTemplateData().getAdditionalConfig();
+            for (Map.Entry<String, Map<String, List<TermSnapshotDTO>>> entry : configMap.entrySet()) {
+                String key = entry.getKey();
+                Long configTypeTermId;
+                try {
+                    configTypeTermId = Long.parseLong(key);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Key trong điều khoản bổ sung phải là số đại diện loại điều khoản. Key không hợp lệ");
+                }
+                Map<String, List<TermSnapshotDTO>> groupConfig = entry.getValue();
+
+                // Map nhóm Common
+                List<AdditionalTermSnapshot> commonSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("Common")) {
+                    for (TermSnapshotDTO termDTO : groupConfig.get("Common")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("Điều khoản trong nhóm điều khoản chung không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
+                        commonSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
+                                .build());
+                    }
+                }
+
+                // Map nhóm A
+                List<AdditionalTermSnapshot> aSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("A")) {
+                    for (TermSnapshotDTO termDTO : groupConfig.get("A")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên A không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
+                        aSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
+                                .build());
+                    }
+                }
+
+                // Map nhóm B
+                List<AdditionalTermSnapshot> bSnapshots = new ArrayList<>();
+                if (groupConfig.containsKey("B")) {
+                    for (TermSnapshotDTO termDTO : groupConfig.get("B")) {
+                        if (termDTO.getId() == null) {
+                            throw new IllegalArgumentException("Điều khoản trong nhóm bên B không được để trống.");
+                        }
+                        Term term = termRepository.findById(termDTO.getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
+                        bSnapshots.add(AdditionalTermSnapshot.builder()
+                                .termId(term.getId())
+                                .termLabel(term.getLabel())
+                                .termValue(term.getValue())
+                                .build());
+                    }
+                }
+
+                // Kiểm tra trùng lặp
+                Set<Long> unionCommonA = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonA.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'A'.");
+                }
+                Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionCommonB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'Chung' và 'B'.");
+                }
+                Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
+                if (!unionAB.isEmpty()) {
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở nhóm 'A' và 'B'.");
+                }
+
+                // Kiểm tra type term
+                for (AdditionalTermSnapshot snap : commonSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : aSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+                for (AdditionalTermSnapshot snap : bSnapshots) {
+                    Term term = termRepository.findById(snap.getTermId())
+                            .orElseThrow(() -> new IllegalArgumentException("Không tồn tại điều khoản với ID: " + snap.getTermId()));
+                    if (!term.getTypeTerm().getId().equals(configTypeTermId)) {
+                        throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản: \"" + term.getTypeTerm().getName() + "\".");
+                    }
+                }
+
+                ContractAdditionalTermDetail configDetail = ContractAdditionalTermDetail.builder()
+                        .typeTermId(configTypeTermId)
+                        .commonTerms(commonSnapshots)
+                        .aTerms(aSnapshots)
+                        .bTerms(bSnapshots)
+                        .contract(contract)
+                        .build();
+                additionalDetails.add(configDetail);
+            }
+        }
+        contract.setAdditionalTermDetails(additionalDetails);
+
+        // 5. Ánh xạ lịch thanh toán
+        List<PaymentSchedule> paymentSchedules = new ArrayList<>();
+        if (dto.getPayments() != null) {
+            int order = 1;
+            for (PaymentDTO paymentDTO : dto.getPayments()) {
+                if (paymentDTO.getAmount() == null || paymentDTO.getAmount() <= 0.0) {
+                    throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0.");
+                }
+                if (paymentDTO.getPaymentDate() == null) {
+                    throw new IllegalArgumentException("Ngày thanh toán không được để trống.");
+                }
+                PaymentSchedule paymentSchedule = PaymentSchedule.builder()
+                        .amount(paymentDTO.getAmount())
+                        .paymentDate(paymentDTO.getPaymentDate())
+                        .notifyPaymentDate(paymentDTO.getNotifyPaymentDate())
+                        .paymentOrder(order++)
+                        .status(PaymentStatus.UNPAID)
+                        .paymentMethod(paymentDTO.getPaymentMethod())
+                        .notifyPaymentContent(paymentDTO.getNotifyPaymentContent())
+                        .contract(contract)
+                        .build();
+                paymentSchedules.add(paymentSchedule);
+            }
+        }
+        contract.setPaymentSchedules(paymentSchedules);
+
+        // 6. Lưu hợp đồng
+        Contract savedContract = contractRepository.save(contract);
+        savedContract.setOriginalContractId(savedContract.getId());
+        savedContract.setSourceContractId(null); // Không có hợp đồng nguồn
+        contractRepository.save(savedContract);
+
+        // 7. Ghi audit trail cho các trường quan trọng
+        List<AuditTrail> auditTrails = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = user.getFullName();
+
+        // Ghi audit cho từng trường với change summary bằng tiếng Việt
+        auditTrails.add(createAuditTrail(savedContract, "title", null, savedContract.getTitle(), now, changedBy,
+                "Tạo hợp đồng mới với tiêu đề: " + savedContract.getTitle()));
+        auditTrails.add(createAuditTrail(savedContract, "contractNumber", null, savedContract.getContractNumber(), now, changedBy,
+                "Gán số hợp đồng: " + savedContract.getContractNumber()));
+        auditTrails.add(createAuditTrail(savedContract, "partner", null, savedContract.getPartner().getId().toString(), now, changedBy,
+                "Liên kết với đối tác có ID: " + savedContract.getPartner().getId()));
+        auditTrails.add(createAuditTrail(savedContract, "user", null, savedContract.getUser().getId().toString(), now, changedBy,
+                "Gán cho người dùng có ID: " + savedContract.getUser().getId()));
+        auditTrails.add(createAuditTrail(savedContract, "template", null, savedContract.getTemplate().getId().toString(), now, changedBy,
+                "Sử dụng mẫu hợp đồng có ID: " + savedContract.getTemplate().getId()));
+        auditTrails.add(createAuditTrail(savedContract, "signingDate", null,
+                savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : null, now, changedBy,
+                "Đặt ngày ký hợp đồng: " + (savedContract.getSigningDate() != null ? savedContract.getSigningDate().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "contractLocation", null, savedContract.getContractLocation(), now, changedBy,
+                "Đặt địa điểm ký hợp đồng: " + savedContract.getContractLocation()));
+        auditTrails.add(createAuditTrail(savedContract, "amount", null,
+                savedContract.getAmount() != null ? savedContract.getAmount().toString() : null, now, changedBy,
+                "Đặt giá trị hợp đồng: " + (savedContract.getAmount() != null ? savedContract.getAmount().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "effectiveDate", null,
+                savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : null, now, changedBy,
+                "Đặt ngày hiệu lực: " + (savedContract.getEffectiveDate() != null ? savedContract.getEffectiveDate().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "expiryDate", null,
+                savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : null, now, changedBy,
+                "Đặt ngày hết hạn: " + (savedContract.getExpiryDate() != null ? savedContract.getExpiryDate().toString() : "không có")));
+        auditTrails.add(createAuditTrail(savedContract, "status", null, savedContract.getStatus().name(), now, changedBy,
+                "Đặt trạng thái ban đầu: " + savedContract.getStatus().name()));
+        auditTrails.add(createAuditTrail(savedContract, "createdAt", null, savedContract.getCreatedAt().toString(), now, changedBy,
+                "Hợp đồng được tạo vào: " + savedContract.getCreatedAt().toString()));
+
+        // Ghi audit cho ContractTerm
+        for (ContractTerm term : savedContract.getContractTerms()) {
+            String newValue = String.format("Term ID: %d, Label: %s, Value: %s, Type: %s",
+                    term.getOriginalTermId(), term.getTermLabel(), term.getTermValue(), term.getTermType().name());
+            auditTrails.add(AuditTrail.builder()
+                    .contract(savedContract)
+                    .entityName("ContractTerm")
+                    .entityId(term.getId())
+                    .action("CREATE")
+                    .fieldName("contractTerms")
+                    .oldValue(null)
+                    .newValue(newValue)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Tạo điều khoản hợp đồng: " + term.getTermLabel() + "cho hợp đồng " + savedContract.getTitle())
+                    .build());
+        }
+
+        // Ghi audit cho ContractAdditionalTermDetail
+        for (ContractAdditionalTermDetail detail : savedContract.getAdditionalTermDetails()) {
+            try {
+                String newValue = objectMapper.writeValueAsString(detail);
+                auditTrails.add(AuditTrail.builder()
+                        .contract(savedContract)
+                        .entityName("ContractAdditionalTermDetail")
+                        .entityId(detail.getId())
+                        .action("CREATE")
+                        .fieldName("additionalTermDetails")
+                        .oldValue(null)
+                        .newValue(newValue)
+                        .changedAt(now)
+                        .changedBy(changedBy)
+                        .changeSummary("Tạo chi tiết điều khoản bổ sung cho hợp đồng")
+                        .build());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Không thể chuyển đổi ContractAdditionalTermDetail thành JSON: " + e.getMessage());
+            }
+        }
+
+        // Ghi audit cho ContractItem
+        if (savedContract.getContractItems() != null && !savedContract.getContractItems().isEmpty()) {
+            for (ContractItem item : savedContract.getContractItems()) {
+                String newValue = String.format("Item ID: %d, Order: %d, Description: %s, Amount: %.2f",
+                        item.getId(), item.getItemOrder(), item.getDescription(), item.getAmount());
+                auditTrails.add(AuditTrail.builder()
+                        .contract(savedContract)
+                        .entityName("ContractItem")
+                        .entityId(item.getId())
+                        .action("CREATE")
+                        .fieldName("contractItems")
+                        .oldValue(null)
+                        .newValue(newValue)
+                        .changedAt(now)
+                        .changedBy(changedBy)
+                        .changeSummary("Tạo hạng mục thanh toán: " + item.getDescription() + " cho hợp đồng " + savedContract.getTitle())
+                        .build());
+            }
+        }
+
+        for (ContractPartner contractPartner : savedContract.getContractPartners()) {
+            String newValue = String.format("Party Type: %s, Name: %s, Partner Address: %s, Partner Tax Code: %s, " +
+                            "Partner Phone: %s, Partner Email: %s, Spokesman Name: %s, Position: %s",
+                    contractPartner.getPartnerType(), contractPartner.getPartnerName(),
+                    contractPartner.getPartnerAddress(), contractPartner.getPartnerTaxCode(),
+                    contractPartner.getPartnerPhone(), contractPartner.getPartnerEmail(),
+                    contractPartner.getSpokesmanName(), contractPartner.getPosition());
+            auditTrails.add(AuditTrail.builder()
+                    .contract(savedContract)
+                    .entityName("ContractPartner")
+                    .entityId(contractPartner.getId()) // ID sẽ có sau khi save
+                    .action("CREATE")
+                    .fieldName("contractPartners")
+                    .oldValue(null)
+                    .newValue(newValue)
+                    .changedAt(now)
+                    .changedBy(changedBy)
+                    .changeSummary("Thêm thông tin " + contractPartner.getPartnerType() + " cho hợp đồng: " + savedContract.getTitle())
+                    .build());
+        }
+
+        // Lưu tất cả bản ghi audit trail
+        auditTrailRepository.saveAll(auditTrails);
+
+
+        return savedContract;
+    }
+
+    private List<ContractPartner> buildContractPartners(Contract contract, Partner partnerA, Partner partnerB) {
+        List<ContractPartner> contractPartners = new ArrayList<>();
+
+        // Tạo ContractPartner cho Partner A
+        ContractPartner contractPartnerA = ContractPartner.builder()
+                .contract(contract)
+                .partnerType(partnerA.getPartnerType()) // Lấy PartnerType từ Partner A
+                .partnerName(partnerA.getPartnerName())
+                .partnerAddress(partnerA.getAddress())
+                .partnerTaxCode(partnerA.getTaxCode())
+                .partnerPhone(partnerA.getPhone())
+                .partnerEmail(partnerA.getEmail())
+                .spokesmanName(partnerA.getSpokesmanName())
+                .position(partnerA.getPosition())
+                .partner(partnerA)
+                .build();
+        contractPartners.add(contractPartnerA);
+
+        // Tạo ContractPartner cho Partner B
+        ContractPartner contractPartnerB = ContractPartner.builder()
+                .contract(contract)
+                .partnerType(partnerB.getPartnerType())
+                .partnerName(partnerB.getPartnerName())
+                .partnerAddress(partnerB.getAddress())
+                .partnerTaxCode(partnerB.getTaxCode())
+                .partnerPhone(partnerB.getPhone())
+                .partnerEmail(partnerB.getEmail())
+                .spokesmanName(partnerB.getSpokesmanName())
+                .position(partnerB.getPosition())
+                .partner(partnerB)
+                .build();
+        contractPartners.add(contractPartnerB);
+
+        // Kiểm tra trùng PartnerType
+        long partnerACount = contractPartners.stream()
+                .filter(p -> p.getPartnerType() == PartnerType.PARTNER_A)
+                .count();
+        if (partnerACount > 1) {
+            throw new IllegalStateException("Không được phép có nhiều hơn một đối tác bên A trong hợp đồng.");
+        }
+
+        long partnerBCount = contractPartners.stream()
+                .filter(p -> p.getPartnerType() == PartnerType.PARTNER_B)
+                .count();
+        if (partnerBCount > 1) {
+            throw new IllegalStateException("Không được phép có nhiều hơn một đối tác bên B trong hợp đồng.");
+        }
+
+        // Đảm bảo có ít nhất một Partner A và một Partner B
+        if (partnerACount == 0 || partnerBCount == 0) {
+            throw new IllegalStateException("Hợp đồng phải có một đối tác bên A và một đối tác bên B.");
+        }
+
+        return contractPartners;
+    }
     // Phương thức createAuditTrail
     private AuditTrail createAuditTrail(Contract contract, String fieldName, String oldValue, String newValue,
                                         LocalDateTime changedAt, String changedBy, String changeSummary) {
@@ -524,7 +596,7 @@ public class ContractService implements IContractService{
         auditTrail.setChangeSummary(changeSummary);
 
         if (auditTrail.getContract() == null || auditTrail.getContract().getId() == null) {
-            throw new IllegalStateException("Hợp đồng trong AuditTrail không tồn tại hoặc không có ID.");
+            throw new IllegalStateException("Hợp đồng trong Kiểm toán không tồn tại.");
         }
 
         return auditTrail;
@@ -538,11 +610,11 @@ public class ContractService implements IContractService{
         String enterpriseAbbr = partnerA.getAbbreviation();
 
         Partner partner = partnerRepository.findById(dto.getPartnerId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác với ID: " + dto.getPartnerId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác"));
         String partnerAbbr = partner.getAbbreviation();
 
         ContractTemplate template = contractTemplateRepository.findById(dto.getTemplateId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng với ID: " + dto.getTemplateId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu hợp đồng"));
         ContractType contractType = template.getContractType();
         String contractTypeAbbr = generateContractTypeAbbreviation(contractType.getName());
         String contractAbbr = generateContractAbbreviation(dto.getContractTitle(), partnerAbbr);
@@ -672,7 +744,9 @@ public class ContractService implements IContractService{
         boolean hasContractTypeFilter = contractTypeId != null;
         Page<Contract> contracts;
 
-        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
+        boolean isCeo = currentUser.getRole() != null &&
+                "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
         boolean isStaff = currentUser.getRole() != null &&
                 "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
 
@@ -682,7 +756,7 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndContractTypeIdAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusInAndContractTypeIdAndUser(
                                 keyword, statuses, contractTypeId, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusInAndContractTypeIdAndUser(
@@ -691,7 +765,7 @@ public class ContractService implements IContractService{
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusInAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusInAndUser(
                                 keyword, statuses, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusInAndUser(
@@ -702,7 +776,7 @@ public class ContractService implements IContractService{
                 if (hasContractTypeFilter) {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndContractTypeIdAndUser(
+                        contracts = contractRepository.findLatestByTitleOrNumberAndStatusNotAndContractTypeIdAndUser(
                                 keyword, ContractStatus.DELETED, contractTypeId, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusNotAndContractTypeIdAndUser(
@@ -711,7 +785,7 @@ public class ContractService implements IContractService{
                 } else {
                     if (hasSearch) {
                         keyword = keyword.trim();
-                        contracts = contractRepository.findLatestByTitleContainingIgnoreCaseAndStatusNotAndUser(
+                        contracts = contractRepository.findLatestByKeywordAndStatusNotAndUser(
                                 keyword, ContractStatus.DELETED, currentUser, pageable);
                     } else {
                         contracts = contractRepository.findLatestByStatusNotAndUser(
@@ -802,7 +876,7 @@ public class ContractService implements IContractService{
             }
         }
 
-        // Kiểm tra hợp lệ (bắt buộc có cả A và B)
+         //Kiểm tra hợp lệ (bắt buộc có cả A và B)
         if (partnerA == null || partnerB == null) {
             throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
         }
@@ -822,6 +896,12 @@ public class ContractService implements IContractService{
                 .user(convertUserToUserContractResponse(contract.getUser()))
                 .partnerA(partnerA) // Thêm partnerA
                 .partnerB(partnerB) // Thêm partnerB
+                .daysDeleted(contract.getDaysDeleted())
+                .signingDate(contract.getSigningDate())
+                .effectiveDate(contract.getEffectiveDate())
+                .expiryDate(contract.getExpiryDate())
+
+                .signedFilePath(contract.getSignedFilePath())
                 .build();
     }
     private UserContractResponse convertUserToUserContractResponse(User user) {
@@ -841,8 +921,15 @@ public class ContractService implements IContractService{
     @Override
     @Transactional(readOnly = true)
     public Optional<ContractResponse> getContractById(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
         return contractRepository.findById(id)
                 .map(contract -> {
+
+//                    if (!hasAccessToContract(contract, currentUser)) {
+//                        throw new ContractAccessDeniedException("Bạn không có quyền xem hợp đồng này");
+//                    }
                     // Force lazy loading của các collection khi session còn mở.
                     contract.getContractTerms().size();
                     contract.getContractItems().size();
@@ -854,6 +941,18 @@ public class ContractService implements IContractService{
                     });
                     return convertContractToResponse(contract);
                 });
+    }
+
+    private boolean hasAccessToContract(Contract contract, User currentUser) {
+        boolean isOwner = contract.getUser() != null && contract.getUser().getId().equals(currentUser.getId());
+
+        ApprovalWorkflow wf = contract.getApprovalWorkflow();
+        boolean isApprover = wf != null && wf.getStages().stream()
+                .anyMatch(stage -> stage.getApprover() != null && stage.getApprover().getId().equals(currentUser.getId()));
+
+        boolean isDirector = currentUser.getRole() != null && currentUser.getRole().equals(Role.DIRECTOR);
+
+        return isOwner || isApprover || isDirector;
     }
 
     private ContractResponse convertContractToResponse(Contract contract) {
@@ -875,6 +974,7 @@ public class ContractService implements IContractService{
                         .value(term.getTermValue())
                         .build())
                 .collect(Collectors.toList());
+
 
         List<TermResponse> otherTerms = contract.getContractTerms().stream()
                 .filter(term -> term.getTermType() == TypeTermIdentifier.OTHER_TERMS)
@@ -942,9 +1042,9 @@ public class ContractService implements IContractService{
             }
         }
 
-        if (partnerA == null || partnerB == null) {
-            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
-        }
+//        if (partnerA == null || partnerB == null) {
+//            throw new RuntimeException("Hợp đồng phải có cả bên A và bên B.");
+//        }
 
         return ContractResponse.builder()
                 .id(contract.getId())
@@ -981,6 +1081,7 @@ public class ContractService implements IContractService{
                 .generalTerms(generalTerms)
                 .contractTypeId(contract.getContractType().getId())
                 .otherTerms(otherTerms)
+                .signedFilePath(contract.getSignedFilePath())
                 .maxDateLate(contract.getMaxDateLate())
                 .paymentSchedules(convertPaymentSchedules(contract.getPaymentSchedules()))
                 .additionalTerms(additionalTerms)
@@ -1042,32 +1143,183 @@ public class ContractService implements IContractService{
                 .collect(Collectors.toList());
     }
 
+        @Override
+        @Transactional
+        public Contract duplicateContract(Long contractId) {
+            // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
+            Contract originalContract = contractRepository.findById(contractId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
+
+            // 2. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
+            Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
+            Integer duplicateNumber = (maxDuplicateNumber != null ? maxDuplicateNumber : 0) + 1;
+
+            // 3. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
+            Contract duplicateContract = Contract.builder()
+                    .title(originalContract.getTitle() + " (Copy " + duplicateNumber + ")")
+                    .contractNumber(originalContract.getContractNumber() + "__" + duplicateNumber)
+                    .sourceContractId(originalContract.getId()) // Liên kết với hợp đồng nguồn
+                    .partner(originalContract.getPartner())
+                    .user(originalContract.getUser())
+                    .template(originalContract.getTemplate())
+                    .signingDate(originalContract.getSigningDate())
+                    .contractLocation(originalContract.getContractLocation())
+                    .amount(originalContract.getAmount())
+                    .effectiveDate(originalContract.getEffectiveDate())
+                    .expiryDate(originalContract.getExpiryDate())
+                    .notifyEffectiveDate(originalContract.getNotifyEffectiveDate())
+                    .notifyExpiryDate(originalContract.getNotifyExpiryDate())
+                    .notifyEffectiveContent(originalContract.getNotifyEffectiveContent())
+                    .notifyExpiryContent(originalContract.getNotifyExpiryContent())
+                    .specialTermsA(originalContract.getSpecialTermsA())
+                    .specialTermsB(originalContract.getSpecialTermsB())
+                    .contractContent(originalContract.getContractContent())
+                    .appendixEnabled(originalContract.getAppendixEnabled())
+                    .transferEnabled(originalContract.getTransferEnabled())
+                    .autoAddVAT(originalContract.getAutoAddVAT())
+                    .vatPercentage(originalContract.getVatPercentage())
+                    .isDateLateChecked(originalContract.getIsDateLateChecked())
+                    .autoRenew(originalContract.getAutoRenew())
+                    .violate(originalContract.getViolate())
+                    .maxDateLate(originalContract.getMaxDateLate())
+                    .suspend(originalContract.getSuspend())
+                    .suspendContent(originalContract.getSuspendContent())
+                    .contractType(originalContract.getContractType())
+                    .status(ContractStatus.CREATED)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .version(1)
+                    .isEffectiveNotified(false)
+                    .isExpiryNotified(false)
+                    .isEffectiveOverdueNotified(false)
+                    .isLatestVersion(true)
+                    .duplicateNumber(duplicateNumber)
+                    .build();
+
+            // 4. Sao chép các điều khoản (ContractTerm)
+            List<ContractTerm> duplicateTerms = new ArrayList<>();
+            for (ContractTerm originalTerm : originalContract.getContractTerms()) {
+                ContractTerm newTerm = ContractTerm.builder()
+                        .originalTermId(originalTerm.getOriginalTermId())
+                        .termLabel(originalTerm.getTermLabel())
+                        .termValue(originalTerm.getTermValue())
+                        .termType(originalTerm.getTermType())
+                        .contract(duplicateContract)
+                        .build();
+                duplicateTerms.add(newTerm);
+            }
+            duplicateContract.setContractTerms(duplicateTerms);
+
+            // 5. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
+            List<ContractAdditionalTermDetail> duplicateAdditionalDetails = new ArrayList<>();
+            for (ContractAdditionalTermDetail originalDetail : originalContract.getAdditionalTermDetails()) {
+                ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
+                        .typeTermId(originalDetail.getTypeTermId())
+                        .commonTerms(new ArrayList<>(originalDetail.getCommonTerms()))
+                        .aTerms(new ArrayList<>(originalDetail.getATerms()))
+                        .bTerms(new ArrayList<>(originalDetail.getBTerms()))
+                        .contract(duplicateContract)
+                        .build();
+                duplicateAdditionalDetails.add(newDetail);
+            }
+            duplicateContract.setAdditionalTermDetails(duplicateAdditionalDetails);
+
+            // 6. Sao chép các lịch thanh toán (PaymentSchedule)
+            List<PaymentSchedule> duplicatePaymentSchedules = new ArrayList<>();
+            for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
+                PaymentSchedule newPayment = PaymentSchedule.builder()
+                        .amount(originalPayment.getAmount())
+                        .paymentDate(originalPayment.getPaymentDate())
+                        .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
+                        .paymentOrder(originalPayment.getPaymentOrder())
+                        .status(PaymentStatus.UNPAID)
+                        .reminderEmailSent(false)
+                        .overdueEmailSent(false)
+                        .paymentMethod(originalPayment.getPaymentMethod())
+                        .notifyPaymentContent(originalPayment.getNotifyPaymentContent())
+                        .contract(duplicateContract)
+                        .build();
+                duplicatePaymentSchedules.add(newPayment);
+            }
+            duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
+
+            // 7. Sao chép các hạng mục thanh toán (ContractItem)
+            List<ContractItem> duplicateContractItems = new ArrayList<>();
+            for (ContractItem originalItem : originalContract.getContractItems()) {
+                ContractItem newItem = ContractItem.builder()
+                        .contract(duplicateContract)
+                        .description(originalItem.getDescription())
+                        .amount(originalItem.getAmount())
+                        .itemOrder(originalItem.getItemOrder())
+                        .build();
+                duplicateContractItems.add(newItem);
+            }
+            duplicateContract.setContractItems(duplicateContractItems);
+
+            List<ContractPartner> duplicatePartners = new ArrayList<>();
+            for (ContractPartner originalPartner : originalContract.getContractPartners()) {
+                ContractPartner newPartner = ContractPartner.builder()
+                        .contract(duplicateContract)
+                        .partnerType(originalPartner.getPartnerType())
+                        .partnerName(originalPartner.getPartnerName())
+                        .partnerAddress(originalPartner.getPartnerAddress())
+                        .partnerTaxCode(originalPartner.getPartnerTaxCode())
+                        .partnerPhone(originalPartner.getPartnerPhone())
+                        .partnerEmail(originalPartner.getPartnerEmail())
+                        .spokesmanName(originalPartner.getSpokesmanName())
+                        .position(originalPartner.getPosition())
+                        .partner(originalPartner.getPartner())
+                        .build();
+                duplicatePartners.add(newPartner);
+            }
+            duplicateContract.setContractPartners(duplicatePartners);
+
+
+            // 8. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
+            Contract savedDuplicateContract = contractRepository.save(duplicateContract);
+            savedDuplicateContract.setOriginalContractId(savedDuplicateContract.getId());
+            contractRepository.save(savedDuplicateContract);
+
+            return savedDuplicateContract;
+        }
+
+
     @Override
     @Transactional
-    public Contract duplicateContract(Long contractId) {
+    public Contract duplicateContractWithPartner(Long contractId, Long partnerId) {
         // 1. Lấy hợp đồng gốc từ cơ sở dữ liệu
         Contract originalContract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
 
-        // 2. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
+        // 2. Lấy Partner từ partnerId để lấy thông tin
+        Partner partnerFromId = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác"));
+
+        Partner partnerA = partnerRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bên A"));
+
+        // 3. Tìm duplicateNumber lớn nhất của các bản sao từ hợp đồng nguồn
         Integer maxDuplicateNumber = contractRepository.findMaxDuplicateNumberBySourceContractId(originalContract.getId());
         Integer duplicateNumber = (maxDuplicateNumber != null ? maxDuplicateNumber : 0) + 1;
 
-        // 3. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
+        LocalDateTime now = LocalDateTime.now();
+        String changedBy = currentUser.getLoggedInUser().getFullName();
+
+        // 4. Tạo hợp đồng mới và sao chép các trường từ hợp đồng gốc
         Contract duplicateContract = Contract.builder()
                 .title(originalContract.getTitle() + " (Copy " + duplicateNumber + ")")
                 .contractNumber(originalContract.getContractNumber() + "__" + duplicateNumber)
                 .sourceContractId(originalContract.getId()) // Liên kết với hợp đồng nguồn
-                .partner(originalContract.getPartner())
+                .partner(partnerFromId) // Gán Partner từ partnerId
                 .user(originalContract.getUser())
                 .template(originalContract.getTemplate())
-                .signingDate(null)
+                .signingDate(originalContract.getSigningDate())
                 .contractLocation(originalContract.getContractLocation())
                 .amount(originalContract.getAmount())
-                .effectiveDate(null)
-                .expiryDate(null)
-                .notifyEffectiveDate(null)
-                .notifyExpiryDate(null)
+                .effectiveDate(originalContract.getEffectiveDate())
+                .expiryDate(originalContract.getExpiryDate())
+                .notifyEffectiveDate(originalContract.getNotifyEffectiveDate())
+                .notifyExpiryDate(originalContract.getNotifyExpiryDate())
                 .notifyEffectiveContent(originalContract.getNotifyEffectiveContent())
                 .notifyExpiryContent(originalContract.getNotifyExpiryContent())
                 .specialTermsA(originalContract.getSpecialTermsA())
@@ -1085,14 +1337,17 @@ public class ContractService implements IContractService{
                 .suspendContent(originalContract.getSuspendContent())
                 .contractType(originalContract.getContractType())
                 .status(ContractStatus.CREATED)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .version(1)
+                .isEffectiveNotified(false)
+                .isExpiryNotified(false)
+                .isEffectiveOverdueNotified(false)
                 .isLatestVersion(true)
                 .duplicateNumber(duplicateNumber)
                 .build();
 
-        // 4. Sao chép các điều khoản (ContractTerm)
+        // 5. Sao chép các điều khoản (ContractTerm)
         List<ContractTerm> duplicateTerms = new ArrayList<>();
         for (ContractTerm originalTerm : originalContract.getContractTerms()) {
             ContractTerm newTerm = ContractTerm.builder()
@@ -1106,7 +1361,7 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setContractTerms(duplicateTerms);
 
-        // 5. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
+        // 6. Sao chép các chi tiết điều khoản bổ sung (ContractAdditionalTermDetail)
         List<ContractAdditionalTermDetail> duplicateAdditionalDetails = new ArrayList<>();
         for (ContractAdditionalTermDetail originalDetail : originalContract.getAdditionalTermDetails()) {
             ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
@@ -1120,13 +1375,13 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setAdditionalTermDetails(duplicateAdditionalDetails);
 
-        // 6. Sao chép các lịch thanh toán (PaymentSchedule)
+        // 7. Sao chép các lịch thanh toán (PaymentSchedule)
         List<PaymentSchedule> duplicatePaymentSchedules = new ArrayList<>();
         for (PaymentSchedule originalPayment : originalContract.getPaymentSchedules()) {
             PaymentSchedule newPayment = PaymentSchedule.builder()
                     .amount(originalPayment.getAmount())
-                    .paymentDate(null)
-                    .notifyPaymentDate(null)
+                    .paymentDate(originalPayment.getPaymentDate())
+                    .notifyPaymentDate(originalPayment.getNotifyPaymentDate())
                     .paymentOrder(originalPayment.getPaymentOrder())
                     .status(PaymentStatus.UNPAID)
                     .paymentMethod(originalPayment.getPaymentMethod())
@@ -1137,7 +1392,7 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setPaymentSchedules(duplicatePaymentSchedules);
 
-        // 7. Sao chép các hạng mục thanh toán (ContractItem)
+        // 8. Sao chép các hạng mục thanh toán (ContractItem)
         List<ContractItem> duplicateContractItems = new ArrayList<>();
         for (ContractItem originalItem : originalContract.getContractItems()) {
             ContractItem newItem = ContractItem.builder()
@@ -1150,12 +1405,356 @@ public class ContractService implements IContractService{
         }
         duplicateContract.setContractItems(duplicateContractItems);
 
-        // 8. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
+        // 9. Tạo ContractPartners từ thông tin của Partner theo partnerId
+        List<ContractPartner> duplicatePartners = new ArrayList<>();
+
+        // Tạo PARTNER_A (giả định giữ nguyên thông tin từ Partner cũ hoặc để trống nếu không cần)
+        ContractPartner contractPartnerA = ContractPartner.builder()
+                .contract(duplicateContract)
+                .partnerType(partnerA.getPartnerType())
+                .partnerName(partnerA.getPartnerName())
+                .partnerAddress(partnerA.getAddress())
+                .partnerTaxCode(partnerA.getTaxCode())
+                .partnerPhone(partnerA.getPhone())
+                .partnerEmail(partnerA.getEmail())
+                .spokesmanName(partnerA.getSpokesmanName())
+                .position(partnerA.getPosition())
+                .partner(partnerA)
+                .build();
+        duplicatePartners.add(contractPartnerA);
+
+        // Tạo PARTNER_B từ thông tin của Partner theo partnerId
+        ContractPartner partnerB = ContractPartner.builder()
+                .contract(duplicateContract)
+                .partnerType(PartnerType.PARTNER_B)
+                .partnerName(partnerFromId.getPartnerName())
+                .partnerAddress(partnerFromId.getAddress())
+                .partnerTaxCode(partnerFromId.getTaxCode())
+                .partnerPhone(partnerFromId.getPhone())
+                .partnerEmail(partnerFromId.getEmail())
+                .spokesmanName(partnerFromId.getSpokesmanName())
+                .position(partnerFromId.getPosition())
+                .partner(partnerFromId)
+                .build();
+        duplicatePartners.add(partnerB);
+
+        duplicateContract.setContractPartners(duplicatePartners);
+
+        // 10. Lưu hợp đồng mới vào cơ sở dữ liệu và gán originalContractId
         Contract savedDuplicateContract = contractRepository.save(duplicateContract);
         savedDuplicateContract.setOriginalContractId(savedDuplicateContract.getId());
         contractRepository.save(savedDuplicateContract);
 
         return savedDuplicateContract;
+    }
+
+    @Override
+    @Transactional
+    public void uploadSignedContract(Long contractId, List<MultipartFile> files) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+
+        try {
+            contract.getSignedContractUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new RuntimeException(("File tải lên phải là file hình ảnh hoặc PDF"));
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "signed_contract_done/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
+                uploadedUrls.add(signedUrl);
+            }
+
+            // Ghi lại danh sách URL mới
+            contract.getSignedContractUrls().addAll(uploadedUrls);
+
+            // Cập nhật trạng thái hợp đồng (có thể tuỳ chỉnh logic)
+            ContractStatus oldStatus = contract.getStatus();
+            contract.setStatus(ContractStatus.SIGNED);
+            contractRepository.save(contract);
+            if (oldStatus != ContractStatus.SIGNED) {
+                logAuditTrailForContract(contract, "UPDATE", "status", oldStatus != null ? oldStatus.name() : null, ContractStatus.ACTIVE.name(), "System");
+            }
+
+        } catch (IOException e) {
+            logger.error("Không tải lên được url hóa đơn cho hợp đồng", e);
+            throw new RuntimeException("Lỗi khi tải lên file", e);
+        }
+    }
+
+    @Override
+    public List<String> getSignedContractUrl(Long contractId) throws DataNotFoundException {
+        List<String> billUrls = contractRepository.findSignedContractUrls(contractId);
+
+        if (billUrls == null || billUrls.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy URLs");
+        }
+
+        return billUrls;
+    }
+
+    @Override
+    public void uploadSignedContractBase64(Long contractId, FileBase64DTO fileBase64DTO, String fileName) throws DataNotFoundException, IOException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy lịch trình thanh toán cho hợp đồng"));
+
+        if (contract.getStatus() == ContractStatus.SIGNED) {
+            throw new RuntimeException("Hợp đồng này đã được ký trước đó");
+        }
+
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64DTO.getFileBase64());
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "signed_contracts",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", true,
+                "format", "pdf"
+        ));
+
+        // Lấy public ID của file đã upload
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Lấy tên file gốc và chuẩn hóa (loại bỏ dấu, ký tự không hợp lệ)
+        String customFilename = normalizeFilename(fileName);
+
+        // URL-encode tên file (một lần encoding là đủ khi tên đã là ASCII)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment:<custom_filename>
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + customFilename))
+                .generate();
+
+        contract.setSignedFilePath(secureUrl);
+        contract.setStatus(ContractStatus.SIGNED);
+        contractRepository.save(contract);
+    }
+
+    @Override
+    @Transactional
+    public void notifyNextApprover(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        ApprovalWorkflow wf = contract.getApprovalWorkflow();
+        if (wf == null) return;  // chưa có workflow thì không làm gì
+
+        // Tìm bước duyệt tiếp theo đang PENDING
+        ApprovalStage nextStage = wf.getStages().stream()
+                .filter(stage -> ApprovalStatus.APPROVING.equals(stage.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (nextStage == null) return; // đã duyệt hết hoặc không có bước PENDING
+
+        User approver = nextStage.getApprover();
+        String message = String.format(
+                "Bạn có hợp đồng: \"%s\" cần được duyệt gấp!",
+                contract.getTitle(),
+                nextStage.getStageOrder()
+        );
+
+        // Chuẩn bị payload
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("message", message);
+        payload.put("contractId", contract.getId());
+
+        // Gửi in-app qua WebSocket
+        messagingTemplate.convertAndSendToUser(
+                approver.getFullName(),    // hoặc approver.getUsername() tuỳ setup
+                "/queue/notifications",
+                payload
+        );
+
+        // Lưu vào hệ thống notification
+        notificationService.saveNotification(approver, message, contract);
+
+        // (Tuỳ chọn) Gửi email nhắc nhở
+    }
+
+    @Override
+    @Transactional
+    public Page<GetAllContractReponse> getAllContractsNearlyExpiryDate(
+            int days,
+            String keyword,
+            int page,
+            int size
+    ) {
+        LocalDateTime now       = LocalDateTime.now();
+        LocalDateTime threshold = now.plusDays(days);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("expiryDate").ascending());
+
+        Page<Contract> contractPage = contractRepository
+                .findExpiringWithinAndSearch(now, threshold, keyword, pageable);
+
+        List<GetAllContractReponse> dtoList = contractPage.getContent().stream()
+                .map(this::convertToGetAllContractResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(
+                dtoList,
+                pageable,
+                contractPage.getTotalElements()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void cancelContract(Long contractId, List<MultipartFile> files, ContractCancelDTO contractCancelDTO) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        if (contract.getStatus() == ContractStatus.CANCELLED) {
+            throw new RuntimeException("Hợp đồng đã hủy trước đó");
+        }
+        contract.setCancelContent(contractCancelDTO.getCancelReason());
+        contract.setCancelDate(LocalDateTime.now());
+        try {
+            contract.getCancellationFileUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new RuntimeException("File tải lên phải là file hình ảnh hoặc PDF");
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "cancelled_contract_files/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
+                uploadedUrls.add(signedUrl);
+            }
+            User currentUser = securityUtils.getLoggedInUser();
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
+
+            // Ghi lại danh sách URL mới
+            contract.getCancellationFileUrls().addAll(uploadedUrls);
+
+            contract.setStatus(ContractStatus.CANCELLED);
+            logAuditTrail(contract, "CANCELLED", "status", oldStatus, ContractStatus.CANCELLED.name(), currentUser.getFullName());
+
+            contractRepository.save(contract);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public CancelContractResponse getContractCancelReason(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        return CancelContractResponse.builder()
+                .contractId(contract.getId())
+                .cancelContent(contract.getCancelContent())
+                .cancelAt(contract.getCancelDate())
+                .urls(contract.getCancellationFileUrls())
+                .build();
+    }
+
+    private String normalizeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "file";
+        }
+        // Loại bỏ extension nếu có
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex != -1) {
+            filename = filename.substring(0, dotIndex);
+        }
+        // Chuẩn hóa Unicode: tách dấu
+        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+        // Loại bỏ dấu (diacritics)
+        normalized = normalized.replaceAll("\\p{M}", "");
+        // Giữ lại chữ, số, dấu gạch dưới, dấu gạch ngang, khoảng trắng và dấu chấm than
+        normalized = normalized.replaceAll("[^\\w\\-\\s!]", "");
+        // Chuyển khoảng trắng thành dấu gạch dưới và trim
+        normalized = normalized.trim().replaceAll("\\s+", "_");
+        return normalized;
     }
 
     public int calculateNewVersion(Long originalContractId, Contract currentContract) {
@@ -1168,13 +1767,16 @@ public class ContractService implements IContractService{
         return baseContractNumber + "-v" + newVersion;
     }
 
-
-    @Transactional
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public Contract updateContract(Long contractId, ContractUpdateDTO dto) {
         // 1. Tìm hợp đồng hiện tại
         Contract currentContract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng."));
+
+        if (currentContract.getStatus() == ContractStatus.ACTIVE) {
+            throw new RuntimeException("Hợp đồng đang ở trạng thái hoạt động. Vui lòng tạo Phụ lục thay vì cập nhật trực tiếp.");
+        }
 
         // 1.1 Kiểm tra xem hợp đồng có đang trong quy trình duyệt hay không
         ApprovalWorkflow workflow = currentContract.getApprovalWorkflow();
@@ -1199,11 +1801,12 @@ public class ContractService implements IContractService{
 
         // 3. Cập nhật các hợp đồng cũ có cùng original_contract_id
         List<Contract> oldContracts = contractRepository.findAllByOriginalContractId(currentContract.getOriginalContractId());
-        for (Contract oldContract : oldContracts) {
+
+        oldContracts.forEach(oldContract -> {
             oldContract.setIsLatestVersion(false);
             oldContract.setApprovalWorkflow(null);
-            contractRepository.save(oldContract);
-        }
+        });
+        contractRepository.saveAll(oldContracts);
 
         List<AuditTrail> auditTrails = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
@@ -1259,9 +1862,12 @@ public class ContractService implements IContractService{
                 .maxDateLate(dto.getMaxDateLate() != null ? dto.getMaxDateLate() : currentContract.getMaxDateLate())
                 .contractType(dto.getContractTypeId() != null
                         ? contractTypeRepository.findById(dto.getContractTypeId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng với id: " + dto.getContractTypeId()))
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy loại hợp đồng"))
                         : currentContract.getContractType())
                 .isLatestVersion(true)
+                .isEffectiveNotified(currentContract.getIsEffectiveNotified())
+                .isExpiryNotified(currentContract.getIsExpiryNotified())
+                .isEffectiveOverdueNotified(currentContract.getIsEffectiveOverdueNotified())
                 .sourceContractId(currentContract.getSourceContractId())
                 .duplicateNumber(currentContract.getDuplicateNumber())
                 .build();
@@ -1341,7 +1947,7 @@ public class ContractService implements IContractService{
                         ? dto.getPartnerB().getPosition() : existingPartnerB.getPosition())           // Thêm position
                 .partner(dto.getPartnerB() != null && dto.getPartnerB().getPartnerId() != null
                         ? partnerRepository.findById(dto.getPartnerB().getPartnerId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy partner B với ID: " + dto.getPartnerB().getPartnerId()))
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy đối tác B"))
                         : existingPartnerB.getPartner())
                 .build();
 
@@ -1412,7 +2018,7 @@ public class ContractService implements IContractService{
 
                 // check tồn tại term trong database
                 Term term = termRepository.findById(termDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Điều khoản"));
 
                 // validate loại term
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.LEGAL_BASIS)) {
@@ -1519,7 +2125,7 @@ public class ContractService implements IContractService{
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.GENERAL_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại GENERAL_TERMS");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại điều khoản chung");
                 }
                 newTermIds.add(term.getId());
                 ContractTerm existingTerm = currentContract.getContractTerms().stream()
@@ -1598,7 +2204,7 @@ public class ContractService implements IContractService{
                 Term term = termRepository.findById(termDTO.getId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
                 if (!term.getTypeTerm().getIdentifier().equals(TypeTermIdentifier.OTHER_TERMS)) {
-                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại OTHER_TERMS");
+                    throw new IllegalArgumentException("Điều khoản \"" + term.getLabel() + "\" không thuộc loại các điều khoản khác");
                 }
                 newTermIds.add(term.getId());
                 ContractTerm existingTerm = currentContract.getContractTerms().stream()
@@ -1731,7 +2337,7 @@ public class ContractService implements IContractService{
 
                                 // Kiểm tra term có tồn tại trong database không
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
 
                                 // Tạo snapshot từ term
                                 return AdditionalTermSnapshot.builder()
@@ -1748,7 +2354,7 @@ public class ContractService implements IContractService{
                     aSnapshots = groupConfig.get("A").stream()
                             .map(termDTO -> {
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                                 return AdditionalTermSnapshot.builder()
                                         .termId(term.getId())
                                         .termLabel(term.getLabel())
@@ -1761,7 +2367,7 @@ public class ContractService implements IContractService{
                     bSnapshots = groupConfig.get("B").stream()
                             .map(termDTO -> {
                                 Term term = termRepository.findById(termDTO.getId())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + termDTO.getId()));
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
                                 return AdditionalTermSnapshot.builder()
                                         .termId(term.getId())
                                         .termLabel(term.getLabel())
@@ -1775,21 +2381,21 @@ public class ContractService implements IContractService{
                 unionCommonA.retainAll(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionCommonA.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'A'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên Chung' và 'Bên A'");
                 }
 
                 Set<Long> unionCommonB = new HashSet<>(commonSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionCommonB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionCommonB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Common' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên Chung' và 'Bên B'");
                 }
 
                 Set<Long> unionAB = new HashSet<>(aSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
                 unionAB.retainAll(bSnapshots.stream().map(AdditionalTermSnapshot::getTermId).toList());
 
                 if (!unionAB.isEmpty()) {
-                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'A' và 'B'");
+                    throw new IllegalArgumentException("Các điều khoản không được chọn đồng thời ở 'Bên A' và 'Bên B'");
                 }
                 // Tạo newDetail tạm thời để so sánh
                 ContractAdditionalTermDetail newDetail = ContractAdditionalTermDetail.builder()
@@ -1938,7 +2544,7 @@ public class ContractService implements IContractService{
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent() != null ? paymentDTO.getNotifyPaymentContent() : oldPayment.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
-
+                    newPayment.setStatus(oldPayment.getStatus());
                     // Kiểm tra thay đổi
                     boolean hasChanges = !Objects.equals(oldPayment.getPaymentOrder(), newPayment.getPaymentOrder()) ||
                             !Objects.equals(oldPayment.getAmount(), newPayment.getAmount()) ||
@@ -1980,6 +2586,7 @@ public class ContractService implements IContractService{
                     newPayment.setNotifyPaymentContent(paymentDTO.getNotifyPaymentContent());
                     newPayment.setReminderEmailSent(paymentDTO.isReminderEmailSent());
                     newPayment.setOverdueEmailSent(paymentDTO.isOverdueEmailSent());
+                    newPayment.setStatus(PaymentStatus.UNPAID);
                     updatedPayments.add(newPayment);
 
                     String newValue = serializePaymentSchedule(newPayment);
@@ -2031,6 +2638,7 @@ public class ContractService implements IContractService{
                 newPayment.setNotifyPaymentContent(oldPayment.getNotifyPaymentContent());
                 newPayment.setReminderEmailSent(oldPayment.isReminderEmailSent());
                 newPayment.setOverdueEmailSent(oldPayment.isOverdueEmailSent());
+                newPayment.setStatus(oldPayment.getStatus());
                 updatedPayments.add(newPayment);
             }
         }
@@ -2291,10 +2899,10 @@ public class ContractService implements IContractService{
                         auditTrail.setNewValue(serializePaymentSchedule(savedPayment));
                         System.out.println("Updated audit trail: " + auditTrail.getNewValue());
                     } else {
-                        System.err.println("Không tìm thấy PaymentSchedule tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
+                        System.err.println("Không tìm thấy lịch thanh toán tương ứng trong savedNewContract cho kiểm toán: " + auditTrail.getNewValue());
                     }
                 } else {
-                    System.err.println("Không tìm thấy PaymentSchedule trong map cho audit trail: " + auditTrail.getNewValue());
+                    System.err.println("Không tìm thấy lịch thanh toán trong map cho kiểm toán: " + auditTrail.getNewValue());
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -2326,10 +2934,10 @@ public class ContractService implements IContractService{
                         auditTrail.setNewValue(serializeContractItem(savedItem));
                         System.out.println("Updated audit trail: " + auditTrail.getNewValue());
                     } else {
-                        System.err.println("Không tìm thấy ContractItem tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
+                        System.err.println("Không tìm thấy mục hợp đồng tương ứng trong savedNewContract cho audit trail: " + auditTrail.getNewValue());
                     }
                 } else {
-                    System.err.println("Không tìm thấy ContractItem trong map cho audit trail: " + auditTrail.getNewValue());
+                    System.err.println("Không tìm thấy mục hợp đồng trong map cho audit trail: " + auditTrail.getNewValue());
                 }
             }
             auditTrail.setContract(savedNewContract);
@@ -2364,9 +2972,11 @@ public class ContractService implements IContractService{
         return savedNewContract;
     }
 
+
     private String getPartnerTypeFromNewValue(String newValue) {
         return newValue.split("type:")[1].split(",")[0];
     }
+
 
     private String serializeContractPartner(ContractPartner partner) {
         return String.format("ContractPartner{type:%s, name:'%s', address:'%s', taxCode:'%s', phone:'%s', email:'%s', spokesmanName:'%s', position:'%s'}",
@@ -2596,7 +3206,7 @@ public class ContractService implements IContractService{
     // Helper method để map TermSnapshotDTO thành AdditionalTermSnapshot
     private AdditionalTermSnapshot mapToSnapshot(TermSnapshotDTO dto) {
         Term term = termRepository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Term với id: " + dto.getId()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy điều khoản"));
         return AdditionalTermSnapshot.builder()
                 .termId(term.getId())
                 .termLabel(term.getLabel())
@@ -2735,7 +3345,7 @@ public class ContractService implements IContractService{
                 return Integer.parseInt(part.substring(7));
             }
         }
-        throw new RuntimeException("Không thể trích xuất paymentOrder từ newValue: " + newValue);
+        throw new RuntimeException("Không thể trích xuất thanh toán: " + newValue);
     }
 
     private Long getTermIdFromNewValue(String newValue) {
@@ -2747,7 +3357,7 @@ public class ContractService implements IContractService{
         // Tìm vị trí của "typeTermId="
         int startIndex = newValue.indexOf("typeTermId=");
         if (startIndex == -1) {
-            throw new RuntimeException("Không thể trích xuất typeTermId từ newValue: " + newValue);
+            throw new RuntimeException("Không thể trích xuất loại điều khoản: " + newValue);
         }
         startIndex += "typeTermId=".length();
         int endIndex = newValue.indexOf(",", startIndex);
@@ -2784,6 +3394,7 @@ public class ContractService implements IContractService{
         // Cập nhật trạng thái
         contract.setStatus(ContractStatus.DELETED);
         contract.setUpdatedAt(LocalDateTime.now());
+        contract.setDaysDeleted(LocalDateTime.now());
 
         // Lưu hợp đồng
         Contract savedContract = contractRepository.save(contract);
@@ -2793,10 +3404,10 @@ public class ContractService implements IContractService{
                 .contract(savedContract)
                 .entityName("Contract")
                 .entityId(savedContract.getId())
-                .action("UPDATE")
+                .action("SOFT_DELETE")
                 .fieldName("status")
-                .oldValue(oldStatusVi) // Sử dụng giá trị đã dịch
-                .newValue(newStatusVi)  // Sử dụng giá trị đã dịch
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
                 .changedAt(LocalDateTime.now())
                 .changedBy(currentUser.getLoggedInUser().getFullName())
                 .changeSummary(String.format("Đã xóa mềm hợp đồng từ trạng thái '%s' sang '%s'", oldStatusVi, newStatusVi))
@@ -2806,6 +3417,37 @@ public class ContractService implements IContractService{
 
         return true;
     }
+
+    private void logAuditTrailForContract(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = oldValue != null ? translateContractStatusToVietnamese(oldValue) : null;
+        String newStatusVi = newValue != null ? translateContractStatusToVietnamese(newValue) : null;
+
+        String changeSummary;
+        if ("CREATED".equalsIgnoreCase(newValue)) {
+            changeSummary = "Đã tạo mới hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+        } else if (oldStatusVi.equalsIgnoreCase(newStatusVi)) {
+            changeSummary = "Đối tác đã ký hợp đồng, chờ ngày hợp đồng với trạng thái '" + (newStatusVi != null ? newStatusVi : "Không có") + "'";
+    } else {
+            changeSummary = String.format("Đã cập nhật trạng thái hợp đồng từ '%s' sang '%s'",
+                    oldStatusVi != null ? oldStatusVi : "Không có",
+                    newStatusVi != null ? newStatusVi : "Không có");
+        }
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract)
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(changeSummary)
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+
     private String translateContractStatusToVietnamese(String status) {
         switch (status) {
             case "DRAFT": return "Bản nháp";
@@ -2823,7 +3465,8 @@ public class ContractService implements IContractService{
             case "CANCELLED": return "Đã hủy";
             case "ENDED": return "Kết thúc";
             case "DELETED": return "Đã xóa";
-            default: return status; // Giữ nguyên nếu không có bản dịch
+            case "LIQUIDATED": return "Đã thanh lý";
+            default: return status;
         }
     }
 
@@ -2865,7 +3508,7 @@ public class ContractService implements IContractService{
     public ContractStatus updateContractStatus(Long contractId, ContractStatus newStatus) {
         // Tìm hợp đồng
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với id: " + contractId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
 
         // Kiểm tra trạng thái hiện tại và trạng thái mới có hợp lệ không
         ContractStatus currentStatus = contract.getStatus();
@@ -2921,7 +3564,7 @@ public class ContractService implements IContractService{
     public Contract rollbackContract(Long originalContractId, int targetVersion) {
         // 1. Tìm hợp đồng cần rollback về
         Contract targetContract = contractRepository.findByOriginalContractIdAndVersion(originalContractId, targetVersion)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng với originalContractId: " + originalContractId + " và version: " + targetVersion));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng: " + " và version: " + targetVersion));
 
         // 2. Tìm phiên bản hiện tại (mới nhất) để so sánh và ghi log
         Integer currentMaxVersion = contractRepository.findMaxVersionByOriginalContractId(originalContractId);
@@ -3046,6 +3689,40 @@ public class ContractService implements IContractService{
         }
         rollbackContract.setContractItems(rollbackItems);
 
+        List<ContractPartner> rollbackPartners = new ArrayList<>();
+        List<AuditTrail> partnerAuditTrails = new ArrayList<>();
+        for (ContractPartner oldPartner : targetContract.getContractPartners()) {
+            ContractPartner newPartner = ContractPartner.builder()
+                    .contract(rollbackContract)
+                    .partnerType(oldPartner.getPartnerType())
+                    .partnerName(oldPartner.getPartnerName())
+                    .partnerAddress(oldPartner.getPartnerAddress())
+                    .partnerTaxCode(oldPartner.getPartnerTaxCode())
+                    .partnerPhone(oldPartner.getPartnerPhone())
+                    .partnerEmail(oldPartner.getPartnerEmail())
+                    .spokesmanName(oldPartner.getSpokesmanName())
+                    .position(oldPartner.getPosition())
+                    .partner(oldPartner.getPartner())
+                    .build();
+            rollbackPartners.add(newPartner);
+
+            // Ghi audit trail cho ContractPartner
+//            String newValue = serializeContractPartner(newPartner);
+//            partnerAuditTrails.add(AuditTrail.builder()
+//                    .contract(rollbackContract)
+//                    .entityName("ContractPartner")
+//                    .entityId(null) // ID sẽ được gán sau khi lưu
+//                    .action("CREATE")
+//                    .fieldName("contractPartners")
+//                    .oldValue(null)
+//                    .newValue(newValue)
+//                    .changedAt(now)
+//                    .changedBy(changedBy)
+//                    .changeSummary("Đã sao chép thông tin " + oldPartner.getPartnerType() + " từ phiên bản " + targetVersion + " trong rollback")
+//                    .build());
+        }
+        rollbackContract.setContractPartners(rollbackPartners);
+
         // 8. Lưu hợp đồng rollback
         Contract savedRollbackContract = contractRepository.save(rollbackContract);
 
@@ -3083,13 +3760,10 @@ public class ContractService implements IContractService{
 
         // Compare basic info
         compareBasicInfo(v1, v2, changes);
-
         // Compare contract terms
         compareContractTerms(v1.getContractTerms(), v2.getContractTerms(), changes);
-
         // Compare additional terms
         compareAdditionalTerms(v1.getAdditionalTermDetails(), v2.getAdditionalTermDetails(), changes);
-
         return changes;
     }
 
@@ -3188,6 +3862,7 @@ public class ContractService implements IContractService{
                 .build();
     }
 
+
     private ContractComparisonDTO createAdditionalTermDTO(AdditionalTermSnapshot term, String groupName,
                                                           String changeType, Object oldValue) {
         return ContractComparisonDTO.builder()
@@ -3217,8 +3892,8 @@ public class ContractService implements IContractService{
     @Override
     @Transactional(readOnly = true)
     public Page<GetAllContractReponse> getAllVersionsByOriginalContractId(Long originalContractId, Pageable pageable, User currentUser) {
-        boolean isCeo = Boolean.TRUE.equals(currentUser.getIsCeo());
         boolean isStaff = currentUser.getRole() != null && "STAFF".equalsIgnoreCase(currentUser.getRole().getRoleName());
+        boolean isCeo = currentUser.getRole() != null && "DIRECTOR".equalsIgnoreCase(currentUser.getRole().getRoleName());
 
         Page<Contract> versions;
         if (isStaff && !isCeo) {
@@ -3288,11 +3963,9 @@ public class ContractService implements IContractService{
                     if (matches && status != null) {
                         matches = contract.getStatus() == status;
                     }
-
                     return matches;
                 })
                 .collect(Collectors.toList());
-
         // Vì đã dùng phân trang ban đầu nhưng sau đó lọc lại theo điều kiện,
         // ta cần tái tạo Page từ kết quả đã lọc
         int start = (int) pageable.getOffset();
@@ -3301,6 +3974,268 @@ public class ContractService implements IContractService{
         Page<Contract> filteredPage = new PageImpl<>(pagedFiltered, pageable, filteredList.size());
 
         return filteredPage.map(this::convertToGetAllContractResponse);
+    }
+    @Override
+    public ResponseEntity<ResponseObject> signContract(SignContractRequest request) {
+        try {
+            // Validate contract existence
+            Optional<Contract> optionalContract = contractRepository.findById(request.getContractId());
+            if (optionalContract.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Không tìm thấy hợp đồng")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Contract contract = optionalContract.get();
+
+            // Check if contract is already signed
+            if (contract.getStatus() == ContractStatus.SIGNED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Hợp đồng trên đã kí")
+                                .build()
+                );
+            }
+
+            // Verify user authorization
+            User currentUser = securityUtils.getLoggedInUser();
+            if (!Objects.equals(currentUser.getRole().getRoleName(), Role.DIRECTOR)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ResponseObject.builder()
+                                .status(HttpStatus.UNAUTHORIZED)
+                                .message("Chỉ có giám đốc mới được quyền ký hợp đồng")
+                                .data(null)
+                                .build());
+            }
+
+            // Verify contract status
+            if (contract.getStatus() != ContractStatus.APPROVED) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Chỉ được ký hợp đồng ở trạng thái 'Đã phê duyệt'")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Save signed file
+            String filePath = saveSignedFile(request.getFileName(), request.getFileBase64());
+
+            // Update contract details
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
+            contract.setSignedFilePath(filePath);
+            contract.setSignedBy(currentUser.getFullName());
+
+            // Parse and set signedAt
+            try {
+                LocalDateTime signedAt = LocalDateTime.parse(request.getSignedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                contract.setSignedAt(signedAt);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(
+                        ResponseObject.builder()
+                                .status(HttpStatus.BAD_REQUEST)
+                                .message("Invalid signedAt format. Use ISO-8601 format.")
+                                .data(null)
+                                .build()
+                );
+            }
+
+            // Update contract status
+            contract.setStatus(ContractStatus.SIGNED);
+
+            // Save contract
+            contractRepository.save(contract);
+
+            // Send email notification
+            mailService.sendEmailContractSignedSuccess(contract);
+
+            // Log audit trail
+            logAuditTrail(contract, "UPDATE", "status", oldStatus, ContractStatus.SIGNED.name(), currentUser.getFullName());
+
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Hợp đồng đã được ký và sao lưu thành công.")
+                    .data(null)
+                    .build());
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi xảy ra khi ký file: " + e.getMessage())
+                            .data(null)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .message("Lỗi hệ thống: " + e.getMessage())
+                            .data(null)
+                            .build());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void liquidateContract(Long contractId, List<MultipartFile> files, ContractLiquidateDTO liquidateDTO) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        if (contract.getStatus() == ContractStatus.LIQUIDATED) {
+            throw new RuntimeException("Hợp đồng đã được thanh lý trước đó");
+        }
+
+        EnumSet<ContractStatus> allowed = EnumSet.of(
+                ContractStatus.SIGNED,
+                ContractStatus.ACTIVE,
+                ContractStatus.EXPIRED
+        );
+        if (!allowed.contains(contract.getStatus()) && !contract.getSignedContractUrls().isEmpty()) {
+            throw new RuntimeException(
+                    "Chỉ hợp đồng ở trạng thái SIGNED, ACTIVE hoặc EXPIRED mới được thanh lý"
+            );
+        }
+        contract.setLiquidateContent(liquidateDTO.getLiquidateReason());
+        contract.setLiquidateDate(LocalDateTime.now());
+        try {
+            contract.getLiquidateFileUrls().clear();
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Kiểm tra định dạng hợp lệ
+                MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(file.getContentType()));
+                if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG)
+                        && !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)
+                        && !mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    throw new RuntimeException("File tải lên phải là file hình ảnh hoặc PDF");
+                }
+
+                // Xác định resource_type
+                String resourceType = mediaType.isCompatibleWith(MediaType.APPLICATION_PDF) ? "raw" : "image";
+
+                // Upload file lên Cloudinary với tên file gốc, có thêm chuỗi tránh trùng
+                Map uploadResult = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "liquidated_contract_files/" + contractId,
+                                "use_filename", true,
+                                "unique_filename", true,
+                                "resource_type", resourceType,
+                                "format", mediaType.getSubtype()
+                        )
+                );
+
+                // Lấy URL an toàn của file
+                String signedUrl = uploadResult.get("secure_url").toString();
+
+                // Nếu là file PDF, tạo URL tải xuống với tên file gốc và định dạng PDF
+                if (mediaType.isCompatibleWith(MediaType.APPLICATION_PDF)) {
+                    String originalFilename = file.getOriginalFilename();
+                    String customFilename = normalizeFilename(originalFilename);
+
+                    // Encode the filename for URL safety
+                    String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+                    // Generate a secure download URL for PDF with the correct filename
+                    signedUrl = cloudinary.url()
+                            .resourceType("raw")
+                            .publicId(uploadResult.get("public_id").toString())
+                            .secure(true)
+                            .transformation(new Transformation().flags("attachment:" + customFilename)) // Ensure it's downloaded as an attachment
+                            .generate();
+                }
+
+                // Add the signed URL to the list
+                uploadedUrls.add(signedUrl);
+            }
+            String oldStatus = contract.getStatus() != null ? contract.getStatus().name() : "UNKNOWN";
+
+            // Ghi lại danh sách URL mới
+            contract.getLiquidateFileUrls().addAll(uploadedUrls);
+            User currentUser = securityUtils.getLoggedInUser();
+
+            contract.setStatus(ContractStatus.LIQUIDATED);
+            logAuditTrail(contract, "LIQUIDATED", "status", oldStatus, ContractStatus.LIQUIDATED.name(), currentUser.getFullName());
+
+            contractRepository.save(contract);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public ContractLiquidationResponse getContractLiquidateReason(Long contractId) throws DataNotFoundException {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hợp đồng"));
+        return ContractLiquidationResponse.builder()
+                .contractId(contract.getId())
+                .liquidateContent(contract.getLiquidateContent())
+                .liquidateAt(contract.getLiquidateDate())
+                .urls(contract.getLiquidateFileUrls())
+                .build();
+    }
+
+    private void logAuditTrail(Contract contract, String action, String fieldName, String oldValue, String newValue, String changedBy) {
+        String oldStatusVi = translateContractStatusToVietnamese(oldValue);
+        String newStatusVi = translateContractStatusToVietnamese(newValue);
+
+        AuditTrail auditTrail = AuditTrail.builder()
+                .contract(contract) // Liên kết với hợp đồng
+                .entityName("Contract")
+                .entityId(contract.getId())
+                .action(action)
+                .fieldName(fieldName)
+                .oldValue(oldStatusVi)
+                .newValue(newStatusVi)
+                .changedBy(changedBy)
+                .changedAt(LocalDateTime.now())
+                .changeSummary(String.format("Hợp đồng được ký bởi %s vào lúc %s. Trạng thái thay đổi từ '%s' sang '%s'",
+                        changedBy,
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now()),
+                        oldStatusVi,
+                        newStatusVi))
+                .build();
+        auditTrailRepository.save(auditTrail);
+    }
+    private String saveSignedFile(String fileName, String fileBase64) throws IOException {
+
+        byte[] fileBytes = Base64.getDecoder().decode(fileBase64);
+
+        // Upload as a raw file to Cloudinary
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileBytes, ObjectUtils.asMap(
+                "resource_type", "raw",      // Cho phép upload file dạng raw
+                "folder", "signed_contracts",
+                "use_filename", true,        // Sử dụng tên file gốc làm public_id
+                "unique_filename", true,     // Tạo tên file duy nhất
+                "format", "pdf"              // Force the file to be uploaded as a PDF
+        ));
+
+        // Lấy public ID của file đã upload
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Normalize filename (remove diacritics, replace spaces with underscores)
+        String customFilename = normalizeFilename(fileName);
+        // URL-encode the normalized filename (only encoding ASCII characters)
+        String encodedFilename = URLEncoder.encode(customFilename, "UTF-8");
+
+        // Tạo URL bảo mật với transformation flag attachment
+        // Khi tải file về, trình duyệt sẽ đặt tên file theo customFilename
+        String secureUrl = cloudinary.url()
+                .resourceType("raw")
+                .publicId(publicId)
+                .secure(true)
+                .transformation(new Transformation().flags("attachment:" + customFilename))
+                .generate();
+
+        return secureUrl;
     }
 
 }

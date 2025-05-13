@@ -6,14 +6,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface ITokenRepository extends JpaRepository<Token, Long> {
 
-    List<Token> findByUser(User user);
+    Optional<Token> findByUser(User user);
 
-    Token findByToken(String token);
+    Optional<Token> findByToken(String token);
 
-    Token findByRefreshToken(String token);
+    Optional<Token> findByUserId(Long userId);
 
-    List<Token> findByUserId(Long userId);
+    void deleteByUser(User user);
+
 }

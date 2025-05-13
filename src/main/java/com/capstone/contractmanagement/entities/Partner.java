@@ -5,7 +5,6 @@ import com.capstone.contractmanagement.enums.PartnerType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,5 +67,12 @@ public class Partner {
     @JsonIgnore
     private List<Contract> contracts = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<PartnerContract> partnerContracts = new ArrayList<>();
 
 }

@@ -24,7 +24,7 @@ public class GetContractForApproverResponse {
     private Long id;
     private String title;
     private UserContractResponse user;
-    private Partner partner;
+    private Partner partnerB;
     private String contractNumber;
     private ContractStatus status;
     private LocalDateTime createdAt;
@@ -53,6 +53,7 @@ public class GetContractForApproverResponse {
     private Boolean suspend;
     private String suspendContent;
     private Integer version;
+    private String signedFilePath;
     private List<TermResponse> legalBasisTerms;
     private List<TermResponse> generalTerms;
     private List<TermResponse> otherTerms;

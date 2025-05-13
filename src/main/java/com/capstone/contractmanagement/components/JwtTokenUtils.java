@@ -22,6 +22,7 @@ import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Component
@@ -31,9 +32,6 @@ public class JwtTokenUtils {
 
     @Value("${jwt.expiration}")
     private int expiration; //save to an environment variable
-
-    @Value("${jwt.expiration-refresh-token}")
-    private int expirationRefreshToken;
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -112,8 +110,8 @@ public class JwtTokenUtils {
         }
         try {
             Map<String, String> identifiers = extractIdentifier(token);
-            Token existingToken = ITokenRepository.findByToken(token);
-            if (existingToken == null || existingToken.isRevoked()) {
+            Optional<Token> existingToken = ITokenRepository.findByToken(token);
+            if (existingToken.isEmpty() || existingToken.get().isRevoked()) {
                 return false;
             }
             String identifier = identifiers.get("email") != null ? identifiers.get("email") : identifiers.get("phoneNumber");
