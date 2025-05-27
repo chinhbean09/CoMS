@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Hợp đồng Đã Quá Hạn</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #f7f9fb;
+          font-family: 'Roboto', sans-serif;
+          color: #333;
+        }
+        .email-wrapper {
+          width: 100%;
+          table-layout: fixed;
+          background-color: #f7f9fb;
+          padding: 40px 0;
+        }
+        .email-content {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .header {
+          background-color: #d9534f;
+          padding: 20px;
+          text-align: center;
+          color: #ffffff;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 500;
+        }
+        .body {
+          padding: 30px;
+          line-height: 1.6;
+        }
+        .body p {
+          margin: 15px 0;
+          font-size: 16px;
+        }
+        .contract-info {
+          background-color: #fff5f5;
+          border-left: 4px solid #d9534f;
+          padding: 15px 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .contract-info p {
+          margin: 8px 0;
+          font-weight: 500;
+          color: #d9534f;
+          font-size: 18px;
+        }
+        .footer {
+          padding: 20px;
+          text-align: center;
+          font-size: 14px;
+          color: #999;
+          border-top: 1px solid #eaeaea;
+        }
+        @media (max-width: 600px) {
+          .body, .header, .footer {
+            padding: 20px;
+          }
+          .contract-info {
+            margin: 15px 0;
+          }
+        }
+    </style>
+</head>
+<body>
+<table class="email-wrapper" cellpadding="0" cellspacing="0">
+    <tr>
+        <td>
+            <div class="email-content">
+                <div class="header">
+                    <h1>Hợp Đồng Đã Quá Hạn</h1>
+                </div>
+                <div class="body">
+                    <p>Xin chào,</p>
+                    <p>Chúng tôi xin thông báo rằng hợp đồng của bạn đã hết hạn với thông tin chi tiết như sau:</p>
+                    <div class="contract-info">
+                        <p th:text="'Hợp đồng: ' + ${contractTitle}"></p>
+                        <p th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
+                        <p th:text="'Ngày hết hạn: ' + ${contractExpiryDate}"></p>
+                    </div>
+                    <p>Vui lòng liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi hoặc cần hỗ trợ gia hạn hợp đồng.</p>
+                    <p>Trân trọng,</p>
+                </div>
+                <div class="footer">
+                    <p>Đây là email tự động, vui lòng không trả lời.</p>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

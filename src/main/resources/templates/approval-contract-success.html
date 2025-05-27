@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Hợp đồng đã hoàn tất phê duyệt</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f9;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+        }
+
+        .email-wrapper {
+            padding: 40px 0;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #28a745;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .body {
+            padding: 30px;
+        }
+
+        .body p {
+            font-size: 16px;
+            margin: 12px 0;
+        }
+
+        .highlight {
+            font-size: 18px;
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 600px) {
+            .body, .header, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="email-wrapper">
+    <div class="email-container">
+        <div class="header">
+            <h2>Hợp đồng đã hoàn tất phê duyệt</h2>
+        </div>
+        <div class="body">
+            <p><strong th:text="'Hợp đồng: ' + ${contractTitle}"></strong></p>
+            <p class="highlight" th:text="'Số hợp đồng: ' + ${contractNumber}"></p>
+            <p>Hợp đồng của bạn đã hoàn tất tất cả các bước phê duyệt. Hãy bắt đầu ký hợp đồng.</p>
+            <p>Vui lòng truy cập hệ thống để xem chi tiết.</p>
+
+        </div>
+        <div class="footer">
+            Đây là email tự động. Vui lòng không trả lời.
+        </div>
+    </div>
+</div>
+</body>
+</html>
