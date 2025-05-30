@@ -20,6 +20,7 @@ public class CreateTermResponse {
     private String value;
     private String type;
     private String identifier;
+    private TermCreatorResponse createdBy;
     private LocalDateTime createdAt;
     private TermStatus status;
 

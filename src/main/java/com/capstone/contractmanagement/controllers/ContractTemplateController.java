@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 
@@ -31,6 +32,7 @@ public class ContractTemplateController {
     private final IContractTemplateService templateService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> createTemplate(@RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.createTemplate(dto);
@@ -51,6 +53,7 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getTemplateById(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponse> templateOpt = templateService.getTemplateById(id);
@@ -80,6 +83,7 @@ public class ContractTemplateController {
 
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllTemplates(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -111,6 +115,7 @@ public class ContractTemplateController {
 
 
     @GetMapping("/titles")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getAllTemplateTitles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -139,6 +144,7 @@ public class ContractTemplateController {
     }
 
     @GetMapping("/{id}/ids")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> getTemplateIdsById(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponseIds> templateOpt = templateService.getTemplateIdsById(id);
@@ -168,6 +174,7 @@ public class ContractTemplateController {
 
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteTemplate(@PathVariable Long id) {
         try {
             templateService.deleteTemplate(id);
@@ -180,6 +187,7 @@ public class ContractTemplateController {
     }
 
     @PostMapping("/{id}/duplicate")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> duplicateTemplate(@PathVariable Long id) {
         try {
             Optional<ContractTemplateResponse> duplicateTemplateOpt = templateService.duplicateTemplate(id);
@@ -208,6 +216,7 @@ public class ContractTemplateController {
     }
 
     @PutMapping("/update/{templateId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateTemplate(@PathVariable Long templateId, @RequestBody ContractTemplateDTO dto) {
         try {
             ContractTemplate template = templateService.updateTemplate(templateId, dto);
@@ -228,6 +237,7 @@ public class ContractTemplateController {
     }
 
     @DeleteMapping("/soft-delete/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
     public ResponseEntity<ResponseObject> softDeleteContractTemplate(@PathVariable Long id) {
         try {
             boolean deleted = templateService.softDelete(id);
@@ -260,7 +270,7 @@ public class ContractTemplateController {
             @PathVariable Long id,
             @RequestParam ContractTemplateStatus status) {
         try {
-            ContractTemplateStatus updatedContract = templateService.updateContractStatus(id, status);
+            ContractTemplateStatus updatedContract = templateService.updateContractTemplateStatus(id, status);
             return ResponseEntity.ok(ResponseObject.builder()
                     .status(HttpStatus.OK)
                     .message(MessageKeys.UPDATE_CONTRACT_STATUS_SUCCESSFULLY)

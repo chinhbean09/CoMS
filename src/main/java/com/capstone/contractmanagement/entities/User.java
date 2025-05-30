@@ -1,5 +1,8 @@
 package com.capstone.contractmanagement.entities;
 
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalStage;
+import com.capstone.contractmanagement.entities.approval_workflow.ApprovalWorkflow;
+import com.capstone.contractmanagement.entities.contract.Contract;
 import com.capstone.contractmanagement.entities.contract_template.ContractTemplate;
 import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.enums.GenderList;
@@ -40,20 +43,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "date_of_birth")
     private LocalDateTime DateOfBirth;
 
-//    @Column(name = "department", length = 100)
-//    @Enumerated(EnumType.STRING)
-//    private DepartmentList department;
-
-    @ManyToOne
-    @JoinColumn(
-            name = "department_id",
-            foreignKey = @ForeignKey(
-                    name = "fk_department",
-                    foreignKeyDefinition = "FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL"
-            )
-    )
-    private Department department;
-
     @Column(name = "email")
     private String email;
 
@@ -67,15 +56,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @JoinColumn(name = "role_id", columnDefinition = "bigint")
     private Role role;
 
-    @Column(name = "modified_by")
-    private String modifiedBy;
-
-    @Column(name = "facebook_account_id")
-    private String facebookAccountId;
-
-    @Column(name = "google_account_id")
-    private String googleAccountId;
-
     @Column(name = "avatar")
     private String avatar;
 
@@ -83,19 +63,38 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Enumerated(EnumType.STRING)
     private GenderList gender;
 
-    @Column(name = "is_ceo", nullable = true)
-    private Boolean isCeo  = Boolean.FALSE;
-
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts = 0;
 
     @Column(name = "staff_code")
     private String staffCode;
 
+    @ManyToOne
+    @JoinColumn(
+            name = "department_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_department",
+                    foreignKeyDefinition = "FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL"
+            )
+    )
+    private Department department;
+
+
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private List<ContractTemplate> contractTemplates = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Partner> partners = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ApprovalWorkflow> approvalWorkflows = new ArrayList<>();
+
+    @OneToMany(mappedBy = "approver", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ApprovalStage> approvalStages = new ArrayList<>();
 
     @Override
     public Map<String, Object> getAttributes() {
@@ -109,9 +108,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
         if (role != null) {
             authorityList.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName()));
-        }
-        if (Boolean.TRUE.equals(isCeo)) {
-            authorityList.add(new SimpleGrantedAuthority("ROLE_CEO"));
         }
         return authorityList;
     }

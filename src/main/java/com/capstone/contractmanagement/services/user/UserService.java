@@ -2,30 +2,23 @@ package com.capstone.contractmanagement.services.user;
 
  import com.capstone.contractmanagement.components.JwtTokenUtils;
  import com.capstone.contractmanagement.components.LocalizationUtils;
- import com.capstone.contractmanagement.dtos.DataMailDTO;
  import com.capstone.contractmanagement.dtos.user.*;
  import com.capstone.contractmanagement.entities.Department;
  import com.capstone.contractmanagement.entities.Role;
  import com.capstone.contractmanagement.entities.Token;
  import com.capstone.contractmanagement.entities.User;
- import com.capstone.contractmanagement.enums.DepartmentList;
+ import com.capstone.contractmanagement.enums.ApprovalStatus;
  import com.capstone.contractmanagement.exceptions.DataNotFoundException;
  import com.capstone.contractmanagement.exceptions.InvalidParamException;
  import com.capstone.contractmanagement.exceptions.PermissionDenyException;
- import com.capstone.contractmanagement.repositories.IDepartmentRepository;
- import com.capstone.contractmanagement.repositories.IRoleRepository;
- import com.capstone.contractmanagement.repositories.ITokenRepository;
- import com.capstone.contractmanagement.repositories.IUserRepository;
+ import com.capstone.contractmanagement.repositories.*;
  import com.capstone.contractmanagement.responses.User.UserListCustom;
  import com.capstone.contractmanagement.responses.User.UserResponse;
  import com.capstone.contractmanagement.services.sendmails.IMailService;
- import com.capstone.contractmanagement.utils.MailTemplate;
  import com.capstone.contractmanagement.utils.MessageKeys;
  import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import jakarta.mail.MessagingException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+ import jakarta.transaction.Transactional;
  import jakarta.validation.Valid;
  import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -40,13 +33,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+ import org.springframework.security.core.Authentication;
+ import org.springframework.security.core.AuthenticationException;
+ import org.springframework.security.core.context.SecurityContextHolder;
+ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
- import org.springframework.validation.BindingResult;
  import org.springframework.web.bind.annotation.RequestBody;
  import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +61,7 @@ public class UserService implements IUserService {
     private final Cloudinary cloudinary;
     private final IMailService mailService;
     private final IDepartmentRepository departmentRepository;
+    private final IApprovalStageRepository approvalStageRepository;
 
     @Override
     @Transactional
@@ -76,29 +69,36 @@ public class UserService implements IUserService {
         String phoneNumber = userDTO.getPhoneNumber();
         if (phoneNumber != null && UserRepository.existsByPhoneNumber(phoneNumber)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+                    (MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         String email = userDTO.getEmail();
         if (UserRepository.existsByEmail(email)) {
             throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+                    (MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
         // Use the default roleId = 2 if none is provided
-        Long roleId = userDTO.getRoleId() != null ? userDTO.getRoleId() : 2L;
+        Long roleId = userDTO.getRoleId();
         Role role = RoleRepository.findById(roleId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        localizationUtils.getLocalizedMessage(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+                        (MessageKeys.ROLE_DOES_NOT_EXISTS)));
 
         // Prevent registration of an Admin account
         if (role.getRoleName().equalsIgnoreCase("ADMIN")) {
-            throw new PermissionDenyException("Not allowed to register for an Admin account");
+            throw new BadCredentialsException("Khoon");
+        }
+
+        // **MỚI**: Không cho tạo thêm Director nếu đã có sẵn
+        if (Role.DIRECTOR.equalsIgnoreCase(role.getRoleName())
+                && UserRepository.existsByRole_RoleName(Role.DIRECTOR)) {
+            throw new BadCredentialsException(
+                    ("Đã có Giám đốc trong hệ thống."));
         }
 
         Department department = departmentRepository.findById(userDTO.getDepartmentId())
                 .orElseThrow(() -> new DataNotFoundException(
-                        localizationUtils.getLocalizedMessage(MessageKeys.DEPARTMENT_NOT_FOUND)));
+                        (MessageKeys.DEPARTMENT_NOT_FOUND)));
 
         // Create a new user instance
         User newUser = User.builder()
@@ -107,7 +107,6 @@ public class UserService implements IUserService {
                 .fullName(userDTO.getFullName())
                 .active(true)
                 .address(userDTO.getAddress())
-                .isCeo(userDTO.getIsCeo())
                 .department(department)
                 .DateOfBirth(userDTO.getDateOfBirth())
                 .build();
@@ -140,22 +139,6 @@ public class UserService implements IUserService {
         // Combine the department code and the random 6-digit number
         return departmentCode + randomDigits;
     }
-
-//    private void sendAccountPassword(String email, String password) {
-//        try {
-//            DataMailDTO dataMailDTO = new DataMailDTO();
-//            dataMailDTO.setTo(email);
-//            dataMailDTO.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("password", password);
-//            dataMailDTO.setProps(props); // Set props to dataMailDTO
-//
-//            mailService.sendHtmlMail(dataMailDTO, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
-//        } catch (MessagingException e) {
-//            logger.error("Failed to send OTP email", e);
-//        }
-//    }
 
     /**
      * Generates a random 8-character password that includes at least one uppercase letter,
@@ -220,48 +203,6 @@ public class UserService implements IUserService {
         });
     }
 
-//    @Override
-//    public void sendMailForRegisterSuccess(String fullName, String email, String password) {
-//        try {
-//            DataMailDTO dataMail = new DataMailDTO();
-//            dataMail.setTo(email);
-//            dataMail.setSubject(MailTemplate.SEND_MAIL_SUBJECT.USER_REGISTER);
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("fulName", fullName);
-//            props.put("email", email);
-//            props.put("password", password);
-//
-//            dataMail.setProps(props);
-//
-//            mailService.sendHtmlMail(dataMail, MailTemplate.SEND_MAIL_TEMPLATE.USER_REGISTER);
-//        } catch (MessagingException exp) {
-//            logger.error("Failed to send registration success email", exp);
-//        }
-//    }
-
-//    @Override
-//    public void changePassword(Long id, ChangePasswordDTO changePasswordDTO) throws DataNotFoundException {
-//        User exsistingUser = UserRepository.findById(id)
-//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
-//        if (!passwordEncoder.matches(changePasswordDTO.getOldPassword(), exsistingUser.getPassword())) {
-//            throw new DataNotFoundException(MessageKeys.OLD_PASSWORD_WRONG);
-//        }
-//        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
-//            throw new DataNotFoundException(MessageKeys.CONFIRM_PASSWORD_NOT_MATCH);
-//        }
-//        exsistingUser.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
-//        UserRepository.save(exsistingUser);
-//    }
-//
-//    @Override
-//    public void updatePassword(String email, String password) throws DataNotFoundException {
-//        User user = UserRepository.findByEmail(email)
-//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
-//        user.setPassword(passwordEncoder.encode(password));
-//        UserRepository.save(user);
-//    }
-
     @Override
     public String login(UserLoginDTO userLoginDTO) throws Exception {
         String loginIdentifier = userLoginDTO.getLoginIdentifier();
@@ -313,28 +254,50 @@ public class UserService implements IUserService {
     public void blockOrEnable(Long userId, Boolean active) throws DataNotFoundException, PermissionDenyException {
         User existingUser = UserRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException(MessageKeys.USER_NOT_FOUND));
+
+
+        if(existingUser.getRole().getRoleName().equals(Role.ADMIN)) {
+            throw new RuntimeException("Không thể khóa người dùng là quản trị viên.");
+        }
+
+        // Nếu đang block (active = false), kiểm tra xem user có đang có bước duyệt nào chưa hoàn thành
+        if (Boolean.FALSE.equals(active)) {
+            long pending = approvalStageRepository.countByApproverAndStatusIn(
+                    existingUser,
+                    List.of(ApprovalStatus.NOT_STARTED, ApprovalStatus.APPROVING, ApprovalStatus.REJECTED)
+            );
+            if (pending > 0) {
+                throw new RuntimeException(
+                        "Không thể khóa người dùng này vì đang trong quy trình duyệt."
+                );
+            }
+        }
         existingUser.setActive(active);
         existingUser.setFailedLoginAttempts(0);
 
-        if(existingUser.getRole().getRoleName().equals(Role.ADMIN)) {
-            throw new PermissionDenyException("Not allowed to block Admin account");
-        }
         UserRepository.save(existingUser);
-        }
+    }
 
     @Override
-    public User getUser(Long id) throws DataNotFoundException {
-        return UserRepository.findById(id).orElseThrow(() -> new DataNotFoundException("User not found"));
+    public User getUser() throws DataNotFoundException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+        return UserRepository.findById(currentUser.getId()).orElseThrow(() -> new DataNotFoundException("User not found"));
+    }
+
+    @Override
+    public User getUserById(Long userId) throws DataNotFoundException {
+        return UserRepository.findById(userId).orElseThrow(() -> new DataNotFoundException("Không tìm thấy người dùng"));
     }
 
     @Override
     public void deleteUser(Long userId) {
         Optional<User> optionalUser = UserRepository.findById(userId);
-        List<Token> tokens = TokenRepository.findByUserId(userId);
-        TokenRepository.deleteAll(tokens);
+        Optional<Token> tokens = TokenRepository.findByUserId(userId);
+        TokenRepository.deleteByUser(optionalUser.get());
         optionalUser.ifPresent(UserRepository::delete);
     }
-    @org.springframework.transaction.annotation.Transactional(rollbackFor = {DataNotFoundException.class, DataIntegrityViolationException.class})
+
     @Override
     public void updateUser(Long userId, UpdateUserDTO userDTO) throws DataNotFoundException {
         // Kiểm tra xem user có tồn tại không
@@ -344,15 +307,15 @@ public class UserService implements IUserService {
         // Kiểm tra số điện thoại: chỉ khi số điện thoại mới khác với số hiện tại mới thực hiện kiểm tra trùng lặp
         String phoneNumber = userDTO.getPhoneNumber();
         if (phoneNumber != null && !phoneNumber.equals(user.getPhoneNumber()) && UserRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
+            throw new RuntimeException(
+                    (MessageKeys.PHONE_NUMBER_ALREADY_EXISTS));
         }
 
         // Kiểm tra email: chỉ khi email mới khác với email hiện tại mới thực hiện kiểm tra trùng lặp
         String email = userDTO.getEmail();
         if (email != null && !email.equals(user.getEmail()) && UserRepository.existsByEmail(email)) {
-            throw new DataIntegrityViolationException(
-                    localizationUtils.getLocalizedMessage(MessageKeys.EMAIL_ALREADY_EXISTS));
+            throw new RuntimeException(
+                    (MessageKeys.EMAIL_ALREADY_EXISTS));
         }
 
         // Nếu có departmentId thì kiểm tra và cập nhật
@@ -368,37 +331,58 @@ public class UserService implements IUserService {
         user.setEmail(userDTO.getEmail());
         user.setGender(userDTO.getGender());
         user.setAddress(userDTO.getAddress());
-        user.setIsCeo(userDTO.getIsCeo());
         user.setDateOfBirth(userDTO.getDateOfBirth());
-        user.setRole(RoleRepository.findById(userDTO.getRoleId())
-                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+//        user.setRole(RoleRepository.findById(userDTO.getRoleId())
+//                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS)));
+        // Fetch the Role entity the client wants:
+        Role newRole = RoleRepository.findById(userDTO.getRoleId())
+                .orElseThrow(() -> new DataNotFoundException(MessageKeys.ROLE_DOES_NOT_EXISTS));
+
+// If they’re trying to become DIRECTOR...
+        if (Role.DIRECTOR.equalsIgnoreCase(newRole.getRoleName())) {
+            // (a) Using existsByRoleAndIdNot:
+            if (UserRepository.existsByRoleAndIdNot(newRole, userId)) {
+                throw new RuntimeException("Giám đốc đã tồn tại trong hệ thống");
+            }
+        }
+        user.setRole(newRole);
 
         // Lưu thông tin cập nhật của user
         UserRepository.save(user);
     }
 
-    @Override
-    public User getUserDetailsFromRefreshToken(String refreshToken) throws Exception {
-        Token existingToken = TokenRepository.findByRefreshToken(refreshToken);
-        return getUserDetailsFromToken(existingToken.getToken());
-    }
+//    @Override
+//    public User getUserDetailsFromRefreshToken(String refreshToken) throws Exception {
+//        Token existingToken = TokenRepository.findByRefreshToken(refreshToken);
+//        return getUserDetailsFromToken(existingToken.getToken());
+//    }
 
     @Override
-    public Page<UserResponse> getAllUsers(int page, int size, DepartmentList department, String search) {
+    public Page<UserResponse> getAllUsers(int page, int size, Long departmentId, Long roleId, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage;
 
-        // Nếu có tìm kiếm theo fullName
-        if (search != null && !search.isEmpty()) {
-            if (department != null) {
-                userPage = UserRepository.findByDepartmentAndFullNameContainingIgnoreCase(department, search, pageable);
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        boolean hasDepartment = departmentId != null;
+        boolean hasRole = roleId != null;
+
+        if (hasSearch) {
+            if (hasDepartment && hasRole) {
+                userPage = UserRepository.searchByDepartmentAndRoleAndFullNameOrStaffCode(departmentId, roleId, search, pageable);
+            } else if (hasDepartment) {
+                userPage = UserRepository.searchByDepartmentAndFullNameOrStaffCode(departmentId, search, pageable);
+            } else if (hasRole) {
+                userPage = UserRepository.searchByRoleAndFullNameOrStaffCode(roleId, search, pageable);
             } else {
-                userPage = UserRepository.findByFullNameContainingIgnoreCase(search, pageable);
+                userPage = UserRepository.searchByFullNameOrStaffCode(search, pageable);
             }
         } else {
-            // Nếu không tìm kiếm theo fullName
-            if (department != null) {
-                userPage = UserRepository.findByDepartment(department, pageable);
+            if (hasDepartment && hasRole) {
+                userPage = UserRepository.findByDepartment_IdAndRole_Id(departmentId, roleId, pageable);
+            } else if (hasDepartment) {
+                userPage = UserRepository.findByDepartment_Id(departmentId, pageable);
+            } else if (hasRole) {
+                userPage = UserRepository.findByRole_Id(roleId, pageable);
             } else {
                 userPage = UserRepository.findAll(pageable);
             }
@@ -419,24 +403,35 @@ public class UserService implements IUserService {
         User user = UserRepository.findById(id).orElse(null);
         if (user != null && avatar != null && !avatar.isEmpty()) {
             try {
-                // Check if the uploaded file is an image
+                // Kiểm tra định dạng ảnh
                 MediaType mediaType = MediaType.parseMediaType(Objects.requireNonNull(avatar.getContentType()));
                 if (!mediaType.isCompatibleWith(MediaType.IMAGE_JPEG) &&
                         !mediaType.isCompatibleWith(MediaType.IMAGE_PNG)) {
                     throw new InvalidParamException(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
                 }
 
-                // Upload the avatar to Cloudinary
-                Map uploadResult = cloudinary.uploader().upload(avatar.getBytes(),
-                        ObjectUtils.asMap("folder", "user_avatar/" + id, "public_id", avatar.getOriginalFilename()));
+                // Tạo tên duy nhất cho avatar theo userId
+                String publicId = "avatar_" + id;
 
-                // Get the URL of the uploaded avatar
+                // Upload avatar lên Cloudinary, ghi đè nếu đã có
+                Map uploadResult = cloudinary.uploader().upload(
+                        avatar.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "user_avatar/" + id,
+                                "public_id", publicId,
+                                "overwrite", true,
+                                "resource_type", "image"
+                        )
+                );
+
+                // Lấy URL ảnh mới
                 String avatarUrl = uploadResult.get("secure_url").toString();
                 user.setAvatar(avatarUrl);
 
-                // Save the updated user entity
+                // Cập nhật user
                 UserRepository.save(user);
                 return user;
+
             } catch (IOException e) {
                 logger.error("Failed to upload avatar for user with ID {}", id, e);
             }
@@ -459,9 +454,16 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Page<UserResponse> getAllStaffAndManager(Pageable pageable) {
-        List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
-        Page<User> usersPage = UserRepository.findByRole_RoleNameIn(roleNames, pageable);
+    public Page<UserResponse> getAllStaffAndManager(String roleName, Pageable pageable) {
+        Page<User> usersPage;
+
+        if (roleName == null || roleName.isBlank()) {
+            List<String> roleNames = List.of(Role.STAFF, Role.MANAGER);
+            usersPage = UserRepository.findByRole_RoleNameInAndActiveTrue(roleNames, pageable);
+        } else {
+            usersPage = UserRepository.findByRole_RoleNameAndActiveTrue(roleName.toUpperCase(), pageable);
+        }
+
         return usersPage.map(UserResponse::fromUser);
     }
 

@@ -1,18 +1,16 @@
+
 package com.capstone.contractmanagement.controllers;
 
 import com.capstone.contractmanagement.components.JwtTokenUtils;
-import com.capstone.contractmanagement.components.LocalizationUtils;
 import com.capstone.contractmanagement.dtos.user.*;
 import com.capstone.contractmanagement.entities.AppConfig;
 import com.capstone.contractmanagement.entities.Token;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.enums.DepartmentList;
 import com.capstone.contractmanagement.exceptions.DataNotFoundException;
 import com.capstone.contractmanagement.repositories.IUserRepository;
 import com.capstone.contractmanagement.responses.ResponseObject;
 import com.capstone.contractmanagement.responses.User.LoginResponse;
 import com.capstone.contractmanagement.responses.User.UserListCustom;
-import com.capstone.contractmanagement.responses.User.UserListResponse;
 import com.capstone.contractmanagement.responses.User.UserResponse;
 import com.capstone.contractmanagement.responses.token.RefreshTokenDTO;
 import com.capstone.contractmanagement.services.app_config.IAppConfigService;
@@ -26,11 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -44,7 +40,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hibernate.query.sqm.tree.SqmNode.log;
@@ -55,18 +50,20 @@ import static org.hibernate.query.sqm.tree.SqmNode.log;
 
 public class UserController {
     private final JwtTokenUtils jwtTokenUtils;
-    private final LocalizationUtils localizationUtils;
+//    private final LocalizationUtils localizationUtils;
     private final IUserRepository UserRepository;
     private final IUserService userService;
     private final ITokenService tokenService;
     private final IAppConfigService appConfigService;
 
     @GetMapping("/generate-secret-key")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> generateSecretKey() {
         return ResponseEntity.ok(jwtTokenUtils.generateSecretKey());
     }
 
-        @PostMapping("/register")
+    @PostMapping("/register")
+    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> registerUser(
             @Valid @RequestBody CreateUserDTO userDTO,
             BindingResult result
@@ -108,13 +105,7 @@ public class UserController {
                     .message(MessageKeys.PHONE_NUMBER_ALREADY_EXISTS)
                     .build());
         }
-//        if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
-//            return ResponseEntity.badRequest().body(ResponseObject.builder()
-//                    .status(HttpStatus.BAD_REQUEST)
-//                    .data(null)
-//                    .message(localizationUtils.getLocalizedMessage(MessageKeys.PASSWORD_NOT_MATCH))
-//                    .build());
-//        }
+
         User user = userService.registerUser(userDTO);
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.CREATED)
@@ -150,7 +141,6 @@ public class UserController {
                     .message(MessageKeys.LOGIN_SUCCESSFULLY)
                     .token(jwtToken.getToken())
                     .tokenType(jwtToken.getTokenType())
-                    .refreshToken(jwtToken.getRefreshToken())
                     .fullName(userDetail.getFullName())
                     .email(userDetail.getEmail())
                     .phoneNumber(userDetail.getPhoneNumber())
@@ -192,11 +182,11 @@ public class UserController {
     }
 
     @PutMapping("/block-or-enable/{userId}/{active}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<?> blockOrEnable(
+    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject> blockOrEnable(
             @Valid @PathVariable long userId,
-            @Valid @PathVariable int active) {
-        try {
+            @Valid @PathVariable int active) throws Exception {
+
             userService.blockOrEnable(userId, active > 0);
             String message = active > 0 ? MessageKeys.ENABLE_USER_SUCCESSFULLY : MessageKeys.BLOCK_USER_SUCCESSFULLY;
 
@@ -205,11 +195,7 @@ public class UserController {
                     .data(null)
                     .message(message)
                     .build());
-        } catch (DataNotFoundException e) {
-            return ResponseEntity.badRequest().body(MessageKeys.USER_NOT_FOUND);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
     }
 
     @PostMapping("/logout")
@@ -241,10 +227,21 @@ public class UserController {
         }
     }
 
-    @GetMapping("/get-user/{id}")
-    public ResponseEntity<UserResponse> getUser(@Valid @PathVariable Long id) {
+    @GetMapping("/get-user")
+    public ResponseEntity<UserResponse> getUser() {
         try {
-            User user = userService.getUser(id);
+            User user = userService.getUser();
+            return ResponseEntity.ok(UserResponse.fromUser(user));
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/get-user-by-id/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DIRECTOR')")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        try {
+            User user = userService.getUserById(id);
             return ResponseEntity.ok(UserResponse.fromUser(user));
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -252,12 +249,11 @@ public class UserController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok(ResponseObject.builder()
-                    .status(HttpStatus.CREATED)
+                    .status(HttpStatus.OK)
                     .data(null)
                     .message(MessageKeys.DELETE_USER_SUCCESSFULLY)
                     .build());        }
@@ -268,7 +264,7 @@ public class UserController {
 
     @Transactional
     @PutMapping("/update-user/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
+    public ResponseEntity<ResponseObject> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDTO userDTO) {
         try {
             userService.updateUser(userId, userDTO);
             return ResponseEntity.ok(ResponseObject.builder()
@@ -277,51 +273,55 @@ public class UserController {
                     .message(MessageKeys.UPDATE_USER_SUCCESSFULLY)
                     .build());
         } catch (DataNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to update user: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(
-            @Valid @RequestBody RefreshTokenDTO refreshTokenDTO
-    ) {
-        try {
-            User userDetail = userService.getUserDetailsFromRefreshToken(refreshTokenDTO.getRefreshToken());
-            Token jwtToken = tokenService.refreshToken(refreshTokenDTO.getRefreshToken(), userDetail);
-            return ResponseEntity.ok(LoginResponse.builder()
-                    .message(MessageKeys.LOGIN_SUCCESSFULLY)
-                    .token(jwtToken.getToken())
-                    .tokenType(jwtToken.getTokenType())
-                    .refreshToken(jwtToken.getRefreshToken())
-                    .fullName(userDetail.getFullName())
-                    .email(userDetail.getEmail())
-                    .gender(userDetail.getGender())
-                    .phoneNumber(userDetail.getPhoneNumber())
-                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
-                    .id(userDetail.getId())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseObject.builder()
+                    .status(HttpStatus.NOT_FOUND)
+                    .message(e.getMessage())
                     .build());
-
         } catch (Exception e) {
-            String errorMessage = "Error occurred during token refresh: " + e.getMessage();
-            LoginResponse errorResponse = LoginResponse.builder()
-                    .message(errorMessage)
-                    .build();
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message(e.getMessage()).build());
         }
-
     }
+
+//    @PostMapping("/refresh-token")
+//    public ResponseEntity<LoginResponse> refreshToken(
+//            @Valid @RequestBody RefreshTokenDTO refreshTokenDTO
+//    ) {
+//        try {
+//            User userDetail = userService.getUserDetailsFromRefreshToken(refreshTokenDTO.getRefreshToken());
+//            Token jwtToken = tokenService.refreshToken(refreshTokenDTO.getRefreshToken(), userDetail);
+//            return ResponseEntity.ok(LoginResponse.builder()
+//                    .message(MessageKeys.LOGIN_SUCCESSFULLY)
+//                    .token(jwtToken.getToken())
+//                    .tokenType(jwtToken.getTokenType())
+//                    .fullName(userDetail.getFullName())
+//                    .email(userDetail.getEmail())
+//                    .gender(userDetail.getGender())
+//                    .phoneNumber(userDetail.getPhoneNumber())
+//                    .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+//                    .id(userDetail.getId())
+//                    .build());
+//
+//        } catch (Exception e) {
+//            String errorMessage = "Error occurred during token refresh: " + e.getMessage();
+//            LoginResponse errorResponse = LoginResponse.builder()
+//                    .message(errorMessage)
+//                    .build();
+//            return ResponseEntity.badRequest().body(errorResponse);
+//        }
+//
+//    }
 
     @GetMapping("/get-all-users")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MANAGER')")
     public ResponseEntity<?> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) DepartmentList department,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long roleId,
             @RequestParam(required = false) String search) {
         try {
-            Page<UserResponse> users = userService.getAllUsers(page, size, department, search);
+            Page<UserResponse> users = userService.getAllUsers(page, size, departmentId, roleId , search);
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -364,10 +364,12 @@ public class UserController {
     @GetMapping("/get-all-staff-and-manager")
     public ResponseEntity<ResponseObject> getAllStaffAndManager(
             @RequestParam(value = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(value = "size", defaultValue = "10", required = false) int size
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "role", required = false) String role
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserResponse> usersPage = userService.getAllStaffAndManager(pageable);
+        Page<UserResponse> usersPage = userService.getAllStaffAndManager(role, pageable);
+
         return ResponseEntity.ok(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(usersPage)
@@ -382,5 +384,4 @@ public class UserController {
                 .data(list)
                 .build());
     }
-
 }
