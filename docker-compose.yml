@@ -38,7 +38,7 @@
 
     volumes:
       postgres_data:
-
+        name: coms_postgres_data
     networks:
       backend_network:
         internal: true

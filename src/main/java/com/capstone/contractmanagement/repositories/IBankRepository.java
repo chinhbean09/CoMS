@@ -11,4 +11,5 @@ import java.util.List;
 public interface IBankRepository extends JpaRepository<Bank, Long> {
 
     List<Bank> findByPartner(Partner partner);
+    boolean existsByBackAccountNumber(String backAccountNumber);
 }

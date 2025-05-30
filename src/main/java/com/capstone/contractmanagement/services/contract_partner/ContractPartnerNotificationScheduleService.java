@@ -1,16 +1,21 @@
 package com.capstone.contractmanagement.services.contract_partner;
 
 import com.capstone.contractmanagement.entities.PartnerContract;
+import com.capstone.contractmanagement.entities.PaymentSchedule;
 import com.capstone.contractmanagement.entities.User;
-import com.capstone.contractmanagement.repositories.IContractPartnerRepository;
+import com.capstone.contractmanagement.enums.PaymentStatus;
+import com.capstone.contractmanagement.repositories.IPartnerContractRepository;
 import com.capstone.contractmanagement.repositories.IPaymentScheduleRepository;
 import com.capstone.contractmanagement.services.notification.INotificationService;
+import com.capstone.contractmanagement.services.sendmails.IMailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,16 +25,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ContractPartnerNotificationScheduleService implements IContractPartnerNotificationScheduleService {
     private final IPaymentScheduleRepository paymentScheduleRepository;
-    private final IContractPartnerRepository contractPartnerRepository;
+    private final IPartnerContractRepository contractPartnerRepository;
 
     private final SimpMessagingTemplate messagingTemplate;
     private final INotificationService notificationService;
+    private final IMailService mailService;
 
     // Số ngày trước khi hiệu lực hoặc hết hạn để gửi thông báo
     private static final int EFFECTIVE_NOTIFY_DAYS = 5;
     private static final int EXPIRY_NOTIFY_DAYS = 5;
 
     @Scheduled(cron = "0 0 8 * * ?") // Chạy định kỳ hàng ngày lúc 8 giờ sáng
+    @Override
     public void checkContractPartnerDates() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -44,8 +51,10 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 .collect(Collectors.toList());
 
         for (PartnerContract cp : partnersToEffectiveNotify) {
-            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate();
+            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sẽ có hiệu lực vào ngày " + cp.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(cp, message, true);
+            // send mail here
+            mailService.sendEmailPartnerContractEffectiveReminder(cp);
         }
 
         // Tìm đối tác hợp đồng sắp hết hạn
@@ -59,8 +68,10 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
                 .collect(Collectors.toList());
 
         for (PartnerContract cp : partnersToExpiryNotify) {
-            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate();
+            String message = "Hợp đồng đối tác '" + cp.getTitle() + "' sắp hết hạn vào ngày " + cp.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             sendNotification(cp, message, false);
+            // send mail here
+            mailService.sendEmailPartnerContractExpiryReminder(cp);
         }
     }
 
@@ -84,7 +95,7 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
         messagingTemplate.convertAndSendToUser(user.getFullName(), "/queue/notifications", payload);
 
         // Lưu thông báo vào hệ thống (Notification entity)
-        //notificationService.saveNotification(user, message, cp);
+        notificationService.saveNotification(user, message, null);
 
         // Cập nhật trạng thái thông báo đã được gửi
         if (isEffective) {
@@ -95,5 +106,103 @@ public class ContractPartnerNotificationScheduleService implements IContractPart
 
         // Lưu lại thay đổi trong cơ sở dữ liệu
         contractPartnerRepository.save(cp);
+    }
+
+    @Scheduled(cron = "0 0 8 * * ?")
+    private void checkPaymentSchedule() {
+        LocalDateTime now = LocalDateTime.now();
+        // Chúng ta chỉ so sánh phần ngày để tránh sai lệch giờ
+        LocalDate today = now.toLocalDate();
+        LocalDate targetDate = today.plusDays(5);
+
+        List<PaymentSchedule> reminderNotifiedPaymentSchedules =
+                paymentScheduleRepository.findAll().stream()
+                        // Chưa gửi reminder
+                        .filter(ps -> !ps.isReminderEmailSent())
+                        // Chỉ cho PartnerContract (bỏ qua những schedule gắn vào Contract chính)
+                        .filter(ps -> ps.getContract() == null && ps.getPartnerContract() != null)
+                        // Chưa thanh toán
+                        .filter(ps -> ps.getStatus() == PaymentStatus.UNPAID)
+                        // paymentDate cách ngày hôm nay đúng 5 ngày
+                        .filter(ps -> {
+                            LocalDate paymentDate = ps.getPaymentDate().toLocalDate();
+                            return paymentDate.equals(targetDate);
+                        })
+                        .collect(Collectors.toList());
+
+        for (PaymentSchedule ps : reminderNotifiedPaymentSchedules) {
+            // Đánh dấu đã gửi
+            ps.setReminderEmailSent(true);
+            paymentScheduleRepository.save(ps);
+
+            // Tạo message
+            String title = ps.getPartnerContract().getTitle();
+            LocalDateTime due = ps.getPaymentDate();
+            String reminderMessage = String.format(
+                    "Nhắc nhở: Hợp đồng đối tác '%s' sẽ đến hạn thanh toán vào ngày %s. Vui lòng chuẩn bị thanh toán.",
+                    title,
+                    due.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            );
+
+            // Gửi notification real‐time qua WebSocket/STOMP
+            String username = ps.getPartnerContract().getUser().getFullName();
+            Map<String, Object> payload = Map.of("message", reminderMessage);
+            messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+
+            // Lưu notification vào DB
+            notificationService.saveNotification(
+                    ps.getPartnerContract().getUser(),
+                    reminderMessage,
+                    null
+            );
+
+            // (Tuỳ chọn) gửi email
+            mailService.sendEmailPartnerContractPaymentReminder(ps);
+        }
+
+        List<PaymentSchedule> overDueNotifiedPaymentSchedules =
+                paymentScheduleRepository.findAll().stream()
+                        // Chưa gửi reminder
+                        .filter(ps -> !ps.isOverdueEmailSent())
+                        // Chỉ cho PartnerContract (bỏ qua những schedule gắn vào Contract chính)
+                        .filter(ps -> ps.getContract() == null && ps.getPartnerContract() != null)
+                        // Chưa thanh toán
+                        .filter(ps -> ps.getStatus() == PaymentStatus.UNPAID)
+                        // paymentDate cách ngày hôm nay đúng 5 ngày
+                        .filter(ps -> {
+                            LocalDate paymentDate = ps.getPaymentDate().toLocalDate();
+                            return paymentDate.equals(targetDate);
+                        })
+                        .collect(Collectors.toList());
+        for (PaymentSchedule ps : overDueNotifiedPaymentSchedules) {
+            // Đánh dấu đã gửi
+            ps.setOverdueEmailSent(true);
+            ps.setStatus(PaymentStatus.OVERDUE);
+            paymentScheduleRepository.save(ps);
+
+            // Tạo message
+            String title = ps.getPartnerContract().getTitle();
+            LocalDateTime due = ps.getPaymentDate();
+            String reminderMessage = String.format(
+                    "Quá hạn: Hợp đồng đối tác '%s' đã quá hạn thanh toán vào ngày %s.",
+                    title,
+                    due.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            );
+
+            // Gửi notification real‐time qua WebSocket/STOMP
+            String username = ps.getPartnerContract().getUser().getFullName();
+            Map<String, Object> payload = Map.of("message", reminderMessage);
+            messagingTemplate.convertAndSendToUser(username, "/queue/payment", payload);
+
+            // Lưu notification vào DB
+            notificationService.saveNotification(
+                    ps.getPartnerContract().getUser(),
+                    reminderMessage,
+                    null
+            );
+
+            // (Tuỳ chọn) gửi email
+            mailService.sendEmailPartnerContractPaymentExpired(ps);
+        }
     }
 }
